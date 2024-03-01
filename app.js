@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 const PORT = process.env.PORT || 3000;
 
-const connectDB = require('./db');
+const connectDB = require('./controllers/databaseController');
 const sessionController = require('./controllers/sessionController');
 const adminController = require('./controllers/adminController');
 const Session = require('./models/session');
