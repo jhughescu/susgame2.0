@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>*Admin</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+    <script src='js/libs/jquery-ui.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src='templates/sustemplates.js'></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!--    <link rel='stylesheet' href='css/basics.css'>-->
+<!--    <link rel='stylesheet' href='css/admin.css'>-->
+</head>
+
+<body>
+    <h1>Master </h1>
+    <h2>session: <span>n/a</span></h2>
+    <p>This is the admin screen</p>
+    <p id='message'></p>
+    <div id='warning'><span id='warning_message'>close this stuff down</span> <div class='closer'>x</div></div>
+    <div id='status'><span></span><div class='closer'>x</div></div>
+    <div class='controls' id='controlSettings' style='display: none;'>
+        <button class='caution' id='toggleDev'>Toggle dev mode (<span id='devModeBoo'>boo</span>)</button>
+        <button class='caution' id='setMax'>Set max votes</button>
+        <input id='showMax' style='width: 40px;' type='number' value='10'>
+    </div>
+    <div class='controls' id='controlSession'>
+        <button id='startSession'>Start Session</button>
+        <button id='endSession'>End Session</button>
+    </div>
+<!--
+    <div class='controls' id='controlAssign'>
+        <button id='assignTeams'>Assign Teams</button>
+    </div>
+-->
+    <div class='controls' id='controlPresentation'>
+        <button id='togglePlaylist'>Toggle playlist</button>
+        <button id='slidePrevious'>Previous slide</button>
+        <button id='slideNext'>Next slide</button>
+        <button id='slideReload'>Reload slide</button>
+    </div>
+    <div class='controls' id='controlRounds' style='display: none;'>
+        <table><tbody>
+            <tr>
+                <td>
+                    <button class='startRound' id='r1'>Start Round 1</button>
+                </td>
+                <td>
+                    <button class='startRound' id='r2'>Start Round 2</button>
+                </td>
+                <td>
+                    <button class='startRound' id='r3'>Start Round 3</button>
+                </td>
+            </tr>
+            <tr><td class='indr' id='indr1'></td><td class='indr' id='indr2'></td><td class='indr' id='indr3'></td></tr>
+        </tbody></table>
+    </div>
+    <br>
+    <div class='controls' id='controlDisplay'>
+        <button id='listPlayers'>List players</button>
+        <button id='showScores'>Show scores</button>
+    </div>
+    <div class='dragger' id='slideshow' style='display: none;'>
+        <div class='button showtoggle'>_</div>
+        <div class='button closer'>x</div>
+        <iframe id='slideshowfr' src=''></iframe>
+    </div>
+    <div id='playlist'><div id='slidelist'></div></div>
+    <div id='players'></div>
+
+    <div>
+        <div id='controlPanel'>
+
+        </div>
+    </div>
+
+
+    <script>
+        const socket = io();
+        const PINGBTN = `pingbtn-`;
+        const RESETBTN = `resetbtn-`;
+        const REFRESHBTN = `refreshbtn-`;
+        const LEADBTN = `leadbtn-`;
+        const REMOVEBTN = `removebtn-`;
+        const STORE_DISPLAY = 'currentDisplay';
+        const STORE_ALL = 'currentState';
+        const ADVER = 'adminVerifier';
+        const showPresPreview = false;
+        let clientData = {role: 'admin'};
+        let storedGame = null;
+        let allEnrolled = null;
+        let allAssigned = null;
+        let env = null;
+        let activeAdmin = null;
+        let verified = false;
+        let currentDisplay = null;
+        let plTime = null;
+        let storeObj = {
+            playlistOpen: false
+        };
+        let devTO = null;
+        let playersDetail = null;
+        //
+        const buttonSetup = () => {
+            // Ping buttons
+            let b = document.getElementsByClassName('pingBtn');
+            [...b].forEach((bu) => {
+//                console.log('get clciked');
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(PINGBTN, '');
+                    socket.emit('playerPing', id);
+//                    console.log('playerPing', id);
+                });
+            });
+            // Refresh buttons
+            b = document.getElementsByClassName('refreshBtn');
+            [...b].forEach((bu) => {
+//                console.log('get clicked');
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(REFRESHBTN, '');
+//                    let r = confirm(`are you sure you want to refresh player ${id}?`);
+                    let r = true;
+                    if (r) {
+//                        console.log(`refreshing ${id}`);
+                        socket.emit('refreshPlayer', id);
+                    }
+                });
+            });
+            // Make Lead buttons
+            b = document.getElementsByClassName('leadBtn');
+            [...b].forEach((bu) => {
+//                console.log('get clicked');
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(LEADBTN, '');
+//                    let r = confirm(`are you sure you want to make player ${id} the team lead?`);
+//                    if (r) {
+//                        console.log('removePlayer', id);
+                        makeTeamLead(id)
+
+//                    }
+                });
+            });
+            // Remove buttons
+            b = document.getElementsByClassName('removeBtn');
+            [...b].forEach((bu) => {
+//                console.log('get clicked');
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(REMOVEBTN, '');
+                    let r = confirm(`are you sure you want to remove player ${id}?`);
+                    if (r) {
+//                        console.log('removePlayer', id);
+                        socket.emit('removePlayer', id);
+                    }
+                });
+            });
+            // Reset buttons (removed)
+            b = document.getElementsByClassName('resetBtn');
+            [...b].forEach((bu) => {
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(RESETBTN, '');
+                    socket.emit('playerReset', id);
+                });
+            });
+            b = $('#playerList').find('th');
+//            console.log('table links?')
+//            console.log(b)
+            b.off('click');
+            b.on('click', function () {
+                listPlayers($(this).html());
+            });
+        };
+        //
+        const buttonSetMax = $('#setMax');
+        const buttonToggleDev = $('#toggleDev');
+        const buttonStartSesh = $('#startSession');
+        const buttonEndSesh = $('#endSession');
+        const buttonsStartRound = $('.startRound');
+        const buttonAssignTeams = $('#assignTeams');
+        const buttonShowScores = $('#showScores');
+        const buttonListPlayers = $('#listPlayers');
+        const buttonCloseWarning = $('#warning').find('.closer');
+        //
+        const buttonTogglePlaylist = $('#togglePlaylist');
+        const buttonSlidePrevious = $('#slidePrevious');
+        const buttonSlideNext = $('#slideNext');
+        const buttonSlideReload = $('#slideReload');
+        //
+        const inputMax = $(`#showMax`);
+        //
+        const procVal = (v) => {
+            let rv = v;
+            if (rv === 'true') {
+                rv = true;
+            }
+            if (rv === 'false') {
+                rv = false;
+            }
+            return rv;
+        };
+        const onAppError = (o) => {
+            alert(o.msg);
+        };
+        const isAutoMode = () => {
+            let am = false;
+            if (env.hasOwnProperty('process')) {
+                if (env.process.hasOwnProperty('AUTO')) {
+                    am = env.process.AUTO === 'true';
+                }
+            }
+            return am;
+        }
+        const enableButton = (b, boo) => {
+//            console.log(b);
+            if (typeof(b) === 'string') {
+                document.querySelector(`#${b}`).disabled = !boo;
+            } else {
+                b.prop('disabled', !boo);
+//                console.log(b.attr('id'), boo);
+            }
+
+        };
+        const updateDisplay = (f) => {
+//            console.log(`updateDisplay: ${f}`);
+            currentDisplay = f;
+            localStorage.setItem(STORE_DISPLAY, f);
+        };
+        const updateStoreObj = (p, v) => {
+            storeObj[p] = v;
+            localStorage.setItem(STORE_ALL, JSON.stringify(storeObj));
+        };
+        const updateStatus = (m, o) => {
+            socket.emit('statusUpdate', m, o);
+
+        };
+        const onStatusUpdate = (s) => {
+            // functionality removed to the 'status' route
+            return;
+            $('#status').show();
+            $('#status').find('span').html(``);
+            s.forEach((sm) => {
+                $('#status').find('span').append(`${sm}<br>`);
+            });
+            $('#status').find('.closer').off('click');
+            $('#status').find('.closer').on('click', function () {
+                $('#status').hide();
+            });
+        };
+        const getStoredVal = (p) => {
+            let r = null;
+            let s = localStorage.getItem(STORE_ALL);
+            if (s) {
+                s = JSON.parse(s);
+                if (s.hasOwnProperty(p)) {
+                    r = s[p];
+                }
+            }
+            return r;
+        };
+        const setSessionButtons = (start) => {
+//            console.log(`setup session buttons, has a session started? ${start ? 'yes' : 'no'}`);
+            enableButton('endSession', start);
+            enableButton('startSession', !start);
+        };
+        const setMaxVotes = () => {
+            console.log(inputMax.val());
+            socket.emit('setMaxVotes', inputMax.val())
+        };
+        const showDevMode = (d) => {
+            $('#devModeBoo').html(d ? 'true' : 'false');
+        };
+        const toggleDev = () => {
+            socket.emit('toggleDevMode', (d) => {
+                showDevMode(d);
+            });
+        };
+        const startNewSession = () => {
+            // key function - check for a saved admin password before running
+//            console.log('startNewSession');
+            let av = sessionStorage.getItem(ADVER);
+            if (av) {
+                socket.emit('requestLogin', 'ADMIN', av, (boo) => {
+                    setSessionButtons(true);
+                    applyClasses();
+                    socket.emit('startNewSession', function (s) {
+                        getGameToStore();
+                    });
+                    // don't reset the slideshow here - a classromm activity may be underway prior to the session beginning
+//                    resetSlideshow();
+                })
+            } else {
+                alert('session ended, please refresh to log in again')
+            }
+
+
+        };
+        const showTeams = (t) => {
+            if (t) {
+                renderTemplate('teamview', 'controlPanel', {team: Object.values(t)});
+            }
+        };
+        const assignTeamsFunk = () => {
+            setupEnrolButton(false);
+            socket.emit('assignTeams', (t) => {
+                listPlayers();
+                enableRoundStart(1);
+                getGameToStore();
+            });
+        }
+        const assignTeams = () => {
+            if (allEnrolled) {
+                assignTeamsFunk();
+            } else {
+                let c = confirm('Some active players are not yet enrolled, are you sure you want to continue? (Players who enroll later will go into the Public Voices teams)');
+                if (c) {
+                    assignTeamsFunk();
+                }
+            }
+        };
+        const makeTeamLead = (id) => {
+//            console.log(`if allowed, make ${id} the leader of their team`);
+            let ok = false;
+            socket.emit('getTeams', (t) => {
+                ok = t.length > 0;
+                if (ok) {
+                    socket.emit('getPlayer', id, (p) => {
+                        if (p.isLead) {
+                            alert(`player ${id} is already team lead`)
+                        } else if (!p.teamObj.hasLead) {
+                            alert('PV teams have no leads');
+                        } else {
+                            let c = confirm(`are you sure you want to make player ${id} the team lead?`);
+                            if (c) {
+                                socket.emit('makeTeamLead', id);
+                            }
+                        }
+                    });
+
+                } else {
+                    alert('cannot swap team leader before teams have been allocated')
+                }
+            })
+
+        };
+        const checkAssigned = (cb) => {
+            socket.emit('getPlayersDetail', (pd) => {
+                playersDetail = pd;
+                let ass = Object.keys(pd).length === 0 ? null : true;
+//                console.log(`checkAssigned: ${Object.keys(pd).length}`);
+                for (var i in pd) {
+                    if (pd[i].stakeholder < 0) {
+                        ass = false;
+                        break
+                    }
+                }
+                if (cb) {
+                    cb(ass);
+                }
+            })
+        }
+        const previewTeams = () => {
+//            console.log('previewTeams');
+//            console.log('previewTeams not implemented');
+            socket.emit('previewTeams', (t) => {
+//                console.log(t);
+                showTeams(t);
+//                renderTemplate('teamview', 'controlPanel', {team: Object.values(t)})
+            });
+        };
+        const newSessionStarted = (o) => {
+//            let s = o.s;
+//            let s = Object.assign(o.s, {});
+            let s = o.hasOwnProperty('s') ? o.s : o;
+            console.log('newSessionStarted');
+//            console.log(o);
+//            console.log(s);
+
+            let str = `${s.sid.substr(0, 3)} ${s.sid.substr(3, 3)} ${s.sid.substr(6)}`;
+//            console.log(str);
+            $('h2').find('span').html(str);
+            setSessionButtons(true);
+//            enableButton(buttonAssignTeams, true);
+            setupEnrolButton(true);
+            setupSessionControls();
+            showPlayersView();
+            showRounds();
+        }
+        const playerDisplay = (p, i) => {
+            var e = document.getElementById('players');
+            var s = '';
+            s += `<div class='${p.active ? 'active' : 'inactive'}'>${p.id} <button class="pingBtn" id="${PINGBTN}${p.id}">Ping</button>`;
+            s += `<button class="resetBtn" id="${RESETBTN}${p.id}">Reset</button></div>`;
+            e.innerHTML += s;
+        };
+        const clearPlayers = () => {
+            document.getElementById('players').innerHTML = ``;
+        };
+        const onPlayerConnect = (msg) => {
+            document.getElementById('message').innerHTML += `<p>player ${msg} has connected</p>`;
+//            console.log('YES IT DOES');
+
+        };
+        const onGetPlayers = (arr) => {
+//            console.log('onGetPlayers');
+//            console.log(arr);
+            clearPlayers();
+            document.getElementById('players').innerHTML = '<b>players:</b>';
+            for (var i = 0; i < arr.length; i++) {
+                playerDisplay(arr[i], i);
+//                console.log(players);
+//                console.log(arr[i]);
+            }
+            buttonSetup();
+        };
+        const onGetPlayerIDsOld = (arr) => {
+            console.log('onGetPlayerIDs');
+            console.log(arr);
+            clearPlayers();
+            document.getElementById('players').innerHTML = '<b>players:</b>';
+            for (var i = 0; i < arr.length; i++) {
+                playerDisplay(arr[i], i);
+//                console.log(players);
+                console.log(arr[i]);
+            }
+            buttonSetup();
+        };
+        const newPlayer = (id) => {
+            socket.emit('getPlayerIDs');
+//            setupSessionControls();
+//            console.log('mooo');
+        };
+        const updateSession = () => {
+            socket.emit('updateSession');
+        };
+        const adminTerminateSession = () => {
+            socket.emit('getPlayersDetail', (d) => {
+                playersDetail = d;
+                let p = 0;
+                for (var i in d) {
+                    p += (d[i].enrolled ? 1 : 0);
+                }
+                if (p > 0) {
+                    let conf = confirm(`Are you sure you want to end this session? There are currently ${p} enrolled players.`);
+                    if (conf) {
+                        socket.emit('adminTerminateSession');
+                    }
+                } else {
+                    socket.emit('adminTerminateSession');
+                }
+            });
+        };
+        const terminateSession = () => {
+            console.log('terminate the session, kill the localStorage');
+            localStorage.removeItem('susgame');
+            localStorage.clear();
+            setSessionButtons(false);
+            setupSessionControls();
+            $('h2').find('span').html(`ended`);
+            $('#status').hide();
+            onStartRound(-1);
+            updatePlayersView();
+            endSlideshow();
+        };
+        const enableRoundStart = (n) => {
+            // Allow a given round to be triggered
+            // n is round 1, 2 etc, hence subtract one to address the array of buttons
+//            console.log(`enableRoundStart ${n}`);
+            enableButton($(buttonsStartRound[(n - 1)]), true);
+            if (isAutoMode()) {
+                clearTimeout(devTO);
+                devTO = setTimeout(() => {
+                    console.log(`teams assigned, start round ${n} automatically`);
+//                    console.log(env.gamedata.rounds.length);
+                    startRoundFunk(n);
+                }, 2000);
+            }
+        };
+        const startRoundFunk = (r) => {
+//            console.log(`startRound ${r}`);
+            socket.emit('startRound', r);
+            updateStatus(`start round ${r}`);
+            enableButton(`r${r}`, false)
+        };
+        const startRound = function () {
+            // NOTE do not alter this to an arrow function!
+            let id = $(this).attr('id');
+            let r = parseInt(id.replace(/[^0-9]/g, ''));
+            startRoundFunk(r);
+//            enableButton(id, false);
+        };
+        const startNextRound = () => {
+//            console.log(`startNextRound`)
+            if (env.session) {
+//                console.log(env.session);
+                startRoundFunk(env.session.round + 1);
+            }
+        };
+        // specifc round events
+        const rAssignTeams = () => {
+//            console.log(`rAssignTeams`);
+            socket.emit('initRound', 'assignTeams');
+        };
+        const startRoundE1R1 = () => {
+            // era 1 round 1; Stakeholders self-allocate resources
+            socket.emit('initRound', 'e1r1');
+        };
+        const startRoundE1R2 = () => {
+            // era 1 round 2; 1st PV vote
+            socket.emit('initRound', 'e1r2');
+        };
+        const startRoundE1R3 = () => {
+            // era 1 round 3; Stakeholders collaborate
+            socket.emit('initRound', 'e1r3');
+        };
+        const startRoundE1R4 = () => {
+            // era 1 round 4; 2nd PV vote
+            socket.emit('initRound', 'e1r4');
+        };
+        // specifc round events END
+        const onStartRound = (r) => {
+//            console.log(`i will start round ${r} and add highlight to #indr${r}`);
+            $('.indr').removeClass('highlight');
+            $(`#indr${r}`).addClass('highlight');
+            $(`.indr${r}`).addClass('highlight');
+//            enableButton(id, false);
+        };
+        const roundUpdate = (o) => {
+            let v = o.scorePacket.val;
+            let p = `${o.scorePacket.valID}${v < 2 ? '' : 's'}`;
+            let t = Object.values(env.gamedata.teams)[o.scorePacket.targ].title;
+            let comp = o.complete ? 'complete' : 'incomplete';
+            updateStatus(`${v} ${p} for ${t} (round ${o.round} ${comp})`, o);
+            if (o.complete) {
+                $('.indr').removeClass('highlight');
+                enableRoundStart(o.round + 1);
+                updateStatus(`round ${o.round} completed`);
+            }
+            console.log(`roundUpdate`);
+            console.log(o);
+            showRounds();
+        };
+        const buttonSetupNONEED = () => {
+            let b = document.getElementsByClassName('pingBtn');
+            [...b].forEach((bu) => {
+                bu.addEventListener('click', (evt) => {
+                    let id = evt.target.id.replace(PINGBTN, '');
+                    socket.emit('playerPing', id);
+                    console.log('playerPing', id);
+                });
+            });
+        };
+        const showPlayersView = () => {
+            updateDisplay('listPlayers');
+//            console.log(`showPlayersView called`);
+            listPlayers();
+        };
+        let sortVal = {val: null, n: 1};
+        const sortPlayers = (s) => {
+            return function (a, b) {
+                const va = a[s];
+                const vb = b[s];
+                if (va > vb) {
+                    return sortVal.n;
+                } else if (va < vb) {
+                    return -1 * sortVal.n;
+                } else {
+                    return 0;
+                }
+            };
+        };
+        const checkList = () => {
+            // check to see if all players are enrolled & enroll them if not, then auto-start the game
+//            console.log(`checkList: ${Boolean(env.session)} isDev: ${env.isDev} session: ${Boolean(env.session)}`);
+//            console.log(`checkList, env:`)
+//            console.log(env)
+//            if (isAutoMode() && !Boolean(env.session)) {
+            if (env) {
+                if (env.isDev && !Boolean(env.session)) {
+    //                debugger;
+//                    console.log('on we go');
+                    clearTimeout(devTO);
+                    devTO = setTimeout(() => {
+                        socket.emit('getPlayerPack', (pp) => {
+                            let pd = Object.values(pp.playersDetail);
+//                            console.log(`checkList callback`);
+    //                        console.log(pp.session);
+    //                        console.log(`allEnrolled: ${allEnrolled}`);
+                            let ae = true;
+
+                            if (pd.length > 0) {
+                                // use AUTOENROL for enrollments - allows auto-enrolment without also allowing auto-completion
+                                let pae = procVal(env.process.AUTOENROL);
+//                                console.log(`pae ${pae}`);
+                                pd.forEach((p) => {
+                                    if (!p.enrolled && pae) {
+    //                                    console.log(`auto refresh ${p.id}`)
+                                        socket.emit('refreshPlayer', p.id);
+                                        ae = false;
+                                    }
+                                });
+                                // switch back to AUTO for team assignment
+                                pae = procVal(env.process.AUTO);
+                                if (ae && pp.session.round === 0 && pae) {
+    //                                console.log('all players enrolled, assign teams automatically');
+    //                                let pae = procVal(env.process.AUTO);
+                                    console.log(`this is the auto enroll bit: ${pae} (${typeof(pae)})`);
+                                    clearTimeout(devTO);
+                                    devTO = setTimeout(() => {
+    //                                    console.log(``);
+                                        assignTeams();
+                                    }, 1000);
+                                }
+                            }
+                        })
+
+                    }, 500);
+                }
+            }
+        };
+        const applyClasses = () => {
+            // enrolled
+//            console.log(`applyClasses`);
+//            console.log(playersDetail);
+            if (playersDetail) {
+                checkEnrollment(Object.values(playersDetail));
+//                let d = getListHeader('enrolled');
+//                d = d.add('.allenrolled');
+                let d = $('.allenrolled');
+                if (d) {
+                    d.removeClass('true');
+                    if (allEnrolled) {
+                        d.addClass('true');
+                    }
+                }
+            }
+            $('.dragger').draggable();
+        };
+        const updatePlayersView = (p) => {
+            if (currentDisplay === 'listPlayers') {
+//                console.log(`updatePlayersView`);
+                renderTemplate('playerList', 'controlPanel', {players: p});
+                applyClasses();
+//                let d = getListHeader('enrolled');
+//                d.removeClass('true');
+//                d.add('.allenrolled');
+//                checkEnrollment(p);
+//                if (allEnrolled) {
+//                    d.addClass('true');
+//                }
+                buttonSetup();
+            }
+        };
+        const checkEnrollment = (p) => {
+            // method needs a player list arg - I'm not querying the server for this level of functionality
+            if (p) {
+//                console.log(`checkEnrollment`);
+//                console.log(p);
+                allEnrolled = p.length > 0;
+                p.forEach((pl) => {
+                    if (!pl.enrolled) {
+                        allEnrolled = false;
+                    }
+                });
+            }
+        };
+        const listPlayers = (s) => {
+            socket.emit('getPlayersDetail', (d) => {
+                playersDetail = d;
+                if (env) {
+                    let p = Object.values(d);
+                    p = p.slice();
+                    p.forEach((pn) => {
+                        pn.stakeholderID = pn.stakeholder;
+                        pn.assigned = pn.stakeholder > -1;
+                        pn.stakeholder = pn.stakeholder > -1 ? Object.values(env.gamedata.teams)[pn.stakeholder].title : 'unassigned';
+                    });
+//                    console.log(`listPlayers: ${JSON.stringify(sortVal)}`);
+                    if (s) {
+                        sortVal.n = sortVal.val === s ? sortVal.n * -1 : 1;
+                        p = p.sort(sortPlayers(s));
+                        sortVal.val = s;
+                    } else if (sortVal.val) {
+                        p.sort(sortPlayers(sortVal.val));
+                    }
+                    updatePlayersView(p);
+                    clearTimeout(plTime)
+                    plTime = setTimeout(setupSessionControls, 500);
+                }
+            });
+        };
+        const getScoreObject = (o) => {
+            let oo = {
+                hasPV: false,
+                hasSt: false,
+                teams: []
+            };
+            // HACK: try getting rid of the concept of rounds to allow scores to accru
+//            o.round = 1;
+//            console.log(o);
+            let t = JSON.parse(JSON.stringify(env.gamedata.mainTeams));
+            if (o.round) {
+                if (o.round > 0) {
+                    let sc = o.scores[`round${o.round}`];
+                    let scPV = sc.pvVotes;
+                    let scSt = sc.stakeholderVotes;
+                    let summ = null;
+                    oo.hasPV = Boolean(scPV);
+                    oo.hasSt = Boolean(scSt);
+//                    console.clear();
+                    t.forEach((v, id) => {
+                        let ot = {
+                            title: v.title,
+                            pv1: {l: '', m: 0},
+                            pv2: {l: '', m: 0},
+                            pvTotal: 0,
+                            stVote: 0,
+                            mult: 0
+                        };
+                        // PV votes
+                        if (scPV) {
+                            summ = scPV.summary;
+                            let ts = summ[`t-${id}`];
+                            if (ts.hasOwnProperty('v-5')) {
+                                // PV1
+                                ts['v-5'].l = ts['v-5'].a.toString();
+                                ot.pv1 = Object.assign(ot.pv1, ts['v-5']);
+                                ot.pvTotal += ot.pv1.m;
+                            }
+                            if (ts.hasOwnProperty('v-6')) {
+                                // PV2
+                                ts['v-6'].l = ts['v-6'].a.toString();
+                                ot.pv2 = Object.assign(ot.pv2, ts['v-6']);
+                                ot.pvTotal += ot.pv2.m;
+                            }
+
+                        }
+                        // Stakeholder votes
+                        if (scSt) {
+                            summ = scSt.summary;
+                            summ = Object.values(summ)[id];
+                            let tot = 0;
+                            Object.values(summ).forEach((v, id) => {
+                                tot += v.t;
+                            });
+                            ot.stVote = tot;
+                        }
+                        ot.mult = ot.pvTotal * ot.stVote;
+                        oo.teams.push(ot);
+                    });
+                }
+            }
+            return oo;
+        };
+        const getScoreObjectV1 = (o) => {
+            let oo = {
+                hasPV: false,
+                hasSt: false,
+                teams: []
+            };
+            let t = JSON.parse(JSON.stringify(env.gamedata.mainTeams));
+            if (o.round) {
+                if (o.round > 0) {
+                    let sc = o.scores[`round${o.round}`];
+                    let scPV = sc.pvVotes;
+                    if (scPV) {
+                        let summ = scPV.summary;
+                        oo.hasPV = true;
+                        t.forEach((v, id) => {
+                            let ot = {
+                                title: v.title,
+                                pv1: {l: '', m: 0},
+                                pv2: {l: '', m: 0}
+                            };
+                            let ts = summ[`t-${id}`];
+                            if (ts.hasOwnProperty('v-5')) {
+                                ts['v-5'].l = ts['v-5'].a.toString();
+                                ot.pv1 = Object.assign(ot.pv1, ts['v-5']);
+                            }
+                            if (ts.hasOwnProperty('v-6')) {
+                                ts['v-6'].l = ts['v-6'].a.toString();
+                                ot.pv2 = Object.assign(ot.pv2, ts['v-6']);
+                            }
+                            oo.teams.push(ot);
+                        });
+                    }
+                    let scSt = sc.stakeholderVotes;
+                    if (scSt) {
+                        let summ = scSt.summary;
+                        oo.hasSt = true;
+                        Object.values(summ).forEach((v, id) => {
+                            let tot = 0;
+                            Object.values(v).forEach((t) => {
+                                console.log(` - ${t.t}`);
+                                tot += t.t;
+                            });
+//                            oo.teams[id][`stVote`] = tot;
+                        });
+                    }
+                }
+            }
+            return oo;
+        };
+        const updateScores = (s) => {
+            console.log('HUP');
+            console.log(s);
+//            console.log($('#controlPanel').find('#scoreSummary'));
+            if ($('#controlPanel').find('#scoreSummary').length > 0) {
+                showScores();
+            }
+            return;
+        };
+        const showScores = () => {
+            socket.emit('getSession', (s) => {
+                if (s) {
+                    let o = getScoreObject(s);
+                    console.log('theScoreObject');
+                    console.log(o);
+                    if (o.hasPV || o.hasSt) {
+                        renderTemplate('scores', 'controlPanel', o);
+                    } else {
+                        $('#controlPanel').html('no scores found');
+                    }
+                } else {
+                    $('#controlPanel').html('no session found');
+                }
+            });
+            updateDisplay('showScores');
+        };
+        //
+        // Methods that could potentially be made universal
+        const renderTemplate = (temp, targ, o) => {
+            targ = '#' + targ;
+            let ob = Object.assign({}, o);
+            const compiledTemplate = Handlebars.templates[temp];
+            const renderedHtml = compiledTemplate(ob);
+            $(targ).html('');
+            $(targ).html(renderedHtml);
+        };
+        const renderTemplateTRIAL = (temp, targ, o) => {
+            targ = '#' + targ;
+            // Fetch the template from the server
+            console.log('pre')
+            fetch(`/templates/${temp}.hbs`)
+                .then(response => response.text())
+                .then(templateSource => {
+                    console.log('post');
+                    // Compile the template
+                    const compiledTemplate = Handlebars.compile(templateSource);
+                    // Merge data objects if an optional object is provided
+                    const ob = o ? Object.assign({}, o) : {};
+                    const renderedHtml = compiledTemplate({slideList: [{type: 'boo', index: '0', title: 'mouse'}]});
+                    console.log(renderedHtml);
+                    // Update the target element with the rendered HTML
+                    $(targ).html('');
+                    $(targ).html(renderedHtml);
+                })
+                .catch(error => console.error('Error fetching or rendering template:', error));
+        };
+
+        const renderTemplateTRIALV2 = (temp, targ, o) => {
+            targ = '#' + targ;
+            // Fetch the template from the server
+            fetch(`/templates/${temp}.hbs`)
+                .then(response => response.text())
+                .then(templateSource => {
+                    // Compile the template
+                    const compiledTemplate = Handlebars.compile(templateSource);
+                    // Merge data objects if an optional object is provided
+                    const ob = o ? Object.assign({}, o) : {};
+                    // Render the template with the data
+                    console.log('########################')
+                    console.log(o)
+                    console.log(ob)
+                    console.log(ob.slideList)
+                    console.log(compiledTemplate);
+
+//                    const renderedHtml = compiledTemplate(ob);
+                    const renderedHtml = compiledTemplate({slideList: [{type: 'boo', index: '0', title: 'mouse'}]});
+                console.log(renderedHtml);
+                    // Update the target element with the rendered HTML
+                    $(targ).html('');
+                    $(targ).html(renderedHtml);
+                })
+                .catch(error => console.error('Error fetching or rendering template:', error));
+        };
+        const showWarning = (w) => {
+            $('#warning_message').html(w);
+            $('#warning').show();
+        };
+        const closeWarning = () => {
+            $('#warning').hide();
+        };
+        const panelToggle = (b, force) => {
+            let p = b.parent();
+            let a = p.find('*');
+//            console.log('the toggle')
+            a = a.not('.button');
+            if (a.is(':visible') || force === 'min') {
+                a.hide();
+                p.addClass('short');
+            } else {
+                a.show();
+                p.removeClass('short');
+            }
+        };
+        const setupPanel = (ip) => {
+            let p = $(`#${ip}`);
+            if (p.length > 1) {
+                alert(`warning - duplicate panel created (${ip})`);
+            } else {
+                let pt = p.find('.showtoggle');
+                let storeID = `panel_${ip}`;
+//                console.log('memory?');
+                if (localStorage.getItem(storeID)) {
+                    let sto = JSON.parse(localStorage.getItem(storeID));
+//                    console.log('yes');
+                    p.css({left: `${sto.x}px`, top: `${sto.y}px`})
+                }
+                let storeOb = {};
+                p.draggable({
+                    stop: function (ev, ui) {
+                        storeOb.x = $(this).position().left;
+                        storeOb.y = $(this).position().top;
+                        localStorage.setItem(storeID, JSON.stringify(storeOb));
+                    }
+                });
+                pt.off('click');
+                pt.on('click', function () {
+                    panelToggle($(this));
+                });
+    //            console.log(p);
+    //            console.log(pt);
+            }
+        };
+        const showPanel = (ip) => {
+            // if the requested panel exists, show it, otherwise create it
+            let p = $(`#${ip}`);
+            if (p.length) {
+                p.show();
+            } else {
+                $('body').append(`<div class='panel dragger' id='${ip}'><div class='pcontent' id='pcontent_${ip}'></div></div>`);
+//                debugger;
+                p = $(`#${ip}`);
+                p.css({top: '20px', left: '50px'});
+                setupPanel(ip);
+            }
+            return p;
+        };
+        const showRounds = () => {
+            if (env) {
+                if (env.session) {
+                    if (env.session.rounds) {
+                        let p = showPanel('sessionRounds');
+                        renderTemplate('rounds', `pcontent_sessionRounds`, Object.values(env.session.rounds).slice(1));
+                    }
+                }
+            } else {
+                // try again in a minute
+                setTimeout(showRounds, 1000)
+            }
+
+        }
+        //
+        //
+        const getStoredGame = () => {
+            storedGame = localStorage.getItem('susgame');
+            if (storedGame) {
+                storedGame = JSON.parse(storedGame);
+            }
+            return storedGame;
+        };
+        let storeDelay = null;
+        const storeGame = (g) => {
+            let sg = JSON.stringify(g);
+            localStorage.setItem('susgame', sg);
+            clearTimeout(storeDelay);
+            // Use delay to limit emissions of storedGameUpdated - each one causes player refresh. Roll back in case of errors
+            storeDelay = setTimeout(() => {
+                socket.emit('storedGameUpdated', g);
+            }, 500);
+//            socket.emit('storedGameUpdated', g);
+            listPlayers();
+        };
+        const getGameToStore = () => {
+//            console.log('storegame');
+            socket.emit('getGameMin', (g) => {
+//                console.log(`this is the only way to get the game data from the server`);
+//                console.log(`the callback, setItem susgame: ${JSON.stringify(g)} (${Object.keys(g.p).length} elements)`);
+//                console.log('I got game min');
+//                console.log(g);
+//                console.log(g.s);
+                storeGame(g);
+            })
+        };
+        const hasStoredSession = (o) => {
+            // looks for a stored session ID in an object, return it if it exists or false if it does not
+            let hss = false;
+            if (o.hasOwnProperty('s')) {
+                if (o.s.hasOwnProperty('sid')) {
+                    // if sid exists it could either be a number/string or null
+                    if (o.s.sid) {
+                        hss = true;
+                    }
+                }
+            }
+            return hss;
+        };
+        const hasStoredSessionV1 = (o) => {
+            // looks for a stored session ID in an object, return it if it exists or false if it does not
+            let hss = false;
+            if (o.hasOwnProperty('sid')) {
+                // if sid exists it could either be a number/string or null
+                if (o.sid) {
+                    hss = true;
+                }
+            }
+            return hss;
+        };
+        const setupEnrolButton = (force) => {
+            return;
+        };
+        const getListHeader = (ID) => {
+            // return a header element from the playerList table based on ID
+            let a = $('#playerList').find('th');
+            let h = null;
+//            console.log(a.length);
+            a.each(function (i, e) {
+                if ($(e).text() === ID) {
+                    h = $(e);
+                }
+            });
+            return h;
+        };
+        const enrollmentUpdate = (o) => {
+//            console.log(`enrollmentUpdate: ${o.allIn}`)
+//            atb.disabled = !o.allIn;
+//            atb.disabled = false;
+//            enableButton(buttonAssignTeams, true);
+//            setupEnrolButton();
+            allEnrolled = o.allIn;
+//            console.log('####')
+//            console.log(`enrollmentUpdate: ${allEnrolled}`);
+//            console.log(o);
+            if (o.allIn) {
+//                d.addClass('true');
+                setTimeout(() => {
+//                    console.log('all players enrolled');
+                }, 500);
+            } else {
+//                d.removeClass('true');
+            }
+        };
+        const onRequestSession = (o) => {
+            if (o.success) {
+                getGameToStore();
+            }
+        };
+        const onSessionUpdate = (s) => {
+            console.log('we have a session update: ');
+            console.log(s);
+//            console.log(env);
+            env.session = env.session ? Object.assign(env.session, s) : s;
+            showRounds();
+        };
+        const onServerShutdown = () => {
+            console.log('SERVER SHUTTIING DOWN');
+            getGameToStore();
+            localStorage.clear();
+        };
+        const onServerStartup = () => {
+            console.log('SERVER STARTED');
+        };
+
+        const getPlayerIDs = () => {
+            socket.emit('getPlayerIDs', (ids) => {
+                let o = {ids: Object.keys(ids)};
+//                console.log(o);
+                renderTemplate('playersBasic', 'controlPanel', o);
+            });
+        };
+        const getGameData = () => {
+            socket.emit('requestGameData', (d) => {
+                console.log(d)
+;            })
+        };
+        const getRoundFromProp = (p) => {
+            let r = null;
+            let rr = null;
+            if (env.hasOwnProperty('session')) {
+                if (env.session) {
+                    if (env.session.hasOwnProperty('rounds')) {
+                        r = env.session.rounds;
+                        for (var i in r) {
+    //                        console.log(r[i])
+                            for (var j in r[i]) {
+                                if (r[i][j] === p) {
+                                    rr = r[i];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return rr;
+        };
+        const slideLinkClick = (id, p) => {
+            // method requires p (presentation data) as it is called from an emit callback
+            let sl = p.slideList[id];
+            let allowed = true;
+            let msg = '';
+            let r = null;
+            let s = null;
+            if (sl.hasAction) {
+                if (env.session) {
+                    s = env.session;
+                    r = getRoundFromProp(sl.action);
+                    console.log(sl.action);
+//                    console.log(sl.action);
+                    if (s.rounds[r.n - 1]) {
+                        if (!s.rounds[r.n - 1].complete) {
+                            allowed = false;
+                            msg = `previous round incomplete`;
+                        }
+                    }
+                    if (r.complete) {
+                        allowed = false;
+                        msg = `this round already completed`;
+                    }
+                } else {
+                    allowed = false;
+                    msg = `session not started`;
+                }
+            }
+            if (allowed) {
+                if (sl.hasAction) {
+                    if (eval(r.action)) {
+                        socket.emit('initRound', r.action, () => {
+                        //   \/ duplicate method call? Possibly...
+                            eval(r.action)();
+                        });
+                    }
+                } else {
+//                    socket.emit('gotoSlide', id);
+                }
+//
+            } else {
+                alert(`cannot carry out this action - ${msg}`)
+            }
+//            console.log(`requesting slide ${id}`);
+            storeSlideInfo(id);
+            socket.emit('gotoSlide', id);
+        };
+        const storeSlideInfo = (id) => {
+            let storeOb = {};
+            storeOb.currentSlide = id;
+            localStorage.setItem(env.gamedata.constants.presentation, JSON.stringify(storeOb));
+        };
+        const renderPlaylist = (cb) => {
+            socket.emit('getPresentationPack', (p) => {
+                let cs = localStorage.getItem(env.gamedata.constants.presentation);
+//                console.log(`the stored data: `)
+//                console.log(cs)
+                if (cs) {
+                    cs = JSON.parse(cs);
+                    cs = cs.currentSlide;
+                    for (var i = 0; i < p.slideList.length; i++) {
+                        p.slideList[i].isCurrent = p.slideList[i].index === parseInt(cs);
+                        p.slideList[i].index === parseInt(cs) ? p.currentSlide = p.slideList[i] : '';
+                    }
+                }
+                renderTemplate('playlist', 'slidelist', p);
+                $('.slideLink').off('click');
+                $('.slideLink').on('click', function () {
+                    let id = $(this).attr('id').split('_')[1];
+                    slideLinkClick(id, p);
+                });
+                applyClasses();
+                panelToggle($(`#slideshow`).find('.showtoggle'), 'min');
+//                console.log(`dunne the show yes`);
+//                console.log(p);
+                if (cb) {
+                    cb(p);
+                }
+            });
+        };
+        const togglePlaylist = (force) => {
+            let pl = $('#playlist');
+            let f = $('#slideshow');
+            let viz = force === undefined ? pl.is(':visible') : force;
+//            console.log(`togglePlaylist ${viz}`);
+            if (viz) {
+                pl.hide();
+                f.hide();
+            } else {
+                if (showPresPreview) {
+                    f.find('iframe').attr('src', 'presentation.html');
+                    f.show();
+                    setupPanel('slideshow');
+                }
+                pl.show();
+                renderPlaylist();
+            }
+            updateStoreObj('playlistOpen', pl.is(':visible'));
+        };
+        const slideUpdate = () => {
+            renderPlaylist((p) => {
+//                console.log(`slideUpdate, yes? ${Boolean(p.currentSlide)}`);
+//                console.log(p);
+                if (p.currentSlide) {
+                    buttonSlidePrevious.attr('disabled', p.currentSlide.index === 0);
+                    buttonSlideNext.attr('disabled', p.currentSlide.index === (p.slideList.length - 1));
+                    if (p.currentSlide.hasOwnProperty('action')) {
+                        if (eval(p.currentSlide.action)) {
+                            // action knocked out, has been moved to main click
+//                            eval(p.currentSlide.action).call();
+                        }
+                    }
+                }
+            });
+        };
+        const resetSlideshow = () => {
+            console.log('reset the show')
+            socket.emit('getPresentationPack', (p) => {
+                slideLinkClick(0, p);
+                console.log(`click the link`);
+            });
+        };
+        const endSlideshow = () => {
+            console.log('end the show')
+            socket.emit('getPresentationPack', (p) => {
+                slideLinkClick(p.slideList.length - 1, p);
+                console.log(`what happens at the end?`);
+//                console.log(p);
+            });
+        };
+
+        //
+        const initDisplay = (s) => {
+            // return to current display state on refresh
+            let sd = localStorage.getItem(STORE_DISPLAY);
+            if (sd) {
+                currentDisplay = sd;
+                switch (sd) {
+                    case 'listPlayers':
+                        updatePlayersView();
+                        listPlayers();
+                        break;
+                    case 'showScores':
+                        showScores();
+                        break;
+                    default:
+                        console.log('no initial display function specified');
+                }
+            }
+            sd = getStoredVal('playlistOpen');
+//            console.log(`initDisplay`);
+//            console.log(`${sd}`);
+            if (sd) {
+                togglePlaylist(false);
+            }
+            slideUpdate();
+            // if a session is currently active show the relevant round indicator etc:
+            if (env.session) {
+                if (env.session.active) {
+                    onStartRound(env.session.round);
+                }
+            }
+        };
+        const setupSessionControls = () => {
+//            console.log(`setupSessionControls`);
+//            enableButton(buttonsStartRound, false);
+            enableButton(buttonAssignTeams, false);
+            checkAssigned((ass) => {
+//                console.log(`ass is ${ass}, ${typeof(ass)}`);
+                if (typeof(ass) === 'boolean') {
+//                    enableButton(buttonsStartRound, ass);
+                    enableButton(buttonAssignTeams, !ass);
+                }
+            });
+        };
+        const launchAdminWinV2 = () => {
+//            console.log('launch it');
+            // currently only enables takeover of the admin window in case of error, but more functionality could be added here.
+            let pw = prompt('enter the admin password to take over the admin window');
+            socket.emit('requestLogin', 'ADMIN', pw, (boo) => {
+//                console.log(boo);
+                if (boo) {
+                    socket.emit('resetAdmin', pw, () => {
+                        console.log('the callback');
+                        location.reload(true);
+                    });
+                    setTimeout(() => {
+
+                    }, 1000);
+                }
+            })
+        };
+        const takeover = () => {
+            location.reload(true);
+        };
+        const launchAdminWin = () => {
+//            console.log('launch it');
+            // currently only enables takeover of the admin window in case of error, but more functionality could be added here.
+            let pw = prompt('enter the admin password to take over the admin window');
+            socket.emit('requestLogin', 'ADMIN', pw, (boo) => {
+//                console.log(boo);
+                if (boo) {
+//                    console.log(socket.id);
+                    socket.emit('resetAdmin', pw, socket.id);
+                    setTimeout(() => {
+//                        location.reload(true);
+                    }, 1000);
+                }
+            })
+        };
+        const init = () => {
+            $('button').prop('disabled', true);
+            let ko = {str: '', timer: null};
+            $(document).on('keydown', function (ev) {
+                ko.str += ev.key;
+                clearTimeout(ko.timer);
+                ko.timer = setTimeout(() => {ko.str = ''}, 2000);
+                if (ko.str.indexOf('admin', 0) > -1) {
+                    launchAdminWin();
+                }
+            })
+            let av = sessionStorage.getItem(ADVER);
+            if (av) {
+                socket.emit('requestLogin', 'ADMIN', av, (boo) => {
+                    initMeth(boo);
+                });
+            } else {
+                loginRequest(initMeth);
+            }
+        };
+        const initMeth = (boo) => {
+//            console.log(`initMeth, boo: ${boo}`);
+            verified = boo;
+            if (boo) {
+                console.log('we go init');
+                setSessionButtons(false);
+                enableButton(buttonEndSesh, false);
+                setupSessionControls();
+                buttonsStartRound.attr('disabled', true);
+                socket.emit('areWeDev', (d) => {
+                    showDevMode(d);
+                });
+                if (window.location.host.indexOf('-dev', 0) > -1) {
+                    $('H1').append(' - dev');
+                }
+                enableButton(buttonTogglePlaylist, true);
+                enableButton(buttonSlideNext, true);
+                enableButton(buttonSlidePrevious, true);
+                enableButton(buttonSlideReload, true);
+                enableButton(buttonSetMax, true);
+                enableButton(buttonToggleDev, true);
+            } else {
+                $('div').html('');
+                $('#message').html('wrong password');
+                $('#message').css({color: '#ff4d4d', 'font-weight': 'bold'});
+            }
+        };
+        const denialOfRegistration = () => {
+            clientData.activeAdmin = false;
+            socket.emit('customDataEvent', clientData);
+            document.title = document.title.replace(/\*/g, '');
+            lockdown();
+            // lines below left for reference: do not auto-close duplicate windows as this prevents the possibility of takeover
+//            setTimeout(() => {
+//                window.close();
+//            }, 1000);
+        };
+        const lockdown = () => {
+            showWarning('An active admin window is alredy open elsewhere, this page has been locked');
+            $('.controls').hide();
+            $('#players').hide();
+            $('#controlPanel').hide();
+//                            $('button').hide();
+//                            $('input').hide();
+            $(":enabled").prop("disabled", true);
+//            window.close();
+        };
+        const onConnect = () => {
+            setTimeout(() => {
+                console.log(`onConnect in the admin`);
+                // timeout allows 'verified' to be set before connection method
+                console.log(`admin connect, verified? ${verified}`);
+                if (verified) {
+                    enableButton('endSession', false);
+                    enableButton('startSession', false);
+                    storedGame = getStoredGame();
+                    if (storedGame) {
+                        storedGame.version = 2;
+                        storedGame.elements = Object.keys(storedGame.p).length;
+                        socket.emit('storedGameFound', storedGame);
+                        let s = hasStoredSession(storedGame);
+                        setSessionButtons(Boolean(storedGame.sid));
+                        if (s) {
+                            newSessionStarted(storedGame);
+                        }
+                    } else {
+                        setSessionButtons(false);
+                    }
+                    clientData.activeAdmin = true;
+                    socket.emit('customDataEvent', clientData);
+                    socket.emit('getPlayerPack', (p) => {
+                        if (p.clean) {
+                            console.log(`looks like a new run, wipe everything`);
+                            socket.emit('setClean', false);
+                            adminTerminateSession();
+                        }
+                        isDev = p.isDev;
+                        env = Object.assign({}, p);
+                        activeAdmin = !Boolean(env.admin);
+//                        clientData.activeAdmin = activeAdmin;
+//                        socket.emit('customDataEvent', clientData);
+                        console.log(`activeAdmin: ${activeAdmin}`);
+                        console.log(env);
+                        if (activeAdmin) {
+        //                    console.log('env is ready, call the init');
+        //                    console.log(p);
+                            initDisplay();
+                            socket.emit('setAdmin', true);
+                        }
+                    });
+                }
+            }, 500);
+        };
+        const loginRequest = (cb) => {
+            if (!cb) {
+                console.log('needs a callback');
+            } else {
+                let pw = prompt('Please enter the admin password');
+                socket.emit('requestLogin', 'ADMIN', pw, (boo) => {
+                    cb(boo);
+//                    console.log(`boo ${boo} ${typeof(boo)}`);
+                    if (boo) {
+                        sessionStorage.setItem(ADVER, pw);
+                    }
+                });
+            }
+        };
+        //
+        buttonSetMax.on('click', setMaxVotes);
+        buttonToggleDev.on('click', toggleDev);
+        buttonStartSesh.on('click', startNewSession);
+        buttonEndSesh.on('click', adminTerminateSession);
+        buttonsStartRound.on('click', startRound);
+        buttonAssignTeams.on('click', assignTeams);
+//        buttonListPlayers.on('click', listPlayers);
+        buttonListPlayers.on('click', showPlayersView);
+        buttonShowScores.on('click', showScores);
+        buttonCloseWarning.on('click', closeWarning);
+        //
+        buttonTogglePlaylist.on('click', () => {
+            togglePlaylist()
+        });
+        buttonSlideNext.on('click', () => {
+            socket.emit('slideNext');
+        });
+        buttonSlidePrevious.on('click', () => {
+            socket.emit('slidePrevious');
+        });
+        buttonSlideReload.on('click', () => {
+            socket.emit('slideReload');
+        });
+        //
+
+        socket.on('connect', () => {
+//            loginRequest();
+            console.log('onnn cnnnect');
+            onConnect();
+        });
+        socket.on('onPlayerConnect', (msg) => {
+            onPlayerConnect(msg);
+        });
+        socket.on('appError', (o) => {
+            onAppError(o);
+        });
+        socket.on('onGetPlayers', (msg) => {
+//            console.log('I hear onGetPlayers')
+            onGetPlayers(msg);
+        });
+        socket.on('onGetPlayerIDs', (msg) => {
+//            console.log('I hear onGetPlayerIDs')
+            onGetPlayerIDs(msg);
+        });
+        socket.on('updatePlayers', (arr) => {
+//            console.log('I hear updatePlayers')
+            onGetPlayerIDs(arr);
+        });
+        socket.on('playersUpdate', (pd) => {
+//            console.log(pd);
+//            updatePlayersView(pd);
+            listPlayers();
+        });
+        socket.on('newPlayer', (players) => {
+//            console.log('new player');
+            newPlayer(players);
+        });
+        socket.on('onAddNewPlayer', () => {
+//            console.log('onAddNewPlayer');
+//            console.log(env.session);
+            getGameToStore();
+            checkList();
+        });
+        socket.on('serverShutdown', onServerShutdown);
+        socket.on('serverStartup', onServerStartup);
+        socket.on('serverStartup', onServerStartup);
+        socket.on('updateFull', (o) => {
+//            console.log('full update');
+//            console.log(o);
+//            console.log({p: o.playersBasic});
+//            console.log(storedGame);
+        });
+        socket.on('terminateSession', terminateSession);
+        socket.on('newSession', newSessionStarted);
+        socket.on('sessionUpdate', (s) => {
+            onSessionUpdate(s)
+        });
+        socket.on('enrollmentUpdate', enrollmentUpdate);
+        socket.on('onRequestSession', (o) => {
+            onRequestSession(o);
+            console.log('fish and chips');
+        });
+        socket.on('onStatusUpdate', (s) => {
+            onStatusUpdate(s);
+        });
+        socket.on('denialOfRegistration', () => {
+            denialOfRegistration();
+        });
+        socket.on('takeover', takeover);
+        socket.on('test', (o) => {
+            console.log('testing testing');
+            console.log(o);
+        })
+        //
+        socket.on('scoreUpdateNoooooo', updateScores);
+        socket.on('scoreUpdate', (o) => {
+            updateScores(o);
+        });
+        socket.on('onStartRound', (r) => {
+            onStartRound(r);
+        });
+        socket.on('roundUpdate', (o) => {
+            roundUpdate(o);
+        });
+        //
+        socket.on('slideUpdate', () => {
+//            console.log(`slideUpdate, no arg`);
+            slideUpdate();
+        });
+
+        storedGame = getStoredGame();
+//        $('button').prop('disabled', true);
+//        console.log('the init');
+        init();
+
+        window.updateSession = updateSession;
+        window.previewTeams = previewTeams;
+        window.getPlayerIDs = getPlayerIDs;
+        window.getGameData = getGameData;
+
+//        socket.emit('getPlayers');
+
+    </script>
+</body>
+
+</html>

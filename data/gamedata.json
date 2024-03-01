@@ -1,0 +1,103 @@
+{
+    "teams": {
+        "t0": {
+            "id": 0,
+            "title": "Government",
+            "lead": "Eurasia Food Evaluation Bureau (EFEB)",
+            "displayColour": "#0099C4",
+            "displayColour": "#0099C4",
+            "abbr": "gov",
+            "actions": ["(Re)Orientate", "Learn", "Dialogue", "(Dis)Incentivise", "Invest", "Demonstrate", "Other"]
+        },
+        "t1": {
+            "id": 1,
+            "title": "Individual Change Maker",
+            "lead": "Jamie Bernath",
+            "displayColour": "#633e88",
+            "displayColour": "#95C11F",
+            "abbr": "icm",
+            "actions": ["Dialogue", "Mobilise", "Cancel", "Invest", "Demonstrate", "Create", "Other"]
+        },
+        "t2": {
+            "id": 2,
+            "title": "Well-established Business",
+            "lead": "Brewbucks",
+            "displayColour": "#95C11F",
+            "displayColour": "#633E8C",
+            "abbr": "web",
+            "actions": ["Mobilise", "Dialogue", "Invest", "(Dis)Incentivise", "Demonstrate", "Create", "Other"]
+        },
+        "t3": {
+            "id": 3,
+            "title": "Civil Society Organisation",
+            "lead": "ChainReAction Foundation",
+            "displayColour": "#F6C310",
+            "displayColour": "#D1356F",
+            "abbr": "cso",
+            "actions": ["Mobilise & Act", "Dialogue", "Mobilise & Rally", "Provide", "Invest", "Create", "Other"]
+        },
+        "t4": {
+            "id": 4,
+            "title": "Small Enterprise",
+            "lead": "Sunfoods",
+            "displayColour": "#D1356F",
+            "displayColour": "#F6C310",
+            "abbr": "se",
+            "actions": ["Dialogue", "Mobilise", "Create", "Promote", "Invest", "Demonstrate", "Other"]
+        },
+        "t5": {
+            "id": 5,
+            "title": "Public Voices 1",
+            "abbr": "pv1",
+            "active": -1,
+            "likes": true,
+            "weight": 3,
+            "hasMax": false,
+            "hasLead": false,
+            "type": 2
+        },
+        "t6": {
+            "id": 6,
+            "title": "Public Voices 2",
+            "abbr": "pv2",
+            "active": -1,
+            "likes": true,
+            "weight": 3,
+            "hasMax": false,
+            "hasLead": false,
+            "type": 2
+        }
+    },
+    "settings": {
+        "teamMax": 6
+    },
+    "defaults": {
+        "active": 1,
+        "votes": 10,
+        "likes": false,
+        "weight": 2,
+        "hasMax": true,
+        "hasLead": true,
+        "rounds": "",
+        "type": 1,
+        "scores": {"eras": {"era1": [], "era2" : []}}
+    },
+    "prefixes": {
+        "player": "player-"
+    },
+    "definitions": {
+        "teams": "stakeholders"
+    },
+    "rounds": [
+        {"n": 0, "id": "null"},
+        {"n": 1, "flag": "rAssignTeams", "action": "assignTeams", "id": "assign"},
+        {"n": 2, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "teams": "mainTeams", "type": 1},
+        {"n": 3, "flag": "e1r2", "action": "startRoundE1R2", "id": "publicvoices 1", "teams": "publicVoices", "type": 2},
+        {"n": 4, "flag": "e1r3", "action": "startRoundE1R3", "id": "collaboration", "teams": "mainTeams", "type": 1},
+        {"n": 5, "flag": "e1r4", "action": "startRoundE1R4", "id": "publicvoices 2", "teams": "publicVoices", "type": 2}
+    ],
+    "actions": ["action 1", "action 2", "action 3", "action 4", "action 5"],
+    "constants": {
+        "presentation": "suspresstore"
+    }
+}

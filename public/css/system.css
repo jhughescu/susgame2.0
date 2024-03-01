@@ -1,0 +1,54 @@
+.link {
+    cursor: pointer
+}
+.link:hover {
+    text-decoration: underline;
+}
+.panel .button {
+    width: 30px;
+    height: 30px;
+/*    background-color: rgba(255, 255, 255, 0.15);*/
+    position: absolute;
+    cursor: pointer;
+}
+.panel .close {
+    top: 10px;
+    right: 10px;
+}
+.panel .close:after {
+    content: 'x';
+    color: #c4c0c0;
+    font-size: 2rem;
+    position: absolute;
+    top: -6px;
+    right: 6px;
+}
+.panel {
+    position: absolute;
+    background-color: black;
+    min-width: 500px;
+    border: 3px solid white;
+    border-radius: 10px;
+    padding: 40px 20px 20px;
+    display: flex; /* Use flexbox layout */
+    flex-direction: column; /* Arrange children vertically */
+    height: auto;
+}
+.panel_sessions {
+/*
+    top: 50px;
+    right: 50px;
+*/
+}
+.content-wrapper {
+    flex-grow: 1; /* Allow the content wrapper to grow and fill available space */
+    display: flex; /* Use flexbox layout for the content wrapper */
+}
+
+#sessionList {
+    flex-grow: 1; /* Allow sessionList to grow to fill available space */
+}
+
+#sessionDetail {
+    margin-left: 30px; /* Add margin for spacing */
+}

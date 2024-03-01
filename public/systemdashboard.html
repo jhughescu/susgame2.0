@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!--    <script src="/socket.io/socket.io.min.js"></script>-->
+    <script src='../js/scriptsys.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
+    <!--    <script src='../js/check-session-timeout.js' type='application/javascript'></script>-->
+    <link rel='stylesheet' href='../css/basics.css' type='text/css'>
+    <link rel='stylesheet' href='../css/system.css' type='text/css'>
+</head>
+
+<body>
+    <h1>System Dashboard</h1>
+
+    <form id="createSessionForm" action='/admin/createSession' method='post'>
+        <button type='submit'>Create session</button>
+    </form>
+    <form id="showSessionsForm" action='/admin/getSessions' method='post'>
+        <button type='submit'>Show all sessions</button>
+    </form>
+    <div id='updateSession'>Update Session</div>
+<!--    <div id='resetSession'>Reset Session</div>-->
+
+    <div class='panel panel_sessions' id='panel_sessions' style='display: none;'>
+        <div class='button close'></div>
+        <div class='content-wrapper'>
+            <div id='sessionList'>
+
+            </div>
+            <div id='sessionDetail'>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- start templates -->
+    <script id='template_sessions' type='text/x-handlebars-template'>
+       Stored Sessions:
+        {{#each sessions}}
+        <div class='getSession link' data-session-id='{{this.uniqueID}}'>{{this.uniqueID}}</div>
+        {{/each}}
+    </script>
+    <script id='template_session' type='text/x-handlebars-template'>
+        Session detail:
+        <table><tbody>
+            <tr><td>uniqueID</td><td>{{uniqueID}}</td></tr>
+            <tr><td>dateID</td><td>{{dateID}}</td></tr>
+            <tr><td>scores</td><td>{{scores}}</td></tr>
+            <tr><td>teams</td><td>{{teams}}</td></tr>
+        </tbody></table>
+    </script>
+    <!-- end templates -->
+
+    <script>
+        const socket = io('/admin/systemdashboard');
+        const getScores = () => {
+            const total = 15;
+            const map = `a_b_c_d_0`;
+            const scores = [];
+            for (var i = 0; i < total; i++) {
+                scores.push(map.replace('a', i%2).replace('b', i%5).replace('c', Math.round(Math.random() * i%5)).replace('d', Math.round(Math.random() * 3)));
+            }
+            scores.sort();
+//            console.log(scores);
+            return scores;
+        };
+        getScores();
+        const getTeams = () => {
+            const allTeams = [];
+            for (var i = 0; i < 30; i++) {
+                allTeams.push(`p${i}`);
+            }
+            const rSort = () => {return Math.floor(Math.random() * 3) - 1};
+            const teams = [[], [], [], [], [], [], []];
+            allTeams.reverse().sort(rSort);
+//            console.log(allTeams);
+            for (var i = 0; i < allTeams.length; i++) {
+                teams[i%teams.length].push(allTeams[i]);
+            }
+//            console.log(teams);
+            return teams;
+        }
+
+        document.getElementById('showSessionsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            // Use fetch to submit the form data to the server asynchronously
+            fetch('/admin/getSessions', {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to generate unique ID');
+                    }
+                    return response.json(); // Parse the response body as JSON
+                })
+                .then(data => {
+                    console.log('All sessions:');
+                    console.log(data);
+                    $('.panel_sessions').show();
+                    $('.panel_sessions').draggable();
+                    renderTemplate('sessionList', 'sessions', {sessions: data});
+                    readySessionLinks();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+        });
+        document.getElementById('createSessionForm').addEventListener('submit', function(event) {
+            const ok = confirm('are you sure you want to create a new session?');
+            if (ok) {
+                event.preventDefault();
+                // Use fetch to submit the form data to the server asynchronously
+                fetch('/admin/createSession', {
+                        method: 'POST',
+                        body: new FormData(this)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to generate unique ID');
+                        }
+                        return response.json(); // Parse the response body as JSON
+                    })
+                    .then(data => {
+                        console.log(data)
+//                    console.log(data.uniqueID)
+                        alert(`Created session with uniqueID: ${data.uniqueID}`);
+                    }).then(() => {
+                        resetTimeout();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                event.preventDefault();
+            }
+        });
+        const renderTemplate = (targ, temp, d) => {
+            const tID = `template_${temp}`;
+//            console.log(tID);
+            var source = document.getElementById(tID).innerHTML;
+//            console.log(source);
+            var template = Handlebars.compile(source);
+//            console.log(template)
+//            console.log(targ);
+//            console.log($(`#${targ}`));
+            var html = template(d);
+            document.getElementById(targ).innerHTML = html;
+        };
+        const readySessionLinks = () => {
+            // Attach click event handler to elements with class 'getSession'
+            $('.getSession').off('click');
+            $('.getSession').on('click', function() {
+                // Get the session ID from the 'data-session-id' attribute
+                var sessionId = $(this).data('session-id');
+                // Perform a fetch call to the server with the session ID as a parameter
+                fetch('/admin/getSession?sessionID=' + sessionId, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to get session data');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Process the data received from the server
+                        $('#sessionDetail').fadeOut(300, function () {
+                            renderTemplate('sessionDetail', 'session', data);
+                            $('#sessionDetail').fadeIn();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        };
+        const readyDevLinks = () => {
+            let us = $('#updateSession');
+            us.off('click');
+            us.on('click', () => {
+                socket.emit('updateSession', $('#sessionID').val(), {teams: getTeams(), scores: getScores()})
+            });
+            us = $('#resetSession');
+            us.off('click');
+            us.on('click', () => {
+                resetTimeout();
+            });
+        };
+        const resetTimeout = () => {
+            $.ajax({
+                method: 'GET',
+                url: '/admin/reset-timeout',
+                success: function(response) {
+                    console.log('Session reset successfully');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error resetting session:', error);
+                }
+            });
+        }
+        $(document).ready(function() {
+            readySessionLinks();
+            readyDevLinks();
+//            setTimeout(() => {
+//                window.location.reload();
+//            }, 4000);
+        });
+    </script>
+
+
+</body>
+
+</html>
