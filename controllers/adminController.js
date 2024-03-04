@@ -21,11 +21,8 @@ async function facAuth(req, res, next) {
         const sessionID = req.body.session;
         const password = req.body.password;
         const session = await sessionController.getSessionWithID(sessionID);
-//        console.log('session');
-//        console.log(session);
-        // session comes back as undefined
         if (session.password === password) {
-//            console.log('troy');
+            req.session = session;
             next();
         } else {
             console.log('login fail');

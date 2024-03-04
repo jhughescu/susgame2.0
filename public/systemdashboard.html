@@ -21,6 +21,7 @@
     <h1>System Dashboard</h1>
 
     <form id="createSessionForm" action='/admin/createSession' method='post'>
+        type: <input type='number' name='type' id='type' value='1' style='width: 30px' onchange='checkInputType()'>
         <button type='submit'>Create session</button>
     </form>
     <form id="showSessionsForm" action='/admin/getSessions' method='post'>
@@ -54,6 +55,7 @@
         <table><tbody>
             <tr><td>uniqueID</td><td>{{uniqueID}}</td></tr>
             <tr><td>dateID</td><td>{{dateID}}</td></tr>
+            <tr><td>type</td><td>{{type}}</td></tr>
             <tr><td>password</td><td>{{password}}</td></tr>
             <tr><td>scores</td><td>{{scores}}</td></tr>
             <tr><td>teams</td><td>{{teams}}</td></tr>
@@ -89,8 +91,16 @@
             }
 //            console.log(teams);
             return teams;
+        };
+        const rangeTop = 1; /* rangeTop will later be replaced by an app variable */
+        const checkInputType = () => {
+            let el = document.getElementById('type');
+            if (el.value < 1) {
+                el.value = 1;
+            } else if (el.value > rangeTop)  {
+                el.value = 1;
+           }
         }
-
         document.getElementById('showSessionsForm').addEventListener('submit', function(event) {
             event.preventDefault();
             // Use fetch to submit the form data to the server asynchronously
@@ -118,32 +128,43 @@
 
         });
         document.getElementById('createSessionForm').addEventListener('submit', function(event) {
-            const ok = confirm('are you sure you want to create a new session?');
-            if (ok) {
+            const inputType = document.getElementById('type');
+            const valType = parseInt(inputType.value);
+
+            if (valType < 1 || valType > rangeTop) {
+                alert(`type must be a number between 1 and ${rangeTop}`);
                 event.preventDefault();
-                // Use fetch to submit the form data to the server asynchronously
-                fetch('/admin/createSession', {
-                        method: 'POST',
-                        body: new FormData(this)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Failed to generate unique ID');
-                        }
-                        return response.json(); // Parse the response body as JSON
-                    })
-                    .then(data => {
-                        console.log(data)
-//                    console.log(data.uniqueID)
-                        alert(`Created session with uniqueID: ${data.uniqueID}`);
-                    }).then(() => {
-                        resetTimeout();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
             } else {
-                event.preventDefault();
+                const ok = confirm('are you sure you want to create a new session?');
+                if (ok) {
+                    event.preventDefault();
+                    // Use fetch to submit the form data to the server asynchronously
+                    fetch('/admin/createSession', {
+                            method: 'POST',
+                            body: JSON.stringify({ valType }),
+                            headers: {
+                                'Content-Type': 'application/JSON'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Failed to generate unique ID');
+                            }
+                            return response.json(); // Parse the response body as JSON
+                        })
+                        .then(data => {
+                            console.log(data)
+    //                    console.log(data.uniqueID)
+                            alert(`Created session with uniqueID: ${data.uniqueID}`);
+                        }).then(() => {
+                            resetTimeout();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                } else {
+                    event.preventDefault();
+                }
             }
         });
         const renderTemplate = (targ, temp, d) => {

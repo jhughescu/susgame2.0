@@ -1,4 +1,5 @@
 const express = require('express');
+const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const http = require('http');
 const path = require('path');
@@ -17,6 +18,13 @@ const Session = require('./models/session');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.engine('.hbs', exphbs.engine({
+    extname: '.hbs',
+    layoutsDir: path.join(__dirname, 'views'),
+    defaultLayout: false
+}));
+app.set('view engine', '.hbs');
 
 io.on('connection', (socket) => {
 //    console.log('A user connected (HTTP or WebSocket)');
@@ -63,7 +71,11 @@ app.get('/facilitatorlogin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'faclogin.html'));
 });
 app.get('/facilitatordashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'facilitatordashboard.html'));
+//    res.sendFile(path.join(__dirname, 'public', 'facilitatordashboard.html'));
+    const session = req.session;
+    console.log('fich')
+    console.log(session)
+    res.render('facilitatordashboard', session);
 });
 app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
     res.redirect('/facilitatordashboard'); // Redirect to admin dashboard upon successful login

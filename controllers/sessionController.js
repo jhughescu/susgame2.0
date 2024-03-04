@@ -116,9 +116,12 @@ async function newSession(req, res) {
         const uniqueID = dateID + padNum(getTopNumber(existingSessions) + 1, 3);
 //        console.log(`sessionID: ${uniqueID}`);
         // auto-generate password
-        const password = generatePassword()
+        const password = generatePassword();
         // Create a new session document
-        const newSession = new Session({ dateID, uniqueID, password });
+        const type = req.body.valType;
+//        console.log(type);
+//        console.log(`type: ${type}`);
+        const newSession = new Session({ dateID, uniqueID, password, type });
 
         // Save the new session document to the database
         await newSession.save();
