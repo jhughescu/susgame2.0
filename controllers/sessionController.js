@@ -1,3 +1,4 @@
+const securePassword = require('secure-random-password');
 const Session = require('../models/session');
 
 const getTopNumber = (s) => {
@@ -14,7 +15,7 @@ const getTopNumber = (s) => {
 };
 const getDateCode = () => {
     let d = new Date();
-    return `${d.getFullYear()}${padNum((d.getMonth() + 1), 2)}${padNum(d.getDate(), 2)}`;
+    return `${parseInt(d.getFullYear().toString().substr(2))}${padNum((d.getMonth() + 1), 2)}${padNum(d.getDate(), 2)}`;
 };
 const padNum = (n, r) => {
     let rn = r === undefined ? 2 : r;
@@ -25,7 +26,35 @@ const padNum = (n, r) => {
     }
     return n;
 };
+const generatePassword = () => {
+    const password = securePassword.randomPassword({
+        length: 6, // specify the length of the password
+        characters: [
+            securePassword.lower,
+            securePassword.upper,
+            securePassword.digits,
+        ], // specify the characters to include in the password
+    });
+    return password;
+};
 
+async function getSessionWithID(id) {
+    try {
+        console.log(`id: ${id}`);
+        const session = await Session.findOne({ uniqueID: id });
+        if (!session) {
+            // If session is not found, return an error
+            throw new Error('Session not found');
+        }
+        // Send the session back to the client as a response
+//        console.log('session found now');
+//        console.log(session)
+        return session;
+//        res.json(session);
+    } catch (err) {
+        console.log('no session found');
+    }
+}
 async function getSessions(req, res) {
     try {
         const existingSessions = await Session.find();
@@ -86,8 +115,10 @@ async function newSession(req, res) {
         // Determine the session ID for the new session
         const uniqueID = dateID + padNum(getTopNumber(existingSessions) + 1, 3);
 //        console.log(`sessionID: ${uniqueID}`);
+        // auto-generate password
+        const password = generatePassword()
         // Create a new session document
-        const newSession = new Session({ dateID, uniqueID });
+        const newSession = new Session({ dateID, uniqueID, password });
 
         // Save the new session document to the database
         await newSession.save();
@@ -100,4 +131,4 @@ async function newSession(req, res) {
     }
 }
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession };
+module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID };

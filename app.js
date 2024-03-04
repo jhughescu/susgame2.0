@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 const PORT = process.env.PORT || 3000;
 
-const connectDB = require('./controllers/databaseController');
+const databaseController = require('./controllers/databaseController');
 const sessionController = require('./controllers/sessionController');
 const adminController = require('./controllers/adminController');
 const Session = require('./models/session');
@@ -38,7 +38,7 @@ adminDashboardNamespace.on('connection', (socket) => {
     // Handle other socket events specific to the admin dashboard...
 });
 
-
+// Routes
 app.get('/admin/systemlogin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'systemlogin.html'));
 });
@@ -55,6 +55,22 @@ app.get('/admin/reset-timeout', (req, res) => {
 app.get('/admin/loggedout', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'loggedout.html'));
 });
+app.get('/admin/systemfail', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'unauthorised.html'));
+});
+
+app.get('/facilitatorlogin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'faclogin.html'));
+});
+app.get('/facilitatordashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'facilitatordashboard.html'));
+});
+app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
+    res.redirect('/facilitatordashboard'); // Redirect to admin dashboard upon successful login
+});
+app.get('/loginfail', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'loginfail.html'));
+});
 
 // session stuff
 app.post('/admin/createSession', async (req, res) => {
@@ -68,7 +84,7 @@ app.post('/admin/getSession', async (req, res) => {
 });
 
 
-connectDB();
+databaseController.dbConnect();
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

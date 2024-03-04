@@ -4,61 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket.IO Chat</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+    <title>Sustainabilty Game Home</title>
 
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-        }
+    <link rel='stylesheet' href='css/basics.css'>
+    <link rel='stylesheet' href='css/home.css'>
+    <link rel='stylesheet' href='css/fog.css'>
 
-        ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        li {
-            margin-bottom: 5px;
-        }
-
-    </style>
 </head>
 
 <body>
-    <div class="container">
-        <ul id="messages"></ul>
-        <form id="form" action="">
-            <input id="input" autocomplete="off" /><button>Send</button>
-        </form>
+    <div class='fogwrapper'>
+        <div id="foglayer_01" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_02" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_03" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        var socket = io();
 
-        var form = document.getElementById('form');
-        var input = document.getElementById('input');
+    <div class='wrapper intro'>
+        <div id='circle-wrapper'>
+            <div class='circle' id='circle-fill'></div>
+        </div>
+        <div id='header'>
+            <p>INDEX</p>
+        </div>
+        <div class="container intro fullscreen1">
+            Welcome to the Sustainabilty game
+        </div>
+    </div>
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (input.value) {
-                socket.emit('chat message', input.value);
-                input.value = '';
-            }
-        });
-
-        socket.on('chat message', function(msg) {
-            var item = document.createElement('li');
-            item.textContent = msg;
-            document.getElementById('messages').appendChild(item);
-        });
-
-    </script>
 </body>
 
 </html>

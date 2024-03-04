@@ -45,4 +45,4 @@ const dbConnected = () => {
 };
 
 
-module.exports = dbConnect;
+module.exports = { dbConnect };

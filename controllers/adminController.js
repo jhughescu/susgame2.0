@@ -1,3 +1,4 @@
+const sessionController = require('./../controllers/sessionController');
 // systemtimeout is the duration of inactivity before the system admin loses contact
 const systemtimeout = 20 * 60 * 1000;
 // v low value means timeout will never be expired on entry
@@ -9,11 +10,32 @@ const adminAuth = (req, res, next) => {
 //    console.log(password, process.env.ADMIN_PASSWORD)
     if (password === process.env.ADMIN_PASSWORD) {
         resetAdmin();
-        console.log('on we go');
         next();
     } else {
-        res.status(401).sendFile(path.join(__dirname, 'public', 'unauthorised.html'));
+//        res.status(401).sendFile(path.join(__dirname, 'public', 'unauthorised.html'));
+        res.redirect('/admin/systemfail');
     }
+};
+async function facAuth(req, res, next) {
+    try {
+        const sessionID = req.body.session;
+        const password = req.body.password;
+        const session = await sessionController.getSessionWithID(sessionID);
+//        console.log('session');
+//        console.log(session);
+        // session comes back as undefined
+        if (session.password === password) {
+//            console.log('troy');
+            next();
+        } else {
+            console.log('login fail');
+            res.redirect('/loginfail');
+        }
+    } catch (error) {
+        console.log('method fail');
+        res.redirect('/loginfail');
+    }
+
 };
 const checkSessionTimeoutAndRedirect = (req, res, next) => {
     const now = Date.now();
@@ -29,4 +51,5 @@ const checkSessionTimeoutAndRedirect = (req, res, next) => {
 const resetAdmin = () => {
     systemNow = Date.now();
 };
-module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect };
+
+module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect, facAuth };
