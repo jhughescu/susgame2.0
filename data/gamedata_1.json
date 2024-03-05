@@ -5,7 +5,6 @@
             "title": "Government",
             "lead": "Eurasia Food Evaluation Bureau (EFEB)",
             "displayColour": "#0099C4",
-            "displayColour": "#0099C4",
             "abbr": "gov",
             "actions": ["(Re)Orientate", "Learn", "Dialogue", "(Dis)Incentivise", "Invest", "Demonstrate", "Other"]
         },
@@ -13,7 +12,6 @@
             "id": 1,
             "title": "Individual Change Maker",
             "lead": "Jamie Bernath",
-            "displayColour": "#633e88",
             "displayColour": "#95C11F",
             "abbr": "icm",
             "actions": ["Dialogue", "Mobilise", "Cancel", "Invest", "Demonstrate", "Create", "Other"]
@@ -22,7 +20,6 @@
             "id": 2,
             "title": "Well-established Business",
             "lead": "Brewbucks",
-            "displayColour": "#95C11F",
             "displayColour": "#633E8C",
             "abbr": "web",
             "actions": ["Mobilise", "Dialogue", "Invest", "(Dis)Incentivise", "Demonstrate", "Create", "Other"]
@@ -31,7 +28,6 @@
             "id": 3,
             "title": "Civil Society Organisation",
             "lead": "ChainReAction Foundation",
-            "displayColour": "#F6C310",
             "displayColour": "#D1356F",
             "abbr": "cso",
             "actions": ["Mobilise & Act", "Dialogue", "Mobilise & Rally", "Provide", "Invest", "Create", "Other"]
@@ -40,7 +36,6 @@
             "id": 4,
             "title": "Small Enterprise",
             "lead": "Sunfoods",
-            "displayColour": "#D1356F",
             "displayColour": "#F6C310",
             "abbr": "se",
             "actions": ["Dialogue", "Mobilise", "Create", "Promote", "Invest", "Demonstrate", "Other"]

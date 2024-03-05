@@ -16,6 +16,8 @@ const sessionController = require('./controllers/sessionController');
 const adminController = require('./controllers/adminController');
 const Session = require('./models/session');
 
+
+
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -39,6 +41,13 @@ io.on('connection', (socket) => {
 //        console.log(`id: ${id}`);
         sessionController.getSessionWithID(id);
     });
+    socket.on('activateSession', (session) => {
+
+        console.log('get it going');
+        createRoute(session.address);
+        sessionController.activateSession(session);
+
+    })
     // Handle other socket events...
 });
 
@@ -54,6 +63,7 @@ adminDashboardNamespace.on('connection', (socket) => {
 });
 
 // Routes
+
 app.get('/admin/systemlogin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'systemlogin.html'));
 });
@@ -73,7 +83,6 @@ app.get('/admin/loggedout', (req, res) => {
 app.get('/admin/systemfail', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'unauthorised.html'));
 });
-
 
 app.get('/facilitatorlogin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'faclogin.html'));
@@ -96,9 +105,6 @@ app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
     const token = adminController.generateToken({ session });
     res.cookie('token', token, { httpOnly: true });
     res.cookie('sessionID', session, { httpOnly: false });
-//    res.redirect(`/facilitatordashboard`);
-//    console.log(session)
-//    res.render(`facilitatordashboard`, {session});
     res.redirect(`/facilitatordashboard?token=${token}`); // Redirect to admin dashboard upon successful login
 });
 
@@ -110,7 +116,16 @@ app.get('/loginfail', (req, res) => {
 
 // session stuff
 app.post('/admin/createSession', async (req, res) => {
-    sessionController.newSession(req, res);
+    try {
+        const sesh = await sessionController.newSession(req, res);
+//        console.log('noo')
+//        console.log(sesh)
+        app.get(`/${sesh.address.split('/').reverse()[0]}`, (req, res) => {
+            res.send('yep, game is on')
+        })
+    } catch (err) {
+        console.log('ero')
+    }
 });
 app.post('/admin/getSessions', async (req, res) => {
     sessionController.getSessions(req, res);
@@ -119,7 +134,34 @@ app.post('/admin/getSession', async (req, res) => {
     sessionController.getSession(req, res);
 });
 
+// ALWAYS LAST!!!!!!!!!
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
 
+const routeExists = (routeName) => {
+    const routes = app._router.stack;
+    for (const layer of routes) {
+        if (layer.route && layer.route.path === routeName) {
+            return true; // Route with the requested name already exists
+        }
+    }
+    return false; // Route with the requested name does not exist
+};
+const createRoute = (r) => {
+    let rt = r.indexOf('http', 0) > -1 ? r.split('/').reverse()[0] : r;
+    rt = rt.substr(0, 1) === '/' ? rt : '/' + rt;
+    if (!routeExists(rt)) {
+        app._router.stack.pop();
+        app.get(rt, (req, res) => {
+//            res.send('yep, game is on');
+            res.render('intro');
+        });
+        app.use((req, res) => {
+            res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+        });
+    }
+};
 databaseController.dbConnect();
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

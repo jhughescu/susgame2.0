@@ -1,3 +1,4 @@
+//const express = require('express');
 const securePassword = require('secure-random-password');
 const Session = require('../models/session');
 
@@ -26,9 +27,9 @@ const padNum = (n, r) => {
     }
     return n;
 };
-const generatePassword = () => {
+const generatePassword = (l) => {
     const password = securePassword.randomPassword({
-        length: 6, // specify the length of the password
+        length: l, // specify the length of the password
         characters: [
             securePassword.lower,
             securePassword.upper,
@@ -38,16 +39,51 @@ const generatePassword = () => {
     return password;
 };
 
+const generateAdress = (req) => {
+    // This method used to create a unique address for each session.
+    const id = securePassword.randomPassword({
+        length: 4, // specify the length of the password
+        characters: [
+            securePassword.lower,
+            securePassword.digits,
+        ], // specify the characters to include in the password
+    });
+    const root = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
+    const suffix = `/game-${id}`;
+    const address = `${root}${suffix}`;
+//    app.get(suffix, (req, res) => {
+//        res.send('yep, game is on')
+//    })
+//    createRoute(suffix);
+    return address;
+};
+const activateSession = (session) => {
+    console.log(`activateSession: ${session}`);
+};
+
+
 async function getSessionWithID(id) {
     try {
-        console.log(`getSessionWithID, id: ${id}`);
-        const session = await Session.findOne({ uniqueID: id }).select('-password');
+        const session = await Session.findOne({ uniqueID: id }).select('-password -_id -__v');
         if (!session) {
             // If session is not found, return an error
             throw new Error('Session not found');
         }
-        // Send the session back to the client as a response
-        console.log(session)
+        return session;
+    } catch (err) {
+        console.log('no session found');
+    }
+}
+async function getSessionPassword(id) {
+//    console.log('getfull');
+    try {
+        const session = await Session.findOne({ uniqueID: id }).select('password');
+        if (!session) {
+            // If session is not found, return an error
+            throw new Error('Session not found');
+        }
+//        console.log('returning')
+//        console.log(session)
         return session;
     } catch (err) {
         console.log('no session found');
@@ -75,9 +111,18 @@ async function getSession(req, res) {
             // If sessionID is not present in query string or request body, return an error
             throw new Error('SessionID not provided');
         }
-        console.log('getSession method');
-        console.log('Session ID:', sessionId);
-        const session = await Session.findOne({ uniqueID: sessionId }).select('-password');
+//        console.log('getSession method');
+//        console.log('Session ID:', sessionId);
+        let noPass = true;
+        if (req.body.password) {
+//            console.log('password provided; if it matches, return the full session')
+//            console.log(req.body.password);
+            noPass = !req.body.password === process.env.ADMIN_PASSWORD;
+        }
+        const boSelector = `-_id -__v${noPass ? ' -password' : ''}`;
+//        console.log(boSelector);
+        const session = await Session.findOne({ uniqueID: sessionId }).select(boSelector);
+
         if (!session) {
             // If session is not found, return an error
             throw new Error('Session not found');
@@ -114,22 +159,24 @@ async function newSession(req, res) {
         const uniqueID = dateID + padNum(getTopNumber(existingSessions) + 1, 3);
 //        console.log(`sessionID: ${uniqueID}`);
         // auto-generate password
-        const password = generatePassword();
+        const password = generatePassword(6);
+        const address = generateAdress(req);
         // Create a new session document
         const type = req.body.valType;
 //        console.log(type);
 //        console.log(`type: ${type}`);
-        const newSession = new Session({ dateID, uniqueID, password, type });
+        const newSession = new Session({ dateID, uniqueID, password, address, type });
 
         // Save the new session document to the database
         await newSession.save();
 
         // Send the generated session ID back to the client as a response
         res.json({ uniqueID });
+        return newSession;
     } catch (error) {
         console.error('Error generating unique session ID:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID };
+module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , activateSession};

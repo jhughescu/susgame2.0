@@ -1,0 +1,508 @@
+@charset "UTF-8";
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
+/* CSS Document */
+
+* {
+  box-sizing: border-box;
+}
+
+/* Style the body */
+body {
+  font-family: "Arial", "sans-serif";
+  margin: 0;
+}
+
+h1, h2, h3{
+	font-weight: 100;
+	}
+
+/* Header/logo Title */
+.header {
+ 	padding: 0px;
+	width: 100%;
+	height: 200px;
+	margin-top: 0;
+  	text-align: center;
+  	background: #2D5D61;
+	background-image: url("../assets/forest.jpg");
+	background-size: cover;
+	background-position: center;
+	position: relative;
+}
+
+.header-grad-overlay{
+	width: 100%;
+	height: 100%;
+	background-image: linear-gradient(120deg,  rgba(0,255,255,0), rgba(0,255,255,0.50));
+	position: absolute;
+	top: 0;
+	left: 0;
+		}
+
+.header h1{
+	color: white;
+	width: 100%;
+	margin: 0;
+	padding: 60px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+}
+
+.main-content{
+		width: 80%;
+		margin: 50px auto;
+		}
+
+.center{
+	text-align: center;
+	}
+
+/* Start/Submit Buttons */
+
+.big-button a{
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: white;
+	background: black;
+	width: 50%;
+	padding: 20px 40px;
+	font-size: 20pt;
+	margin: 50px auto;
+	transition: 0.5s;
+	}
+
+.big-button a:hover{
+	background: #404040;
+	}
+
+/* Global Header Scetion, Back Button and Title Bar */
+
+.nav-header-container{
+			width: 100%;
+			margin-bottom: 20px;
+			text-align: center;
+			color: white;
+		}
+
+.back-btn-title-bar{
+			width: 100%;
+			height: 74px;
+			position: relative;
+			padding: 22px;
+		}
+
+.back-btn {
+			position: absolute;
+			left: 0;
+			top: 0;
+			display: block;
+			width: 70px;
+			padding: 15px;
+			background: none;
+			transition: 0.5s;
+		z-index: 10;
+		}
+
+.back-btn:hover{
+			background: rgba(0,0,0,0.2);
+		}
+
+		.nav-header-container h1{
+			font-weight: 100;
+			font-size: 20pt;
+			margin-top: 0px;
+		}
+
+.dark-text{
+	color: black;
+}
+
+/* Title Bar Colours */
+
+.title-bar-blue{
+	background: #006cb5;
+}
+
+.title-bar-red{
+	background: #e4003a;
+}
+
+
+
+/* Connect On */
+
+.menu-container{
+			position: relative;
+			top: -80px;
+			margin-bottom: 50px;
+		}
+
+.header-img{
+			width: 140px;
+			margin: 0px auto 10px;
+		}
+
+.header-img img{
+			width: 100%;
+			border-radius: 10px;
+			border: 2px solid white;
+			background: #006cb5;
+		}
+
+.team-menu{
+			width: 100%;
+			border-bottom: 2px solid lightgrey;
+			background: none;
+			padding-top: 10px;
+			transition: 0.5s;
+		}
+
+.team-menu:hover{
+		background: rgba(0,0,0,0.1);
+
+		}
+
+.team-link{
+			display: flex;
+			flex-wrap: nowrap;
+			padding: 0 50px;
+		}
+
+.team-link-icon{
+			flex: 25%;
+			padding: 5px;
+		}
+
+.team-link-icon img{
+		width: 90px;
+		height: 90px;
+		border-radius: 50%;
+		}
+
+.team-link-info{
+			flex: 60%;
+			padding: 0px 20px;
+		}
+
+.team-link-info h2{
+			margin: 20px 0px 0px;
+		}
+
+.team-link-info h3{
+			margin-top: 5px;
+			font-weight: 100;
+		}
+
+.team-link-next{
+			flex: 15%;
+		}
+
+.team-link-next a{
+			display: block;
+		}
+
+.team-link-next a img{
+			width: 18px;
+			margin: 32px 23px;
+		}
+
+/* Team Page */
+
+.team-header{
+		width: 100%;
+		margin-bottom: 20px;
+		background: #F2F2F2;
+		}
+
+.hero-image{
+			background: #00890A;
+			width: 100%;
+			height: 150px;
+			background-image: url("../assets/greenGlobeAlternative.png");
+			background-size: cover;
+			background-position: center;
+		}
+
+	.company-logo{
+			position: absolute;
+			top: 15px;
+			right: 15px;
+			width: 90px;
+			border-radius: 6px;
+		}
+
+.team-icon{
+			display: block;
+			width: 120px;
+			margin: 0px auto;
+		}
+
+.team-info{
+			width: 80%;
+			margin: 0 auto;
+			position: relative;
+			top: -60px;
+		}
+
+		.team-info h1{
+			margin: 10px;
+		}
+
+/* Global Times */
+
+		.headline-title{
+			padding: 40px;
+			background: #AE2422;
+			background-image: url("../assets/RedNewsGlobe.PNG");
+			background-size: cover;
+		}
+
+		.headline-title h2{
+			font-size: 100pt;
+			margin: 0px;
+		}
+
+		.headline-title p{
+			font-size: 25pt;
+			margin: 0px;
+			font-weight: 100;
+			position: relative;
+			top: -20px;
+		}
+
+		.article-container{
+			display: flex;
+			flex-wrap: nowrap;
+			padding: 20px 30px 15px;
+			border-bottom: 2px solid lightgrey;
+			background: none;
+			transition: 0.5s;
+		}
+
+.article-container:hover{
+			background: rgba(0,0,0,0.1);
+		}
+		.article-img{
+			flex: 40%;
+		}
+
+		.article-headline{
+			flex: 60%;
+		}
+
+		.article-img img{
+			width: 100%;
+		}
+
+		.article-headline h3{
+			margin: 0px;
+			padding: 10px;
+			font-size: 12pt;
+		}
+
+		.article-headline p{
+			padding-left: 10px;
+			margin: 6px 0px;
+			color: grey;
+			font-size: 9pt;
+		}
+
+/* Your Move Form */
+
+input[type=text], select {
+  	width: 100%;
+  	padding: 12px 20px;
+  	margin: 5px 0 15px;
+  	display: inline-block;
+  	border: 0px solid #ccc;
+  	border-radius: 4px;
+  	box-sizing: border-box;
+	background-color: #f2f2f2;
+}
+
+textarea {
+ 	width: 100%;
+  	height: 150px;
+  	padding: 12px 20px;
+	margin: 10px 0 15px;
+  	box-sizing: border-box;
+  	border: 0px solid #ccc;
+  	border-radius: 4px;
+  	background-color: #f2f2f2;
+  	resize: none;
+	font-family: Arial, 'sans-serif';
+}
+
+input[type=submit] {
+ 	text-align: center;
+	text-decoration: none;
+	color: white;
+	background-color: black;
+	width: 80%;
+	padding: 20px 40px;
+	font-size: 20pt;
+	margin: 40px 10%;
+	transition: 0.5s;
+ 	cursor: pointer;
+}
+
+input[type=submit]:hover {
+  	background-color: #404040;
+}
+form label{
+	font-size: 17pt;
+	}
+
+.resources-container{
+	width: 100%;
+	display: flex;
+	margin: 0px auto;
+	}
+
+.resources-score{
+	font-size: 18pt;
+	flex: 20%;
+	padding-left: 10px;
+	text-align: left;
+	}
+
+.resources-btn {
+  	background-color: #091932;
+  	border: none;
+  	color: white;
+  	padding: 12px 16px;
+  	font-size: 22px;
+  	cursor: pointer;
+  	border-radius: 50%;
+	margin: 12px 10px;
+}
+
+/* Collaboration */
+
+.team-content-box{
+	background: #F2F2F2;
+	width: 100%;
+	border-radius: 10px;
+	text-align: center;
+	padding: 30px;
+	margin: 0px 0px 20px;
+		}
+
+.collab-icon{
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+		}
+
+.team-content-box h2{
+	margin: 10px 0px;
+	font-size: 16pt;
+		}
+
+/* Overwrites 100% width to bring Score 0/10 and - & + buttons closer together */
+.team-content-box .resources-container{
+	width: 70%;
+		}
+
+/* You Represent Page */
+
+.represent-header{
+	width: 100%;
+	margin-bottom: 20px;
+	}
+
+.represent-icon{
+	background: grey;
+	border-radius: 50%;
+	width: 140px;
+	height: 140px;
+	margin: 0px auto;
+	}
+
+.represent-info{
+	width: 80%;
+	margin: 0 auto;
+	}
+
+/* Icon and Badge Positions */
+
+.icon-badge-box{
+	width: 100%;
+	position: relative;
+	}
+
+.icon-badge{
+	width: 50px;
+	position: absolute;
+	left: 58%
+	}
+
+/* Grid Layout */
+
+.grid-container {
+   	display: grid;
+   	grid-auto-columns: minmax(0, 1fr);
+   	grid-auto-flow: column;
+	gap: 20px;
+	}
+
+.grid-container > div{
+	border-radius: 10px;
+	overflow: hidden;
+	}
+
+.grid-container > div img{
+	width: 100%;
+	border-radius: 13px;
+	}
+
+.grid-item-span-all{
+	grid-column: 1 / span 2;
+	padding: 30px;
+	background: #F2F2F2;
+	text-align: center;
+	}
+
+.grid-item-2{
+	grid-column: 1 / span 1;
+	background: #e4003a;
+	}
+
+.grid-item-3{
+	grid-column: 2 / span 1;
+	background: #006cb5;
+	}
+
+/* Icon Background Colours */
+
+
+.icm-bg{
+	background: #95c11f;
+		}
+
+.gov-bg{
+	background: #4497C0;
+}
+
+.web-bg{
+	background: #5F4084;
+}
+
+.cso-bg{
+	background: #C1436F;
+		}
+
+.se-bg{
+	background: #EEC445;
+		}
+
+.pv1-bg{
+	background: #999999;
+		}
+
+.pv2-bg{
+	background: #666666;
+		}

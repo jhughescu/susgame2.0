@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 console.log(data);
+                console.log(window.location.origin);
+                socket.emit('activateSession', data);
+                window.renderTemplate('sessionCard', 'session', data);
             })
             .catch(error => {
                 console.error('Error:', error);

@@ -24,7 +24,7 @@ const verifyTokenExpiration = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
         // Token not provided, redirect to '/loggedout' route
-        return res.redirect('/loggedout');
+        return res.redirect('/facilitatorloggedout');
     }
 
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
@@ -48,12 +48,9 @@ async function facAuth(req, res, next) {
     try {
         const session = req.body.session;
         const password = req.body.password;
-//        console.log(session, password);
-        const storedSession = await sessionController.getSessionWithID(session);
-//        console.log(storedSession.password, password);
+        const storedSession = await sessionController.getSessionPassword(session);
         if (storedSession.password === password) {
             req.session = storedSession;
-//            console.log('suck sess')
             next();
         } else {
             console.log('login fail');

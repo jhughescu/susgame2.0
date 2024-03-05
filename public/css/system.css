@@ -34,6 +34,9 @@
     flex-direction: column; /* Arrange children vertically */
     height: auto;
 }
+.panel td {
+    padding: 3px 20px;
+}
 .panel_sessions {
 /*
     top: 50px;

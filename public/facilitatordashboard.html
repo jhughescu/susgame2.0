@@ -7,6 +7,7 @@
     <title>Game Facilitator Dashboard</title>
     <link rel='stylesheet' href='../css/basics.css' type='text/css'>
     <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
 <!--    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">-->
 <!--    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>-->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -17,7 +18,15 @@
 <body>
     <h1>Game Facilitator Dashboard</h1>
     <div id='sessionCard'></div>
-
+    <script id='template_session' type='text/x-handlebars-template'>
+        Session detail:
+        <table><tbody>
+            {{#each this}}
+            <tr><td>{{@key}}</td><td>{{this}}</td></tr>
+            {{/each}}
+        </tbody></table>
+        <a href='{{this.address}}' target='_blank'>go to game</a>
+    </script>
 </body>
 
 </html>
