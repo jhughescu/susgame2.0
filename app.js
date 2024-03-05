@@ -1,9 +1,11 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const http = require('http');
 const path = require('path');
 const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -18,6 +20,8 @@ const Session = require('./models/session');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cookieParser())
+
 
 app.engine('.hbs', exphbs.engine({
     extname: '.hbs',
@@ -31,7 +35,10 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
 //        console.log('User disconnected (HTTP or WebSocket)');
     });
-
+    socket.on('getSesssionWithID', (id) => {
+//        console.log(`id: ${id}`);
+        sessionController.getSessionWithID(id);
+    });
     // Handle other socket events...
 });
 
@@ -67,19 +74,36 @@ app.get('/admin/systemfail', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'unauthorised.html'));
 });
 
+
 app.get('/facilitatorlogin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'faclogin.html'));
 });
-app.get('/facilitatordashboard', (req, res) => {
-//    res.sendFile(path.join(__dirname, 'public', 'facilitatordashboard.html'));
-    const session = req.session;
-    console.log('fich')
-    console.log(session)
-    res.render('facilitatordashboard', session);
+app.get('/facilitatorloggedout', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'facilitatorloggedout.html'));
+});
+
+app.get('/facilitatordashboard', adminController.verifyTokenExpiration, (req, res) => {
+//    const token = req.headers.authorization;
+//    const token = req.query.token;
+//    const token = localStorage.getItem('token');
+    const token = req.cookies.token;
+//    console.log('token?');
+//    console.log(token);
+    res.sendFile(path.join(__dirname, 'public', 'facilitatordashboard.html'));
 });
 app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
-    res.redirect('/facilitatordashboard'); // Redirect to admin dashboard upon successful login
+    const session = req.body.session;
+    const token = adminController.generateToken({ session });
+    res.cookie('token', token, { httpOnly: true });
+    res.cookie('sessionID', session, { httpOnly: false });
+//    res.redirect(`/facilitatordashboard`);
+//    console.log(session)
+//    res.render(`facilitatordashboard`, {session});
+    res.redirect(`/facilitatordashboard?token=${token}`); // Redirect to admin dashboard upon successful login
 });
+
+
+
 app.get('/loginfail', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'loginfail.html'));
 });

@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const sessionController = require('./../controllers/sessionController');
 // systemtimeout is the duration of inactivity before the system admin loses contact
 const systemtimeout = 20 * 60 * 1000;
@@ -16,13 +17,43 @@ const adminAuth = (req, res, next) => {
         res.redirect('/admin/systemfail');
     }
 };
+const generateToken = (user) => {
+    return jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '24h' }); // Change the expiration time as needed
+};
+const verifyTokenExpiration = (req, res, next) => {
+    const token = req.cookies.token;
+    if (!token) {
+        // Token not provided, redirect to '/loggedout' route
+        return res.redirect('/loggedout');
+    }
+
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            // Token verification failed, redirect to '/loggedout' route
+            return res.redirect('/facilitatorloggedout');
+        }
+
+        // Check if token has expired
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        if (decoded.exp < currentTimestamp) {
+            // Token has expired, redirect to '/loggedout' route
+            return res.redirect('/facilitatorloggedout');
+        }
+
+        // Token is valid, proceed to next middleware
+        next();
+    });
+}
 async function facAuth(req, res, next) {
     try {
-        const sessionID = req.body.session;
+        const session = req.body.session;
         const password = req.body.password;
-        const session = await sessionController.getSessionWithID(sessionID);
-        if (session.password === password) {
-            req.session = session;
+//        console.log(session, password);
+        const storedSession = await sessionController.getSessionWithID(session);
+//        console.log(storedSession.password, password);
+        if (storedSession.password === password) {
+            req.session = storedSession;
+//            console.log('suck sess')
             next();
         } else {
             console.log('login fail');
@@ -49,4 +80,4 @@ const resetAdmin = () => {
     systemNow = Date.now();
 };
 
-module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect, facAuth };
+module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect, facAuth, generateToken, verifyTokenExpiration };

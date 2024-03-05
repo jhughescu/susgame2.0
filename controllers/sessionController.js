@@ -40,17 +40,15 @@ const generatePassword = () => {
 
 async function getSessionWithID(id) {
     try {
-        console.log(`id: ${id}`);
-        const session = await Session.findOne({ uniqueID: id });
+        console.log(`getSessionWithID, id: ${id}`);
+        const session = await Session.findOne({ uniqueID: id }).select('-password');
         if (!session) {
             // If session is not found, return an error
             throw new Error('Session not found');
         }
         // Send the session back to the client as a response
-//        console.log('session found now');
-//        console.log(session)
+        console.log(session)
         return session;
-//        res.json(session);
     } catch (err) {
         console.log('no session found');
     }
@@ -79,7 +77,7 @@ async function getSession(req, res) {
         }
         console.log('getSession method');
         console.log('Session ID:', sessionId);
-        const session = await Session.findOne({ uniqueID: sessionId });
+        const session = await Session.findOne({ uniqueID: sessionId }).select('-password');
         if (!session) {
             // If session is not found, return an error
             throw new Error('Session not found');
