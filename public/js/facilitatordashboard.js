@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = io();
+    const socket = io('/facilitatordashboard');
     const clientData = {role: 'facilitator'};
+
+    let session = null;
+
     const onConnect = () => {
+
 //        const sID = document.getElementById('sessionID').innerHTML;
 //        console.log(sID);
 //        console.log(sID);
@@ -16,15 +20,11 @@ document.addEventListener('DOMContentLoaded', function() {
         onConnect();
 
     });
-    socket.on('connectedDB', () => {
-//        console.log('database ready')
-    });
-    socket.on('dbReady', (boo) => {
-//        console.log(`database ready? ${boo}`)
-    });
     const getSessionID = () => {
         const cookies = document.cookie.split(';');
+//        console.log(`getSessionID`);
         for (let cookie of cookies) {
+            console.log(cookie);
             const [cookieName, cookieValue] = cookie.trim().split('=');
             if (cookieName === 'sessionID') {
                 return decodeURIComponent(cookieValue);
@@ -32,6 +32,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return null;
     };
+    const startGame = () => {
+//        console.log('start');
+        const id = session.uniqueID;
+        const type = session.type;
+        socket.emit('startGame', { id, type }, (game) => {
+//            console.log('this is the game:');
+//            console.log(game);
+            getSession(game.gameID);
+        });
+    };
+    const restoreGame = () => {
+        console.log('restore');
+    };
+    const endGame = () => {
+        console.log('end');
+    };
+    const setupLinks = () => {
+        let sg = $('#gameStart');
+        let rg = $('#gameRestore');
+        let eg = $('#gameEnd');
+        let gl = $('#gameLaunch');
+        $('.link').off('click');
+        sg.on('click', startGame);
+        rg.on('click', restoreGame);
+        eg.on('click', endGame);
+        if (session.state !== 'started') {
+            gl.addClass('disabled');
+            document.getElementById('gameLaunch').addEventListener('click', (ev) => {
+                ev.preventDefault();
+            });
+        }
+    };
+    const renderSession = () => {
+        window.renderTemplate('sessionCard', 'session', session);
+    };
+    const initSession = () => {
+        renderSession();
+        setupLinks();
+//        console.log(`initSession`)
+//        console.log(session);
+//        console.log(session.state === 'started');
+        if (session.state === 'started') {
+            // this session has already been started, activate it so users can connect
+            socket.emit('activateSession', session);
+        }
+    }
     const getSession = (sessionId) => {
         fetch('/admin/getSession?sessionID=' + sessionId, {
                 method: 'POST',
@@ -46,10 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
-                console.log(window.location.origin);
-                socket.emit('activateSession', data);
-                window.renderTemplate('sessionCard', 'session', data);
+                session = data;
+                session.base = window.location.origin;
+                initSession();
             })
             .catch(error => {
                 console.error('Error:', error);

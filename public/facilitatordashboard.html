@@ -22,10 +22,15 @@
         Session detail:
         <table><tbody>
             {{#each this}}
-            <tr><td>{{@key}}</td><td>{{this}}</td></tr>
+            <tr><td>{{@key}}</td><td id='val_{{@key}}'>{{this}}</td></tr>
             {{/each}}
         </tbody></table>
-        <a href='{{this.address}}' target='_blank'>go to game</a>
+        <br>
+        <div class='link' id='gameStart'>start or join this game</div>
+        <a id='gameLaunch' href='{{this.base}}{{this.address}}?active=false' target='_blank'>go to game player screen (testing only, will not join session)</a>
+        <div class='link' id='gameRestore'>restore game</div>
+        <div class='link' id='gameEnd'>end game</div>
+<!--        <a href='/player' target='_blank'>go to game</a>-->
     </script>
 </body>
 

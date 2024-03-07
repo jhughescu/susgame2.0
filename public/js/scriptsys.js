@@ -102,9 +102,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     async function facilitate () {
+//        console.log('facilitate - cookie?');
+//        console.log(document.cookie);
+//        document.cookie = `sessionID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         try {
-            const session = $('#sSession').html();
-            const password = $('#sPassword').html();
+            const session = $('#val_uniqueID').html();
+            const password = $('#val_password').html();
 //            console.log(session, password);
             const response = await fetch('/facilitatorlogin', {
                 method: 'POST',
@@ -120,7 +123,9 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(ret)
 //            const data = await response.json();
             // Redirect to facilitator dashboard with the token
-            window.open(`/facilitatordashboard`, '_blank');
+            document.cookie = `sessionID=${session}`;
+//            console.log(document.cookie);
+            window.open(`/facilitatordashboard`, 'facdash');
         } catch (err) {
             console.log('error');
             console.log(err);

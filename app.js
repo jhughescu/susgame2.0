@@ -14,7 +14,9 @@ const PORT = process.env.PORT || 3000;
 const databaseController = require('./controllers/databaseController');
 const sessionController = require('./controllers/sessionController');
 const adminController = require('./controllers/adminController');
+const gameController = require('./controllers/gameController');
 const Session = require('./models/session');
+//const Game = require('./models/game');
 
 
 
@@ -41,13 +43,7 @@ io.on('connection', (socket) => {
 //        console.log(`id: ${id}`);
         sessionController.getSessionWithID(id);
     });
-    socket.on('activateSession', (session) => {
 
-        console.log('get it going');
-        createRoute(session.address);
-        sessionController.activateSession(session);
-
-    })
     // Handle other socket events...
 });
 
@@ -59,6 +55,28 @@ adminDashboardNamespace.on('connection', (socket) => {
 //        console.log('User disconnected from the admin dashboard');
     });
 
+    // Handle other socket events specific to the admin dashboard...
+});
+// Define a separate namespace for socket.io connections related to all facilitator dashboards
+const facilitatorDashboardNamespace = io.of('/facilitatordashboard');
+facilitatorDashboardNamespace.on('connection', (socket) => {
+    console.log('A user connected to a facilitator dashboard');
+    socket.on('disconnect', () => {
+        console.log('User disconnected from a facilitator dashboard');
+    });
+    socket.on('getGame', (id) => {
+        gameController.getGame(id);
+    });
+    socket.on('startGame', (o, cb) => {
+        gameController.startGame(o, cb);
+    });
+    socket.on('activateSession', (session) => {
+
+//        console.log('get it going');
+        createRoute(session.address);
+        sessionController.activateSession(session);
+
+    });
     // Handle other socket events specific to the admin dashboard...
 });
 
@@ -121,7 +139,7 @@ app.post('/admin/createSession', async (req, res) => {
 //        console.log('noo')
 //        console.log(sesh)
         app.get(`/${sesh.address.split('/').reverse()[0]}`, (req, res) => {
-            res.send('yep, game is on')
+            res.send('yep, game is on');
         })
     } catch (err) {
         console.log('ero')
@@ -134,11 +152,23 @@ app.post('/admin/getSession', async (req, res) => {
     sessionController.getSession(req, res);
 });
 
-// ALWAYS LAST!!!!!!!!!
-//app.use((req, res) => {
-//    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
-//});
 
+// Declare the 404 response
+const notFoundHandler = (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+};
+// Initial 404 handler
+app.use(notFoundHandler);
+
+const showRoutes = (routeName) => {
+    const routes = app._router.stack;
+    for (const layer of routes) {
+//        if (layer.name === 'bound dispatch') {
+            console.log(layer);
+//        }
+    }
+    return false; // Route with the requested name does not exist
+};
 const routeExists = (routeName) => {
     const routes = app._router.stack;
     for (const layer of routes) {
@@ -149,17 +179,17 @@ const routeExists = (routeName) => {
     return false; // Route with the requested name does not exist
 };
 const createRoute = (r) => {
+//    return;
+//    console.log('CREATE ROUTE');
     let rt = r.indexOf('http', 0) > -1 ? r.split('/').reverse()[0] : r;
     rt = rt.substr(0, 1) === '/' ? rt : '/' + rt;
+    app._router.stack = app._router.stack.filter(layer => layer.handle !== notFoundHandler);
     if (!routeExists(rt)) {
-        app._router.stack.pop();
         app.get(rt, (req, res) => {
-//            res.send('yep, game is on');
-            res.render('intro');
+            res.sendFile(path.join(__dirname, 'public', 'player.html'));
         });
-//        app.use((req, res) => {
-//            res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
-//        });
+        app.use(notFoundHandler);
+//        showRoutes();
     }
 };
 databaseController.dbConnect();

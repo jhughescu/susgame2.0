@@ -8,7 +8,8 @@ const sessionSchema = new Schema({
     password: String,
     address: String,
     teams: Array,
-    state: {cl: Number, cr: Number},
+    state: String,
+    progress: Number,
     scores: Array
 });
 

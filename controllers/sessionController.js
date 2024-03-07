@@ -50,12 +50,12 @@ const generateAdress = (req) => {
     });
     const root = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
     const suffix = `/game-${id}`;
-    const address = `${root}${suffix}`;
+//    const address = `${root}${suffix}`;
 //    app.get(suffix, (req, res) => {
 //        res.send('yep, game is on')
 //    })
 //    createRoute(suffix);
-    return address;
+    return suffix;
 };
 const activateSession = (session) => {
     console.log(`activateSession: ${session}`);
@@ -163,9 +163,11 @@ async function newSession(req, res) {
         const address = generateAdress(req);
         // Create a new session document
         const type = req.body.valType;
+        const state = 'pending';
+        const progress = 0;
 //        console.log(type);
 //        console.log(`type: ${type}`);
-        const newSession = new Session({ dateID, uniqueID, password, address, type });
+        const newSession = new Session({ dateID, uniqueID, password, address, type , state, progress});
 
         // Save the new session document to the database
         await newSession.save();

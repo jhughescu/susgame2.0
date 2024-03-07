@@ -54,6 +54,10 @@
     <script id='template_session' type='text/x-handlebars-template'>
         Session detail:
         <table><tbody>
+            {{#each this}}
+            <tr><td>{{@key}}</td><td id='val_{{@key}}'>{{this}}</td></tr>
+            {{/each}}
+<!--
             <tr><td>uniqueID</td><td id='sSession'>{{uniqueID}}</td></tr>
             <tr><td>address</td><td>{{address}}</td></tr>
             <tr><td>dateID</td><td>{{dateID}}</td></tr>
@@ -61,6 +65,7 @@
             <tr><td>password</td><td id='sPassword'>{{#if password}}{{password}}{{else}}NOT PROVIDED{{/if}}</td></tr>
             <tr><td>scores</td><td>{{scores}}</td></tr>
             <tr><td>teams</td><td>{{teams}}</td></tr>
+-->
         </tbody></table>
         {{#if password}}<div id='launch' class='link'>facilitate this session</div>{{/if}}
     </script>

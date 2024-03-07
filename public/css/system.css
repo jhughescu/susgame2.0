@@ -1,9 +1,4 @@
-.link {
-    cursor: pointer
-}
-.link:hover {
-    text-decoration: underline;
-}
+
 .panel .button {
     width: 30px;
     height: 30px;
