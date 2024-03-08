@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const EventEmitter = require('events');
+const dbEvents = new EventEmitter();
 require('dotenv').config();
 
 // MongoDB connection URI
@@ -18,6 +20,20 @@ async function dbConnect() {
         }
         await mongoose.connect(uri);
         console.log('DB connected');
+        const db = mongoose.connection;
+//        console.log(db);
+        const collection = db.collection('sessions');
+        const changeStream = collection.watch();
+        changeStream.on('change', (change) => {
+//            console.log('Change occurred:', change);
+            dbEvents.emit('databaseChange', change);
+            // Handle the change as needed
+        });
+
+        // Handle errors
+        changeStream.on('error', (err) => {
+            console.error('Change stream error:', err);
+        });
     } catch (err) {
         console.error('Error connecting to MongoDB:', err);
     }
@@ -45,4 +61,4 @@ const dbConnected = () => {
 };
 
 
-module.exports = { dbConnect };
+module.exports = { dbConnect, dbEvents };

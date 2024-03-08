@@ -11,13 +11,17 @@ const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+//const io = socketIo(server);
+const { initSocket } = require('./controllers/socketController');
+initSocket(server);
 const PORT = process.env.PORT || 3000;
 
 const databaseController = require('./controllers/databaseController');
 const templateController = require('./controllers/templateController');
 const sessionController = require('./controllers/sessionController');
+//const socketController = require('./controllers/socketController');
 const adminController = require('./controllers/adminController');
+const eventController = require('./controllers/eventController');
 const gameController = require('./controllers/gameController');
 const Session = require('./models/session');
 //const Game = require('./models/game');
@@ -25,7 +29,9 @@ const Session = require('./models/session');
 
 //require('./views/partials');
 
-
+databaseController.dbEvents.on('databaseChange', (ch) => {
+    console.log('no way')
+});
 
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -50,7 +56,7 @@ app.get('/views/:templateName', (req, res) => {
 });
 
 
-
+/*
 io.on('connection', (socket) => {
 //    console.log('A user connected (HTTP or WebSocket)');
     socket.on('disconnect', () => {
@@ -63,7 +69,6 @@ io.on('connection', (socket) => {
 
     // Handle other socket events...
 });
-
 // Define a separate namespace for socket.io connections related to the admin dashboard
 const adminDashboardNamespace = io.of('/admin/systemdashboard');
 adminDashboardNamespace.on('connection', (socket) => {
@@ -96,6 +101,7 @@ facilitatorDashboardNamespace.on('connection', (socket) => {
     });
     // Handle other socket events specific to the admin dashboard...
 });
+*/
 
 // Routes
 
