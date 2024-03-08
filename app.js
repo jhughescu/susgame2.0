@@ -1,5 +1,8 @@
 const express = require('express');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
+const handlebars = require('handlebars');
+//const hbs = require('hbs');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const http = require('http');
@@ -12,6 +15,7 @@ const io = socketIo(server);
 const PORT = process.env.PORT || 3000;
 
 const databaseController = require('./controllers/databaseController');
+const templateController = require('./controllers/templateController');
 const sessionController = require('./controllers/sessionController');
 const adminController = require('./controllers/adminController');
 const gameController = require('./controllers/gameController');
@@ -19,20 +23,33 @@ const Session = require('./models/session');
 //const Game = require('./models/game');
 
 
+//require('./views/partials');
+
+
 
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser())
+app.use(cookieParser());
+
+// Serve static files from the 'views' directory
+//app.use(express.static('public'));
 
 
 app.engine('.hbs', exphbs.engine({
     extname: '.hbs',
     layoutsDir: path.join(__dirname, 'views'),
+    partialsDir: path.join(__dirname, 'views/partials'),
     defaultLayout: false
 }));
 app.set('view engine', '.hbs');
+app.get('/views/:templateName', (req, res) => {
+    const templateName = req.params.templateName;
+    res.sendFile(`${__dirname}/views/${templateName}`);
+});
+
+
 
 io.on('connection', (socket) => {
 //    console.log('A user connected (HTTP or WebSocket)');
@@ -89,6 +106,8 @@ app.post('/admin/systemlogin', adminController.adminAuth, (req, res) => {
     res.redirect('/admin/systemdashboard'); // Redirect to admin dashboard upon successful login
 });
 app.get('/admin/systemdashboard', adminController.checkSessionTimeoutAndRedirect, (req, res) => {
+    templateController.setupPartials();
+    console.log('>>>>> dev only, knock out in production (see app.js /admin/systemdashboard route)')
     res.sendFile(path.join(__dirname, 'public', 'systemdashboard.html'));
 });
 app.get('/admin/reset-timeout', (req, res) => {
@@ -126,6 +145,9 @@ app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
     res.redirect(`/facilitatordashboard?token=${token}`); // Redirect to admin dashboard upon successful login
 });
 
+app.get('/testbed', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'testbed.html'));
+})
 
 
 app.get('/loginfail', (req, res) => {
@@ -152,13 +174,17 @@ app.post('/admin/getSession', async (req, res) => {
     sessionController.getSession(req, res);
 });
 
+app.get('/getTemplate', (req, res) => {
+    templateController.getTemplate(req, res);
+});
+
 
 // Declare the 404 response
 const notFoundHandler = (req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 };
 // Initial 404 handler
-app.use(notFoundHandler);
+//app.use(notFoundHandler);
 
 const showRoutes = (routeName) => {
     const routes = app._router.stack;

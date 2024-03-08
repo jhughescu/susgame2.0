@@ -2,6 +2,8 @@
 const securePassword = require('secure-random-password');
 const Session = require('../models/session');
 
+let select = '-_id -__v';
+
 const getTopNumber = (s) => {
     let tn = 0;
     if (s.length > 0) {
@@ -91,7 +93,9 @@ async function getSessionPassword(id) {
 }
 async function getSessions(req, res) {
     try {
-        const existingSessions = await Session.find();
+        let filter = select + ' -password';
+//        let filter = select;
+        const existingSessions = await Session.find().select(filter);
         res.json(existingSessions);
     } catch (error) {
         console.error('Error generating unique session ID:', error);

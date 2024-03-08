@@ -65,7 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const renderSession = () => {
-        window.renderTemplate('sessionCard', 'session', session);
+        window.renderTemplate('sessionCard', 'sessionCardFacilitator', session, () => {
+            setupLinks();
+            $('#gameRestore').addClass('disabled');
+            $('#gameEnd').addClass('disabled');
+        });
     };
     const initSession = () => {
         renderSession();

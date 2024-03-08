@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Facilitator Dashboard</title>
     <link rel='stylesheet' href='../css/basics.css' type='text/css'>
+    <link rel='stylesheet' href='../css/facilitator.css' type='text/css'>
     <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
 <!--    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">-->
@@ -18,6 +19,7 @@
 <body>
     <h1>Game Facilitator Dashboard</h1>
     <div id='sessionCard'></div>
+<!--
     <script id='template_session' type='text/x-handlebars-template'>
         Session detail:
         <table><tbody>
@@ -28,10 +30,10 @@
         <br>
         <div class='link' id='gameStart'>start or join this game</div>
         <a id='gameLaunch' href='{{this.base}}{{this.address}}?active=false' target='_blank'>go to game player screen (testing only, will not join session)</a>
-        <div class='link' id='gameRestore'>restore game</div>
-        <div class='link' id='gameEnd'>end game</div>
-<!--        <a href='/player' target='_blank'>go to game</a>-->
+        <div class='link disabled' id='gameRestore'>restore game</div>
+        <div class='link disabled' id='gameEnd'>end game</div>
     </script>
+-->
 </body>
 
 </html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack Divs Vertically with Text Width</title>
+<style>
+    /* Style for the container */
+    .container {
+        /* Ensure divs stack vertically */
+        display: block;
+    }
+
+    /* Style for the divs */
+    .clickable-div {
+        margin: 5px 0; /* Optional: Add some vertical spacing between the divs */
+        background-color: #f0f0f0; /* Optional: Add background color for better visibility */
+        padding: 5px; /* Optional: Add padding for better visual appearance */
+        cursor: pointer; /* Change cursor to pointer to indicate clickable */
+    }
+</style>
+</head>
+<body>
+
+<!-- Container to hold the divs -->
+<div class="container" id="container">
+    <!-- Divs will stack vertically -->
+</div>
+
+<script>
+    // Function to create and append a div with text content
+    function createDivWithText(text) {
+        var div = document.createElement('div');
+        div.className = 'clickable-div';
+        div.textContent = text;
+        document.getElementById('container').appendChild(div);
+    }
+
+    // Example: Create divs with text
+    createDivWithText('Link 1');
+    createDivWithText('Link 2');
+    createDivWithText('Link 3');
+</script>
+
+</body>
+</html>

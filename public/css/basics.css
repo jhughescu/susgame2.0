@@ -31,16 +31,29 @@ a:visited {
 a:hover {
     text-decoration: underline;
 }
-a.disabled {
+a.disabled, .link.disabled {
     color: grey;
     cursor: default;
 }
-a.disabled:hover {
+a.disabled:hover, .link.disabled:hover {
     text-decoration: none;
 }
 .link {
-    cursor: pointer
+    cursor: pointer;
+/*    display: inline-block;*/
+    width: fit-content;
+/*    background-color: green;*/
+}
+.vertstack {
+    display: block;
 }
 .link:hover {
     text-decoration: underline;
+}
+.highlight {
+    color: yellow;
+}
+table, td, tr {
+    border-collapse: collapse;
+    border: 0px;
 }

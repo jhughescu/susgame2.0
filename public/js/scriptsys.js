@@ -35,10 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (el.value > rangeTop)  {
             el.value = 1;
        }
-    }
+    };
+
+
     document.getElementById('showSessionsForm').addEventListener('submit', function(event) {
         event.preventDefault();
-        // Use fetch to submit the form data to the server asynchronously
         fetch('/admin/getSessions', {
                 method: 'POST',
                 body: new FormData(this)
@@ -50,16 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json(); // Parse the response body as JSON
             })
             .then(data => {
-                $('.panel_sessions').show();
-                $('.panel_sessions').draggable();
-                window.renderTemplate('sessionList', 'sessions', {sessions: data});
-                readySessionLinks();
+                panel('sessions', data);
             })
             .catch(error => {
                 console.error('Error:', error);
             });
-
     });
+
     document.getElementById('createSessionForm').addEventListener('submit', function(event) {
         const inputType = document.getElementById('type');
         const valType = parseInt(inputType.value);
@@ -132,6 +130,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    const panel = (id, data) => {
+        window.renderTemplate('panel', 'panel', {id: id, content: 'sessionPanel'}, () => {
+            const p = $(`#panel_${id}`);
+            p.show();
+            p.draggable();
+            p.find('.close').off('click');
+            p.find('.close').on('click', function () {
+                p.find('#sessionList').html('');
+                p.find('#sessionDetail').html('');
+                p.hide();
+            });
+            window.renderTemplate('sessionList', 'sessionList', {sessions: data}, readySessionLinks);
+        });
+//
+
+        return;
+
+    };
     const getSession = (sessionID) => {
         // Prompt the user to enter a password
         let password = prompt('Session password will be omitted from return unless admin password is provided here:', 'canary');
@@ -156,9 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 // Process the data received from the server
                 $('#sessionDetail').fadeOut(300, function () {
-                    window.renderTemplate('sessionDetail', 'session', data);
+                    window.renderTemplate('sessionDetail', 'sessionCardSystem', data, readyLaunch);
                     $('#sessionDetail').fadeIn();
-                    readyLaunch();
+//                    readyLaunch();
                 });
             })
             .catch(error => {
@@ -166,15 +182,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     };
     const readySessionLinks = () => {
-        // Attach click event handler to elements with class 'getSession'
-        $('.getSession').off('click');
-        $('.getSession').on('click', function() {
-            // Get the session ID from the 'data-session-id' attribute
+        const gs = $('.getSession');
+        gs.off('click');
+        gs.on('click', function() {
+            gs.removeClass('highlight');
             var sessionId = $(this).data('session-id');
+            $(this).addClass('highlight');
             getSession(sessionId);
-
         });
     };
+    window.readyL = readySessionLinks;
     const readyDevLinks = () => {
         let us = $('#updateSession');
         us.off('click');
