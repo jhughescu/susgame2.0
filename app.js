@@ -158,11 +158,6 @@ app.get('/loginfail', (req, res) => {
 app.post('/admin/createSession', async (req, res) => {
     try {
         const sesh = await sessionController.newSession(req, res);
-//        console.log('noo')
-//        console.log(sesh)
-        app.get(`/${sesh.address.split('/').reverse()[0]}`, (req, res) => {
-            res.send('yep, game is on');
-        })
     } catch (err) {
         console.log('ero')
     }
