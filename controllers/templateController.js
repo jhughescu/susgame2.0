@@ -20,7 +20,8 @@ const listFiles = (directoryPath, fileType = null) => {
 };
 
 const setupPartials = () => {
-    const dir = __dirname + './../views/partials/';
+//    const dir = __dirname + './../views/partials/';
+    const dir = path.join(__dirname, '..', 'views', 'partials');
     listFiles(dir, 'hbs')
     .then(files => {
 //        console.log('Files in the directory:');
