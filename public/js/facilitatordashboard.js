@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('end');
     };
     const setupLinks = () => {
+        console.log('setupLinks');
         let sg = $('#gameStart');
         let rg = $('#gameRestore');
         let eg = $('#gameEnd');
@@ -65,15 +66,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const renderSession = () => {
-        window.renderTemplate('sessionCard', 'sessionCardFacilitator', session, () => {
+        window.setupObserver('sessionCard', () => {
+            console.log('mutationObserver detects change in sessionCard');
             setupLinks();
             $('#gameRestore').addClass('disabled');
             $('#gameEnd').addClass('disabled');
+//            obs.disconnect();
+        });
+        window.renderTemplate('sessionCard', 'sessionCardFacilitator', session, () => {
+            console.log('the renderTemplate callback');
         });
     };
     const initSession = () => {
         renderSession();
-        setupLinks();
+//        setupLinks();
 //        console.log(`initSession`)
 //        console.log(session);
 //        console.log(session.state === 'started');
