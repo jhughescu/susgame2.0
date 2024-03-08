@@ -20,6 +20,28 @@ const listFiles = (directoryPath, fileType = null) => {
 };
 
 const setupPartials = () => {
+    const dir = __dirname + './../views/partials/';
+    listFiles(dir, 'hbs')
+    .then(files => {
+//        console.log('Files in the directory:');
+//        console.log(files);
+        files.forEach(file => {
+            const id = file.split('.')[0];
+//            const pf = fs.readFileSync(__dirname + './../views/partials/' + file, 'utf8');
+            const pp = path.join(__dirname, '..', 'views', 'partials', file);
+//            console.log(pf, id);
+            const template = fs.readFileSync(pp, 'utf8');
+            const partial = handlebars.compile(template);
+            handlebars.registerPartial(id, partial);
+        });
+        console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered`);
+    })
+    .catch(err => {
+        console.error('Error listing files:', err);
+    });
+};
+
+const setupPartialsV1 = () => {
     const path = __dirname + './../views/partials/';
     listFiles(path, 'hbs')
     .then(files => {
