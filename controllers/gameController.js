@@ -1,3 +1,4 @@
+//const { createRoute} = require('./../app');
 const Game = require('./../models/game');
 const sessionController = require('./../controllers/sessionController');
 const games = {};
@@ -16,5 +17,5 @@ const startGame = (o, cb) => {
 };
 const getGame = (id) => {
     console.log(`get game with id ${id}`);
-}
+};
 module.exports = { getGame , startGame };

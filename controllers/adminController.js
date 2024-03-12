@@ -8,6 +8,7 @@ const adminAuth = (req, res, next) => {
     const {
         password
     } = req.body;
+//    console.log(req.body)
 //    console.log(password, process.env.ADMIN_PASSWORD)
     if (password === process.env.ADMIN_PASSWORD) {
         resetAdmin();

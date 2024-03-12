@@ -1,9 +1,16 @@
 const socketIo = require('socket.io');
-
+const gameController = require('./../controllers/gameController');
+const routeController = require('./../controllers/routeController');
+const sessionController = require('./../controllers/sessionController');
+//console.log(gameController)
+//console.log(app)
+let io = null;
+let adminDashboardNamespace = null;
+let facilitatorDashboardNamespace = null;
 // Function to initialize socket.io
 function initSocket(server) {
-    const io = socketIo(server);
-
+    io = socketIo(server);
+    console.log('INIT');
     // Handle client events
     io.on('connection', (socket) => {
         socket.on('disconnect', () => {
@@ -18,8 +25,9 @@ function initSocket(server) {
 
         // Add more event handlers as needed
     });
+
     // Define a separate namespace for socket.io connections related to the admin dashboard
-    const adminDashboardNamespace = io.of('/admin/systemdashboard');
+    adminDashboardNamespace = io.of('/admin/systemdashboard');
     adminDashboardNamespace.on('connection', (socket) => {
         console.log('A user connected to the admin dashboard');
         socket.on('disconnect', () => {
@@ -28,8 +36,9 @@ function initSocket(server) {
 
         // Handle other socket events specific to the admin dashboard...
     });
+
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
-    const facilitatorDashboardNamespace = io.of('/facilitatordashboard');
+    facilitatorDashboardNamespace = io.of('/facilitatordashboard');
     facilitatorDashboardNamespace.on('connection', (socket) => {
         console.log('A user connected to a facilitator dashboard');
         socket.on('disconnect', () => {
@@ -42,16 +51,21 @@ function initSocket(server) {
             gameController.startGame(o, cb);
         });
         socket.on('activateSession', (session) => {
-
-            //        console.log('get it going');
-            createRoute(session.address);
+            routeController.createRoute(session.address);
             sessionController.activateSession(session);
 
         });
         // Handle other socket events specific to the admin dashboard...
     });
+    theIO = io;
+}
+const emitSystem = (ev, o) => {
+    if (io) {
+        adminDashboardNamespace.emit(ev, o)
+    }
 }
 
 module.exports = {
-    initSocket
+    initSocket,
+    emitSystem
 };

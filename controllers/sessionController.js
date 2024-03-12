@@ -41,7 +41,7 @@ const generatePassword = (l) => {
     return password;
 };
 
-const generateAdress = (req) => {
+const generateAddress = (req) => {
     // This method used to create a unique address for each session.
     const id = securePassword.randomPassword({
         length: 4, // specify the length of the password
@@ -52,11 +52,6 @@ const generateAdress = (req) => {
     });
     const root = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
     const suffix = `/game-${id}`;
-//    const address = `${root}${suffix}`;
-//    app.get(suffix, (req, res) => {
-//        res.send('yep, game is on')
-//    })
-//    createRoute(suffix);
     return suffix;
 };
 const activateSession = (session) => {
@@ -164,7 +159,7 @@ async function newSession(req, res) {
 //        console.log(`sessionID: ${uniqueID}`);
         // auto-generate password
         const password = generatePassword(6);
-        const address = generateAdress(req);
+        const address = generateAddress(req);
         // Create a new session document
         const type = req.body.valType;
         const state = 'pending';

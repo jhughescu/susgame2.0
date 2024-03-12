@@ -223,6 +223,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     };
+    socket.on('databaseChange', (ch) => {
+        console.log('times they are a changing');
+        console.log(ch);
+    })
     $(document).ready(function() {
         readySessionLinks();
         readyDevLinks();
