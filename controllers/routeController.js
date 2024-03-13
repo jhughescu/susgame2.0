@@ -106,8 +106,6 @@ app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
 });
 
 
-
-
 app.get('/loginfail', (req, res) => {
     res.sendFile(path.join(basePath, 'loginfail.html'));
 });

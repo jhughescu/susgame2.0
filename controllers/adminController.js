@@ -4,12 +4,14 @@ const sessionController = require('./../controllers/sessionController');
 const systemtimeout = 20 * 60 * 1000;
 // v low value means timeout will never be expired on entry
 let systemNow = -1 * 1000 * 60 * 60 * 24 * 365 * 100;
+
 const adminAuth = (req, res, next) => {
     const {
         password
     } = req.body;
 //    console.log(req.body)
 //    console.log(password, process.env.ADMIN_PASSWORD)
+//    console.log(password, process.env.STORAGE_ID)
     if (password === process.env.ADMIN_PASSWORD) {
         resetAdmin();
         next();

@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', function() {
         onConnect();
 
     });
+    socket.on('checkOnConnection', () => {
+        console.log('connected one way or another, find out if there is a game on');
+        init();
+    });
     const getSessionID = () => {
         const cookies = document.cookie.split(';');
 //        console.log(`getSessionID`);
@@ -116,6 +120,6 @@ document.addEventListener('DOMContentLoaded', function() {
             getSession(sessionID);
         }
     };
-    init();
+//    init();
 });
 

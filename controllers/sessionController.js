@@ -71,6 +71,18 @@ async function getSessionWithID(id) {
         console.log('no session found');
     }
 }
+async function getSessionWithAddress(id) {
+    try {
+        const session = await Session.findOne({ address: id }).select('-password -_id -__v');
+        if (!session) {
+            // If session is not found, return an error
+            throw new Error('Session not found');
+        }
+        return session;
+    } catch (err) {
+        console.log('no session found');
+    }
+}
 async function getSessionPassword(id) {
 //    console.log('getfull');
     try {
@@ -95,6 +107,18 @@ async function getSessions(req, res) {
     } catch (error) {
         console.error('Error generating unique session ID:', error);
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
+async function sessionExists(prop, val) {
+    // return true if a session exists with a val matching prop
+    try {
+        const query = {};
+        query[prop] = val;
+        const session = await Session.find(query);
+        console.log(session.length > 0);
+        return session.length > 0;
+    } catch (error) {
+        console.log(error);
     }
 }
 async function getSession(req, res) {
@@ -140,7 +164,7 @@ async function updateSession(uniqueID, updateOb) {
             updateOb,
             { new: true }
         );
-        console.log('Updated document:', updatedSession);
+//        console.log('Updated document:', updatedSession);
         return updatedSession;
     } catch (error) {
         console.error('Error updating document:', error);
@@ -180,4 +204,4 @@ async function newSession(req, res) {
     }
 }
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , activateSession};
+module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , activateSession, getSessionWithAddress};

@@ -7,10 +7,23 @@ const sessionController = require('./../controllers/sessionController');
 let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
+let playerNamespace = null;
+
+const getQueries = (u) => {
+    let r = u.split('?');
+    let qu = {};
+    r.forEach(q => {
+        q = q.split('=');
+        qu[q[0]] = q[1];
+    });
+//    console.log(qu);
+    return qu;
+};
+
 // Function to initialize socket.io
 function initSocket(server) {
     io = socketIo(server);
-    console.log('INIT');
+//    console.log('INIT');
     // Handle client events
     io.on('connection', (socket) => {
         socket.on('disconnect', () => {
@@ -40,7 +53,8 @@ function initSocket(server) {
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
     facilitatorDashboardNamespace = io.of('/facilitatordashboard');
     facilitatorDashboardNamespace.on('connection', (socket) => {
-        console.log('A user connected to a facilitator dashboard');
+        console.log('A user connected to a facilitator dashboard - has their game started?');
+        socket.emit('checkOnConnection');
         socket.on('disconnect', () => {
             console.log('User disconnected from a facilitator dashboard');
         });
@@ -57,7 +71,29 @@ function initSocket(server) {
         });
         // Handle other socket events specific to the admin dashboard...
     });
-    theIO = io;
+
+    playerNamespace = io.of('/player');
+    playerNamespace.on('connection', async (socket) => {
+        let ref = socket.request.headers.referer;
+        const isReal = getQueries(ref)['isAdmin'] !== 'true';
+        if (isReal) {
+            ref = ref.split('?')[0];
+            const gameID = ref.split('/').reverse()[0];
+            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+//            console.log(`session Exists`)
+//            console.log(session)
+
+            if (session) {
+                socket.emit('playerConnect', process.env.STORAGE_ID);
+            }
+            socket.on('regPlayer', (data) => {
+//                console.log('regPlayer', data);
+                gameController.registerPlayer(session, data);
+            })
+        }
+    });
+
+//    theIO = io;
 }
 const emitSystem = (ev, o) => {
     if (io) {
