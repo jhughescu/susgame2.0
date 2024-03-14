@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
             for (const mutation of mutationsList) {
                 // Perform actions based on the type of mutation
                 if (mutation.type === 'childList') {
-                    console.log('A child node has been added or removed');
+//                    console.log('A child node has been added or removed');
                     // Perform actions such as updating the UI, etc.
                     if (cb) {
                         cb();
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(compiledTemplate => {
                 const template = compiledTemplate;
                 document.getElementById(targ).innerHTML = template;
-                console.log('template loaded');
+//                console.log('template loaded');
                 if (cb) {
                     cb();
                 }

@@ -54,33 +54,32 @@ const generateAddress = (req) => {
     const suffix = `/game-${id}`;
     return suffix;
 };
-const activateSession = (session) => {
-    console.log(`activateSession: ${session}`);
-};
 
 
 async function getSessionWithID(id) {
+//    console.log(`getSessionWithID: ${id}`);
     try {
         const session = await Session.findOne({ uniqueID: id }).select('-password -_id -__v');
         if (!session) {
             // If session is not found, return an error
-            throw new Error('Session not found');
+            throw new Error(`getSessionWithID: Session not found (${id})`);
         }
         return session;
     } catch (err) {
-        console.log('no session found');
+        console.log(err);
     }
 }
 async function getSessionWithAddress(id) {
+//    console.log(`getSessionWithAddress: ${id}`);
     try {
         const session = await Session.findOne({ address: id }).select('-password -_id -__v');
         if (!session) {
             // If session is not found, return an error
-            throw new Error('Session not found');
+            throw new Error(`getSessionWithAddress: Session not found (${id})`);
         }
         return session;
     } catch (err) {
-        console.log('no session found');
+        console.log(err);
     }
 }
 async function getSessionPassword(id) {
@@ -115,7 +114,7 @@ async function sessionExists(prop, val) {
         const query = {};
         query[prop] = val;
         const session = await Session.find(query);
-        console.log(session.length > 0);
+//        console.log(session.length > 0);
         return session.length > 0;
     } catch (error) {
         console.log(error);
@@ -158,6 +157,8 @@ async function getSession(req, res) {
     }
 }
 async function updateSession(uniqueID, updateOb) {
+//    console.log(`updateSession: ${uniqueID}`);
+//    console.log(updateOb);
     try {
         const updatedSession = await Session.findOneAndUpdate(
             { uniqueID },
@@ -204,4 +205,4 @@ async function newSession(req, res) {
     }
 }
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , activateSession, getSessionWithAddress};
+module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , getSessionWithAddress};

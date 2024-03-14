@@ -1,3 +1,18 @@
 td {
     padding: 3px 20px;
 }
+#logFeed {
+    background-color: black;
+    border: 2px solid white;
+    border-radius: 4px;
+    width: 400px;
+    height: 300px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    font-size: 0.8rem;
+    padding: 10px;
+    margin: 20px;
+}
+#logFeed p {
+    margin: 2px;
+}

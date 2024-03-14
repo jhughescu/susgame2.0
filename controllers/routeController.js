@@ -37,9 +37,10 @@ const routeExists = (routeName) => {
 };
 const createRoute = (r) => {
 //    return;
-//    console.log('CREATE ROUTE');
+
     let rt = r.indexOf('http', 0) > -1 ? r.split('/').reverse()[0] : r;
     rt = rt.substr(0, 1) === '/' ? rt : '/' + rt;
+    console.log(`createRoute: ${rt}`);
     app._router.stack = app._router.stack.filter(layer => layer.handle !== notFoundHandler);
     if (!routeExists(rt)) {
         app.get(rt, (req, res) => {
