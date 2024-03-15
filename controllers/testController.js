@@ -1,8 +1,6 @@
-const { eventEmitter } = require('./../controllers/eventController');
-console.log('testController')
-setInterval(() => {
-    console.log(eventEmitter);
-}, 2000);
+const { getEventEmitter } = require('./../controllers/eventController');
+const eventEmitter = getEventEmitter();
+
 
 module.exports = {
     eventEmitter

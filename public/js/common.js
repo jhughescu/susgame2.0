@@ -56,10 +56,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error fetching or rendering template:', error);
             });
     };
+    const copyObjectWithExclusions = (obj, exclusions) => {
+        const newObj = {};
+        // Copy properties from the original object to the new object,
+        // excluding properties specified in the exclusions array
+        for (const key in obj) {
+            if (!exclusions.includes(key)) {
+                newObj[key] = obj[key];
+            }
+        }
+        return newObj;
+    }
     const setupPanel = () => {
         console.log('setupPanel')
+    };
+    const getQueries = (u) => {
+        // return an object all query string properties in a given URL
+        let qu = {};
+        if (u.indexOf('?', 0) > -1) {
+            let r = u.split('?')[1];
+            r = r.split('&');
+            r.forEach(q => {
+                q = q.split('=');
+                qu[q[0]] = q[1];
+            });
+        }
+        return qu;
     };
     window.renderTemplate = renderTemplate;
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
+    window.copyObjectWithExclusions = copyObjectWithExclusions;
+    window.getQueries = getQueries;
 });

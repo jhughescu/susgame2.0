@@ -1,8 +1,10 @@
 //const { createRoute} = require('./../app');
 const Game = require('./../models/game');
 const sessionController = require('./../controllers/sessionController');
-const { eventEmitter } = require('./../controllers/eventController');
+const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
+
+const eventEmitter = getEventEmitter();
 const games = {};
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
@@ -16,9 +18,7 @@ async function startGame (o, cb) {
             sessionController.updateSession(session.uniqueID, {state: 'started'});
         }
     }
-    console.log(Object.keys(games).length);
     rg = games[game];
-//    console.log(session)
     routeController.createRoute(`${session.address}`);
     try {
         await rg.loadPersistentData(session.type);
@@ -61,7 +61,7 @@ const getGame = (id) => {
 const getGameWithUniqueID = (id) => {
     for (let g in games) {
         if (games[g].uniqueID === id) {
-            console.log(games[g].uniqueID)
+//            console.log(games[g].uniqueID)
             return games[g];
         }
     }
@@ -73,39 +73,62 @@ const getGameWithAddress = (add) => {
         }
     }
 };
+async function resetGame(id, cb) {
+
+    // CURRENTLY RESETS ALL - ALL - THE PLAYERS
+    eventEmitter.emit('resetAll');
+    const game = getGameWithUniqueID(id);
+//    console.log(game);
+    game.players = [];
+    game.state = 'pending';
+
+    // NEED TO UPDATE THE ASSOCIATED SESSION
+    console.log('setting state to pending')
+    const session = await sessionController.updateSession(id, {state: 'pending'});
+    if (session) {
+        console.log('return updated session');
+        console.log(session);
+        if (cb) {
+            cb(session);
+        }
+    }
+};
 const registerPlayer = (ob, cb, socket) => {
-    console.log(`registerPlayer to game ${ob.game}`);
+//    console.log(`registerPlayer to game ${ob.game}`);
+//    console.log(ob)
     const game = getGameWithAddress(ob.game);
     let ID = null;
-    console.log(ob);
+    let newP = null;
     if (game) {
+//        console.log(game.players)
         if (ob.player) {
+//            console.log(`yep, we have ob.player`);
             ID = ob.player;
             const pl = game.players.reduce((acc, plID) => {
                 acc[plID] = true;
                 return acc;
             }, {});
-            console.log(`is ${ob.player} already in this game? ${pl.hasOwnProperty(ob.player)}`);
-//            console.log(game.players);
-            if (!pl.hasOwnProperty(ob.player)) {
+            newP = !pl.hasOwnProperty(ob.player);
+            if (newP) {
                 game.players.push(ob.player);
             }
         } else {
+//            console.log('no ob.player')
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
-            console.log(`no player ID, new player joining game at ${game.players.length}, ID: ${ID}`);
             game.players.push(ID);
+            newP = true;
             if (cb) {
                 cb(ID);
             } else {
                 console.log('reg P, no CB');
             }
-//            return ID;
         }
-        console.log(game.players);
+        console.log(`register ${ID} with game ${ob.game}, (${newP ? 'new' : 'existing'} ${ob.fake ? 'fake' : 'real'} player) - ${JSON.stringify(ob)}`);
+//        console.log(ob);
         eventEmitter.emit('gameUpdate', game);
         return ID;
     } else {
         console.log('no game exists with that address');
     }
 };
-module.exports = { getGame , getGameCount , startGame, restoreGame, registerPlayer };
+module.exports = { getGame , getGameCount , startGame, restoreGame, resetGame, registerPlayer };

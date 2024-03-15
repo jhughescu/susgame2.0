@@ -45,7 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
             game = rgame;
             addToLogFeed('game ready');
             getSession(game.uniqueID, () => {
-//                console.log('game cb');
+                console.log('game cb');
+//                renderGame();
             });
         });
     };
@@ -58,10 +59,21 @@ document.addEventListener('DOMContentLoaded', function() {
             addToLogFeed('game restore complete - game can recommence');
 //            console.log(rgame);
             game = rgame;
+            renderGame();
         });
     };
     const endGame = () => {
         console.log('end');
+    };
+    const resetGame = () => {
+        const id = game.uniqueID;
+        addToLogFeed(`resetting game ${id}`);
+        socket.emit('resetGame', id, (rs) => {
+//            console.log('resetGame callback');
+//            console.log(rs);
+            session = rs;
+            renderSession();
+        });
     };
     const setupLinks = () => {
 //        console.log('setupLinks');
@@ -75,10 +87,17 @@ document.addEventListener('DOMContentLoaded', function() {
         eg.on('click', endGame);
         if (session.state !== 'started') {
             gl.addClass('disabled');
-            document.getElementById('gameLaunch').addEventListener('click', (ev) => {
-                ev.preventDefault();
-            });
+            if (document.getElementById('gameLaunch')) {
+                document.getElementById('gameLaunch').addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                });
+            }
         }
+    };
+    const setupGameLinks = () => {
+        const rg = $('#gameReset');
+        $('.link').off('click');
+        rg.on('click', resetGame);
     };
     const renderSession = () => {
         window.setupObserver('sessionCard', () => {
@@ -92,8 +111,20 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('the renderTemplate callback');
         });
     };
+    const renderGame = () => {
+        window.setupObserver('sessionCard', () => {
+//            console.log('mutationObserver detects change in sessionCard');
+            setupGameLinks();
+        });
+        // Render the game object excluding the persistent data
+        window.renderTemplate('sessionCard', 'gameCard', window.copyObjectWithExclusions(game, 'persistentData'), () => {
+//            console.log('the renderTemplate callback');
+
+        });
+    };
     const initSession = () => {
         renderSession();
+//        renderGame();
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
             restoreGame();
@@ -135,10 +166,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    socket.on('gameUpdate', (game) => {
-        console.log('gameUpdate');
-        console.log(game);
+    socket.on('gameUpdate', (g) => {
+//        console.log('gameUpdate');
+//        console.log(g);
+//        console.log(window.copyObjectWithExclusions(g, 'persistentData'));
+
+//        console.log(JSON.stringify(g));
+        game = g;
+        renderGame();
     });
-//    init();
+    init();
 });
 

@@ -1,11 +1,11 @@
 const socketIo = require('socket.io');
-const { eventEmitter } = require('./../controllers/eventController');
-//const gameController = require('./../controllers/gameController');
-//const routeController = require('./../controllers/routeController');
-//const sessionController = require('./../controllers/sessionController');
-setInterval(() => {
-//    console.log(eventEmitter);
-}, 2000);
+const { getEventEmitter } = require('./../controllers/eventController');
+const gameController = require('./../controllers/gameController');
+const routeController = require('./../controllers/routeController');
+const sessionController = require('./../controllers/sessionController');
+
+const eventEmitter = getEventEmitter();
+
 let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
@@ -19,13 +19,12 @@ const getQueries = (u) => {
         q = q.split('=');
         qu[q[0]] = q[1];
     });
-//    console.log(qu);
     return qu;
 };
 
 // Function to initialize socket.io
 function initSocket(server) {
-    /*
+
     io = socketIo(server);
 //    console.log('INIT');
     // Handle client events
@@ -72,7 +71,10 @@ function initSocket(server) {
         socket.on('restoreGame', (o, cb) => {
             gameController.restoreGame(o, cb);
         });
-        // Handle other socket events specific to the admin dashboard...
+        socket.on('resetGame', (id, cb) => {
+            gameController.resetGame(id, cb);
+        });
+
     });
 
     playerNamespace = io.of('/player');
@@ -93,18 +95,19 @@ function initSocket(server) {
             });
             socket.on('getGameCount', (cb) => {
                 gameController.getGameCount(cb);
-//                getGameCount(cb);
             });
         }
     });
 
-//    eventEmitter.on('gameUpdate', (game) => {
-//        console.log('onGameUpdate');
-//        console.log(game);
-//    })
+    eventEmitter.on('gameUpdate', (game) => {
+        facilitatorDashboardNamespace.emit('gameUpdate', game);
+    });
+    eventEmitter.on('resetAll', (id) => {
+        playerNamespace.emit('resetAll');
+    });
 
 //    theIO = io;
-*/
+
 }
 const emitAll = (ev, o) => {
     io.emit(ev, o);
