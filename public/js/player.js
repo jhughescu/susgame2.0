@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //    console.log(fake);
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
-        console.log(`registerwithGame: ${ID}`);
+        console.log(`registerwithGame: ${ID} ${qu.hasOwnProperty(fID) ? '(from query)' : ''}`);
         const initObj = {game: gID, player: ID, fake: fake};
         socket.emit('regPlayer', initObj, (res) => {
             console.log(`regPlayer callback, res: ${res}`);
@@ -22,17 +22,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log(`looks like a fake, does it have ID? ${qu.hasOwnProperty(fID)}`);
                     lID = lID + res;
                     if (!qu.hasOwnProperty(fID)) {
-                        const newURL = new URL(window.location.href);
-                        newURL.searchParams.set(fID, res);
-                        history.pushState(null, '', newURL);
+//                        const newURL = new URL(window.location.href);
+//                        newURL.searchParams.set(fID, res);
+//                        history.pushState(null, '', newURL);
                     }
                 }
+                console.log(`add to localStorage, ${lID}: ${res}`);
                 localStorage.setItem(lID, res)
             }
         });
     };
 
     const resetFake = () => {
+        return;
+
+
+
         const url = new URL(window.location.href);
         console.log(`resetFake:`);
         url.searchParams.delete(fID);

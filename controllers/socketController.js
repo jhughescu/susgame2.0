@@ -11,6 +11,9 @@ let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
 
+const log = (msg) => {
+    console.log(`socketController: ${msg}`);
+}
 
 const getQueries = (u) => {
     let r = u.split('?');
@@ -57,15 +60,16 @@ function initSocket(server) {
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
     facilitatorDashboardNamespace = io.of('/facilitatordashboard');
     facilitatorDashboardNamespace.on('connection', (socket) => {
-//        console.log('A user connected to a facilitator dashboard - has their game started?');
+        console.log('A user connected to a facilitator dashboard - has their game started?');
         socket.emit('checkOnConnection');
         socket.on('disconnect', () => {
 //            console.log('User disconnected from a facilitator dashboard');
         });
-        socket.on('getGame', (id) => {
-            gameController.getGame(id);
+        socket.on('getGame', (id, cb) => {
+            gameController.getGame(id, cb);
         });
         socket.on('startGame', (o, cb) => {
+            log(`startGame`);
             gameController.startGame(o, cb);
         });
         socket.on('restoreGame', (o, cb) => {
@@ -74,13 +78,16 @@ function initSocket(server) {
         socket.on('resetGame', (id, cb) => {
             gameController.resetGame(id, cb);
         });
-
+        socket.on('assignTeams', (ob, cb) => {
+            gameController.assignTeams(ob, cb);
+        })
     });
 
     playerNamespace = io.of('/player');
     playerNamespace.on('connection', async (socket) => {
         let ref = socket.request.headers.referer;
         const isReal = getQueries(ref)['isAdmin'] !== 'true';
+//        console.log(`playerNamespace setup, isReal? ${isReal}`);
         if (isReal) {
             ref = ref.split('?')[0];
             const gameID = ref.split('/').reverse()[0];

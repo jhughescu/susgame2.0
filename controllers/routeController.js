@@ -105,6 +105,9 @@ app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {
     res.cookie('sessionID', session, { httpOnly: false });
     res.redirect(`/facilitatordashboard?token=${token}`); // Redirect to admin dashboard upon successful login
 });
+app.get('/fakegenerator', (req, res) => {
+    res.sendFile(path.join(basePath, 'fakegenerator.html'));
+});
 
 
 app.get('/loginfail', (req, res) => {

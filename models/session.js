@@ -7,6 +7,7 @@ const sessionSchema = new Schema({
     type: Number,
     password: String,
     address: String,
+    players: Array,
     teams: Array,
     state: String,
     progress: Number,

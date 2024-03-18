@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const setupObserver = (elementId, cb) => {
         // Select the target element based on the provided ID
         const targetNode = document.getElementById(elementId);
+
         // Ensure the targetNode exists before proceeding
         if (!targetNode) {
             console.error(`Element with ID '${elementId}' not found.`);

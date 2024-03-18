@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // logFeed is an array of messages to be revealed to the client
     const logFeed = [];
+    const logFeedArchive = [];
 
     let session = null;
     let game = null;
@@ -12,10 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on');
         addToLogFeed('connected to app');
-        init();
+        sockInit();
     });
     const addToLogFeed = (msg) => {
         logFeed.push(`${logFeed.length + 1}: ${msg}`);
+        logFeedArchive.push(`${logFeed.length + 1}: ${msg}`);
         renderLogFeed();
     };
     const renderLogFeed = () => {
@@ -26,6 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 200);
         }
         window.renderTemplate('logFeed', 'facilitatorLogFeed', logFeed);
+    };
+    const clearLogFeed = () => {
+        logFeed.splice(0, logFeed.length);
+        renderLogFeed();
     };
     const getSessionID = () => {
         const cookies = document.cookie.split(';');
@@ -45,19 +51,17 @@ document.addEventListener('DOMContentLoaded', function() {
             game = rgame;
             addToLogFeed('game ready');
             getSession(game.uniqueID, () => {
-                console.log('game cb');
-//                renderGame();
+//                console.log('game cb');
             });
+            renderGame();
         });
     };
     const restoreGame = () => {
-//        console.log('restore');
-//        console.log(JSON.parse(JSON.stringify(session)));
         socket.emit('restoreGame', JSON.stringify(session), (rgame) => {
             console.log('restoreGame callback');
-//            console.log(game);
             addToLogFeed('game restore complete - game can recommence');
-//            console.log(rgame);
+            console.log(rgame);
+            console.log(rgame.assignTeams);
             game = rgame;
             renderGame();
         });
@@ -75,16 +79,52 @@ document.addEventListener('DOMContentLoaded', function() {
             renderSession();
         });
     };
-    const setupLinks = () => {
-//        console.log('setupLinks');
+    const launchFakeGenerator = () => {
+        window.open(`/fakegenerator#${game.address}`, '_blank');
+    };
+    const setupTab = (arg) => {
+        switch (arg) {
+        case 'session':
+            setupSessionLinks();
+            break;
+        case 'game':
+            setupGameLinks();
+            break;
+        case 'controls':
+            window.renderTemplate('contentControls', 'facilitatorcontrols', {}, () => {
+                setupControlLinks();
+            });
+
+            break;
+        default:
+            console.log(`invalid argument provided.`);
+    }
+
+    }
+    const setupBaseLinks = () => {
+        // adding a timeout because some elements don't appear to be present at init (for some weird reason)
+        setTimeout(() => {
+            let cl = $('#clearLog');
+            let tl = $('.tablinks');
+            cl.off('click');
+            tl.off('click');
+            cl.on('click', () => {
+                clearLogFeed();
+            });
+            tl.on('click', function () {
+                openTab($(this).attr('id').replace('link', ''));
+            });
+            const t = window.location.hash ? window.location.hash.replace('#', '') : 'session';
+            openTab(t);
+        }, 200);
+    };
+    const setupSessionLinks = () => {
+//        console.log('setupSessionLinks');
+        addToLogFeed('setupSessionLinks');
         let sg = $('#gameStart');
-        let rg = $('#gameRestore');
-        let eg = $('#gameEnd');
         let gl = $('#gameLaunch');
         $('.link').off('click');
         sg.on('click', startGame);
-        rg.on('click', restoreGame);
-        eg.on('click', endGame);
         if (session.state !== 'started') {
             gl.addClass('disabled');
             if (document.getElementById('gameLaunch')) {
@@ -96,41 +136,65 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const setupGameLinks = () => {
         const rg = $('#gameReset');
+        const mf = $('#makeFakes');
         $('.link').off('click');
+        $('.mf').off('click');
         rg.on('click', resetGame);
+        mf.on('click', launchFakeGenerator);
+    };
+    const setupControlLinks = () => {
+        const al = $('#assign');
+//        console.log(al);
+        al.off('click');
+        al.on('click', () => {
+//            console.log(game.persistentData)
+            console.log(game);
+            socket.emit('assignTeams', {address: game.address, type: 'order'}, (game) => {
+//                console.log('yep');
+                console.log(game);
+            });
+//            console.log(game.assignTeams())
+        });
     };
     const renderSession = () => {
-        window.setupObserver('sessionCard', () => {
+        addToLogFeed(`renderSession (see console)`);
+        console.log(`renderSession`);
+        console.log(session);
+        const targ = 'contentSession';
+        window.setupObserver(targ, () => {
 //            console.log('mutationObserver detects change in sessionCard');
-            setupLinks();
+            setupSessionLinks();
             $('#gameRestore').addClass('disabled');
             $('#gameEnd').addClass('disabled');
 //            obs.disconnect();
         });
-        window.renderTemplate('sessionCard', 'sessionCardFacilitator', session, () => {
+        window.renderTemplate(targ, 'sessionCardFacilitator', session, () => {
 //            console.log('the renderTemplate callback');
         });
     };
     const renderGame = () => {
-        window.setupObserver('sessionCard', () => {
+        addToLogFeed(`renderGame`);
+        const targ = 'contentGame';
+        window.setupObserver(targ, () => {
 //            console.log('mutationObserver detects change in sessionCard');
             setupGameLinks();
         });
         // Render the game object excluding the persistent data
-        window.renderTemplate('sessionCard', 'gameCard', window.copyObjectWithExclusions(game, 'persistentData'), () => {
+        window.renderTemplate(targ, 'gameCard', window.copyObjectWithExclusions(game, 'persistentData'), () => {
 //            console.log('the renderTemplate callback');
 
         });
     };
     const initSession = () => {
+        addToLogFeed(`initSession, session state? ${session.state}`);
+        console.log(`initSession`);
+        console.log(session);
         renderSession();
-//        renderGame();
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
             restoreGame();
-//            renderSession();
         }
-    }
+    };
     const getSession = (sessionId) => {
         fetch('/admin/getSession?sessionID=' + sessionId, {
                 method: 'POST',
@@ -157,17 +221,37 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
             });
+    };
+    const openTab = (l) => {
+//        console.log(l)
+        window.location.hash = l.toLocaleLowerCase();
+        const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`
+        const tabcontent = $('.tabcontent');
+        const tablinks = $('.tablinks');
+        const tabTarg = $(`#tab${id}`);
+        const tabLink = $(`#link${id}`);
+        tabcontent.hide();
+        tablinks.removeClass('active');
+        tabTarg.show();
+        tabLink.addClass('active');
+        setupTab(l.toLowerCase());
     }
-    const init = () => {
+
+    const sockInit = () => {
         const sessionID = getSessionID();
         addToLogFeed(`sessionID: ${sessionID}`);
         if (sessionID) {
             getSession(sessionID);
         }
     };
+    const domInit = () => {
+        setupBaseLinks();
+    };
 
+//    window.clearLogFeed = clearLogFeed;
+    window.setupBaseLinks = setupBaseLinks;
     socket.on('gameUpdate', (g) => {
-//        console.log('gameUpdate');
+        addToLogFeed('gameUpdate');
 //        console.log(g);
 //        console.log(window.copyObjectWithExclusions(g, 'persistentData'));
 
@@ -175,6 +259,6 @@ document.addEventListener('DOMContentLoaded', function() {
         game = g;
         renderGame();
     });
-    init();
+    domInit();
 });
 
