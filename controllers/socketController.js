@@ -11,6 +11,8 @@ let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
 
+const gameNamespaces = {};
+
 const log = (msg) => {
     console.log(`socketController: ${msg}`);
 }
@@ -29,17 +31,17 @@ const getQueries = (u) => {
 function initSocket(server) {
 
     io = socketIo(server);
-//    console.log('INIT');
+//    log('INIT');
     // Handle client events
     io.on('connection', (socket) => {
         socket.on('disconnect', () => {
-            console.log('User disconnected (HTTP or WebSocket)');
+            log('User disconnected (HTTP or WebSocket)');
         });
 
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method
-//            console.log('sock');
+//            log('sock');
             sessionController.getSessionWithID(id);
         });
 
@@ -49,9 +51,9 @@ function initSocket(server) {
     // Define a separate namespace for socket.io connections related to the admin dashboard
     adminDashboardNamespace = io.of('/admin/systemdashboard');
     adminDashboardNamespace.on('connection', (socket) => {
-//        console.log('A user connected to the admin dashboard');
+//        log('A user connected to the admin dashboard');
         socket.on('disconnect', () => {
-//            console.log('User disconnected from the admin dashboard');
+//            log('User disconnected from the admin dashboard');
         });
 
         // Handle other socket events specific to the admin dashboard...
@@ -60,10 +62,10 @@ function initSocket(server) {
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
     facilitatorDashboardNamespace = io.of('/facilitatordashboard');
     facilitatorDashboardNamespace.on('connection', (socket) => {
-        console.log('A user connected to a facilitator dashboard - has their game started?');
+        log('A user connected to a facilitator dashboard - has their game started?');
         socket.emit('checkOnConnection');
         socket.on('disconnect', () => {
-//            console.log('User disconnected from a facilitator dashboard');
+//            log('User disconnected from a facilitator dashboard');
         });
         socket.on('getGame', (id, cb) => {
             gameController.getGame(id, cb);
@@ -80,14 +82,23 @@ function initSocket(server) {
         });
         socket.on('assignTeams', (ob, cb) => {
             gameController.assignTeams(ob, cb);
-        })
+        });
+        socket.on('resetTeams', (ob, cb) => {
+            gameController.resetTeams(ob, cb);
+        });
     });
+
+    gameNamespace = io.of('/game-7bn3');
+    gameNamespace.on('connection', async (socket) => {
+        log('game connex')
+    })
 
     playerNamespace = io.of('/player');
     playerNamespace.on('connection', async (socket) => {
+        console.log('player connects');
         let ref = socket.request.headers.referer;
         const isReal = getQueries(ref)['isAdmin'] !== 'true';
-//        console.log(`playerNamespace setup, isReal? ${isReal}`);
+//        log(`playerNamespace setup, isReal? ${isReal}`);
         if (isReal) {
             ref = ref.split('?')[0];
             const gameID = ref.split('/').reverse()[0];
@@ -96,26 +107,154 @@ function initSocket(server) {
                 socket.emit('playerConnect', process.env.STORAGE_ID);
             }
             socket.on('regPlayer', (data, cb) => {
-//                console.log('regPlayer', data);
                 gameController.registerPlayer(data, cb);
-//                registerPlayer(data, cb);
             });
             socket.on('getGameCount', (cb) => {
                 gameController.getGameCount(cb);
             });
+            createGameNamespace(session.uniqueID);
+//            console.log(`joiner: sessionID: ${session.uniqueID}, gameID: ${gameID}`);
+            let gameNamespace = io.of(`/game-${gameID}`);
+            if (gameNamespace) {
+//                console.log('OK to join');
+            } else {
+//                console.log('no way')
+            }
+            socket.join(`/game${session.uniqueID}`);
+        }
+    });
+    playerNamespaceBAD = io.of('/playerBAD');
+    playerNamespaceBAD.on('connection', async (socket) => {
+        let ref = socket.request.headers.referer;
+        const isReal = getQueries(ref)['isAdmin'] !== 'true';
+        if (isReal) {
+            ref = ref.split('?')[0];
+            const gameID = ref.split('/').reverse()[0];
+            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+            createGameNamespace(session.uniqueID);
+            console.log(`player joins, sessionID: ${session.uniqueID}`);
+            // test for namespace:
+            let gameNamespace = io.of(`/game${session.uniqueID}`);
+            if (gameNamespace) {
+                console.log('OK to join'); // always appears
+            } else {
+                console.log('no way'); // never appears
+            }
+            socket.join(`/game${session.uniqueID}`);
+            const socks = gameNamespaces[session.uniqueID].sockets;
+            console.log(socks); // always returns "Map(0) {}"
+            // test for non-existant namespace:
+            gameNamespace = io.of(`/canary${session.uniqueID}`);
+            if (gameNamespace) {
+                console.log('OK to join NON-EXISTANT namespace'); // always appears
+            } else {
+                console.log('no way'); // never appears
+            }
         }
     });
 
     eventEmitter.on('gameUpdate', (game) => {
         facilitatorDashboardNamespace.emit('gameUpdate', game);
     });
+    eventEmitter.on('teamsAssigned', (game) => {
+        console.log(`teamsAssigned: ${game.uniqueID}`);
+        console.log(gameNamespaces.hasOwnProperty(game.uniqueID));
+//        playerNamespace.emit('teamsAssigned', game);
+        gameNamespaces[game.uniqueID].emit('teamsAssigned', game);
+        const socks = gameNamespaces[game.uniqueID].sockets;
+        for (const socketId in socks) {
+            const socket = socks[socketId];
+            // Access socket properties or perform actions
+//            console.log(`Socket ID: ${socketId}, Connected: ${socket.connected}`);
+        }
+    });
     eventEmitter.on('resetAll', (id) => {
         playerNamespace.emit('resetAll');
+    });
+    eventEmitter.on('createNamespace', (id) => {
+        createGameNamespace(id);
     });
 
 //    theIO = io;
 
+}// Function to initialize socket.io
+function initSocketBAD(server) {
+
+    io = socketIo(server);
+//    log('INIT');
+    // Handle client events
+    io.on('connection', (socket) => {
+        socket.on('disconnect', () => {
+            log('User disconnected (HTTP or WebSocket)');
+        });
+
+        // Handle other socket events
+        socket.on('getSesssionWithID', (id) => {
+            // Call appropriate controller method
+//            log('sock');
+            sessionController.getSessionWithID(id);
+        });
+
+        // Add more event handlers as needed
+    });
+
+
+    playerNamespaceBAD = io.of('/player');
+    playerNamespaceBAD.on('connection', async (socket) => {
+        let ref = socket.request.headers.referer;
+        const isReal = getQueries(ref)['isAdmin'] !== 'true';
+        if (isReal) {
+            ref = ref.split('?')[0];
+            const gameID = ref.split('/').reverse()[0];
+            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+            createGameNamespace(session.uniqueID);
+            const playerRef = socket.handshake.headers.referer.split('=')[2]
+
+//            console.log(socket.handshake.headers)
+            const gameNamespace = gameNamespaces[`${session.uniqueID}`];
+
+            if (gameNamespace) {
+                const nsID = `game${session.uniqueID}`
+//                console.log(`OK to join ${nsID}`); // always appears
+                socket.join(nsID);
+//                socket.join(gameNamespace);
+                let socks = playerNamespace.sockets;
+
+                if (playerRef === 'pf15') {
+                    console.log(`========================================================= player joins, sessionID: ${session.uniqueID}, player: ${playerRef}`);
+                    console.log(gameNamespace.name);
+                    setTimeout(() => {
+                        console.log(typeof(socks))
+                        socks = Object.fromEntries(socks)
+                        console.log(`socks ${Object.keys(socks).length}`);
+//                        console.log(socks)
+                        for (const socketId in socks) {
+//                            console.log(socketId)
+                            const socket = socks[socketId];
+                            // Access socket properties or perform actions
+                            console.log(`Socket ID: ${socketId}, Connected: ${socket.connected}`);
 }
+                    }, 1000);
+                }
+            } else {
+                console.log('no way'); // never appears
+            }
+        }
+    });
+
+}
+const createGameNamespace = (id) => {
+    // create a game-specific namespace if one does not already exist
+    const gameNamespace = id;
+    if (!gameNamespaces.hasOwnProperty(id)) {
+        log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ createGameNamespace: ${gameNamespace}`);
+        gameNamespaces[id] = io.of(gameNamespace);
+//        console.log(gameNamespaces[id]);
+        gameNamespaces[id].on('connection', async (socket) => {
+            log('new game connected');
+        })
+    }
+};
 const emitAll = (ev, o) => {
     io.emit(ev, o);
 }
@@ -128,5 +267,7 @@ module.exports = {
     initSocket,
     eventEmitter,
     emitSystem,
-    emitAll
+    emitAll,
+    createGameNamespace,
+    gameNamespaces
 };

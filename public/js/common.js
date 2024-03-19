@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
 //    setupObserver('myTargetElement');
 
     const renderTemplate = (targ, temp, ob, cb) => {
+//        console.log(JSON.stringify(ob))
+//        console.log(ob)
         fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
             .then(response => response.text())
             .then(compiledTemplate => {

@@ -58,10 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const restoreGame = () => {
         socket.emit('restoreGame', JSON.stringify(session), (rgame) => {
-            console.log('restoreGame callback');
+//            console.log('restoreGame callback');
             addToLogFeed('game restore complete - game can recommence');
-            console.log(rgame);
-            console.log(rgame.assignTeams);
+//            console.log(rgame);
+//            console.log(rgame.assignTeams);
             game = rgame;
             renderGame();
         });
@@ -82,23 +82,80 @@ document.addEventListener('DOMContentLoaded', function() {
     const launchFakeGenerator = () => {
         window.open(`/fakegenerator#${game.address}`, '_blank');
     };
+    const renderTeams = () => {
+        let rendO = {};
+        if (game) {
+            const T = game.persistentData.teams;
+            const t = game.teams;
+//            console.log(`renderTeams`);
+//            console.log(t);
+            Object.values(T).forEach((el, id) => {
+//                console.log(el, id)
+                if (el.hasOwnProperty('id')) {
+                    rendO[el.id] = {name: el.title, team: t[id].toString()}
+                }
+            });
+//            console.log(rendO);
+            window.renderTemplate('controlsInfo', 'teamsCard', rendO);
+        }
+    };
+    const renderControls = () => {
+//        console.log(`renderControls`);
+        if (game) {
+//            console.log(`we have game`);
+//            console.log(game)
+            const hasTeams = game.teams.length > 0;
+            const rendO = {disableAssignTeams: hasTeams};
+//            console.log(`renderControls, hasTeams? ${hasTeams}`);
+//            console.log(rendO)
+            window.renderTemplate('contentControls', 'facilitatorcontrols', rendO, () => {
+                setupControlLinks();
+                if (!hasTeams) {
+//                    console.log('make the links')
+//                    setupControlLinks();
+                } else {
+                    renderTeams();
+                }
+            });
+        } else {
+            console.log('no game');
+        }
+    };
+    const assignTeams = () => {
+        socket.emit('assignTeams', {address: game.address, type: 'order'}, (rgame) => {
+//            console.log(rgame);
+            addToLogFeed('teams assigned');
+            game.teams = rgame.teams;
+            renderControls();
+//            renderTeams();
+        });
+    };
+    const resetTeams = () => {
+
+        socket.emit('resetTeams', {address: game.address}, (rgame) => {
+            addToLogFeed('teams reset');
+            game.teams = rgame.teams;
+            renderControls();
+//            renderTeams();
+        });
+    };
     const setupTab = (arg) => {
+//        console.log(`setupTab`)
         switch (arg) {
         case 'session':
+            renderSession();
             setupSessionLinks();
             break;
         case 'game':
             setupGameLinks();
             break;
         case 'controls':
-            window.renderTemplate('contentControls', 'facilitatorcontrols', {}, () => {
-                setupControlLinks();
-            });
+            renderControls();
 
             break;
         default:
             console.log(`invalid argument provided.`);
-    }
+        }
 
     }
     const setupBaseLinks = () => {
@@ -116,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const t = window.location.hash ? window.location.hash.replace('#', '') : 'session';
             openTab(t);
-        }, 200);
+        }, 500);
     };
     const setupSessionLinks = () => {
 //        console.log('setupSessionLinks');
@@ -144,16 +201,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const setupControlLinks = () => {
         const al = $('#assign');
-//        console.log(al);
+        const rt = $('#reset');
         al.off('click');
+        rt.off('click');
         al.on('click', () => {
-//            console.log(game.persistentData)
-            console.log(game);
-            socket.emit('assignTeams', {address: game.address, type: 'order'}, (game) => {
-//                console.log('yep');
-                console.log(game);
-            });
-//            console.log(game.assignTeams())
+            assignTeams();
+
+        });
+        rt.on('click', () => {
+            resetTeams();
+            console.log('dddddddddddddddddddddddddddddddddddddddddddd')
         });
     };
     const renderSession = () => {
@@ -187,9 +244,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const initSession = () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
-        console.log(`initSession`);
-        console.log(session);
-        renderSession();
+//        console.log(`initSession`);
+//        console.log(session);
+//        renderSession();
+        setupBaseLinks();
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
             restoreGame();
@@ -245,11 +303,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const domInit = () => {
-        setupBaseLinks();
+//        setupBaseLinks();
     };
 
 //    window.clearLogFeed = clearLogFeed;
-    window.setupBaseLinks = setupBaseLinks;
     socket.on('gameUpdate', (g) => {
         addToLogFeed('gameUpdate');
 //        console.log(g);

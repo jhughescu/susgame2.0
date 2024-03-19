@@ -11,7 +11,7 @@ let updateDelay = null;
 const games = {};
 
 const log = (msg) => {
-    console.log(`======================== gameController: ${msg}`);
+    console.log(`gameController: ${msg}`);
 };
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
@@ -21,14 +21,8 @@ async function startGame (o, cb) {
     let rg = null;
     if (!games.hasOwnProperty(game)) {
         Game = require(`./../models/game.${session.type}`);
-//        games[game] = new Game(session.uniqueID, session.type);
         const newGame = await new Game(session.uniqueID, session.type);
-//        console.log(`newGame`);
-//        console.log(newGame);
-//        console.log(newGame.assignTeams);
-//        newGame.assignTeams();
         games[game] = newGame;
-//        console.log(games[game])
     }
     // Only set state to 'started' if it is currently pending
     if (session.state ===  'pending') {
@@ -37,15 +31,13 @@ async function startGame (o, cb) {
     rg = games[game];
 
     routeController.createRoute(`${session.address}`);
+    eventEmitter.emit('createNamespace', session.address);
     try {
         await rg.loadPersistentData(session.type);
     } catch (error) {
         console.error('Error loading persistent data:', error);
     }
     log(`returned game is ready`);
-//    console.log(rg);
-//    console.log(rg.assignTeams());
-//    rg.assignTeams();
     if (cb) {
         cb(rg);
     }
@@ -58,15 +50,11 @@ async function restoreGame (o, cb) {
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
     log(`============================ restoreGame: ${game.uniqueID}`);
-//    console.log(game);
-    console.log(game.assignTeams);
-//    console.log(game);
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
     }
     if (cb) {
-    console.log(game.assignTeams);
         cb(game);
     } else {
         console.error('restoreGame requires a callback');
@@ -74,8 +62,8 @@ async function restoreGame (o, cb) {
 };
 
 const getGameCount = (cb) => {
-//    console.log('getGames');
-//    console.log(cb);
+//    log('getGames');
+//    log(cb);
     if (cb) {
         cb(Object.keys(games).length);
     }
@@ -87,14 +75,14 @@ const getGame = (id, cb) => {
     log(games)
     if (id.indexOf('/', 0) > -1) {
         // presume searching with address
-        console.log(`presume searching with address`);
+        log(`presume searching with address`);
         gg = getGameWithAddress(id);
     } else {
         // presume searching with uniqueID
-        console.log(`presume searching with uniqueID`);
+        log(`presume searching with uniqueID`);
         gg = getGameWithUniqueID(id);
     }
-    console.log(gg);
+    log(gg);
     if (cb) {
         cb(gg);
     }
@@ -103,7 +91,7 @@ const getGame = (id, cb) => {
 const getGameWithUniqueID = (id) => {
     for (let g in games) {
         if (games[g].uniqueID === id) {
-//            console.log(games[g].uniqueID)
+//            log(games[g].uniqueID)
             return games[g];
         }
     }
@@ -123,15 +111,31 @@ const assignTeams = (ob, cb) => {
             t = game.assignTeamsOrder();
             break;
         default:
-            console.log('no order type specified');
+            log('no order type specified');
         }
     if (t) {
         const uo = {teams: t};
-        console.log(uo);
         sessionController.updateSession(game.uniqueID, uo);
+        game.teams = t;
     }
+//    log('assignTeams');
+    eventEmitter.emit('teamsAssigned', game);
+    // NOTE currently this event is emitted to ALL players & client-side logic must determine whether to action it or not.
+    // This should be updated so that the event is only emitted to players registered with this game.
     if (cb) {
-        cb(t);
+        cb(game);
+    }
+};
+const resetTeams = (ob, cb) => {
+    const game = getGameWithAddress(ob.address);
+    let t = [];
+    const uo = {teams: t};
+//    log('reseeeter');
+    sessionController.updateSession(game.uniqueID, uo);
+    game.teams = t;
+//    log(game);
+    if (cb) {
+        cb(game);
     }
 }
 async function resetGame(id, cb) {
@@ -139,24 +143,24 @@ async function resetGame(id, cb) {
     // CURRENTLY RESETS ALL - ALL - THE PLAYERS
     eventEmitter.emit('resetAll');
     const game = getGameWithUniqueID(id);
-//    console.log(game);
+//    log(game);
     game.players = [];
     game.state = 'pending';
 
     // NEED TO UPDATE THE ASSOCIATED SESSION
-    console.log('setting state to pending');
+    log('setting state to pending');
     const session = await sessionController.updateSession(id, {state: 'pending', players: game.players});
     if (session) {
-        console.log('return updated session here');
-        console.log(session);
+        log('return updated session here');
+        log(session);
         if (cb) {
             cb(session);
         }
     }
 };
 const registerPlayer = (ob, cb, socket) => {
-//    console.log(`registerPlayer to game ${ob.game}`);
-//    console.log(ob)
+//    log(`registerPlayer to game ${ob.game}`);
+//    log(ob)
     const game = getGameWithAddress(ob.game);
     let ID = null;
     let newP = null;
@@ -181,17 +185,17 @@ const registerPlayer = (ob, cb, socket) => {
 //            if (cb) {
 //                cb(ID);
 //            } else {
-//                console.log('reg P, no CB');
+//                log('reg P, no CB');
 //            }
         }
-//        console.log(`register ${ID} with game ${ob.game}, (${newP ? 'new' : 'existing'} ${ob.fake ? 'fake' : 'real'} player) - ${JSON.stringify(ob)}`);
-//        console.log(plOrig);
-//        console.log(ob);
+//        log(`register ${ID} with game ${ob.game}, (${newP ? 'new' : 'existing'} ${ob.fake ? 'fake' : 'real'} player) - ${JSON.stringify(ob)}`);
+//        log(plOrig);
+//        log(ob);
         eventEmitter.emit('gameUpdate', game);
         clearTimeout(updateDelay);
-//        console.log(JSON.stringify(game.players), plOrig, JSON.stringify(game.players) === plOrig)
+//        log(JSON.stringify(game.players), plOrig, JSON.stringify(game.players) === plOrig)
         if (JSON.stringify(game.players) !== plOrig) {
-//            console.log('change to players, will write data')
+//            log('change to players, will write data')
         }
         if (JSON.stringify(game.players) !== plOrig) {
             updateDelay = setTimeout(() => {
@@ -202,11 +206,20 @@ const registerPlayer = (ob, cb, socket) => {
         if (cb) {
             cb(ID);
         } else {
-            console.log('reg P, no CB');
+            log('reg P, no CB');
         }
         return ID;
     } else {
-//        console.log('no game exists with that address');
+//        log('no game exists with that address');
     }
 };
-module.exports = { getGame , getGameCount , startGame, restoreGame, resetGame, registerPlayer, assignTeams };
+module.exports = {
+    getGame,
+    getGameCount,
+    startGame,
+    restoreGame,
+    resetGame,
+    registerPlayer,
+    assignTeams,
+    resetTeams
+};

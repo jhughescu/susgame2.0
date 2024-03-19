@@ -165,7 +165,7 @@ async function updateSession(uniqueID, updateOb) {
             updateOb,
             { new: true }
         );
-        console.log('Updated document:', updatedSession);
+//        console.log('Updated document:', updatedSession);
         return updatedSession;
     } catch (error) {
         console.error('Error updating document:', error);

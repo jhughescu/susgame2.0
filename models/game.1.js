@@ -21,8 +21,9 @@ class Game {
             this.persistentData = JSON.parse(data);
             const { processData } = require(`./../gamemodules/gameprocess_${type}.js`);
             this.persistentData = processData(this.persistentData);
-//            console.log('Persistent data loaded successfully:', this.persistentData);
             console.log('Persistent data loaded successfully:');
+//            console.log(this.persistentData);
+//            this.persistentData = JSON.parse(JSON.stringify(this.persistentData));
         } catch (error) {
             console.error('Error reading or parsing JSON file:', error);
             throw error; // Rethrow error to be caught by the caller
