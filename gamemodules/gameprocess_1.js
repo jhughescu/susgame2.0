@@ -1,6 +1,6 @@
 // All functionality specific to the Type 1 Game
 const processData = (d) => {
-    console.log('pro sess');
+//    console.log('pro sess');
     let t = d.teams;
     let f = d.defaults;
     let m = d.map;

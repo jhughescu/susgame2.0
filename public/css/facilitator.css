@@ -68,4 +68,14 @@ td#val_players {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-top: none;
+    position: relative;
+}
+
+#tabGame #qrcode {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 148px;
+    height: 148px;
+/*    background-color: red;*/
 }

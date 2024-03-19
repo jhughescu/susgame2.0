@@ -5,6 +5,7 @@ let Game = null;
 const sessionController = require('./../controllers/sessionController');
 const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
+const gfxController = require('./../controllers/gfxController');
 
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
@@ -34,6 +35,7 @@ async function startGame (o, cb) {
 
     routeController.createRoute(`${session.address}`);
     eventEmitter.emit('createNamespace', session.address);
+    gfxController.generateSessionQR(session);
     try {
         await rg.loadPersistentData(session.type);
     } catch (error) {

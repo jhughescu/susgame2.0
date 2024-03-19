@@ -6,6 +6,7 @@ const http = require('http');
 const path = require('path');
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
+const gfxController = require('./controllers/gfxController');
 const app = express();
 const server = http.createServer(app);
 
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 const databaseController = require('./controllers/databaseController');
 
 
-
+app.use('/public', express.static(path.join(__dirname, 'public')));
 app.engine('.hbs', exphbs.engine({
     extname: '.hbs',
     layoutsDir: path.join(__dirname, 'views'),
