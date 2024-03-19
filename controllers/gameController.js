@@ -11,7 +11,9 @@ let updateDelay = null;
 const games = {};
 
 const log = (msg) => {
-    console.log(`gameController: ${msg}`);
+    if (process.env.ISDEV) {
+        console.log(`gameController: ${msg}`);
+    }
 };
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case

@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('connected');
                 window.navigator = window.navigator || {};
                 window.navigator = window.navigator || {};
-                document.getElementById('replace-your-button-ID').addEventListener('click', function () {
-                    navigator.vibrate(100);
-                });
+                navigator.vibrate(100);
             }
         }, 300);
         //        console.log(`connected? ${socket.connected}`);

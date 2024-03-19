@@ -14,7 +14,9 @@ let playerNamespace = null;
 const gameNamespaces = {};
 
 const log = (msg) => {
-    console.log(`socketController: ${msg}`);
+    if (process.env.ISDEV) {
+        console.log(`socketController: ${msg}`);
+    }
 }
 
 const getQueries = (u) => {
