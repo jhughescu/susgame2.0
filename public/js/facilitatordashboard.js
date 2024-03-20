@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const launchFakeGenerator = () => {
+//        console.log(game);
         window.open(`/fakegenerator#${game.address}`, '_blank');
     };
     const renderTeams = () => {
@@ -100,20 +101,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const renderControls = () => {
-//        console.log(`renderControls`);
         if (game) {
-//            console.log(`we have game`);
-//            console.log(game)
             const hasTeams = game.teams.length > 0;
             const rendO = {disableAssignTeams: hasTeams};
-//            console.log(`renderControls, hasTeams? ${hasTeams}`);
-//            console.log(rendO)
             window.renderTemplate('contentControls', 'facilitatorcontrols', rendO, () => {
                 setupControlLinks();
-                if (!hasTeams) {
-//                    console.log('make the links')
-//                    setupControlLinks();
-                } else {
+                if (hasTeams) {
                     renderTeams();
                 }
             });
@@ -138,6 +131,10 @@ document.addEventListener('DOMContentLoaded', function() {
             renderControls();
 //            renderTeams();
         });
+    };
+    const identifyPlayers = () => {
+        console.log('identifyPlayers');
+        socket.emit('identifyPlayers', game);
     };
     const setupTab = (arg) => {
 //        console.log(`setupTab`)
@@ -200,19 +197,25 @@ document.addEventListener('DOMContentLoaded', function() {
         mf.on('click', launchFakeGenerator);
     };
     const setupControlLinks = () => {
-        const al = $('#assign');
-        const rt = $('#reset');
-        al.off('click');
-        rt.off('click');
-        al.on('click', () => {
-            assignTeams();
-
+    const ids = ['#assign', '#reset', '#identify'];
+    ids.forEach(id => {
+        const element = $(id);
+        element.off('click').on('click', () => {
+            console.log(`a click: ${id}`)
+            switch (id) {
+                case '#assign':
+                    assignTeams();
+                    break;
+                case '#reset':
+                    resetTeams();
+                    break;
+                case '#identify':
+                    identifyPlayers();
+                    break;
+            }
         });
-        rt.on('click', () => {
-            resetTeams();
-            console.log('dddddddddddddddddddddddddddddddddddddddddddd')
-        });
-    };
+    });
+};
     const renderSession = () => {
         addToLogFeed(`renderSession (see console)`);
         console.log(`renderSession`);

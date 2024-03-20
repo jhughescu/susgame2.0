@@ -7,11 +7,10 @@ class Game {
         this.scores = [];
         this.teams = [];
         this.persistentData = null;
-        this.snake = 'adder';
     }
 
     async loadPersistentData(type) {
-        console.log(`loadPersis ${type}`)
+//        console.log(`loadPersis ${type}`)
         // Read the JSON file asynchronously
         const filePath = `data/gamedata_${type}.json`;
         try {
@@ -21,7 +20,7 @@ class Game {
             this.persistentData = JSON.parse(data);
             const { processData } = require(`./../gamemodules/gameprocess_${type}.js`);
             this.persistentData = processData(this.persistentData);
-            console.log('Persistent data loaded successfully:');
+//            console.log('Persistent data loaded successfully:');
 //            console.log(this.persistentData);
 //            this.persistentData = JSON.parse(JSON.stringify(this.persistentData));
         } catch (error) {

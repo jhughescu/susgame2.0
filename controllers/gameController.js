@@ -18,9 +18,9 @@ const log = (msg) => {
 };
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
-    log('startGame')
     const session = JSON.parse(o);
     const game = `game-${session.uniqueID}`;
+    log(`startGame: ${game}`);
     let rg = null;
     if (!games.hasOwnProperty(game)) {
         Game = require(`./../models/game.${session.type}`);

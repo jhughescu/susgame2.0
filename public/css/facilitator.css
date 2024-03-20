@@ -79,3 +79,11 @@ td#val_players {
     height: 148px;
 /*    background-color: red;*/
 }
+.vertStack {
+    display: flex;
+    flex-direction: column;
+}
+.vertStack button {
+    width: 200px;
+    margin-bottom: 4px;
+}

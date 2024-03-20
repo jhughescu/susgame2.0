@@ -15,17 +15,37 @@ const gameNamespaces = {};
 
 const log = (msg) => {
     if (process.env.ISDEV) {
-        console.log(`socketController: ${msg}`);
+
+        if (typeof(msg) === 'object' && !msg.hasOwnProperty('length')) {
+            console.log(Object.assign({loggedBy: 'socketController'}, msg));
+        } else {
+            console.log(`socketController: ${msg}`);
+        }
     }
 }
-
+const procVal = (v) => {
+    // process values into numbers, booleans etc
+    if (!isNaN(parseInt(v))) {
+        v = parseInt(v);
+    } else if (v === 'true') {
+        v = true;
+    } else if (v === 'false') {
+        v = false;
+    }
+    return v;
+}
 const getQueries = (u) => {
+//    log(u);
     let r = u.split('?');
     let qu = {};
-    r.forEach(q => {
-        q = q.split('=');
-        qu[q[0]] = q[1];
-    });
+    if (r.length > 1) {
+        r = r[1].split('&');
+        r.forEach(q => {
+            q = q.split('=');
+            qu[q[0]] = procVal(q[1]);
+        });
+    }
+//    console.log(qu);
     return qu;
 };
 
@@ -35,7 +55,36 @@ function initSocket(server) {
     io = socketIo(server);
 //    log('INIT');
     // Handle client events
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
+        let ref = socket.request.headers.referer;
+        let src = ref.split('?')[0]
+        src = src.split('/').reverse()[0];
+        src = `/${src}`;
+        if (src.indexOf('/game', 0) > -1) {
+            socket.join(src);
+            const queries = getQueries(ref);
+            const isReal = queries['isAdmin'] !== true;
+//            console.log(queries);
+            if (isReal) {
+                const gameID = src.replace('/', '');
+                const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+
+                if (session) {
+                    socket.emit('playerConnect', process.env.STORAGE_ID);
+                }
+                socket.on('regPlayer', (data, cb) => {
+                    gameController.registerPlayer(data, cb);
+                });
+                socket.on('getGameCount', (cb) => {
+                    gameController.getGameCount(cb);
+                });
+                const hasID = queries.hasOwnProperty('fid');
+                const idStr = hasID ? ` with ID ${queries.fid}` : '';
+                log(`${queries['fake'] ? 'fake' : 'real'} player${idStr} added to game ${src}`);
+            }
+
+        }
+
         socket.on('disconnect', () => {
             log('User disconnected (HTTP or WebSocket)');
         });
@@ -64,7 +113,7 @@ function initSocket(server) {
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
     facilitatorDashboardNamespace = io.of('/facilitatordashboard');
     facilitatorDashboardNamespace.on('connection', (socket) => {
-        log('A user connected to a facilitator dashboard - has their game started?');
+//        log('A user connected to a facilitator dashboard - has their game started?');
         socket.emit('checkOnConnection');
         socket.on('disconnect', () => {
 //            log('User disconnected from a facilitator dashboard');
@@ -73,7 +122,7 @@ function initSocket(server) {
             gameController.getGame(id, cb);
         });
         socket.on('startGame', (o, cb) => {
-            log(`startGame`);
+//            log(`startGame`);
             gameController.startGame(o, cb);
         });
         socket.on('restoreGame', (o, cb) => {
@@ -88,23 +137,29 @@ function initSocket(server) {
         socket.on('resetTeams', (ob, cb) => {
             gameController.resetTeams(ob, cb);
         });
+        socket.on('identifyPlayers', (game) => {
+            io.to(game.address).emit('identifyPlayer');
+        });
     });
 
-    gameNamespace = io.of('/game-7bn3');
-    gameNamespace.on('connection', async (socket) => {
-        log('game connex')
-    })
-
+    // Block below removed, functionaility moved to the basic socket setup
+    /*
     playerNamespace = io.of('/player');
     playerNamespace.on('connection', async (socket) => {
-        console.log('player connects');
+        log('player connects');
         let ref = socket.request.headers.referer;
         const isReal = getQueries(ref)['isAdmin'] !== 'true';
-//        log(`playerNamespace setup, isReal? ${isReal}`);
+        log(`playerNamespace setup, isReal? ${isReal}`);
+
         if (isReal) {
             ref = ref.split('?')[0];
             const gameID = ref.split('/').reverse()[0];
+            log(`gameID: ${gameID}`);
+//            socket.join(gameID);
             const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+            console.log('session:');
+            console.log(session);
+            socket.join('moose');
             if (session) {
                 socket.emit('playerConnect', process.env.STORAGE_ID);
             }
@@ -114,15 +169,6 @@ function initSocket(server) {
             socket.on('getGameCount', (cb) => {
                 gameController.getGameCount(cb);
             });
-            createGameNamespace(session.uniqueID);
-//            console.log(`joiner: sessionID: ${session.uniqueID}, gameID: ${gameID}`);
-            let gameNamespace = io.of(`/game-${gameID}`);
-            if (gameNamespace) {
-//                console.log('OK to join');
-            } else {
-//                console.log('no way')
-            }
-            socket.join(`/game${session.uniqueID}`);
         }
     });
     playerNamespaceBAD = io.of('/playerBAD');
@@ -154,21 +200,14 @@ function initSocket(server) {
             }
         }
     });
+    */
 
     eventEmitter.on('gameUpdate', (game) => {
         facilitatorDashboardNamespace.emit('gameUpdate', game);
     });
     eventEmitter.on('teamsAssigned', (game) => {
-        console.log(`teamsAssigned: ${game.uniqueID}`);
-        console.log(gameNamespaces.hasOwnProperty(game.uniqueID));
-//        playerNamespace.emit('teamsAssigned', game);
-        gameNamespaces[game.uniqueID].emit('teamsAssigned', game);
-        const socks = gameNamespaces[game.uniqueID].sockets;
-        for (const socketId in socks) {
-            const socket = socks[socketId];
-            // Access socket properties or perform actions
-//            console.log(`Socket ID: ${socketId}, Connected: ${socket.connected}`);
-        }
+        log(`teamsAssigned: ${game.uniqueID}`);
+        io.to(game.address).emit('teamsAssigned', game);
     });
     eventEmitter.on('resetAll', (id) => {
         playerNamespace.emit('resetAll');
@@ -246,14 +285,32 @@ function initSocketBAD(server) {
 
 }
 const createGameNamespace = (id) => {
+    return;
     // create a game-specific namespace if one does not already exist
     const gameNamespace = id;
     if (!gameNamespaces.hasOwnProperty(id)) {
-        log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ createGameNamespace: ${gameNamespace}`);
+//        log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ createGameNamespace: ${gameNamespace}`);
         gameNamespaces[id] = io.of(gameNamespace);
 //        console.log(gameNamespaces[id]);
         gameNamespaces[id].on('connection', async (socket) => {
-            log('new game connected');
+//            log('new game connected');
+            let ref = socket.request.headers.referer;
+            const isReal = getQueries(ref)['isAdmin'] !== 'true';
+//            log(`playerNamespace setup, isReal? ${isReal}`);
+            if (isReal) {
+                ref = ref.split('?')[0];
+                const gameID = ref.split('/').reverse()[0];
+                const session = await sessionController.getSessionWithAddress(`/${gameID}`);
+                if (session) {
+                    socket.emit('playerConnect', process.env.STORAGE_ID);
+                }
+                socket.on('regPlayer', (data, cb) => {
+                    gameController.registerPlayer(data, cb);
+                });
+                socket.on('getGameCount', (cb) => {
+                    gameController.getGameCount(cb);
+                });
+            }
         })
     }
 };

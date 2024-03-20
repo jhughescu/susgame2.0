@@ -37,12 +37,13 @@ const routeExists = (routeName) => {
 };
 const createRoute = (r) => {
 //    return;
-
     let rt = r.indexOf('http', 0) > -1 ? r.split('/').reverse()[0] : r;
+    console.log(`create route: ${rt}`);
     rt = rt.substr(0, 1) === '/' ? rt : '/' + rt;
-    console.log(`createRoute: ${rt}`);
+
     app._router.stack = app._router.stack.filter(layer => layer.handle !== notFoundHandler);
     if (!routeExists(rt)) {
+        console.log(`created route: ${rt}`);
         app.get(rt, (req, res) => {
             res.sendFile(path.join(basePath, 'player.html'));
         });

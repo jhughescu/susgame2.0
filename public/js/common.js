@@ -41,7 +41,20 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
 //    setupObserver('myTargetElement');
-
+    const getTemplate = (temp, ob, cb) => {
+        // returns a compiled template, but does not render it
+        fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
+            .then(response => response.text())
+            .then(compiledTemplate => {
+                const template = compiledTemplate;
+                if (cb) {
+                    cb(template);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching or rendering template:', error);
+            });
+    }
     const renderTemplate = (targ, temp, ob, cb) => {
 //        console.log(JSON.stringify(ob))
 //        console.log(ob)
@@ -87,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return qu;
     };
     window.renderTemplate = renderTemplate;
+    window.getTemplate = getTemplate;
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
     window.copyObjectWithExclusions = copyObjectWithExclusions;
