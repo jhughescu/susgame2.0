@@ -16,6 +16,7 @@ const log = (msg) => {
         console.log(`gameController: ${msg}`);
     }
 };
+
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
     const session = JSON.parse(o);
@@ -47,7 +48,6 @@ async function startGame (o, cb) {
     }
     return rg;
 };
-
 async function restoreGame (o, cb) {
     // restoreGame will set up a game that has been started, but due to some sort of failure has been removed from the 'games' object.
     // Restore by creating a new instance of Game and then loading any stored info from the database.
@@ -62,6 +62,30 @@ async function restoreGame (o, cb) {
         cb(game);
     } else {
         console.error('restoreGame requires a callback');
+    }
+};
+async function resetGame(id, cb) {
+
+    const game = getGameWithUniqueID(id);
+    // Note: add a condition that only system admin can reset a game with state='ended'
+    if (game.state === 'ended') {
+
+    } else {}
+    eventEmitter.emit('resetAll', game.address);
+    //    log(game);
+    game.players = [];
+    game.teams = [];
+    game.state = 'pending';
+
+    // NEED TO UPDATE THE ASSOCIATED SESSION
+    log('setting state to pending');
+    const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams});
+    if (session) {
+        log('return updated session here');
+        log(session);
+        if (cb) {
+            cb(session);
+        }
     }
 };
 
@@ -141,26 +165,17 @@ const resetTeams = (ob, cb) => {
     if (cb) {
         cb(game);
     }
-}
-async function resetGame(id, cb) {
-
-    // CURRENTLY RESETS ALL - ALL - THE PLAYERS
-    eventEmitter.emit('resetAll');
-    const game = getGameWithUniqueID(id);
-//    log(game);
+};
+const endGame = (game, cb) => {
+    console.log(`end game with address ${game.address}`);
+    routeController.destroyRoute(game.address);
     game.players = [];
-    game.state = 'pending';
-
-    // NEED TO UPDATE THE ASSOCIATED SESSION
-    log('setting state to pending');
-    const session = await sessionController.updateSession(id, {state: 'pending', players: game.players});
-    if (session) {
-        log('return updated session here');
-        log(session);
-        if (cb) {
-            cb(session);
-        }
+    game.teams = [];
+    game.state = 'ended';
+    if (cb) {
+        cb(game);
     }
+    eventEmitter.emit('gameEnded', game);
 };
 const registerPlayer = (ob, cb, socket) => {
 //    log(`registerPlayer to game ${ob.game}`);
@@ -221,6 +236,7 @@ module.exports = {
     getGame,
     getGameCount,
     startGame,
+    endGame,
     restoreGame,
     resetGame,
     registerPlayer,

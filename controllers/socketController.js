@@ -131,6 +131,9 @@ function initSocket(server) {
         socket.on('resetGame', (id, cb) => {
             gameController.resetGame(id, cb);
         });
+        socket.on('endGame', (game, cb) => {
+            gameController.endGame(game, cb);
+        });
         socket.on('assignTeams', (ob, cb) => {
             gameController.assignTeams(ob, cb);
         });
@@ -139,6 +142,17 @@ function initSocket(server) {
         });
         socket.on('identifyPlayers', (game) => {
             io.to(game.address).emit('identifyPlayer');
+        });
+        socket.on('testPassword', async (ob, cb) => {
+//            console.log(`testPassword`);
+            let s = await sessionController.getSessionPassword(ob.session);
+            if (s) {
+                if (cb) {
+                    cb(s.password === ob.pw);
+                }
+            } else {
+                console.log(`no session found with id ${ob.session}`)
+            }
         });
     });
 
@@ -209,8 +223,19 @@ function initSocket(server) {
         log(`teamsAssigned: ${game.uniqueID}`);
         io.to(game.address).emit('teamsAssigned', game);
     });
-    eventEmitter.on('resetAll', (id) => {
-        playerNamespace.emit('resetAll');
+    eventEmitter.on('resetAll', (address) => {
+//        playerNamespace.emit('resetAll');
+        log(`resetAll: ${address}`);
+        io.to(address).emit('resetAll');
+    });
+    eventEmitter.on('gameEnded', (game) => {
+        console.log('this is the end');
+        const upO = {
+            players: game.players,
+            teams: game.teams,
+            state: game.state,
+        }
+        sessionController.updateSession(game.uniqueID, upO);
     });
     eventEmitter.on('createNamespace', (id) => {
         createGameNamespace(id);

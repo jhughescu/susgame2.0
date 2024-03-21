@@ -100,13 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     async function facilitate () {
-//        console.log('facilitate - cookie?');
+        console.log('facilitate - cookie?');
 //        console.log(document.cookie);
 //        document.cookie = `sessionID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         try {
             const session = $('#val_uniqueID').html();
             const password = $('#val_password').html();
 //            console.log(session, password);
+//            debugger;
             const response = await fetch('/facilitatorlogin', {
                 method: 'POST',
                 headers: {
@@ -123,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Redirect to facilitator dashboard with the token
             document.cookie = `sessionID=${session}`;
 //            console.log(document.cookie);
+//            debugger;
             window.open(`/facilitatordashboard`, 'facdash');
         } catch (err) {
             console.log('error');
@@ -141,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 p.find('#sessionDetail').html('');
                 p.hide();
             });
+
             window.renderTemplate('sessionList', 'sessionList', {sessions: data}, readySessionLinks);
         });
 //
@@ -148,6 +151,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
 
     };
+    const copyToClipboard = (elementId) => {
+        // Select the text inside the element
+        const element = document.getElementById(elementId);
+        const range = document.createRange();
+        range.selectNode(element);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+
+        // Copy the selected text to the clipboard
+        document.execCommand('copy');
+
+        // Deselect the text
+        window.getSelection().removeAllRanges();
+    }
+
     const getSession = (sessionID) => {
         // Prompt the user to enter a password
         let password = prompt('Session password will be omitted from return unless admin password is provided here:', 'canary');
@@ -173,7 +191,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Process the data received from the server
                 $('#sessionDetail').fadeOut(300, function () {
                     window.renderTemplate('sessionDetail', 'sessionCardSystem', data, readyLaunch);
-                    $('#sessionDetail').fadeIn();
+                    $('#sessionDetail').fadeIn(300, () => {
+                        const vp = $('#val_password');
+                        vp.addClass('link');
+                        vp.off('click');
+                        vp.on('click', function() {
+                            copyToClipboard($(this).attr('id'));
+                        });
+                    });
 //                    readyLaunch();
                 });
             })

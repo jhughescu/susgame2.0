@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const resetFake = () => {
+        console.log(`resetFake method (no action)`)
         return;
 
 
@@ -107,6 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`id player ${getPlayerID()}`);
         showOverlay('playerID', {id: getPlayerID()});
     };
+    const onGameEnd = () => {
+        localStorage.clear();
+    };
+
     socket.on('playerConnect', (lid) => {
         playerConnect(lid);
     });
@@ -116,5 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('identifyPlayer', () => {
         identifyPlayer();
+    });
+    socket.on('gameEnd', () => {
+        onGameEnd();
+    });
+    window.addEventListener('beforeunload', function(event) {
+        // Cancel the event as stated by the standard.
+        event.preventDefault();
+        // Chrome requires returnValue to be set.
+        event.returnValue = 'Are you sure you want to leave? You may not be able to rejoin the session.';
     });
 });

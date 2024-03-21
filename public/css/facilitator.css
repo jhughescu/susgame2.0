@@ -61,6 +61,9 @@ td#val_players {
 /*  background-color: #ccc;*/
     font-weight: bold;
 }
+.tab button:disabled {
+    cursor: default;
+}
 
 /* Style the tab content */
 .tabcontent {

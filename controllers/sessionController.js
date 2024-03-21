@@ -94,7 +94,8 @@ async function getSessionPassword(id) {
 //        console.log(session)
         return session;
     } catch (err) {
-        console.log('no session found');
+        console.log(`getSessionPassword error:`);
+        console.log(err);
     }
 }
 async function getSessions(req, res) {
@@ -164,7 +165,7 @@ async function updateSession(uniqueID, updateOb) {
             { uniqueID },
             updateOb,
             { new: true }
-        );
+        ).select(select + ' -password');
 //        console.log('Updated document:', updatedSession);
         return updatedSession;
     } catch (error) {
