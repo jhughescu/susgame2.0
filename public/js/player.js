@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let lID = null;
     let fID = 'fid';
     let now = null;
+    let renderState = null;
 //    console.log(window.location);
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
@@ -15,22 +16,19 @@ document.addEventListener('DOMContentLoaded', function() {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         console.log(`registerwithGame: ${ID} ${qu.hasOwnProperty(fID) ? '(from query)' : ''}`);
         const initObj = {game: gID, player: ID, fake: fake};
-        socket.emit('regPlayer', initObj, (res) => {
-//            console.log(`regPlayer callback, res: ${res}`);
-            if (res) {
+        socket.emit('registerPlayer', initObj, (ob) => {
+            if (ob) {
+                console.log(ob)
+                let res = ob.id;
                 // amend for fake players
-//                console.log(res);
+                console.log(`registerPlayer callback, res: ${res}`);
                 if (res.indexOf('f', 0) > -1) {
-//                    console.log(`looks like a fake, does it have ID? ${qu.hasOwnProperty(fID)}`);
                     lID = lID + res;
-                    if (!qu.hasOwnProperty(fID)) {
-//                        const newURL = new URL(window.location.href);
-//                        newURL.searchParams.set(fID, res);
-//                        history.pushState(null, '', newURL);
-                    }
                 }
-//                console.log(`add to localStorage, ${lID}: ${res}`);
-                localStorage.setItem(lID, res)
+                localStorage.setItem(lID, res);
+                renderState = ob.renderState;
+//                getTeamIndex();
+                render();
             }
         });
     };
@@ -77,16 +75,30 @@ document.addEventListener('DOMContentLoaded', function() {
         lID = lid;
         onConnect();
     };
-
-    const teamsAssigned = (game) => {
-        console.log(`teamsAssigned`)
-        console.log(game);
-        console.log(game.address, gID);
-        console.log(game.address === gID);
-        if (game.address === gID) {
-            // team assignment is relevant to this game
-
+    const getTeam = (game) => {
+        const id = getPlayerID();
+        const arr = game.teams;
+        let ti = -1;
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].includes(id)) {
+                ti = i;
+                break;
+            }
         }
+//        console.log(`ti ${ti}`);
+//        console.log(game.persistentData.teams)
+        const t = game.persistentData.teams[`t${ti}`];
+//        console.log(t)
+        return t;
+    };
+    console.log('why oh why');
+    const teamsAssigned = (game) => {
+        const t = getTeam(game);
+        console.log(`teamAssigned`);
+        console.log(t);
+//        renderState = {temp: 'game.main', ob: {team: t.title}};
+        renderState = {temp: 'game.main', ob: {teamObj: t}};
+        render();
     };
     const showOverlay = (id, ob) => {
         if ($('.overlay')) {
@@ -108,8 +120,25 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`id player ${getPlayerID()}`);
         showOverlay('playerID', {id: getPlayerID()});
     };
+
+    const render = () => {
+        if (typeof(renderState) === 'object') {
+            const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
+            const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
+            console.log(`call renderTemplate`);
+            console.log(targ);
+            console.log(renderState.temp);
+            console.log(rOb);
+            window.renderTemplate(targ, renderState.temp, rOb);
+        } else {
+            console.warn('rendering not possible; renderState undefined');
+        }
+    };
     const onGameEnd = () => {
+        console.log(`onGameEnd`);
         localStorage.clear();
+        renderState = {temp: 'game.gameover', ob: {}};
+        render();
     };
 
     socket.on('playerConnect', (lid) => {
@@ -122,13 +151,25 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('identifyPlayer', () => {
         identifyPlayer();
     });
-    socket.on('gameEnd', () => {
+    socket.on('gameOver', () => {
+        console.log(`gameOver heard`);
         onGameEnd();
     });
+    socket.on('renderPlayer', (rOb) => {
+        const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
+        const temp = rOb.temp;
+        renderState = {temp: temp, ob: ob};
+        if (rOb.hasOwnProperty('targ')) {
+            renderState.targ = rOb.targ;
+        }
+        render();
+    });
+    /*
     window.addEventListener('beforeunload', function(event) {
         // Cancel the event as stated by the standard.
         event.preventDefault();
         // Chrome requires returnValue to be set.
         event.returnValue = 'Are you sure you want to leave? You may not be able to rejoin the session.';
     });
+    */
 });

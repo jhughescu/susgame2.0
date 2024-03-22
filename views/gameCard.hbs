@@ -1,15 +1,15 @@
 Game detail:
 <table><tbody>
-    {{#each this}}
+    {{#each game}}
     <tr><td>{{@key}}</td><td id='val_{{@key}}'>{{this}}</td></tr>
     {{/each}}
 </tbody></table>
 
 <div class='vertstack'>
-    <div class='link{{#if gameInactive}} disabled{{/if}}' id='makeFakes' >Launch Fake Generator</div>
-    <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameReset' >Reset game</div>
-    <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameEnd' >End game</div>
+    <div class='link{{#if gameInactive}} disabled{{/if}}' id='makeFakes'>Launch Fake Generator</div>
+    <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameReset'>Reset game</div>
+    <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameEnd'>End game</div>
 </div>
 <div id='qrcode'>
-    <img src='public/assets/qr/qrcode-{{this.uniqueID}}.png'>
+    <img src='public/assets/qr/qrcode-{{game.uniqueID}}.png'>
 </div>

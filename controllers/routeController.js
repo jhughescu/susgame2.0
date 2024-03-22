@@ -149,6 +149,11 @@ app.get('/getTemplate', (req, res) => {
 });
 
 
+app.post('/getTemplate', (req, res) => {
+    templateController.getTemplate(req, res);
+});
+
+
 // Declare the 404 response
 const notFoundHandler = (req, res) => {
     res.status(404).sendFile(path.join(basePath, '404.html'));

@@ -39,13 +39,25 @@ const setupPartials = () => {
 };
 
 
-const getTemplate = (req, res) => {
+const getTemplateOLd = (req, res) => {
     const temp = req.query.template;
+//    console.log(req.query.data);
+//    console.log(JSON.parse(req.query.data));
     const o = JSON.parse(req.query.data);
     const templateContent = fs.readFileSync(`views/${temp}.hbs`, 'utf8');
     const compiledTemplate = handlebars.compile(templateContent);
     const html = compiledTemplate(o);
     res.send(html);
 };
+const getTemplate = (req, res) => {
+    const temp = req.query.template;
+    const o = req.body; // Use req.body to access the JSON data object
+    const templateContent = fs.readFileSync(`views/${temp}.hbs`, 'utf8');
+    const compiledTemplate = handlebars.compile(templateContent);
+    const html = compiledTemplate(o);
+    res.send(html);
+};
+
+
 setupPartials();
 module.exports = { getTemplate, setupPartials };

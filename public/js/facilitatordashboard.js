@@ -45,6 +45,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return null;
     };
+    const resetSession = () => {
+        socket.emit('resetSession', session.uniqueID, (rtn) => {
+            if (typeof(rtn) === 'string') {
+                alert(rtn);
+            } else {
+                console.log(`session reset`);
+                session = rtn;
+                renderSession();
+            }
+        });
+    };
     const startGame = () => {
         addToLogFeed('start new game');
         if (session.state === 'pending') {
@@ -72,6 +83,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const endGame = () => {
+        socket.emit('endGame', game, (rgame) => {
+            //returns modified game, render this
+            game = rgame;
+            renderGame();
+        });
+        return;
+        // NOTE Use below in deployment
         let sure = window.prompt('Warning: this action cannot be undone. Enter your password to continue.');
         if (sure) {
             socket.emit('testPassword', {session: session.uniqueID, pw: sure}, (boo) => {
@@ -210,9 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('setupSessionLinks');
         addToLogFeed('setupSessionLinks');
         let sg = $('#gameStart');
+        let sr = $('#sessionReset');
         let gl = $('#gameLaunch');
         $('.link').off('click');
         sg.on('click', startGame);
+        sr.on('click', resetSession);
         if (session.state !== 'started') {
             gl.addClass('disabled');
             if (document.getElementById('gameLaunch')) {
@@ -291,8 +311,8 @@ document.addEventListener('DOMContentLoaded', function() {
             setupGameLinks();
         });
         // Render the game object excluding the persistent data
-        let rOb = window.copyObjectWithExclusions(game, 'persistentData');
-        rOb.gameInactive = rOb.state !== 'started';
+        let rOb = {game: window.copyObjectWithExclusions(game, 'persistentData')};
+        rOb.gameInactive = rOb.game.state !== 'started';
         if (clear) {
             $(`#${targ}`).html('');
         } else {

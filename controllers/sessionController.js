@@ -205,5 +205,16 @@ async function newSession(req, res) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+async function resetSession(id, cb) {
+    // dev only method, return warning if not dev
+    if (process.env.ISDEV) {
+        const session = await updateSession(id, {state: 'pending'});
+        if (session) {
+            cb(session);
+        }
+    } else {
+        cb('Not allowed');
+    }
+}
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , getSessionWithAddress};
+module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , getSessionWithAddress, resetSession};

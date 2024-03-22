@@ -35,7 +35,6 @@ async function startGame (o, cb) {
     rg = games[game];
 
     routeController.createRoute(`${session.address}`);
-    eventEmitter.emit('createNamespace', session.address);
     gfxController.generateSessionQR(session);
     try {
         await rg.loadPersistentData(session.type);
@@ -148,8 +147,6 @@ const assignTeams = (ob, cb) => {
     }
 //    log('assignTeams');
     eventEmitter.emit('teamsAssigned', game);
-    // NOTE currently this event is emitted to ALL players & client-side logic must determine whether to action it or not.
-    // This should be updated so that the event is only emitted to players registered with this game.
     if (cb) {
         cb(game);
     }
@@ -177,6 +174,27 @@ const endGame = (game, cb) => {
     }
     eventEmitter.emit('gameEnded', game);
 };
+const getRenderState = (game) => {
+    // returns an object which tells the player which template to render
+    console.log(`getRenderState, game state: ${game.state}`);
+//    console.log(game);
+    let rs = {};
+    if (game.state === 'ended') {
+        rs.temp = 'game.gameover';
+    } else if (game.state === 'pending') {
+        rs.temp = 'game.pending';
+    } else {
+        // only remaining state is 'started'
+        if (game.teams.length > 0) {
+            rs.temp = 'game.main';
+            rs.ob = {team: 'butter'};
+        } else {
+            rs.temp = 'game.intro';
+        }
+    }
+    console.log(rs)
+    return rs;
+};
 const registerPlayer = (ob, cb, socket) => {
 //    log(`registerPlayer to game ${ob.game}`);
 //    log(ob)
@@ -200,22 +218,9 @@ const registerPlayer = (ob, cb, socket) => {
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
             game.players.push(ID);
             newP = true;
-            // \/ moved to end
-//            if (cb) {
-//                cb(ID);
-//            } else {
-//                log('reg P, no CB');
-//            }
         }
-//        log(`register ${ID} with game ${ob.game}, (${newP ? 'new' : 'existing'} ${ob.fake ? 'fake' : 'real'} player) - ${JSON.stringify(ob)}`);
-//        log(plOrig);
-//        log(ob);
         eventEmitter.emit('gameUpdate', game);
         clearTimeout(updateDelay);
-//        log(JSON.stringify(game.players), plOrig, JSON.stringify(game.players) === plOrig)
-        if (JSON.stringify(game.players) !== plOrig) {
-//            log('change to players, will write data')
-        }
         if (JSON.stringify(game.players) !== plOrig) {
             updateDelay = setTimeout(() => {
                 // save list of players, but do so on a timeout so as not to address the database too frequently
@@ -223,7 +228,7 @@ const registerPlayer = (ob, cb, socket) => {
             }, 5000);
         }
         if (cb) {
-            cb(ID);
+            cb({id: ID, renderState: getRenderState(game)});
         } else {
             log('reg P, no CB');
         }

@@ -61,6 +61,7 @@ function initSocket(server) {
         src = src.split('/').reverse()[0];
         src = `/${src}`;
         if (src.indexOf('/game', 0) > -1) {
+            // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
             const queries = getQueries(ref);
             const isReal = queries['isAdmin'] !== true;
@@ -72,7 +73,7 @@ function initSocket(server) {
                 if (session) {
                     socket.emit('playerConnect', process.env.STORAGE_ID);
                 }
-                socket.on('regPlayer', (data, cb) => {
+                socket.on('registerPlayer', (data, cb) => {
                     gameController.registerPlayer(data, cb);
                 });
                 socket.on('getGameCount', (cb) => {
@@ -128,6 +129,9 @@ function initSocket(server) {
         socket.on('restoreGame', (o, cb) => {
             gameController.restoreGame(o, cb);
         });
+        socket.on('resetSession', (id, cb) => {
+            sessionController.resetSession(id, cb);
+        });
         socket.on('resetGame', (id, cb) => {
             gameController.resetGame(id, cb);
         });
@@ -156,65 +160,7 @@ function initSocket(server) {
         });
     });
 
-    // Block below removed, functionaility moved to the basic socket setup
-    /*
-    playerNamespace = io.of('/player');
-    playerNamespace.on('connection', async (socket) => {
-        log('player connects');
-        let ref = socket.request.headers.referer;
-        const isReal = getQueries(ref)['isAdmin'] !== 'true';
-        log(`playerNamespace setup, isReal? ${isReal}`);
 
-        if (isReal) {
-            ref = ref.split('?')[0];
-            const gameID = ref.split('/').reverse()[0];
-            log(`gameID: ${gameID}`);
-//            socket.join(gameID);
-            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
-            console.log('session:');
-            console.log(session);
-            socket.join('moose');
-            if (session) {
-                socket.emit('playerConnect', process.env.STORAGE_ID);
-            }
-            socket.on('regPlayer', (data, cb) => {
-                gameController.registerPlayer(data, cb);
-            });
-            socket.on('getGameCount', (cb) => {
-                gameController.getGameCount(cb);
-            });
-        }
-    });
-    playerNamespaceBAD = io.of('/playerBAD');
-    playerNamespaceBAD.on('connection', async (socket) => {
-        let ref = socket.request.headers.referer;
-        const isReal = getQueries(ref)['isAdmin'] !== 'true';
-        if (isReal) {
-            ref = ref.split('?')[0];
-            const gameID = ref.split('/').reverse()[0];
-            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
-            createGameNamespace(session.uniqueID);
-            console.log(`player joins, sessionID: ${session.uniqueID}`);
-            // test for namespace:
-            let gameNamespace = io.of(`/game${session.uniqueID}`);
-            if (gameNamespace) {
-                console.log('OK to join'); // always appears
-            } else {
-                console.log('no way'); // never appears
-            }
-            socket.join(`/game${session.uniqueID}`);
-            const socks = gameNamespaces[session.uniqueID].sockets;
-            console.log(socks); // always returns "Map(0) {}"
-            // test for non-existant namespace:
-            gameNamespace = io.of(`/canary${session.uniqueID}`);
-            if (gameNamespace) {
-                console.log('OK to join NON-EXISTANT namespace'); // always appears
-            } else {
-                console.log('no way'); // never appears
-            }
-        }
-    });
-    */
 
     eventEmitter.on('gameUpdate', (game) => {
         facilitatorDashboardNamespace.emit('gameUpdate', game);
@@ -230,115 +176,23 @@ function initSocket(server) {
     });
     eventEmitter.on('gameEnded', (game) => {
         console.log('this is the end');
+        console.log(game)
         const upO = {
             players: game.players,
             teams: game.teams,
             state: game.state,
         }
         sessionController.updateSession(game.uniqueID, upO);
+        console.log(`attempt to emit to game clients`)
+        io.to(game.address).emit('gameOver');
     });
     eventEmitter.on('createNamespace', (id) => {
-        createGameNamespace(id);
+        console.warn('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! createNameSpace has been removed, delete any emit methods which call it')
     });
 
 //    theIO = io;
 
-}// Function to initialize socket.io
-function initSocketBAD(server) {
-
-    io = socketIo(server);
-//    log('INIT');
-    // Handle client events
-    io.on('connection', (socket) => {
-        socket.on('disconnect', () => {
-            log('User disconnected (HTTP or WebSocket)');
-        });
-
-        // Handle other socket events
-        socket.on('getSesssionWithID', (id) => {
-            // Call appropriate controller method
-//            log('sock');
-            sessionController.getSessionWithID(id);
-        });
-
-        // Add more event handlers as needed
-    });
-
-
-    playerNamespaceBAD = io.of('/player');
-    playerNamespaceBAD.on('connection', async (socket) => {
-        let ref = socket.request.headers.referer;
-        const isReal = getQueries(ref)['isAdmin'] !== 'true';
-        if (isReal) {
-            ref = ref.split('?')[0];
-            const gameID = ref.split('/').reverse()[0];
-            const session = await sessionController.getSessionWithAddress(`/${gameID}`);
-            createGameNamespace(session.uniqueID);
-            const playerRef = socket.handshake.headers.referer.split('=')[2]
-
-//            console.log(socket.handshake.headers)
-            const gameNamespace = gameNamespaces[`${session.uniqueID}`];
-
-            if (gameNamespace) {
-                const nsID = `game${session.uniqueID}`
-//                console.log(`OK to join ${nsID}`); // always appears
-                socket.join(nsID);
-//                socket.join(gameNamespace);
-                let socks = playerNamespace.sockets;
-
-                if (playerRef === 'pf15') {
-                    console.log(`========================================================= player joins, sessionID: ${session.uniqueID}, player: ${playerRef}`);
-                    console.log(gameNamespace.name);
-                    setTimeout(() => {
-                        console.log(typeof(socks))
-                        socks = Object.fromEntries(socks)
-                        console.log(`socks ${Object.keys(socks).length}`);
-//                        console.log(socks)
-                        for (const socketId in socks) {
-//                            console.log(socketId)
-                            const socket = socks[socketId];
-                            // Access socket properties or perform actions
-                            console.log(`Socket ID: ${socketId}, Connected: ${socket.connected}`);
 }
-                    }, 1000);
-                }
-            } else {
-                console.log('no way'); // never appears
-            }
-        }
-    });
-
-}
-const createGameNamespace = (id) => {
-    return;
-    // create a game-specific namespace if one does not already exist
-    const gameNamespace = id;
-    if (!gameNamespaces.hasOwnProperty(id)) {
-//        log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ createGameNamespace: ${gameNamespace}`);
-        gameNamespaces[id] = io.of(gameNamespace);
-//        console.log(gameNamespaces[id]);
-        gameNamespaces[id].on('connection', async (socket) => {
-//            log('new game connected');
-            let ref = socket.request.headers.referer;
-            const isReal = getQueries(ref)['isAdmin'] !== 'true';
-//            log(`playerNamespace setup, isReal? ${isReal}`);
-            if (isReal) {
-                ref = ref.split('?')[0];
-                const gameID = ref.split('/').reverse()[0];
-                const session = await sessionController.getSessionWithAddress(`/${gameID}`);
-                if (session) {
-                    socket.emit('playerConnect', process.env.STORAGE_ID);
-                }
-                socket.on('regPlayer', (data, cb) => {
-                    gameController.registerPlayer(data, cb);
-                });
-                socket.on('getGameCount', (cb) => {
-                    gameController.getGameCount(cb);
-                });
-            }
-        })
-    }
-};
 const emitAll = (ev, o) => {
     io.emit(ev, o);
 }
@@ -352,6 +206,5 @@ module.exports = {
     eventEmitter,
     emitSystem,
     emitAll,
-    createGameNamespace,
     gameNamespaces
 };

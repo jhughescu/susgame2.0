@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', function () {
             for (const mutation of mutationsList) {
                 // Perform actions based on the type of mutation
                 if (mutation.type === 'childList') {
-//                    console.log('A child node has been added or removed');
+                    //                    console.log('A child node has been added or removed');
                     // Perform actions such as updating the UI, etc.
                     if (cb) {
                         cb();
                     }
                 } else if (mutation.type === 'attributes') {
-//                    console.log('Attributes of the target element have changed');
+                    //                    console.log('Attributes of the target element have changed');
                     // Perform actions such as updating the UI, etc.
                 }
             }
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // observer.disconnect();
     };
 
-//    setupObserver('myTargetElement');
+    //    setupObserver('myTargetElement');
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
         fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
@@ -54,16 +54,44 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => {
                 console.error('Error fetching or rendering template:', error);
             });
-    }
+    };
     const renderTemplate = (targ, temp, ob, cb) => {
-//        console.log(JSON.stringify(ob))
-//        console.log(ob)
+        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
+        console.log(JSON.stringify(ob));
+        if (ob === undefined) {
+            console.error('Error: Data object is undefined');
+            return;
+        }
+        fetch(`/getTemplate?template=${temp}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ob)
+            })
+            .then(response => response.text())
+            .then(compiledTemplate => {
+                const template = compiledTemplate;
+                document.getElementById(targ).innerHTML = template;
+                if (cb) {
+                    cb();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching or rendering template:', error);
+            });
+    };
+
+    const renderTemplateOLD = (targ, temp, ob, cb) => {
+        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
+        console.log(JSON.stringify(ob))
+        //        console.log(ob)
         fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
             .then(response => response.text())
             .then(compiledTemplate => {
                 const template = compiledTemplate;
                 document.getElementById(targ).innerHTML = template;
-//                console.log('template loaded');
+                //                console.log('template loaded');
                 if (cb) {
                     cb();
                 }
