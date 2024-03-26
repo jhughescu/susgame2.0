@@ -1,9 +1,21 @@
 <div class='playerlist'>
 <table><tbody>
-<tr><th class='link listSort'>index</th><th class='link listSort'>ID</th><th class='link listSort'>team</th><th class='link listSort'>isLead</th></tr>
+<tr>
+<th class='link listSort'>index</th>
+<th class='link listSort'>ID</th>
+<th class='link listSort'>team</th>
+<th class='link listSort'>isLead</th>
+<th></th>
+</tr>
 {{#each this}}
 
-<tr><td>{{this.index}}</td><td>{{this.id}}</td><td>{{this.teamObj.title}}</td><td class='boo {{this.isLead}}'>{{this.isLead}}</td></tr>
+<tr>
+<td>{{this.index}}</td>
+<td>{{this.id}}</td>
+<td>{{this.teamObj.title}}</td>
+<td class='boo {{this.isLead}}'>{{this.isLead}}</td>
+<td><button class='makeLead' id='makeLead_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}}>make lead</button></td>
+</tr>
 {{/each}}
 </tbody></table>
 </div>

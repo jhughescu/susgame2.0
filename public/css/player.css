@@ -11,13 +11,14 @@ body {
 /*    z-index: 9;*/
 }
 .overlay {
+    font-size: 1rem;
     position: absolute;
-    width: 300px;
-    height: 100px;
+    width: 450px;
+    height: 150px;
     top: 10px;
     right: 10px;
     z-index: 999;
     background-color: rgba(0, 0, 0, 0.4);
     color: white;
-    padding: 30px;
+    padding: 20px;
 }

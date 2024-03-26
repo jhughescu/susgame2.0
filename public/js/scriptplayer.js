@@ -15,22 +15,22 @@ document.addEventListener('DOMContentLoaded', function() {
 //    console.log(fake);
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
-//        console.log(`registerwithGame: ${ID} ${qu.hasOwnProperty(fID) ? '(from query)' : ''}`);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
-//        console.log(socket.id)
+//        console.log(initObj);
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
-//                console.log(ob);
                 let res = ob.id;
+//                console.log('registerPlayer CB');
+//                console.log(JSON.parse(ob.game));
+                if (ob.game) {
+                    setPlayer(JSON.parse(ob.game));
+                }
                 // amend for fake players
-//                console.log(`registerPlayer callback, res: ${res}`);
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
                 }
                 localStorage.setItem(lID, res);
                 renderState = ob.renderState;
-//                console.log(player)
-//                getTeamIndex();
                 render();
             }
         });
@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (localStorage.getItem(lID)) {
             id = localStorage.getItem(lID);
         }
-        return id;
+        let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': id;
+        return ID;
     };
 
     const resetFake = () => {
@@ -94,15 +95,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(t)
         return t;
     };
-    const teamsAssigned = (game) => {
-//        console.log(`teamAssigned`);
+    const setPlayer = (game) => {
+//        console.log(`setPlayer ${getPlayerID()}`);
+//        console.log(game)
         const t = getTeam(game);
         player = game.playersFull[getPlayerID()];
-
-//        console.log(t);
 //        console.log(player);
-//        renderState = {temp: 'game.main', ob: {team: t.title}};
-//        renderState = {temp: 'game.main', ob: {teamObj: t}};
+    };
+    const teamsAssigned = (game) => {
+        setPlayer(game);
         renderState = {temp: 'game.main', ob: player};
         render();
     };
@@ -125,8 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
 //        }));
     }
     const identifyPlayer = () => {
-        console.log(`id player ${getPlayerID()}`);
-        showOverlay('playerID', {id: getPlayerID()});
+//        console.log(`id player ${getPlayerID()}`);
+        const idOb = {id: getPlayerID(), sock: socket.id, stored: 'null'};
+        if (player) {
+            idOb.stored = player.socketID;
+        }
+        showOverlay('playerID', idOb);
     };
 
     const render = () => {
@@ -148,7 +153,17 @@ document.addEventListener('DOMContentLoaded', function() {
         renderState = {temp: 'game.gameover', ob: {}};
         render();
     };
-
+    socket.on('gameUpdate', (rgame) => {
+//        console.log(`game updated: ${getPlayerID()}`)
+//        console.log(rgame);
+        game = rgame;
+        setPlayer(game);
+        renderState = {temp: 'game.main', ob: player};
+        render();
+    });
+    socket.on('test', () => {
+        console.log('testing')
+    });
     socket.on('playerConnect', (lid) => {
         playerConnect(lid);
     });

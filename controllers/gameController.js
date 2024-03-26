@@ -59,10 +59,12 @@ async function restoreGame (o, cb) {
     // Restore by creating a new instance of Game and then loading any stored info from the database.
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
-    log(`restoreGame: ${game.uniqueID}`);
+//    log(`restoreGame: ${game.uniqueID}`);
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
+        // RETAIN LINE BELOW:
+        console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`)
     }
     if (cb) {
         cb(game);
@@ -110,6 +112,31 @@ async function resetGame(id, cb) {
             }
         }
     }
+};
+async function makeLead (ob) {
+    // change the team lead based on the object passed
+    const game = games[`game-${ob.game}`];
+    if (game) {
+        let t = game.teams[ob.team].slice();
+//        console.log(`change the lead of team ${ob.team} to ${ob.player}`);
+        t.splice(t.indexOf(ob.player), 1);
+        t.unshift(ob.player);
+        game.teams[ob.team] = t;
+        const leadNew = game.playersFull[ob.player];
+        const leadOld = game.playersFull[t[1]];
+//        console.log(leadNew);
+//        console.log(leadOld);
+        game.setTeam(leadNew);
+        //  \/ changes the existing lead (which has now been shunted to index 2)
+        game.setTeam(leadOld);
+        const session = await sessionController.updateSession(ob.game, {teams: game.teams});
+        eventEmitter.emit('gameUpdate', game);
+        eventEmitter.emit('singlePlayerGameUpdate', {player: leadNew, game});
+        eventEmitter.emit('singlePlayerGameUpdate', {player: leadOld, game});
+    } else {
+        console.log(`cannot change lead; no game with ID game-${ob.game}`)
+    }
+
 };
 
 const getGameCount = (cb) => {
@@ -276,15 +303,14 @@ const registerPlayer = (ob, cb) => {
                 index = game.players.length;
             }
             if (!game.playersFull.hasOwnProperty(ID)) {
-                console.log(`create new player with id ${ID} at index ${index}`);
-
-                const pl = new Player(ID, ob.socketID);
-                if (index > -1) {
-                    // only add index for new players
-                    pl.index = index;
-                }
+                let plIndex = index > -1 ? index : game.players.indexOf(ID) + 1;
+//                console.log(`create new player with id ${ID} at index ${plIndex}`);
+                const pl = new Player(ID, plIndex, ob.socketID);
                 game.playersFull[ID] = pl;
                 game.setTeam(pl);
+            } else {
+                // update the existing player object with the new socketID
+                game.playersFull[ID].socketID = ob.socketID;
             }
         } else {
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
@@ -293,6 +319,7 @@ const registerPlayer = (ob, cb) => {
         }
         if (newP && game.teams.length > 0) {
             console.log(`looks like a new player (${ID}) joining after teams are assigned`);
+            // NOTE no functionality added yet - assign player to whichever PV team has fewer members
         }
 
         eventEmitter.emit('gameUpdate', game);
@@ -305,7 +332,7 @@ const registerPlayer = (ob, cb) => {
             }, 5000);
         }
         if (cb) {
-            cb({id: ID, renderState: getRenderState(game, ID)});
+            cb({id: ID, renderState: getRenderState(game, ID), game: JSON.stringify(game)});
         } else {
             log('reg P, no CB');
         }
@@ -320,6 +347,7 @@ const registerPlayer = (ob, cb) => {
         }, 500);
     }
 };
+
 module.exports = {
     getGame,
     getGameCount,
@@ -329,5 +357,6 @@ module.exports = {
     resetGame,
     registerPlayer,
     assignTeams,
+    makeLead,
     resetTeams
 };

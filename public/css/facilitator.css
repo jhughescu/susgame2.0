@@ -94,7 +94,7 @@ td#val_players {
     font-size: 0.8rem;
     text-align: left;
 }
-.playerlist td {
+.playerlist td, th {
 /*    background-color: green;*/
     padding: 5px 20px 0px 0px;
 }

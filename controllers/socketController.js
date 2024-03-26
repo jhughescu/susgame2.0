@@ -70,7 +70,8 @@ function initSocket(server) {
         src = src.split('/').reverse()[0];
         src = `/${src}`;
         const Q = socket.handshake.query;
-//        console.log(Q);
+
+        // Player clients
         if (src.indexOf('/game', 0) > -1) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
@@ -105,8 +106,9 @@ function initSocket(server) {
             }
 
         }
+        // End player clients
 
-
+        // Facilitator clients
         if (Q.role === 'facilitator') {
             // this is a dashboard - needs further conditions to distinguish from system admin (which currently uses a namespace)
             socket.emit('checkOnConnection');
@@ -127,7 +129,7 @@ function initSocket(server) {
     //            log('User disconnected from a facilitator dashboard');
             });
             socket.on('getGame', (id, cb) => {
-                console.log(`on getGame`)
+//                console.log(`on getGame`)
                 gameController.getGame(id, cb);
             });
             socket.on('startGame', (o, cb) => {
@@ -155,6 +157,9 @@ function initSocket(server) {
             socket.on('identifyPlayers', (game) => {
                 io.to(game.address).emit('identifyPlayer');
             });
+            socket.on('makeLead', (obj) => {
+                gameController.makeLead(obj);
+            });
             socket.on('testPassword', async (ob, cb) => {
     //            console.log(`testPassword`);
                 let s = await sessionController.getSessionPassword(ob.session);
@@ -167,7 +172,7 @@ function initSocket(server) {
                 }
             });
         }
-
+        // End facilitator clients
 
 //        socket.on('disconnect', () => {
 //            log('User disconnected (HTTP or WebSocket)');
@@ -267,15 +272,25 @@ function initSocket(server) {
 
 
     eventEmitter.on('gameUpdate', (game) => {
-//        facilitatorDashboardNamespace.emit('gameUpdate', game);
-//        const roomName = `/game-5eaf-fac`;
-        const roomName = `${game.address}-fac`;
-//        showRoomSize(roomName)
-//        io.to(roomName).emit('test');
+        let roomName = `${game.address}-fac`;
+//        console.log(`gameUpdate emmitted to room ${roomName}`);
+//        showRoomSize(roomName);
         io.to(roomName).emit('gameUpdate', game);
+//        roomName = `${game.address}`;
+//        console.log(`gameUpdate emmitted to room ${roomName}`);
+//        showRoomSize(roomName);
+//        io.to(roomName).emit('gameUpdate', game);
+    });
+    eventEmitter.on('singlePlayerGameUpdate', (ob) => {
+        // requires an object: {player: <playerObject>, game}
+        if (ob.hasOwnProperty('player') && ob.hasOwnProperty('game')) {
+            io.to(ob.player.socketID).emit('gameUpdate', ob.game);
+        } else {
+            console.log(`singlePlayerGameUpdate requires an object: {player: <playerObject>, game}`)
+        }
     });
     eventEmitter.on('teamsAssigned', (game) => {
-        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
+//        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
         const room = io.sockets.adapter.rooms.get(game.address);
         if (room) {
             const numSockets = room.size;
@@ -302,6 +317,12 @@ function initSocket(server) {
         console.log(`attempt to emit to game clients`)
         io.to(game.address).emit('gameOver');
     });
+    eventEmitter.on('test', (player) => {
+        console.log(`emit test to ${player.socketID}`)
+        if (player.socketID) {
+            io.to(player.socketID).emit('test');
+        }
+    })
     eventEmitter.on('createNamespace', (id) => {
         console.warn('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! createNameSpace has been removed, delete any emit methods which call it')
     });
@@ -309,6 +330,7 @@ function initSocket(server) {
 //    theIO = io;
 
 }
+
 const emitAll = (ev, o) => {
     io.emit(ev, o);
 }

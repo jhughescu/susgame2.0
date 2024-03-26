@@ -85,7 +85,6 @@ class Game {
             score
         });
     }
-
     getScores() {
         return this.scores;
     }
