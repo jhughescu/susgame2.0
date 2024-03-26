@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    // templateStore maintains copies of each fetched template so they can be retrieved without querying the server
+    const templateStore = {};
+
     // Define the setupObserver function to accept an element ID as an argument
     const setupObserver = (elementId, cb) => {
         // Select the target element based on the provided ID
@@ -41,7 +45,18 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     //    setupObserver('myTargetElement');
-    const getTemplate = (temp, ob, cb) => {
+    const procVal = (v) => {
+        // process values into numbers, booleans etc
+        if (!isNaN(parseInt(v))) {
+            v = parseInt(v);
+        } else if (v === 'true') {
+            v = true;
+        } else if (v === 'false') {
+            v = false;
+        }
+        return v;
+    }
+    const getTemplatev1 = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
         fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
             .then(response => response.text())
@@ -55,9 +70,87 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error fetching or rendering template:', error);
             });
     };
-    const renderTemplate = (targ, temp, ob, cb) => {
+    const getTemplateV2 = (temp, ob, cb) => {
+        // returns a compiled template, but does not render it
+        fetch(`/getTemplate?template=${temp}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ob)
+            })
+            .then(response => response.text())
+            .then(compiledTemplate => {
+                const template = compiledTemplate;
+                if (cb) {
+                    cb(compiledTemplate);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching or rendering template:', error);
+            });
+    };
+    const getTemplate = (temp, ob, cb) => {
+        // returns a compiled template, but does not render it
+        if (templateStore.hasOwnProperty(temp)) {
+            // template exists in the store, return that
+            const uncompiledTemplate = templateStore[temp];
+            if (cb) {
+                cb(uncompiledTemplate);
+            }
+        } else {
+            // new template request, fetch from the server
+            fetch(`/getTemplate?template=${temp}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(ob)
+                })
+                .then(response => response.text())
+                .then(uncompiledTemplate => {
+//                    const template = uncompiledTemplate;
+                    templateStore[temp] = uncompiledTemplate;
+                    if (cb) {
+                        cb(uncompiledTemplate);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching or rendering template:', error);
+                });
+        }
+    };
+    const getPartials = () => {
+        // Client-side code
+//        console.log(`getPartials`);
+        fetch('/partials')
+            .then(response => response.json())
+            .then(data => {
+                const partials = data.partials;
+//                console.log('partials');
+//                console.log(partials);
+                (async () => {
+//                    console.log(`the async`)
+                    for (const name in partials) {
+                        const part = await Handlebars.compile(partials[name]);
+                        Handlebars.registerPartial(name, part);
+//                        console.log(part);
+//                        console.log(`Handlebars.partials:`);
+//                        console.log(JSON.parse(JSON.stringify(Handlebars.partials)));
+                    }
+
+                })();
+
+                // Now the partials are registered and ready to use
+            })
+            .catch(error => {
+                console.error('Error fetching partials:', error);
+            });
+
+    };
+    const renderTemplateV1 = (targ, temp, ob, cb) => {
         console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
-        console.log(JSON.stringify(ob));
+//        console.log(JSON.stringify(ob));
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
@@ -82,24 +175,66 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     };
 
-    const renderTemplateOLD = (targ, temp, ob, cb) => {
-        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
-        console.log(JSON.stringify(ob))
-        //        console.log(ob)
-        fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
-            .then(response => response.text())
-            .then(compiledTemplate => {
-                const template = compiledTemplate;
-                document.getElementById(targ).innerHTML = template;
-                //                console.log('template loaded');
-                if (cb) {
-                    cb();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching or rendering template:', error);
-            });
+    const renderTemplate = (targ, temp, ob, cb) => {
+//        getPartials()
+//        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
+//        console.log(JSON.stringify(ob));
+//        console.log(ob);
+//        console.log(JSON.parse(JSON.stringify(Handlebars.partials)))
+        if (ob === undefined) {
+            console.error('Error: Data object is undefined');
+            return;
+        }
+        if (templateStore.hasOwnProperty(temp)) {
+            // if this template has already been requested we can just serve it from the store
+            const compiledTemplate = Handlebars.compile(templateStore[temp]);
+//            const compiledTemplate = Handlebars.compile(uncompiledTemplate);
+            document.getElementById(targ).innerHTML = compiledTemplate(ob);
+//            console.log(`template returned from store: ${temp}`);
+//            console.log(compiledTemplate());
+            if (cb) {
+                cb();
+            }
+        } else {
+            // If this template is being requested for the first time we will have to fetch it from the server
+            fetch(`/getTemplate?template=${temp}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(ob)
+                })
+                .then(response => response.text())
+                .then(uncompiledTemplate => {
+//                    console.log(`template fetched from server: ${temp}`);
+//                    console.log(JSON.parse(JSON.stringify(Handlebars.partials)));
+                    const template = uncompiledTemplate;
+//                    console.log(`template:`);
+//                    console.log(template);
+                    templateStore[temp] = uncompiledTemplate;
+                    const compiledTemplate = Handlebars.compile(template);
+
+//                    console.log(`compiledTemplate:`)
+//                    console.log(compiledTemplate);
+//                    if (temp === 'sessionCardSystem') {
+//                        console.log(`compiledTemplate run:`)
+//                        console.log(compiledTemplate({password: 'sjdkl'}));
+//                    }
+//                    console.log(`compiledTemplate run with ob:`)
+//                    console.log(compiledTemplate(ob))
+//                    console.log(`ob:`)
+//                    console.log(ob)
+                    document.getElementById(targ).innerHTML = compiledTemplate(ob);
+                    if (cb) {
+                        cb();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching or rendering template:', error);
+                });
+        }
     };
+
     const copyObjectWithExclusions = (obj, exclusions) => {
         const newObj = {};
         // Copy properties from the original object to the new object,
@@ -127,10 +262,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return qu;
     };
+    // NOTE: parials are currently set up each time the system admin connects, so the method call below is safe for now.
+    // In case of problems getting partials, check the order of system architecture.
+    getPartials();
+    window.procVal = procVal;
     window.renderTemplate = renderTemplate;
     window.getTemplate = getTemplate;
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
     window.copyObjectWithExclusions = copyObjectWithExclusions;
     window.getQueries = getQueries;
+    window.getPartials = getPartials;
 });

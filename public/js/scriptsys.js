@@ -190,7 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 // Process the data received from the server
                 $('#sessionDetail').fadeOut(300, function () {
-                    window.renderTemplate('sessionDetail', 'sessionCardSystem', data, readyLaunch);
+                    const rOb = data;
+//                    const rOb = {password: 'socks'};
+                    window.renderTemplate('sessionDetail', 'sessionCardSystem', rOb, readyLaunch);
                     $('#sessionDetail').fadeIn(300, () => {
                         const vp = $('#val_password');
                         vp.addClass('link');

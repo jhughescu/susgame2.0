@@ -90,3 +90,17 @@ td#val_players {
     width: 200px;
     margin-bottom: 4px;
 }
+.playerlist {
+    font-size: 0.8rem;
+    text-align: left;
+}
+.playerlist td {
+/*    background-color: green;*/
+    padding: 5px 20px 0px 0px;
+}
+.boo.true {
+    color: #33cc33;
+}
+.boo.false {
+    color: #a72727;
+}

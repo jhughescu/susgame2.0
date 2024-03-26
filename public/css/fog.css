@@ -17,6 +17,10 @@ body {
   -webkit-filter: blur(1px) grayscale(0.2) saturate(1.2) sepia(0.2);
   filter: blur(1px) grayscale(0.2) saturate(1.2) sepia(0.2);
 }
+/* my tweaks */
+.fogwrapper {
+    pointer-events: none;
+}
 #foglayer_01, #foglayer_02, #foglayer_03 {
   height: 100%;
   position: absolute;

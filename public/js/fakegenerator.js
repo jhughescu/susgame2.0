@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = io('/facilitatordashboard');
     const gameID = window.location.hash.replace('#', '');
+    const socket = io('', {
+        query: {
+            role: 'facilitator',
+            type: 'fakeGenerator',
+            id: gameID
+//            session: session
+        }
+    });
     socket.on('checkOnConnection', () => {
     });
     function rsort () {

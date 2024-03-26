@@ -1,5 +1,25 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = io('/facilitatordashboard');
+
+    const getSessionID = () => {
+        const cookies = document.cookie.split(';');
+//        console.log(`getSessionID`);
+        for (let cookie of cookies) {
+//            console.log(cookie);
+            const [cookieName, cookieValue] = cookie.trim().split('=');
+            if (cookieName === 'sessionID') {
+                return decodeURIComponent(cookieValue);
+            }
+        }
+        return null;
+    };
+    const socket = io('', {
+        query: {
+            role: 'facilitator',
+            type: 'dashboard',
+            id: getSessionID()
+//            session: session
+        }
+    });
     const clientData = {role: 'facilitator'};
 
     // logFeed is an array of messages to be revealed to the client
@@ -9,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let session = null;
     let game = null;
 
+    const playerSortOrder = {prop: null, dir: true};
 
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on');
@@ -32,18 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearLogFeed = () => {
         logFeed.splice(0, logFeed.length);
         renderLogFeed();
-    };
-    const getSessionID = () => {
-        const cookies = document.cookie.split(';');
-//        console.log(`getSessionID`);
-        for (let cookie of cookies) {
-//            console.log(cookie);
-            const [cookieName, cookieValue] = cookie.trim().split('=');
-            if (cookieName === 'sessionID') {
-                return decodeURIComponent(cookieValue);
-            }
-        }
-        return null;
     };
     const resetSession = () => {
         socket.emit('resetSession', session.uniqueID, (rtn) => {
@@ -157,13 +166,92 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('no game');
         }
     };
+    const sortListisLead = (a, b) => {
+        if (a.isLead && !b.isLead) {
+            return playerSortOrder.dir ? -1 : 1;
+        } else if (!a.islead && b.isLead) {
+            return playerSortOrder.dir ? 1 : -1;
+        } else {
+            return 0;
+        }
+    };
+    const sortListIndex = (a, b) => {
+        const aID = parseInt(a.index);
+        const bID = parseInt(b.index);
+        if (aID < bID) {
+            return playerSortOrder.dir ? -1 : 1;
+        } else if (aID > bID) {
+            return playerSortOrder.dir ? 1 : -1;
+        } else {
+            return 0;
+        }
+    };
+    const sortListID = (a, b) => {
+        const aID = parseInt(a.id.replace(/pf/g, ''));
+        const bID = parseInt(b.id.replace(/pf/g, ''));
+        if (aID < bID) {
+            return playerSortOrder.dir ? -1 : 1;
+        } else if (aID > bID) {
+            return playerSortOrder.dir ? 1 : -1;
+        } else {
+            return 0;
+        }
+    };
+    const sortListTeam = (a, b) => {
+        const aID = a.teamObj.title;
+        const bID = b.teamObj.title;
+        if (aID < bID) {
+            return playerSortOrder.dir ? -1 : 1;
+        } else if (aID > bID) {
+            return playerSortOrder.dir ? 1 : -1;
+        } else {
+            return 0;
+        }
+    };
+    const renderPlayers = (l) => {
+        if (game || l) {
+            const list = l ? l : Object.values(Object.assign({}, game.playersFull));
+            const pso = playerSortOrder;
+//            console.log(list);
+            renderTemplate('contentPlayers', 'playerlist', list, () => {
+                $('.listSort').off('click');
+                $('.listSort').on('click', function () {
+                    pso.dir = pso.prop === this.textContent ? !pso.dir : true;
+                    switch (this.textContent) {
+                        case 'index':
+                            renderPlayers(list.sort(sortListIndex));
+                            break;
+                        case 'ID':
+                            renderPlayers(list.sort(sortListID));
+                            break;
+                        case 'team':
+                            renderPlayers(list.sort(sortListTeam));
+                            break;
+                        case 'isLead':
+                            renderPlayers(list.sort(sortListisLead));
+                            break;
+                        default:
+                            console.log('nosort');
+                    }
+
+//                    pso.dir = !pso.dir;
+                    pso.prop = this.textContent;
+                });
+            })
+        }
+    };
     const assignTeams = () => {
         socket.emit('assignTeams', {address: game.address, type: 'order'}, (rgame) => {
 //            console.log(rgame);
-            addToLogFeed('teams assigned');
-            game.teams = rgame.teams;
-            renderControls();
-//            renderTeams();
+            if (typeof(rgame) === 'string') {
+                alert('error assigning teams, try again');
+            } else {
+                addToLogFeed('teams assigned');
+                console.log('ready to check');
+                game = rgame;
+                renderControls();
+    //            renderTeams();
+            }
         });
     };
     const resetTeams = () => {
@@ -191,7 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
             break;
         case 'controls':
             renderControls();
-
+            break;
+        case 'players':
+            renderPlayers();
             break;
         default:
             console.log(`invalid argument provided.`);
@@ -311,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setupGameLinks();
         });
         // Render the game object excluding the persistent data
-        let rOb = {game: window.copyObjectWithExclusions(game, 'persistentData')};
+        let rOb = {game: window.copyObjectWithExclusions(game, ['persistentData', 'playersFull'])};
         rOb.gameInactive = rOb.game.state !== 'started';
         if (clear) {
             $(`#${targ}`).html('');
@@ -374,8 +464,12 @@ document.addEventListener('DOMContentLoaded', function() {
         setupTab(l.toLowerCase());
         setupTabLinks();
     }
+    const showGame = () => {
+        console.log(game);
+    };
 
     const sockInit = () => {
+//        console.log(`sockInit`)
         const sessionID = getSessionID();
         addToLogFeed(`sessionID: ${sessionID}`);
         if (sessionID) {
@@ -386,17 +480,25 @@ document.addEventListener('DOMContentLoaded', function() {
 //        setupBaseLinks();
     };
 
-//    window.clearLogFeed = clearLogFeed;
+    socket.on('test', () => {console.log('test')})
     socket.on('gameUpdate', (g) => {
-        addToLogFeed('gameUpdate');
-//        console.log(g);
-//        console.log(window.copyObjectWithExclusions(g, 'persistentData'));
+        const pv = procVal;
+        console.log(`attempt to update the game, ${pv(g.uniqueID)}, ${pv(getSessionID())}`);
+        // As there currently is no game-specific Facilitator room/namespace a conditional is required:
+        if (pv(g.uniqueID) === pv(getSessionID())) {
+            addToLogFeed('gameUpdate');
+            console.log(`gameUpdate, my ID is ${getSessionID()}`);
+//            console.log(g);
 
-//        console.log(JSON.stringify(g));
-        game = g;
-        renderGame();
+            game = g;
+
+            renderGame();
+        }
     });
 
+    window.showGame = showGame;
+    renderTemplate = window.renderTemplate;
+    procVal = window.procVal;
     domInit();
 });
 

@@ -9,7 +9,7 @@ const generateQR = (data, id) => {
             console.error(err);
             return;
         }
-        console.log(`generateQR, data: ${data}, id: ${id}`);
+//        console.log(`generateQR, data: ${data}, id: ${id}`);
         QRCode.toFile(`public/assets/qr/qrcode-${id}.png`, data, (err) => {
             if (err) {
                 console.error(err);

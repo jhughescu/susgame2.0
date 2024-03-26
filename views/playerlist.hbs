@@ -1,0 +1,9 @@
+<div class='playerlist'>
+<table><tbody>
+<tr><th class='link listSort'>index</th><th class='link listSort'>ID</th><th class='link listSort'>team</th><th class='link listSort'>isLead</th></tr>
+{{#each this}}
+
+<tr><td>{{this.index}}</td><td>{{this.id}}</td><td>{{this.teamObj.title}}</td><td class='boo {{this.isLead}}'>{{this.isLead}}</td></tr>
+{{/each}}
+</tbody></table>
+</div>

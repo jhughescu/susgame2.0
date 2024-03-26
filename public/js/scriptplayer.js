@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let lID = null;
     let fID = 'fid';
     let now = null;
+    let player = null;
     let renderState = null;
 //    console.log(window.location);
     const qu = window.getQueries(window.location.href);
@@ -14,19 +15,21 @@ document.addEventListener('DOMContentLoaded', function() {
 //    console.log(fake);
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
-        console.log(`registerwithGame: ${ID} ${qu.hasOwnProperty(fID) ? '(from query)' : ''}`);
-        const initObj = {game: gID, player: ID, fake: fake};
+//        console.log(`registerwithGame: ${ID} ${qu.hasOwnProperty(fID) ? '(from query)' : ''}`);
+        const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
+//        console.log(socket.id)
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
-                console.log(ob)
+//                console.log(ob);
                 let res = ob.id;
                 // amend for fake players
-                console.log(`registerPlayer callback, res: ${res}`);
+//                console.log(`registerPlayer callback, res: ${res}`);
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
                 }
                 localStorage.setItem(lID, res);
                 renderState = ob.renderState;
+//                console.log(player)
 //                getTeamIndex();
                 render();
             }
@@ -91,13 +94,16 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(t)
         return t;
     };
-    console.log('why oh why');
     const teamsAssigned = (game) => {
+//        console.log(`teamAssigned`);
         const t = getTeam(game);
-        console.log(`teamAssigned`);
-        console.log(t);
+        player = game.playersFull[getPlayerID()];
+
+//        console.log(t);
+//        console.log(player);
 //        renderState = {temp: 'game.main', ob: {team: t.title}};
-        renderState = {temp: 'game.main', ob: {teamObj: t}};
+//        renderState = {temp: 'game.main', ob: {teamObj: t}};
+        renderState = {temp: 'game.main', ob: player};
         render();
     };
     const showOverlay = (id, ob) => {
@@ -105,6 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
             $('.overlay').remove();
         }
         window.getTemplate('overlay', {}, (temp) => {
+            console.log('getTemplate returns:')
+            console.log(temp)
             $('body').append(temp);
             window.renderTemplate('overlay', id, ob, () => {
                 $('.overlay').fadeIn(300).delay(2000).fadeOut(1000);
@@ -125,10 +133,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof(renderState) === 'object') {
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
-            console.log(`call renderTemplate`);
-            console.log(targ);
-            console.log(renderState.temp);
-            console.log(rOb);
+//            console.log(`call renderTemplate`);
+//            console.log(targ);
+//            console.log(renderState.temp);
+//            console.log(rOb);
             window.renderTemplate(targ, renderState.temp, rOb);
         } else {
             console.warn('rendering not possible; renderState undefined');
@@ -146,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('resetAll', resetFake);
     socket.on('teamsAssigned', (game) => {
+//        console.log('the event')
         teamsAssigned(game);
     });
     socket.on('identifyPlayer', () => {

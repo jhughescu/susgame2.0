@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const handlebars = require('handlebars');
 const { app } = require('./../app'); // Import app from app.js
 const adminController = require('./../controllers/adminController');
 const sessionController = require('./../controllers/sessionController');
@@ -12,7 +13,11 @@ const basePath = path.join(__dirname, '..', 'public');
 app.use(express.static(basePath));
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+
+
+//app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '0.5mb' }));
 //app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
 
@@ -144,13 +149,28 @@ app.post('/admin/getSession', async (req, res) => {
     sessionController.getSession(req, res);
 });
 
-app.get('/getTemplate', (req, res) => {
-    templateController.getTemplate(req, res);
-});
 
 
 app.post('/getTemplate', (req, res) => {
     templateController.getTemplate(req, res);
+});
+app.get('/partials', async (req, res) => {
+    const partials = await templateController.getPartials();
+//    console.log(`server tries to get those partials`);
+//    console.log(partials);
+    res.json({ partials });
+});
+app.get('/partialsV1', (req, res) => {
+    const partials = templateController.getPartials();
+    console.log(`server tries to get those partials`);
+    console.log(partials);
+    const serialised = {};
+    for (const name in partials) {
+//        serialised[name] = partials[name];
+        serialised[name] = handlebars.partials[name](null);
+    }
+    console.log(serialised);
+    res.json({ partials: serialised });
 });
 
 

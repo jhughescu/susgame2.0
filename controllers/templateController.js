@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 
+const templateStore = {};
+let partialStore = {};
+
 const listFiles = (directoryPath, fileType = null) => {
     return new Promise((resolve, reject) => {
         fs.readdir(directoryPath, (err, files) => {
@@ -31,25 +34,72 @@ const setupPartials = () => {
             const partial = handlebars.compile(template);
             handlebars.registerPartial(id, partial);
         });
-        console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered`);
+        console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered (setupPartials)`);
     })
     .catch(err => {
         console.error('Error listing files:', err);
     });
 };
+const getPartials = async () => {
+    try {
+        const dir = path.join(__dirname, '..', 'views', 'partials');
+        const files = await listFiles(dir, 'hbs');
+        let pList = {};
+        if (Object.keys(partialStore).length === 0) {
 
-
-const getTemplateOLd = (req, res) => {
-    const temp = req.query.template;
-//    console.log(req.query.data);
-//    console.log(JSON.parse(req.query.data));
-    const o = JSON.parse(req.query.data);
-    const templateContent = fs.readFileSync(`views/${temp}.hbs`, 'utf8');
-    const compiledTemplate = handlebars.compile(templateContent);
-    const html = compiledTemplate(o);
-    res.send(html);
+            for (const file of files) {
+                const id = file.split('.')[0];
+                const pp = path.join(dir, file);
+                const template = fs.readFileSync(pp, 'utf8');
+                pList[id] = template;
+            }
+            console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered (getPartials)`);
+            partialStore = pList;
+        } else {
+            pList = partialStore;
+//            console.log('just use the stored partials');
+        }
+        return pList;
+    } catch (err) {
+        console.error('Error listing files:', err);
+        throw err; // Re-throw the error for proper handling
+    }
 };
+
+const getPartialsV2 = () => {
+    const dir = path.join(__dirname, '..', 'views', 'partials');
+    const pList = [];
+    listFiles(dir, 'hbs')
+    .then(files => {
+        files.forEach(file => {
+            const id = file.split('.')[0];
+            const pp = path.join(__dirname, '..', 'views', 'partials', file);
+            const template = fs.readFileSync(pp, 'utf8');
+            pList.push(template);
+//            const partial = handlebars.compile(template);
+//            handlebars.registerPartial(id, partial);
+        });
+        console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered`);
+        console.log(pList)
+        return pList;
+    })
+    .catch(err => {
+        console.error('Error listing files:', err);
+    });
+};
+const getPartialsV1 = () => {
+    return handlebars.partials;
+};
+
 const getTemplate = (req, res) => {
+    const temp = req.query.template;
+    const o = req.body; // Use req.body to access the JSON data object
+    const templateContent = fs.readFileSync(`views/${temp}.hbs`, 'utf8');
+//    const compiledTemplate = handlebars.compile(templateContent);
+//    const html = compiledTemplate(o);
+    res.send(templateContent);
+};
+const getTemplateV1 = (req, res) => {
     const temp = req.query.template;
     const o = req.body; // Use req.body to access the JSON data object
     const templateContent = fs.readFileSync(`views/${temp}.hbs`, 'utf8');
@@ -60,4 +110,4 @@ const getTemplate = (req, res) => {
 
 
 setupPartials();
-module.exports = { getTemplate, setupPartials };
+module.exports = { getTemplate, setupPartials, getPartials };

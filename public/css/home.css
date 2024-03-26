@@ -14,6 +14,9 @@ body, html {
     color: white;
     font-size: 2.5rem;
 }
+.intro a {
+    font-size: 1.8rem;
+}
 #content {
     position: absolute;
     top: 0;
@@ -54,11 +57,16 @@ body, html {
     background-size: cover;
     background-repeat: no-repeat;
     background-color: white;
+    z-index: -1;
 }
 .container.fullscreen1 {
     background-image: url(../assets/forest.jpg);
 }
+#top {
+    z-index: 9999;
+}
 .container.fullscreen1::before {
+    z-index: -1;
     content: "";
     display: block;
     position: absolute;
