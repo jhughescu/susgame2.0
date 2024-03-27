@@ -104,3 +104,19 @@ td#val_players {
 .boo.false {
     color: #a72727;
 }
+.circle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+/*    background-color: green;*/
+    margin: 0px auto;
+}
+.boo.true .circle  {
+    background-color: #33cc33;
+}
+.boo.false .circle {
+    background-color: #a72727;
+}
+.warning {
+    color: #ff8900;
+}

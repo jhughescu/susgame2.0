@@ -11,7 +11,7 @@ body {
 /*    z-index: 9;*/
 }
 .overlay {
-    font-size: 1rem;
+    font-size: 2rem;
     position: absolute;
     width: 450px;
     height: 150px;

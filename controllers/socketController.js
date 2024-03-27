@@ -81,6 +81,9 @@ function initSocket(server) {
             const isReal = queries['isAdmin'] !== true;
             if (isReal) {
                 const gameID = src.replace('/', '');
+                const facilitator = `${src}-fac`;
+                gameController.playerConnectEvent(gameID, socket.id, true);
+//                io.to(facilitator).emit('playerUpdate', {event: 'connection', val: true, ref: ref});
                 const session = await sessionController.getSessionWithAddress(`/${gameID}`);
                 if (session) {
                     socket.emit('playerConnect', process.env.STORAGE_ID);
@@ -90,17 +93,15 @@ function initSocket(server) {
                 socket.on('registerPlayer', (data, cb) => {
 //                    log(`emit registerPlayer, game: ${data.game}, player: ${data.player}`);
                     gameController.registerPlayer(data, cb);
+                    gameController.playerConnectEvent(gameID, socket.id, true);
                 });
                 socket.on('getGameCount', (cb) => {
                     gameController.getGameCount(cb);
                 });
                 socket.on('disconnect', () => {
-//                    log('THIS is the disconnect');
 //                    log(`${queries['fake'] ? 'fake' : 'real'} player disconnected from game ${src} ${idStr}`);
-//                    facilitatorDashboardNamespace.emit('test');
-                    const dest = `${src}-fac`;
-//                    log(`send to ${dest}`)
-                    io.to(dest).emit('test');
+                    gameController.playerConnectEvent(gameID, socket.id, false);
+//                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
                 });
 //                log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
             }
@@ -171,6 +172,23 @@ function initSocket(server) {
                     console.log(`no session found with id ${ob.session}`)
                 }
             });
+            socket.on('isSocketConnected', (socketID, cb) => {
+                const socks = io.sockets.sockets;
+                let sc = false;
+//                console.log(socks)
+//                console.log(`check for ${socketID}`);
+                for (const socket of socks.values()) {
+                    // Check if the socket ID matches the specified ID
+
+                    if (socket.id === socketID) {
+//                        cb(socket);
+//                        console.log(socket.id, socketID, socket.id === socketID);
+                        sc = true;
+//                        return socket; // Return the socket if found
+                    }
+                }
+                cb(sc);
+            });
         }
         // End facilitator clients
 
@@ -199,6 +217,9 @@ function initSocket(server) {
         // Handle other socket events specific to the admin dashboard...
     });
 
+
+    // KNOCKED OUT 20240326 - remove section below after a couple of days of stable operation
+    /*
     // Define a separate namespace for socket.io connections related to all facilitator dashboards
     facilitatorDashboardNamespace = io.of('/facilitatordashboardNOMORE');
     facilitatorDashboardNamespace.on('connection', async (socket) => {
@@ -268,7 +289,7 @@ function initSocket(server) {
             });
         }
     });
-
+    */
 
 
     eventEmitter.on('gameUpdate', (game) => {

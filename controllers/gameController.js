@@ -9,7 +9,7 @@ const gfxController = require('./../controllers/gfxController');
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
-const logging = true;
+const logging = false;
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -347,6 +347,20 @@ const registerPlayer = (ob, cb) => {
         }, 500);
     }
 };
+const playerConnectEvent = (gameID, playerID, boo) => {
+    const game = getGameWithAddress(`/${gameID}`);
+    if (game) {
+        const playerArray = Object.values(game.playersFull);
+        const socketIDs = playerArray.map(player => player.socketID);
+        const player = playerArray[socketIDs.indexOf(playerID)];
+//        console.log(socketIDs)
+        if (player) {
+            log(gameID, playerID, boo, (game ? 'yep' : 'nope'));
+            player.connected = boo;
+            eventEmitter.emit('gameUpdate', game);
+        }
+    }
+};
 
 module.exports = {
     getGame,
@@ -356,6 +370,7 @@ module.exports = {
     restoreGame,
     resetGame,
     registerPlayer,
+    playerConnectEvent,
     assignTeams,
     makeLead,
     resetTeams

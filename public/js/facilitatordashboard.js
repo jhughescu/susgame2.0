@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let game = null;
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
+    const gameState = {disconnected: [], timeout: -1}
 
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on');
@@ -208,9 +209,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     };
+    const processPlayers = (list) => {
+        // add any special conditions prior to rendering the player list
+        // Note add nothing here that should persist, this is a display-only method.
+        list.forEach((pl, i) => {
+            if (!pl.connected && pl.isLead) {
+                list[i].warning = true;
+                list[i].warningMessage = 'Team lead is disconnected, consider assigning new lead if they do not reconnect shortly.'
+            }
+        });
+        return list;
+    }
     const renderPlayers = (l) => {
         if (game || l) {
-            const list = l ? l : Object.values(Object.assign({}, game.playersFull));
+            let list = l ? l : Object.values(Object.assign({}, game.playersFull));
             const pso = playerSortOrder;
 //            console.log(list);
             switch (pso.prop) {
@@ -229,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 default:
 //                    console.log('nosort');
             }
+            list = processPlayers(list);
             clearTimeout(pso.timeout);
             pso.timeout = setTimeout(() => {console.log(list)}, 2000);
             renderTemplate('contentPlayers', 'playerlist', list, () => {
@@ -246,10 +259,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('.makeLead').on('click', function () {
                     const leader = $(this).attr('id').split('_').splice(1);
                     const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
-//                    console.log('makeLead:');
-//                    console.log(leadObj);
                     socket.emit('makeLead', leadObj);
                 });
+                $('.warning').off('click');
+                $('.warning').on('click', function () {
+//                    console.log($(this));
+                    // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
+                    const rowIndex = $(this).closest('tr').index() - 1;
+//                    console.log('Row index:', rowIndex);
+//                    console.log(list)
+                    alert(list[rowIndex].warningMessage)
+                });
+
             })
         }
     };
@@ -506,8 +527,11 @@ document.addEventListener('DOMContentLoaded', function() {
             renderPlayers();
         }
     });
+    socket.on('playerUpdate', (ob) => {
 
-    window.showGame = showGame;
+    });
+
+//    window.showGame = showGame;
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
     domInit();

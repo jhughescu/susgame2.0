@@ -3,6 +3,7 @@ class Player {
         this.id = id;
         this.index = index;
         this.socketID = socketID;
+        this.connected = true;
         this.stakeholder = '';
         this.stakeholderID = -1;
         this.teamObj = null;

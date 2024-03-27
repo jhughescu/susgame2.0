@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
             $('.overlay').remove();
         }
         window.getTemplate('overlay', {}, (temp) => {
-            console.log('getTemplate returns:')
-            console.log(temp)
+//            console.log('getTemplate returns:')
+//            console.log(temp)
             $('body').append(temp);
             window.renderTemplate('overlay', id, ob, () => {
                 $('.overlay').fadeIn(300).delay(2000).fadeOut(1000);
