@@ -362,6 +362,20 @@ const playerConnectEvent = (gameID, playerID, boo) => {
     }
 };
 
+const testRound = (gameID) => {
+    const game_id = `game-${gameID}`;
+    const game = games[game_id];
+    if (game) {
+        console.log(`send to ${game.address}`);
+        eventEmitter.emit('updatePlayers', {game: game, update: 'testRound'});
+    } else {
+        console.log(`game not found: ${game_id}`);
+    }
+}
+const scoreSubmitted = (ob) => {
+
+}
+
 module.exports = {
     getGame,
     getGameCount,
@@ -373,5 +387,7 @@ module.exports = {
     playerConnectEvent,
     assignTeams,
     makeLead,
-    resetTeams
+    resetTeams,
+    testRound,
+    scoreSubmitted
 };

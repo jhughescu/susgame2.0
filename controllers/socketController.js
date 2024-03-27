@@ -103,6 +103,12 @@ function initSocket(server) {
                     gameController.playerConnectEvent(gameID, socket.id, false);
 //                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
                 });
+                socket.on('submitScore', (ob) => {
+                    console.log('scoreSubmitted');
+                    console.log(ob);
+                    gameController.scoreSubmitted(ob);
+                    io.to(facilitator).emit('scoreSubmitted', ob);
+                });
 //                log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
             }
 
@@ -188,6 +194,9 @@ function initSocket(server) {
                     }
                 }
                 cb(sc);
+            });
+            socket.on('testRound', (gameID) => {
+                gameController.testRound(gameID);
             });
         }
         // End facilitator clients
@@ -321,6 +330,20 @@ function initSocket(server) {
         }
         io.to(game.address).emit('teamsAssigned', game);
     });
+
+    eventEmitter.on('updatePlayers', (ob) => {
+//        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
+        const add = ob.game.address;
+        const room = io.sockets.adapter.rooms.get(add);
+        if (room) {
+            const numSockets = room.size;
+            log(`Number of sockets in room ${add}: ${numSockets}`);
+        } else {
+            log(`Room ${add} does not exist or has no sockets.`);
+        }
+        io.to(add).emit(ob.update, ob.game);
+    });
+
     eventEmitter.on('resetAll', (address) => {
 //        playerNamespace.emit('resetAll');
         log(`resetAll: ${address}`);

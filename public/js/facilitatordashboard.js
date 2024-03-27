@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             list = processPlayers(list);
             clearTimeout(pso.timeout);
-            pso.timeout = setTimeout(() => {console.log(list)}, 2000);
+//            pso.timeout = setTimeout(() => {console.log(list)}, 2000);
             renderTemplate('contentPlayers', 'playerlist', list, () => {
                 $('.listSort').off('click');
                 $('.listSort').on('click', function () {
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const identifyPlayers = () => {
-        console.log('identifyPlayers');
+//        console.log('identifyPlayers');
         socket.emit('identifyPlayers', game);
     };
     const setupTab = (arg) => {
@@ -392,11 +392,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#assign', '#reset', '#identify'];
+        const ids = ['#assign', '#reset', '#identify', '#testRound'];
         ids.forEach(id => {
             const element = $(id);
             element.off('click').on('click', () => {
-                console.log(`a click: ${id}`)
+//                console.log(`a click: ${id}`)
                 switch (id) {
                     case '#assign':
                         assignTeams();
@@ -406,6 +406,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     case '#identify':
                         identifyPlayers();
+                        break;
+                    case '#testRound':
+                        socket.emit('testRound', game.uniqueID);
                         break;
                 }
             });
@@ -529,6 +532,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('playerUpdate', (ob) => {
 
+    });
+    socket.on('scoreSubmitted', (ob) => {
+        console.log(`actions submitted by ${ob.player.teamObj.title}:`);
+        console.log(`action: ${ob.action}`);
+        console.log(`description: ${ob.desc}`);
+        console.log(`value assigned: ${ob.score}`)
     });
 
 //    window.showGame = showGame;

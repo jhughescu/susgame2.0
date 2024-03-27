@@ -188,6 +188,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         render();
     });
+    socket.on('testRound', (game) => {
+        console.log('testRound heard');
+        if (player.teamObj.hasLead && player.isLead) {
+            const rOb = player.teamObj;
+            rOb.currentRoundComplete = false;
+            renderTemplate(`interactions`, 'game.allocation', rOb, () => {
+                const butMinus = $('#vote_btn_minus');
+                const butPlus = $('#vote_btn_plus');
+                const val = $('.tempV');
+                const submit = $(`#buttonAllocate`);
+                const action = $(`#action-choice`);
+                const desc = $(`#actionDesc`);
+                console.log(submit)
+                console.log(val.html())
+                butPlus.off('click');
+                butPlus.on('click', () => {
+                    let v = parseInt(val.html());
+                    console.log(`v was ${v}`)
+                    if (v < 10) {
+                        v += 1;
+                        console.log(`v to ${v}`)
+                        val.html(v)
+                    }
+                });
+                butMinus.off('click');
+                butMinus.on('click', () => {
+                    let v = parseInt(val.html());
+                    if (v > 1) {
+                        v -= 1;
+                        val.html(v)
+                    }
+                });
+                submit.off('click');
+                submit.on('click', () => {
+                    let scoreV = parseInt(val.html());
+                    let actionV = action.val();
+                    let descV = desc.val();
+                    let ob = {score: scoreV, action: actionV, desc: descV, player: player};
+                    socket.emit('submitScore', ob);
+                });
+            });
+        } else {
+            console.log('not a lead')
+        }
+    });
+    renderTemplate = window.renderTemplate;
     /*
     window.addEventListener('beforeunload', function(event) {
         // Cancel the event as stated by the standard.
