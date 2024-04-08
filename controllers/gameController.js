@@ -228,7 +228,6 @@ const assignTeams = (ob, cb) => {
             sessionController.updateSession(game.uniqueID, uo);
             game.teams = t;
             game.setTeams();
-//            games[`game-${game.uniqueID}`];
             eventEmitter.emit('teamsAssigned', game);
             if (cb) {
                 cb(game);
@@ -240,13 +239,8 @@ const assignTeams = (ob, cb) => {
             }
         }
     }
-//    log('assignTeams');
-
-//    eventEmitter.emit('teamsAssigned', game);
-//    if (cb) {
-//        cb(game);
-//    }
 };
+
 const resetTeams = (ob, cb) => {
     const game = getGameWithAddress(ob.address);
     let t = [];
@@ -316,13 +310,14 @@ const registerPlayer = (ob, cb) => {
     let ID = null;
     let newP = null;
     let timer = null;
+    let player = null;
     if (game) {
 //        log(game);
         // store a copy of the list of players for later comparison
         const plOrig = JSON.stringify(game.players);
         // index will be the joining order (i.e first connected player index = 1 etc)
         let index = -1;
-        console.log(ob.player)
+//        console.log(ob.player);
         if (ob.player) {
             ID = ob.player;
             const pl = game.players.reduce((acc, plID) => {
@@ -336,10 +331,10 @@ const registerPlayer = (ob, cb) => {
             }
             if (!game.playersFull.hasOwnProperty(ID)) {
                 let plIndex = index > -1 ? index : game.players.indexOf(ID) + 1;
-//                console.log(`create new player with id ${ID} at index ${plIndex}`);
-                const pl = new Player(ID, plIndex, ob.socketID);
-                game.playersFull[ID] = pl;
-                game.setTeam(pl);
+                console.log(`create new player with id ${ID} at index ${plIndex}`);
+                player = new Player(ID, plIndex, ob.socketID);
+                game.playersFull[ID] = player;
+                game.setTeam(player);
             } else {
                 // update the existing player object with the new socketID
                 game.playersFull[ID].socketID = ob.socketID;
@@ -351,6 +346,7 @@ const registerPlayer = (ob, cb) => {
         }
         if (newP && game.teams.length > 0) {
             console.log(`looks like a new player (${ID}) joining after teams are assigned`);
+            game.addLatecomer(player);
             // NOTE no functionality added yet - assign player to whichever PV team has fewer members
         }
 

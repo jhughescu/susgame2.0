@@ -219,12 +219,102 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         return list;
-    }
+    };
+    const renderPlayersV2 = () => {
+        let list = game.players;
+        list.forEach((p, i) => list[i] = {id: p, connected: false});
+        console.log(list);
+        renderTemplate('contentPlayers', 'playerlist', list, () => {
+
+        })
+    };
     const renderPlayers = (l) => {
+//        console.clear();
+//        console.log(`renderPlayers`)
         if (game || l) {
+//            console.log(`yep - list provided? ${Boolean(l)}`);
+//            console.log(game);
+            let basicList = game.players;
+            const pf = game.playersFull;
+            basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
+
+            let list = l ? l : basicList;
+            list.forEach((p, i) => {
+//                console.log(p.id)
+                if (pf.hasOwnProperty(p.id)) {
+//                    console.log(`we got one`);
+//                    console.log(pf[p.id]);
+                    list[i] = pf[p.id];
+                } else if (p.id.hasOwnProperty('id')) {
+                    if (pf.hasOwnProperty(p.id.id)) {
+                        list[i] = pf[p.id.id];
+                    }
+                } else {
+                    console.log(`not found in playersFull: ${p.id}`)
+                    console.log(p.id)
+                }
+            });
+//            let list = l ? l : Object.values(Object.assign({}, game.playersFull));
+            const pso = playerSortOrder;
+            console.log(list);
+            console.log(game);
+            switch (pso.prop) {
+                case 'index':
+                    list.sort(sortListIndex);
+                    break;
+                case 'ID':
+                    list.sort(sortListID);
+                    break;
+                case 'team':
+                    list.sort(sortListTeam);
+                    break;
+                case 'isLead':
+                    list.sort(sortListisLead);
+                    break;
+                default:
+//                    console.log('nosort');
+            }
+            list = processPlayers(list);
+            clearTimeout(pso.timeout);
+//            pso.timeout = setTimeout(() => {console.log(list)}, 2000);
+            renderTemplate('contentPlayers', 'playerlist', list, () => {
+                $('.listSort').off('click');
+                $('.listSort').on('click', function () {
+                    pso.dir = pso.prop === this.textContent ? !pso.dir : true;
+                    pso.prop = this.textContent;
+                    renderPlayers();
+                    const index = $('.listSort').filter(function() {
+                        return $(this).text().trim() === pso.prop;
+                    }).index();
+                    $($('.listSort')[index]).addClass('highlight');
+                });
+                $('.makeLead').off('click');
+                $('.makeLead').on('click', function () {
+                    const leader = $(this).attr('id').split('_').splice(1);
+                    const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
+                    socket.emit('makeLead', leadObj);
+                });
+                $('.warning').off('click');
+                $('.warning').on('click', function () {
+//                    console.log($(this));
+                    // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
+                    const rowIndex = $(this).closest('tr').index() - 1;
+//                    console.log('Row index:', rowIndex);
+//                    console.log(list)
+                    alert(list[rowIndex].warningMessage)
+                });
+
+            })
+        }
+    };
+    const renderPlayersV1 = (l) => {
+        console.log(`renderPlayers`)
+        if (game || l) {
+            console.log(`yep`);
             let list = l ? l : Object.values(Object.assign({}, game.playersFull));
             const pso = playerSortOrder;
-//            console.log(list);
+            console.log(list);
+            console.log(game);
             switch (pso.prop) {
                 case 'index':
                     list.sort(sortListIndex);
