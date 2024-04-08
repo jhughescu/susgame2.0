@@ -8,6 +8,7 @@
             <img class='represent-icon {{teamObj.abbr}}-bg' alt='Team icon' src='assets/icons_{{teamObj.abbrCap}}white 1.svg'/>
 		</div>
 		<h2>{{teamObj.lead}}</h2>
+		<h3>({{teamObj.title}})</h3>
 		{{#if isLead}}
 		<p>You have been assigned the role of team leader for this round. This means that only you will be able to submit your team’s move decisions.</p>
 		{{else}}
@@ -16,4 +17,4 @@
 	</div>
 
 </div>
-<div id='interactions'></div>
+<div id='sub'></div>

@@ -11,7 +11,8 @@ const sessionSchema = new Schema({
     teams: Array,
     state: String,
     progress: Number,
-    scores: Array
+    scores: Array,
+    values: Array
 });
 
 module.exports = mongoose.model('Session', sessionSchema);

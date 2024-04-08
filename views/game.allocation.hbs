@@ -1,5 +1,4 @@
 <div class='round round2' id='allocation'>
-
     {{#if currentRoundComplete}}
     <div class="your-move-2">
 		<h2>Action choice</h2>
@@ -10,13 +9,16 @@
 		<p>{{pageState.allocateVal}}</p>
 	</div>
     {{else}}
+    {{#if isLead}}
+
     <label for='action-choice'>Action choice</label>
     <select id='action-choice' name='action-choice'>
     <option value=''>Select an option...</option>
-    {{#each actions}}
+    {{#each teamObj.actions}}
     <option value='{{this}}'>{{this}}</option>
     {{/each}}
     </select>
+
 
     <label for='move-description'>Move description</label>
     <textarea id='actionDesc' placeholder='Add description here...'></textarea>
@@ -31,5 +33,6 @@
         </div>
     </div>
     <input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'>
+    {{/if}}
     {{/if}}
 </div>

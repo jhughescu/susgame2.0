@@ -279,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(rgame);
             if (typeof(rgame) === 'string') {
                 alert('error assigning teams, try again');
+                alert(rgame);
             } else {
                 addToLogFeed('teams assigned');
                 console.log('ready to check');
@@ -525,6 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pv(g.uniqueID) === pv(getSessionID())) {
             addToLogFeed('gameUpdate');
             game = g;
+//            console.log(game)
 
             renderGame();
             renderPlayers();
@@ -534,10 +536,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     });
     socket.on('scoreSubmitted', (ob) => {
-        console.log(`actions submitted by ${ob.player.teamObj.title}:`);
-        console.log(`action: ${ob.action}`);
-        console.log(`description: ${ob.desc}`);
-        console.log(`value assigned: ${ob.score}`)
+//        console.log(`score submitted by ${ob.player.teamObj.title}:`);
+        console.log(ob);
+//        console.log(`action: ${ob.action}`);
+//        console.log(`description: ${ob.desc}`);
+//        console.log(`value assigned: ${ob.score}`)
     });
 
 //    window.showGame = showGame;

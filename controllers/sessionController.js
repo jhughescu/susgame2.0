@@ -158,15 +158,13 @@ async function getSession(req, res) {
     }
 }
 async function updateSession(uniqueID, updateOb) {
-//    console.log(`updateSession: ${uniqueID}`);
-//    console.log(updateOb);
     try {
         const updatedSession = await Session.findOneAndUpdate(
             { uniqueID },
             updateOb,
             { new: true }
         ).select(select + ' -password');
-//        console.log('Updated document:', updatedSession);
+//        console.log('updatedSession', updatedSession);
         return updatedSession;
     } catch (error) {
         console.error('Error updating document:', error);

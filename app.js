@@ -19,6 +19,7 @@ const databaseController = require('./controllers/databaseController');
 
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/models', express.static(path.join(__dirname, 'models')));
 app.engine('.hbs', exphbs.engine({
     extname: '.hbs',
     layoutsDir: path.join(__dirname, 'views'),

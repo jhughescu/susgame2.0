@@ -6,9 +6,11 @@ class Game {
         this.players = [];
         this.playersFull = {};
         this.scores = [];
+        this.scorePackets = [];
         this.teams = [];
         this.teamObjects = {};
         this.persistentData = null;
+        this.round = 2;
     }
 
     async loadPersistentData(type) {
@@ -87,6 +89,12 @@ class Game {
     }
     getScores() {
         return this.scores;
+    }
+    getScorePackets() {
+        this.scores.forEach(s => {
+            this.scorePackets.push(s);
+        });
+        return this.scorePackets;
     }
 }
 module.exports = Game;

@@ -10,7 +10,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = false;
+const logging = true;
 
 const gameNamespaces = {};
 
@@ -103,11 +103,19 @@ function initSocket(server) {
                     gameController.playerConnectEvent(gameID, socket.id, false);
 //                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
                 });
-                socket.on('submitScore', (ob) => {
-                    console.log('scoreSubmitted');
-                    console.log(ob);
-                    gameController.scoreSubmitted(ob);
-                    io.to(facilitator).emit('scoreSubmitted', ob);
+                socket.on('submitScore', (ob, cb) => {
+                    const sp = gameController.scoreSubmitted(ob, cb);
+                    io.to(facilitator).emit('scoreSubmitted', sp);
+                });
+                socket.on('submitValues', (ob) => {
+                    const sp = gameController.valuesSubmitted(ob);
+                    io.to(facilitator).emit('valuesSubmitted', sp);
+                });
+                socket.on('getScorePackets', (gameID, cb) => {
+                    gameController.getScorePackets(gameID, cb);
+                });
+                socket.on('getValues', (idOb, cb) => {
+                    gameController.getValues(idOb, cb);
                 });
 //                log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
             }
@@ -347,7 +355,8 @@ function initSocket(server) {
     eventEmitter.on('resetAll', (address) => {
 //        playerNamespace.emit('resetAll');
         log(`resetAll: ${address}`);
-        io.to(address).emit('resetAll');
+        showRoomSize(address)
+        io.to(address).emit('resetPlayer');
     });
     eventEmitter.on('gameEnded', (game) => {
         console.log('this is the end');

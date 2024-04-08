@@ -8,11 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let fID = 'fid';
     let now = null;
     let player = null;
-    let renderState = null;
+    let game = {};
+    const renderState = {};
 //    console.log(window.location);
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
 //    console.log(fake);
+    const updateGame = (ob) => {
+        Object.assign(game, ob);
+    };
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
@@ -20,17 +24,16 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
                 let res = ob.id;
-//                console.log('registerPlayer CB');
-//                console.log(JSON.parse(ob.game));
                 if (ob.game) {
-                    setPlayer(JSON.parse(ob.game));
+                    updateGame(JSON.parse(ob.game));
+                    setPlayer(game);
                 }
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
                 }
                 localStorage.setItem(lID, res);
-                renderState = ob.renderState;
+                updateRenderState(ob.renderState);
                 render();
             }
         });
@@ -44,17 +47,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return ID;
     };
 
-    const resetFake = () => {
-        console.log(`resetFake method (no action)`)
-        return;
+    const resetPlayer = () => {
+//        console.log(`resetFake method (no action)`)
+//        return;
 
 
 
-        const url = new URL(window.location.href);
-        console.log(`resetFake:`);
-        url.searchParams.delete(fID);
-        history.pushState(null, '', url);
+//        const url = new URL(window.location.href);
+//        console.log(`resetFake:`);
+//        url.searchParams.delete(fID);
+//        history.pushState(null, '', url);
         localStorage.clear();
+        updateRenderState({temp: 'game.intro'});
+        render();
     };
     const getGames = () => {
         socket.emit('getGameCount', (g) => {
@@ -103,8 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(player);
     };
     const teamsAssigned = (game) => {
+        updateGame(game);
         setPlayer(game);
-        renderState = {temp: 'game.main', ob: player};
+//        renderState = {temp: 'game.main', ob: player};
+        updateRenderState({temp: 'game.main', ob: player});
         render();
     };
     const showOverlay = (id, ob) => {
@@ -134,15 +141,104 @@ document.addEventListener('DOMContentLoaded', function() {
         showOverlay('playerID', idOb);
     };
 
+    // interactions
+    const thisRoundScored = () => {
+        return new Promise((resolve, reject) => {
+            socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
+                const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
+                const rID = `${game.round}.${player.teamObj.id}`;
+                const spi = scoreSumm.indexOf(rID);
+                console.log(scoreSumm, rID);
+//                console.log(`thisRoundScored: ${isS}`);
+                resolve({hasScore: spi > -1, scorePacket: sps[spi]});
+            });
+        })
+    }
+    const setupAllocation = async () => {
+        const butMinus = $('#vote_btn_minus');
+        const butPlus = $('#vote_btn_plus');
+        const val = $('.tempV');
+        const submit = $(`#buttonAllocate`);
+        const action = $(`#action-choice`);
+        const desc = $(`#actionDesc`);
+        const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
+        const hasS = await thisRoundScored();
+        console.log('see if the round has been scored already:');
+        console.log(hasS);
+        if (hasS.hasScore) {
+            const vOb = {gameID: `game-${game.uniqueID}`, team: player.teamObj.id};
+            socket.emit('getValues', vOb, (v) => {
+                console.log('test the values')
+                console.log(v)
+                ints.prop('disabled', true);
+                ints.addClass('disabled');
+                val.html(hasS.scorePacket.val);
+                desc.html(v.description);
+                action.val(v.action);
+            });
+        } else {
+            ints.off('click');
+            butPlus.on('click', () => {
+                let v = parseInt(val.html());
+                if (v < 10) {
+                    v += 1;
+                    val.html(v);
+                }
+            });
+            butMinus.on('click', () => {
+                let v = parseInt(val.html());
+                if (v > 1) {
+                    v -= 1;
+                    val.html(v);
+                }
+            });
+            submit.on('click', () => {
+                let scoreV = parseInt(val.html());
+                let actionV = action.val();
+                let descV = desc.val();
+                if (scoreV === 0 || actionV === '' || descV === '') {
+                    alert('Please complete all options and allocate at least 1 resource')
+                } else {
+                    const tID = player.teamObj.id;
+                    let t = player.teamObj.id;
+                    const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
+                    socket.emit('submitValues', vob);
+                    const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
+                    socket.emit('submitScore', sob, (scores) => {
+                        setupAllocation();
+                    });
+
+//                    setupAllocation(false);
+                }
+            });
+        }
+    };
+
+    const updateRenderState = (ob) => {
+        if (ob) {
+            console.log(`updating the renderState`);
+            Object.assign(renderState, ob);
+            console.log(renderState)
+        }
+    }
     const render = () => {
         if (typeof(renderState) === 'object') {
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
-//            console.log(`call renderTemplate`);
-//            console.log(targ);
-//            console.log(renderState.temp);
-//            console.log(rOb);
-            window.renderTemplate(targ, renderState.temp, rOb);
+            renderTemplate(targ, renderState.temp, rOb, () => {
+//                console.log(`render callback`);
+                if (renderState.hasOwnProperty('sub')) {
+//                    console.log(`sub: ${renderState.sub}`)
+//                    console.log(rOb)
+                    renderTemplate('sub', renderState.sub, rOb, () => {
+//                        console.log(`sub callback, ${renderState.sub}`);
+                        switch (renderState.sub.replace('game.', '')) {
+                            case 'allocation':
+                                setupAllocation(true);
+                        }
+                    });
+                }
+            });
         } else {
             console.warn('rendering not possible; renderState undefined');
         }
@@ -150,15 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const onGameEnd = () => {
         console.log(`onGameEnd`);
         localStorage.clear();
-        renderState = {temp: 'game.gameover', ob: {}};
+//        renderState = {temp: 'game.gameover', ob: {}};
+        updateRenderState({temp: 'game.gameover', ob: {}});
         render();
     };
     socket.on('gameUpdate', (rgame) => {
 //        console.log(`game updated: ${getPlayerID()}`)
 //        console.log(rgame);
-        game = rgame;
+        updateGame(rgame);
         setPlayer(game);
-        renderState = {temp: 'game.main', ob: player};
+//        renderState = {temp: 'game.main', ob: player};
+        updateRenderState({temp: 'game.main', ob: player});
         render();
     });
     socket.on('test', () => {
@@ -167,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('playerConnect', (lid) => {
         playerConnect(lid);
     });
-    socket.on('resetAll', resetFake);
+    socket.on('resetPlayer', resetPlayer);
     socket.on('teamsAssigned', (game) => {
 //        console.log('the event')
         teamsAssigned(game);
@@ -182,18 +280,20 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('renderPlayer', (rOb) => {
         const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
         const temp = rOb.temp;
-        renderState = {temp: temp, ob: ob};
+//        renderState = {temp: temp, ob: ob};
+        updateRenderState({temp: temp, ob: ob});
         if (rOb.hasOwnProperty('targ')) {
             renderState.targ = rOb.targ;
         }
         render();
     });
-    socket.on('testRound', (game) => {
-        console.log('testRound heard');
+    socket.on('testRoundGONE', (game) => {
+//        console.log('testRound heard');
         if (player.teamObj.hasLead && player.isLead) {
             const rOb = player.teamObj;
             rOb.currentRoundComplete = false;
-            renderTemplate(`interactions`, 'game.allocation', rOb, () => {
+            updateRenderState({sub: 'game.allocation'})
+            renderTemplate(`sub`, 'game.allocation', rOb, () => {
                 const butMinus = $('#vote_btn_minus');
                 const butPlus = $('#vote_btn_plus');
                 const val = $('.tempV');
@@ -205,10 +305,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 butPlus.off('click');
                 butPlus.on('click', () => {
                     let v = parseInt(val.html());
-                    console.log(`v was ${v}`)
                     if (v < 10) {
                         v += 1;
-                        console.log(`v to ${v}`)
                         val.html(v)
                     }
                 });
@@ -221,11 +319,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 submit.off('click');
+
                 submit.on('click', () => {
                     let scoreV = parseInt(val.html());
                     let actionV = action.val();
                     let descV = desc.val();
-                    let ob = {score: scoreV, action: actionV, desc: descV, player: player};
+                    const tID = player.teamObj.id;
+                    let t = player.teamObj.id;
+                    let ob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
                     socket.emit('submitScore', ob);
                 });
             });

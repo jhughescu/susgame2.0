@@ -352,6 +352,10 @@ input[type=submit] {
 input[type=submit]:hover {
   	background-color: #404040;
 }
+input[type=submit].disabled {
+    cursor: default;
+    background-color: #404040;
+}
 form label{
 	font-size: 17pt;
 	}
@@ -378,6 +382,10 @@ form label{
   	cursor: pointer;
   	border-radius: 50%;
 	margin: 12px 10px;
+}
+.resources-btn.disabled {
+  	background-color: #2f394a;
+    cursor: default;
 }
 
 /* Collaboration */
