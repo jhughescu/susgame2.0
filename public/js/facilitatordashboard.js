@@ -136,28 +136,37 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game);
         window.open(`/fakegenerator#${game.address}`, '_blank');
     };
+    const setupTeamsLinks = () => {
+        const tl = $('#contentTeams').find('.link');
+//        console.log(tl);
+        tl.off('click');
+        tl.on('click', function () {
+//            console.log($(this).attr('id'))
+            socket.emit('identifyPlayer', {game: game, player: $(this).attr('id').split('_')[2]})
+        });
+    };
     const renderTeams = () => {
         let rendO = {};
         if (game) {
             const T = game.persistentData.teams;
             const t = game.teams;
-//            console.log(`renderTeams`);
-//            console.log(t);
             Object.values(T).forEach((el, id) => {
-//                console.log(el, id)
                 if (el.hasOwnProperty('id')) {
-                    rendO[el.id] = {name: el.title, team: t[id].toString()}
+                    rendO[el.id] = {name: el.title, team: t[id].toString(), players: t[id]}
                 }
             });
 //            console.log(rendO);
             window.renderTemplate('controlsInfo', 'teamsCard', rendO);
+            window.renderTemplate('contentTeams', 'teamsCard', rendO, () => {
+                setupTeamsLinks();
+            });
         }
     };
     const renderControls = () => {
         if (game) {
             const hasTeams = game.teams.length > 0;
             const rendO = {disableAssignTeams: hasTeams};
-            window.renderTemplate('contentControls', 'facilitatorcontrols', rendO, () => {
+            window.renderTemplate('contentControls', 'facilitator.controls', rendO, () => {
                 setupControlLinks();
                 if (hasTeams) {
                     renderTeams();
@@ -165,6 +174,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else {
             console.log('no game');
+        }
+    };
+    const sortListConnected = (a, b) => {
+        if (a.connected && !b.connected) {
+            return playerSortOrder.dir ? -1 : 1;
+        } else if (!a.connected && b.connected) {
+            return playerSortOrder.dir ? 1 : -1;
+        } else {
+            return 0;
         }
     };
     const sortListisLead = (a, b) => {
@@ -179,6 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortListIndex = (a, b) => {
         const aID = parseInt(a.index);
         const bID = parseInt(b.index);
+        if (aID === undefined || bID === undefined) {
+            return 0;
+        }
         if (aID < bID) {
             return playerSortOrder.dir ? -1 : 1;
         } else if (aID > bID) {
@@ -190,6 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortListID = (a, b) => {
         const aID = parseInt(a.id.replace(/pf/g, ''));
         const bID = parseInt(b.id.replace(/pf/g, ''));
+        if (aID === undefined || bID === undefined) {
+            return 0;
+        }
         if (aID < bID) {
             return playerSortOrder.dir ? -1 : 1;
         } else if (aID > bID) {
@@ -199,8 +223,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const sortListTeam = (a, b) => {
-        const aID = a.teamObj.title;
-        const bID = b.teamObj.title;
+        const aT = a.teamObj;
+        const bT = b.teamObj;
+        if (aT === undefined || bT === undefined) {
+            return 0;
+        }
+        const aID = aT.title;
+        const bID = bT.title;
+        if (aID === undefined || bID === undefined) {
+            return 0;
+        }
         if (aID < bID) {
             return playerSortOrder.dir ? -1 : 1;
         } else if (aID > bID) {
@@ -229,8 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     };
     const renderPlayers = (l) => {
-//        console.clear();
-//        console.log(`renderPlayers`)
+        console.clear();
+        console.log(`renderPlayers`)
         if (game || l) {
 //            console.log(`yep - list provided? ${Boolean(l)}`);
 //            console.log(game);
@@ -242,12 +274,19 @@ document.addEventListener('DOMContentLoaded', function() {
             list.forEach((p, i) => {
 //                console.log(p.id)
                 if (pf.hasOwnProperty(p.id)) {
-//                    console.log(`we got one`);
+                    console.log(`ID found in PF`);
 //                    console.log(pf[p.id]);
                     list[i] = pf[p.id];
                 } else if (p.id.hasOwnProperty('id')) {
+                    console.log(`p.id is an object which has an ID property: ${p.id.id}`)
                     if (pf.hasOwnProperty(p.id.id)) {
+                        console.log(`yep, it should have been done`)
                         list[i] = pf[p.id.id];
+                    } else {
+                        console.log(`${p.id.id} not found in PF`);
+                        console.log(pf);
+                        // Seems to be a disconnected player
+                        list[i] = p.id;
                     }
                 } else {
                     console.log(`not found in playersFull: ${p.id}`)
@@ -264,6 +303,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'ID':
                     list.sort(sortListID);
+                    break;
+                case 'connected':
+                    list.sort(sortListConnected);
                     break;
                 case 'team':
                     list.sort(sortListTeam);
@@ -408,6 +450,9 @@ document.addEventListener('DOMContentLoaded', function() {
         case 'players':
             renderPlayers();
             break;
+        case 'teams':
+            renderTeams();
+            break;
         default:
             console.log(`invalid argument provided.`);
         }
@@ -483,11 +528,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#assign', '#reset', '#identify', '#testRound'];
+        const ids = ['#assign', '#reset', '#identify', '#startRound'];
+        const rSel = $('#contentControls').find('.buttonSet').find('button');
+        const rVal = $('#roundInput');
+//        console.log(rSel);
         ids.forEach(id => {
             const element = $(id);
             element.off('click').on('click', () => {
-//                console.log(`a click: ${id}`)
                 switch (id) {
                     case '#assign':
                         assignTeams();
@@ -498,12 +545,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     case '#identify':
                         identifyPlayers();
                         break;
-                    case '#testRound':
-                        socket.emit('testRound', game.uniqueID);
+                    case '#startRound':
+                        const r = parseInt($('#roundInput').val());
+                        console.log(`startRound ${r}`)
+                        socket.emit('startRound', {gameID: game.uniqueID, round: r});
                         break;
                 }
             });
         });
+        rSel.off('click').on('click', function () {
+            const rNow = parseInt(rVal.val());
+            rVal.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
+            rVal.val(parseInt(rVal.val()) < -1 ? -1 : rVal.val())
+        })
     };
     const renderSession = () => {
         addToLogFeed(`renderSession (see console)`);
@@ -632,6 +686,10 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`description: ${ob.desc}`);
 //        console.log(`value assigned: ${ob.score}`)
     });
+    socket.on('gameWarning', (ob) => {
+        alert(ob.warning)
+    });
+
 
 //    window.showGame = showGame;
     renderTemplate = window.renderTemplate;

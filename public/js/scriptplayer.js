@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let now = null;
     let player = null;
     let game = {};
-    const renderState = {};
+    let renderState = {};
+    let returnRenderState = {};
 //    console.log(window.location);
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
@@ -21,20 +22,43 @@ document.addEventListener('DOMContentLoaded', function() {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
 //        console.log(initObj);
+//        console.log('reg player')
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
                 let res = ob.id;
                 if (ob.game) {
-                    updateGame(JSON.parse(ob.game));
+                    ob.game = JSON.parse(ob.game);
+                    updateGame(ob.game);
                     setPlayer(game);
                 }
+                console.log(`register player:`);
+                console.log(ob);
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
                 }
                 localStorage.setItem(lID, res);
-                updateRenderState(ob.renderState);
-                render();
+                // use renderstate from localStorage if possible
+                // ob.renderState can overwrite stored renderstate
+                const srs = getStoredRenderState();
+//                console.log(Boolean(srs));
+                if (srs) {
+                    srs.source = 'localStorage'
+                    updateRenderState(srs);
+                }
+//                console.log(`registerPlayer callback, ${Boolean(srs)}`);
+//                console.log(ob);
+//                updateRenderState(Boolean(srs) ? srs : ob.renderState);
+                if (ob.renderState) {
+                    ob.renderState.source = `registerPlayer event`;
+                    updateRenderState(ob.renderState);
+                }
+                render(() => {
+                    if (game.round > 0) {
+                        onStartRound(game.round);
+                    }
+                });
+
             }
         });
     };
@@ -153,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resolve({hasScore: spi > -1, scorePacket: sps[spi]});
             });
         })
-    }
+    };
     const setupAllocation = async () => {
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
@@ -213,30 +237,166 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const activateYourmove = () => {
+        // light up the yourmove button & bring it into focus
+        const ymb = $('.yourmove-btn');
+        if (ymb.length > 0) {
+            $('html, body').animate({
+                scrollTop: ymb.offset().top
+            }, 300, () => {
+                if (!ymb.data('flashed')) {
+                    ymb.data('flashed', true);
+                    ymb.fadeOut(100).fadeIn(200).fadeOut(100).fadeIn(200).fadeOut(100).fadeIn(200, () => {
+                        ymb.data('flashed', false);
+                    });
+                }
+            });
+        }
+    };
+    const onStartRound = (r) => {
+        console.log(`onStartRound`)
+        console.log(r);
+//        console.log(ob.val);
+        round = game.persistentData.rounds[r];
+        console.log(round);
+        if (round) {
+            if (round.type === 1) {
+                activateYourmove();
+            }
+        }
+    };
 
+    const setupHomeButton = async () => {
+//        console.log(`setupHomeButton`);
+        const hb = $('.home_btn');
+        if ($.isEmptyObject(returnRenderState)) {
+//            console.log('empty object');
+            const rs = await new Promise((resolve, reject) => {
+//                console.log('off we go');
+                socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
+                    resolve(rs);
+                    // how can I wait for this to occur before proceeding to the return?
+                });
+            });
+            rs.source = 'getRenderState event'
+            returnRenderState = rs;
+        }
+//        console.log(`returnRenderState:`);
+//        console.log(returnRenderState);
+        hb.off('click');
+        hb.on('click', async () => {
+//            renderState = Object.assign({}, returnRenderState);
+            updateRenderState(returnRenderState);
+            resetScroll();
+            render();
+        });
+    }
+    const setupMainControl = () => {
+//        console.log(`setupMainControl`);
+        const l = $('.link_main');
+        const ls = $(`#link_resources`);
+        const lg = $(`#link_global`);
+        const lc = $(`#link_connecton`);
+//        console.log(lg)
+        l.off('click');
+        lg.on('click', () => {
+//            returnRenderState = Object.assign({}, renderState);
+//            renderState.temp = 'game.global';
+//            delete renderState.sub;
+            updateRenderState({temp: 'game.global', sub: null, ob: {}});
+            resetScroll();
+            render();
+        });
+        lc.on('click', () => {
+            returnRenderState = Object.assign({}, renderState);
+//            renderState.temp = 'game.connecton';
+//            renderState.ob = Object.values(game.persistentData.teams);
+            updateRenderState({temp: 'game.connecton', sub: null, ob: Object.values(game.persistentData.teams)});
+//            console.log(renderState.ob);
+//            delete renderState.sub;
+            resetScroll();
+            render();
+        });
+    };
+    const setupGlobalControl = () => {
+        setupHomeButton();
+    };
+    const setupConnectonControl = () => {
+//        console.log(`setupConnectonControl`);
+        setupHomeButton();
+    };
+    const setupControl = (type) => {
+        // On template rendered, set up any controls
+//        console.log(`setupControl: ${type}`);
+        switch (type) {
+            case 'main':
+                setupMainControl();
+                break;
+            case 'global':
+                setupGlobalControl();
+                break;
+            case 'connecton':
+                setupConnectonControl();
+                break;
+            default:
+                console.warn(`no controls defined for ${type}`);
+        }
+    };
+    const getStoredRenderState = () => {
+        let srs = localStorage.getItem('renderState');
+        if (srs) {
+            srs = JSON.parse(srs);
+        };
+        srs.source = 'localStorage';
+        return srs;
+    }
+    const storeRenderState = () => {
+        localStorage.setItem('renderState', JSON.stringify(renderState));
+    }
     const updateRenderState = (ob) => {
         if (ob) {
-            console.log(`updating the renderState`);
+//            console.log(`updating the renderState`);
             Object.assign(renderState, ob);
-            console.log(renderState)
+            for (let i in renderState) {
+                if (renderState[i] === null) {
+                    delete renderState[i]
+                }
+            }
+            storeRenderState();
+//            console.log(renderState);
         }
-    }
-    const render = () => {
+    };
+    const resetScroll = () => {
+        $('html, body').animate({
+            scrollTop: 0
+        }, 300);
+    };
+    const render = (cb) => {
+        // render can accept an optional callback
+        console.log(`render`);
+        console.log(renderState);
         if (typeof(renderState) === 'object') {
+            const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
+            const rType = renderState.temp.replace(GAMESTUB, '');
             renderTemplate(targ, renderState.temp, rOb, () => {
-//                console.log(`render callback`);
+                setupControl(rType);
                 if (renderState.hasOwnProperty('sub')) {
-//                    console.log(`sub: ${renderState.sub}`)
-//                    console.log(rOb)
                     renderTemplate('sub', renderState.sub, rOb, () => {
-//                        console.log(`sub callback, ${renderState.sub}`);
-                        switch (renderState.sub.replace('game.', '')) {
+                        switch (renderState.sub.replace(GAMESTUB, '')) {
                             case 'allocation':
-                                setupAllocation(true);
+                                activateYourmove(true);
+//                                setupAllocation(true);
+                        }
+                        if (cb) {
+                            cb();
                         }
                     });
+                } else {
+                    if (cb) {
+                        cb();
+                    }
                 }
             });
         } else {
@@ -250,13 +410,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRenderState({temp: 'game.gameover', ob: {}});
         render();
     };
+
     socket.on('gameUpdate', (rgame) => {
 //        console.log(`game updated: ${getPlayerID()}`)
 //        console.log(rgame);
         updateGame(rgame);
         setPlayer(game);
-//        renderState = {temp: 'game.main', ob: player};
-        updateRenderState({temp: 'game.main', ob: player});
+        updateRenderState({source: 'gameUpdate event', temp: 'game.main', ob: player});
         render();
     });
     socket.on('test', () => {
@@ -272,6 +432,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('identifyPlayer', () => {
         identifyPlayer();
+    });
+    socket.on('identifySinglePlayer', (pl) => {
+        console.log(`id me: ${pl}, ${player.id}`);
+        if (pl === player.id) {
+            identifyPlayer();
+        }
     });
     socket.on('gameOver', () => {
         console.log(`gameOver heard`);
@@ -333,6 +499,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.log('not a lead')
         }
+    });
+    socket.on('forceRefresh', () => {
+        console.log('make me refresh');
+        window.location.reload();
+    });
+    socket.on('startRound', (ob) => {
+        onStartRound(ob.val);
     });
     renderTemplate = window.renderTemplate;
     /*

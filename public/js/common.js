@@ -189,7 +189,11 @@ document.addEventListener('DOMContentLoaded', function () {
             // if this template has already been requested we can just serve it from the store
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
 //            const compiledTemplate = Handlebars.compile(uncompiledTemplate);
-            document.getElementById(targ).innerHTML = compiledTemplate(ob);
+            if (document.getElementById(targ)) {
+                document.getElementById(targ).innerHTML = compiledTemplate(ob);
+            } else {
+                console.warn(`target HTML not found: ${targ}`);
+            }
 //            console.log(`template returned from store: ${temp}`);
 //            console.log(compiledTemplate());
             if (cb) {
@@ -224,7 +228,12 @@ document.addEventListener('DOMContentLoaded', function () {
 //                    console.log(compiledTemplate(ob))
 //                    console.log(`ob:`)
 //                    console.log(ob)
-                    document.getElementById(targ).innerHTML = compiledTemplate(ob);
+//                    document.getElementById(targ).innerHTML = compiledTemplate(ob);
+                    if (document.getElementById(targ)) {
+                        document.getElementById(targ).innerHTML = compiledTemplate(ob);
+                    } else {
+                        console.warn(`target HTML not found: ${targ}`);
+                    }
                     if (cb) {
                         cb();
                     }

@@ -1,6 +1,7 @@
 // All functionality specific to the Type 1 Game
 const processData = (d) => {
 //    console.log('pro sess');
+//    console.log(d);
     let t = d.teams;
     let f = d.defaults;
     let m = d.map;
@@ -23,6 +24,8 @@ const processData = (d) => {
     for (var i in m) {
         m[m[i]] = i;
     }
+    // add a blank round so that any call to the rounds array can use round 1 etc (as apposed to 0)
+    d.rounds.unshift({n: 0})
     return d;
 }
 const assignTeams = (players) => {

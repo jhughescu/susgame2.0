@@ -1,0 +1,32 @@
+<div class="nav-header-container">
+    <div class="back-btn-title-bar title-bar-blue">
+        <a class="back-btn home_btn" title="Previous page"><img alt="Previous page icon" src="assets/backButton.svg" /></a>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="menu-container">
+    <div class="header-img">
+        <img alt="Company logo" src="assets/GlobalNewsConnectOnLogos-02.svg" />
+    </div>
+    {{#each this}}
+    <div class="team-menu">
+        <div class="team-link">
+            <div class="team-link-icon">
+                <img class="{{abbr}}-bg" alt="team icon" src="assets/icons_{{abbrCap}}white 1.svg" />
+            </div>
+            <div class="team-link-info">
+                <h2>Team name</h2>
+                <h3>{{title}}</h3>
+            </div>
+            <div class="team-link-next">
+                <a title="Go to {{title}}"><img alt="Next page icon" src="assets/next.svg" /></a>
+            </div>
+
+        </div>
+        <div class='team-content' style='display: none;'>
+            content
+        </div>
+    </div>
+    {{/each}}
+</div>

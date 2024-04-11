@@ -1,6 +1,8 @@
-Teams
 <table><tbody>
 {{#each this}}
-<tr><td>{{name}}</td><td>{{team}}</td></tr>
+<tr><td>{{name}}</td><td>{{#each players}}<span class='link' id='pl_link_{{this}}'>{{this}}</span> {{/each}}</td></tr>
 {{/each}}
 </tbody></table>
+<br>
+<div>Key: <span class='highlight'>highlighted player</span> is the team lead</div>
+<div>Click any player in the list to identify the client browser</div>

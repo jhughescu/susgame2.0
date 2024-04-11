@@ -1,0 +1,20 @@
+<div class='vertStack'>
+    <button id='assign' {{#if disableAssignTeams}}disabled{{/if}}>Assign Teams</button>
+    <button id='reset' {{#if disableAssignTeams}}{{else}}disabled{{/if}}>Reset Teams</button>
+    <table id='roundTesting'>
+        <tr>
+            <td>
+                <button id='startRound'>Start round</button>
+            </td>
+            <td>
+                <input type="text" id="roundInput" value="1" readonly >
+            </td>
+            <td class='buttonSet'>
+                <button>-</button><button>+</button>
+            </td>
+        </tr>
+        <tr><td colspan="3" style='font-size: 0.7em;'>(set round to -1 to effectively exit the current round)</td></tr>
+    </table>
+    <button id='identify' >Identify Players</button>
+</div>
+<div id='controlsInfo'></div>

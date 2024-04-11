@@ -61,12 +61,12 @@ async function restoreGame (o, cb) {
     // Restore by creating a new instance of Game and then loading any stored info from the database.
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
-//    log(`restoreGame: ${game.uniqueID}`);
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
         // RETAIN LINE BELOW:
-        console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`)
+        console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`);
+        restoreClients(game.address);
     }
     if (cb) {
         cb(game);
@@ -80,7 +80,9 @@ async function resetGame(id, cb) {
         // Note: add a condition that only system admin can reset a game with state='ended'
         if (game.state === 'ended') {
 
-        } else {}
+        } else {
+
+        }
         eventEmitter.emit('resetAll', game.address);
         Object.entries(game).forEach(value => {
             if (typeof(value) === 'object') {
@@ -116,14 +118,11 @@ async function makeLead (ob) {
     const game = games[`game-${ob.game}`];
     if (game) {
         let t = game.teams[ob.team].slice();
-//        console.log(`change the lead of team ${ob.team} to ${ob.player}`);
         t.splice(t.indexOf(ob.player), 1);
         t.unshift(ob.player);
         game.teams[ob.team] = t;
         const leadNew = game.playersFull[ob.player];
         const leadOld = game.playersFull[t[1]];
-//        console.log(leadNew);
-//        console.log(leadOld);
         game.setTeam(leadNew);
         //  \/ changes the existing lead (which has now been shunted to index 2)
         game.setTeam(leadOld);
@@ -137,6 +136,22 @@ async function makeLead (ob) {
 
 };
 
+const restoreClients = (address) => {
+    // refresh connected clients on game restore
+    setTimeout(() => {
+        eventEmitter.emit('getSockets', address, (socks) => {
+            if (socks) {
+                if (socks.size > 0) {
+//                    console.log(`${address} has ${socks.size} clients connected`);
+                    // game has connected clients, wait then refresh them
+                    setTimeout(() => {
+                        eventEmitter.emit('refreshSockets', address);
+                    }, 2000);
+                }
+            }
+        });
+    }, 500);
+};
 const getGameCount = (cb) => {
 //    log('getGames');
 //    log(cb);
@@ -279,7 +294,7 @@ const endGame = (game, cb) => {
     }
     eventEmitter.emit('gameEnded', game);
 };
-const getRenderState = (game, id) => {
+const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
     let rs = {};
     if (game.state === 'ended') {
@@ -290,19 +305,26 @@ const getRenderState = (game, id) => {
         // only remaining state is 'started'
         if (game.teams.length > 0) {
             rs.temp = 'game.main';
-            // NOTE - hard coded value below, replace with round-specific info
-//            console.log(game.round)
-//            console.log(game.persistentData.rounds[game.round]);
-            rs.sub = `game.${game.persistentData.rounds[game.round].id}`;
+            if (game.state === 'started' && game.round > -1 && game.persistentData.rounds[game.round].hasOwnProperty('subtemplate')) {
+                // set no sub for games  not currently started
+                rs.sub = `game.${game.persistentData.rounds[game.round].subtemplate}`;
+            } else {
+                rs.sub = null;
+            }
 //            rs.ob = {teamObj: getFullTeam(id, game)};
             rs.ob = game.playersFull[id];
         } else {
             rs.temp = 'game.intro';
         }
     }
-//    log(rs);
+    log('rs:');
+    log(rs);
     return rs;
 };
+const getRenderState = (ob, cb) => {
+//    console.log(`getRenderState`);
+    cb(getTheRenderState(ob.game, ob.playerID));
+}
 const registerPlayer = (ob, cb) => {
     log(`registerPlayer to game ${ob.game}`);
 //    log(ob)
@@ -317,7 +339,6 @@ const registerPlayer = (ob, cb) => {
         const plOrig = JSON.stringify(game.players);
         // index will be the joining order (i.e first connected player index = 1 etc)
         let index = -1;
-//        console.log(ob.player);
         if (ob.player) {
             ID = ob.player;
             const pl = game.players.reduce((acc, plID) => {
@@ -331,7 +352,7 @@ const registerPlayer = (ob, cb) => {
             }
             if (!game.playersFull.hasOwnProperty(ID)) {
                 let plIndex = index > -1 ? index : game.players.indexOf(ID) + 1;
-                console.log(`create new player with id ${ID} at index ${plIndex}`);
+                log(`create new player with id ${ID} at index ${plIndex}`);
                 player = new Player(ID, plIndex, ob.socketID);
                 game.playersFull[ID] = player;
                 game.setTeam(player);
@@ -360,7 +381,7 @@ const registerPlayer = (ob, cb) => {
             }, 5000);
         }
         if (cb) {
-            cb({id: ID, renderState: getRenderState(game, ID), game: JSON.stringify(game)});
+            cb({id: ID, renderState: getTheRenderState(game, ID), game: JSON.stringify(game)});
         } else {
             log('reg P, no CB');
         }
@@ -381,7 +402,6 @@ const playerConnectEvent = (gameID, playerID, boo) => {
         const playerArray = Object.values(game.playersFull);
         const socketIDs = playerArray.map(player => player.socketID);
         const player = playerArray[socketIDs.indexOf(playerID)];
-//        console.log(socketIDs)
         if (player) {
             log(gameID, playerID, boo, (game ? 'yep' : 'nope'));
             player.connected = boo;
@@ -390,25 +410,32 @@ const playerConnectEvent = (gameID, playerID, boo) => {
     }
 };
 
-const testRound = (gameID) => {
+const startRound = (ob) => {
+    const gameID = ob.gameID;
+    const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
     if (game) {
-        console.log(`send to ${game.address}`);
-        eventEmitter.emit('updatePlayers', {game: game, update: 'testRound'});
+        const rounds = game.persistentData.rounds;
+        const rIndex = ob.round - 1;
+        if (ob.round > rounds.length) {
+            const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
+            eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
+        } else {
+            game.round = ob.round;
+            eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
+        }
     } else {
-        console.log(`game not found: ${game_id}`);
+        log(`game not found: ${game_id}`);
     }
 };
 const scoreSubmitted = async (ob, cb) => {
     const sc = ob.scoreCode;
-    console.log(`scoreSubmitted: ${ob.game}`);
     const game = games[`game-${ob.game}`];
     if (game) {
         let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
-        console.log(d)
         if (p) {
             const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
             if (session) {
@@ -433,7 +460,6 @@ const scoreSubmitted = async (ob, cb) => {
     }
     };
 const valuesSubmitted = async (ob) => {
-//    console.log(`valuesSubmitted: ${ob.game}`);
     if (ob.hasOwnProperty('values')) {
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
         if (session) {
@@ -461,9 +487,10 @@ module.exports = {
     assignTeams,
     makeLead,
     resetTeams,
-    testRound,
+    startRound,
     scoreSubmitted,
     valuesSubmitted,
     getScorePackets,
+    getRenderState,
     getValues
 };

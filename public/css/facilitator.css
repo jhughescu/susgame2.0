@@ -120,3 +120,27 @@ td#val_players {
 .warning {
     color: #ff8900;
 }
+#contentTeams .link:first-child {
+    color: yellow;
+}
+#contentControls table {
+    width: 290px;
+}
+#contentControls table, tr, td {
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+}
+#contentControls input {
+    width: 40px;
+    pointer-events: none;
+    text-align: center;
+}
+#roundTesting .buttonSet {
+    display: flex;
+    flex-direction: row;
+}
+#roundTesting .buttonSet button {
+    width: 30px;
+    cursor: pointer;
+}
