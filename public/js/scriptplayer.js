@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-    const onStartRound = (r) => {
+    const onStartRound = async (r) => {
 //        console.log(`onStartRound: ${r}`);
 //        console.log(r);
         round = game.persistentData.rounds[r];
@@ -298,7 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (round) {
             if (round.type === 1) {
-                activateYourmove();
+                const rs = await thisRoundScored();
+                if (!rs.hasScore) {
+                    activateYourmove();
+                }
             }
         }
     };
