@@ -298,6 +298,7 @@ const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
     console.log(`getTheRenderState: ${id}, round: ${game.round}`);
     const round = game.persistentData.rounds[game.round];
+    console.log('fetch');
     console.log(round)
     console.log(game)
     const leads = game.teams.map(c => c[0]);
