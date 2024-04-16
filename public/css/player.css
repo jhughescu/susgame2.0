@@ -5,6 +5,12 @@ html, body {
 body {
 /*    font-size: 1em;*/
 }
+
+/* Resources button turned off for now 20240416 */
+#link_resources {
+    display: none;
+}
+
 #insertion {
     position: absolute;
     width: 100%;

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let game = {};
     let renderState = {};
     let returnRenderState = {};
+    const home = {note: 'home setting', temp: 'game.main', partialName: 'game-links', ob: player, tempType: 'home', sub: null};
 //    console.log(window.location);
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 //                console.log(`register player:`);
 //                console.log(ob);
+//                console.log(player);
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
@@ -40,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem(lID, res);
                 // use renderstate from localStorage if possible
                 // ob.renderState can overwrite stored renderstate
-                const srs = getStoredRenderState();
+//                const srs = getStoredRenderState();
                 /*
                 if (srs) {
                     srs.source = 'localStorage'
@@ -54,10 +56,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const hash = window.location.hash;
                 if (hash) {
 //                    console.log(`do something with hash ${hash}`);
-                    updateRenderState({temp: `game.${hash.replace('#', '')}`});
-//                    console.log(renderState);
+                    updateRenderState({temp: `game.${hash.replace('#', '')}`, tempType: `sub`});
+//                    console.log(JSON.parse(JSON.stringify(renderState)));
                 }
                 render(() => {
+//                    console.log(`register: ${game.round}`);
                     if (game.round > 0) {
                         onStartRound(game.round);
                     }
@@ -172,10 +175,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // interactions
     const setRoundState = (boo) => {
         // store a state which can be used to check whether the current round has been 'activated' or not.
-        localStorage.setItem('roundState', boo);
+        const ID = `${lID}-roundState`;
+//        console.log(`setRoundState ${ID} ${boo}`);
+        localStorage.setItem(ID, boo);
     };
     const getRoundState = (boo) => {
-        return localStorage.getItem('roundState');
+        const ID = `${lID}-roundState`;
+        let rs = localStorage.getItem(ID);
+//        console.log(rs, typeof(rs));
+        rs = procVal(rs);
+//        console.log(rs, typeof(rs));
+        return rs;
     };
     const thisRoundScored = () => {
         return new Promise((resolve, reject) => {
@@ -250,23 +260,20 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const activateYourmove = async () => {
         // light up the yourmove button & bring it into focus
+        console.log(`activateYourmove`);
         const ymb = $('.yourmove-btn');
         if (ymb.length > 0) {
             ymb.removeClass('disabled');
-            ymb.off('click').on('click', () => {
-//                updateRenderState({temp: 'game.allocation', targ: 'main-content'});
-//                updateRenderState({temp: 'game.allocation'});
+            ymb.off('click').on('click', async () => {
                 setRoundState(true);
-                setTimeout(async () => {
-//                    render();
-                    const rs = await new Promise((resolve, reject) => {
-                        socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
-                            console.log('we can go mofo');
-                            resolve(rs);
-                            render();
-                        });
+                const rs = await new Promise((resolve, reject) => {
+                    socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
+//                        console.log(rs);
+                        resolve(rs);
+                        updateRenderState(rs);
+                        render();
                     });
-                }, 1000);
+                });
             });
             $('html, body').animate({
                 scrollTop: ymb.offset().top
@@ -281,11 +288,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const onStartRound = (r) => {
-//        console.log(`onStartRound`)
+//        console.log(`onStartRound: ${r}`);
 //        console.log(r);
-//        console.log(ob.val);
         round = game.persistentData.rounds[r];
 //        console.log(round);
+        if (r === -1) {
+            updateRenderState({temp: 'game.main', partialName: 'game-links'});
+            render();
+        }
         if (round) {
             if (round.type === 1) {
                 activateYourmove();
@@ -295,21 +305,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const setupHomeButton = async () => {
         const hb = $('.home_btn');
+//        console.log(`setupHomeButton`, hb)
         if ($.isEmptyObject(returnRenderState)) {
             const rs = await new Promise((resolve, reject) => {
                 socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
                     resolve(rs);
                 });
             });
-            rs.source = 'getRenderState event'
+            rs.source = 'getRenderState event';
             returnRenderState = rs;
         }
         hb.off('click');
         hb.on('click', async () => {
+//            console.log('clicked');
             setHash();
-            updateRenderState(returnRenderState);
+            homeState();
+            setRoundState(false);
             resetScroll();
             render();
+//            console.log(`run the round check here`);
+//            console.log(game.round);
+            const round = game.persistentData.rounds[game.round];
+            if (round) {
+                const rs = await thisRoundScored();
+//                console.log(rs);
+//                console.log(rs.hasScore);
+                if (!rs.hasScore) {
+                    activateYourmove();
+                }
+            }
+
         });
     };
     const setHash = (hash) => {
@@ -331,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         l.off('click');
         lg.on('click', () => {
             setHash(`global`);
-            updateRenderState({temp: 'game.global', sub: null, ob: {}});
+            updateRenderState({temp: 'game.global', sub: null, tempType: 'sub', ob: {}});
             resetScroll();
             render();
         });
@@ -339,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setHash(`connecton`);
 //            returnRenderState = Object.assign({}, renderState);
 //            updateRenderState({temp: 'game.connecton', sub: null, ob: Object.values(game.persistentData.teams)});
-            updateRenderState({temp: 'game.connecton', sub: null});
+            updateRenderState({temp: 'game.connecton', sub: null, tempType: 'sub'});
             resetScroll();
             render();
         });
@@ -372,6 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const getStoredRenderState = () => {
+        console.warn(`call to getStoredRenderState, which is being phased out`)
         let srs = localStorage.getItem('renderState');
         if (srs) {
             srs = JSON.parse(srs);
@@ -380,20 +406,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return srs;
     }
     const storeRenderState = () => {
+        // knocking this out for the time being 20240416
+        return;
+
         localStorage.setItem('renderState', JSON.stringify(renderState));
     }
     const updateRenderState = (ob) => {
         if (ob) {
 //            console.log(`updating the renderState`);
+            const deletions = [];
             Object.assign(renderState, ob);
             for (let i in renderState) {
                 if (renderState[i] === null) {
+//                    console.log(`deleted ${i}`);
+                    deletions.push(i);
                     delete renderState[i]
                 }
             }
             storeRenderState();
-//            console.log(renderState);
+//            console.log(`updateRenderState:`);
+            if (deletions.length) {
+//                console.log(`deletions: ${deletions.join(', ')}`)
+            }
+//            console.log(JSON.parse(JSON.stringify(renderState)));
+            const show = Object.assign({}, renderState);
+//            console.log(show);
+            delete renderState.note;
         }
+    };
+    const homeState = () => {
+//        console.log(`set to home state`);
+        home.ob = player;
+        updateRenderState(home);
     };
     const resetScroll = () => {
         $('html, body').animate({
@@ -402,34 +446,39 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const render = (cb) => {
         // render can accept an optional callback
-        console.log(`render:`);
-        console.log(renderState);
+//        console.log(`render:`);
+//        console.log(renderState);
         if (typeof(renderState) === 'object') {
             const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
-            if (renderState.hasOwnProperty('tempActive')) {
-                // current state has two possible veriants, select which to use via getRoundState
-                renderState.temp = renderState[`temp${Boolean(getRoundState()) ? 'Active' : 'Passive'}`];
-            }
-            const rType = renderState.temp.replace(GAMESTUB, '');
             rOb.game = game;
             if (renderState.hasOwnProperty('partialName')) {
                 rOb.partialName = renderState.partialName;
             }
+//            console.log(`what is the roundState? ${getRoundState()}`);
+//            console.log(renderState);
+            if (renderState.tempType) {
+                if (renderState.tempType === 'interaction') {
+//                    console.log(`condition for interactive template`);
+                    // interactions must be 'activated' for their templates to be rendered, otherwise the home template should be rendered (with trigger button enabled)
+                    if (getRoundState()) {
+//                        console.log(`button has been clicked, interactive template allowed`)
+                    } else {
+//                        console.log(`button not clicked, return to home`)
+                        homeState();
+                    }
+                }
+            }
+            const rType = renderState.temp.replace(GAMESTUB, '');
+//            console.log(`render template ${renderState.temp}:`);
+//            console.log(rOb);
+            // delete playersFull from the render object 'game' object, as this causes circularity
+            delete rOb.game.playersFull;
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 if (renderState.hasOwnProperty('sub')) {
-                    renderTemplate('sub', renderState.sub, rOb, () => {
-                        switch (renderState.sub.replace(GAMESTUB, '')) {
-                            case 'allocation':
-                                activateYourmove(true);
-//                                setupAllocation(true);
-                        }
-                        if (cb) {
-                            cb();
-                        }
-                    });
+                    console.warn('"sub" functionality removed 20240416')
                 } else {
                     if (cb) {
                         cb();
@@ -450,7 +499,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Select the target div element
     const targetDiv = document.getElementById('insertion');
-
     // Create a new MutationObserver instance
     const observer = new MutationObserver((mutationsList, observer) => {
         // Iterate through each mutation in the mutations list
@@ -458,14 +506,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check if the mutation type is 'childList' (indicating a change in the child elements)
             if (mutation.type === 'childList') {
                 // Handle the change here
-                console.log('Change detected in the div:', mutation);
+//                console.log('Change detected in the div:', mutation);
                 if ($('.home_btn').length > 0) {
                     setupHomeButton();
                 }
             }
         });
     });
-
     // Configure the MutationObserver to watch for changes in the child nodes of the target div
     const config = { childList: true };
 
@@ -569,6 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         onStartRound(ob.val);
     });
     renderTemplate = window.renderTemplate;
+    procVal = window.procVal;
     /*
     window.addEventListener('beforeunload', function(event) {
         // Cancel the event as stated by the standard.

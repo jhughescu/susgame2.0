@@ -107,7 +107,7 @@ function initSocket(server) {
                     gameController.playerConnectEvent(gameID, socket.id, true);
                 });
                 socket.on('getRenderState', (ob, cb) => {
-                    console.log(`getRenderState heard`)
+//                    console.log(`getRenderState heard`)
                     gameController.getRenderState(ob, cb);
                 });
                 socket.on('getGameCount', (cb) => {
@@ -311,19 +311,19 @@ function initSocket(server) {
         io.to(address).emit('resetPlayer');
     });
     eventEmitter.on('gameEnded', (game) => {
-        console.log('this is the end');
-        console.log(game)
+//        console.log('this is the end');
+//        console.log(game)
         const upO = {
             players: game.players,
             teams: game.teams,
             state: game.state,
         }
         sessionController.updateSession(game.uniqueID, upO);
-        console.log(`attempt to emit to game clients`)
+//        console.log(`attempt to emit to game clients`)
         io.to(game.address).emit('gameOver');
     });
     eventEmitter.on('test', (player) => {
-        console.log(`emit test to ${player.socketID}`)
+//        console.log(`emit test to ${player.socketID}`)
         if (player.socketID) {
             io.to(player.socketID).emit('test');
         }

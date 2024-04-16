@@ -224,9 +224,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    console.log(`register it now!`);
+//    console.log(`register it now!`);
     const getDyno = (name) => {
-        console.log(`getDyno: ${name}`)
+//        console.log(`getDyno: ${name}`);
         const partial = Handlebars.partials[name];
         if (typeof partial === 'function') {
             console.log('yep, is a funk');
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     Handlebars.registerHelper('dynamicPartialNO', getDyno);
     Handlebars.registerHelper('dynamicPartial', function(partialName, options) {
-        console.log(`register dynamicPartial: ${partialName}`);
+//        console.log(`register dynamicPartial: ${partialName}`);
         // Check if the partialName is defined and is a valid partial
         if (Handlebars.partials[partialName]) {
             // Include the specified partial

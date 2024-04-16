@@ -296,22 +296,16 @@ const endGame = (game, cb) => {
 };
 const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
-    console.log(`getTheRenderState: ${id}, round: ${game.round}`);
+    // Ensure current game data by deriving & fetching from the games object:
+    game = games[`game-${game.uniqueID}`];
+//    log(`getTheRenderState: ${id}, round: ${game.round}`);
     const round = game.persistentData.rounds[game.round];
-    console.log('fetch');
-    console.log(round)
-    console.log(game)
     const leads = game.teams.map(c => c[0]);
     const isLead = leads.includes(id);
-//    console.log(id);
-//    console.log(game.teams);
     const team = game.teams.findIndex(t => t.includes(id));
     const scoreRef = `${game.round}_${team}`;
-//    console.log(scoreRef);
-//    console.log(game.scores);
     // check this value \/ , the map array should have only one element
     const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
-//    console.log(hasScore);
     let rs = {};
     if (game.state === 'ended') {
         rs.temp = 'game.gameover';
@@ -324,21 +318,16 @@ const getTheRenderState = (game, id) => {
             rs.partialName = 'game-links';
             if (game.state === 'started') {
                 if (isLead) {
-//                    console.log(round);
-//                    console.log(`is the lead, hasScore? ${hasScore}, (${typeof(hasScore)})`);
                     if (hasScore) {
-//                        console.log(`gets the main page...`);
                         rs.temp = 'game.main';
-//                        rs.partialName = 'game-links';
                     } else {
                         if (round) {
                             if (round.n > 0) {
                                 rs.temp = 'game.allocation';
+                                rs.tempType = 'interaction';
                             }
                         }
                     }
-                } else {
-//                    rs.partialName = 'game-links'
                 }
             } else {
                 rs.sub = null;
@@ -348,56 +337,20 @@ const getTheRenderState = (game, id) => {
             rs.temp = 'game.intro';
         }
     }
-//    rs.partialName = 'test';
     rs.stuff = `id: ${id}, isLead: '${isLead}, team: ${team}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
     const rsCopy = Object.assign({}, rs);
     delete rsCopy.ob;
 //    log('rs:');
-    log(rsCopy);
-    return rs;
-};
-const getTheRenderStateV1 = (game, id) => {
-    // returns an object which tells the player which template to render
-//    console.log(`getTheRenderState: ${id}`);
-    const leads = game.teams.map(c => c[0]);
-    const isLead = leads.includes(id);
-    let rs = {};
-    if (game.state === 'ended') {
-        rs.temp = 'game.gameover';
-    } else if (game.state === 'pending') {
-        rs.temp = 'game.pending';
-    } else {
-        // only remaining state is 'started'
-        if (game.teams.length > 0) {
-            rs.temp = 'game.main';
-            if (game.state === 'started' && game.round > -1 && game.persistentData.rounds[game.round].hasOwnProperty('template') && isLead) {
-                // set no sub for games  not currently started
-                rs.tempActive = `game.${game.persistentData.rounds[game.round].template}`;
-                rs.tempPassive = `game.main`;
-                rs.sub = null;
-                rs.id = id;
-            } else {
-                rs.sub = null;
-            }
-            rs.ob = game.playersFull[id];
-        } else {
-            rs.temp = 'game.intro';
-        }
-    }
-    rs.partialName = 'test';
-    const rsCopy = Object.assign({}, rs);
-    delete rsCopy.ob;
-    log('rs:');
-    log(rsCopy);
+//    log(rsCopy);
     return rs;
 };
 const getRenderState = (ob, cb) => {
-    console.log(`getRenderState:`);
-    console.log(ob);
+//    console.log(`getRenderState:`);
+//    console.log(ob);
     cb(getTheRenderState(ob.game, ob.playerID));
 }
 const registerPlayer = (ob, cb) => {
-    log(`registerPlayer to game ${ob.game}`);
+//    log(`registerPlayer to game ${ob.game}`);
 //    log(ob)
     const game = getGameWithAddress(ob.game);
     let ID = null;
@@ -423,7 +376,7 @@ const registerPlayer = (ob, cb) => {
             }
             if (!game.playersFull.hasOwnProperty(ID)) {
                 let plIndex = index > -1 ? index : game.players.indexOf(ID) + 1;
-                log(`create new player with id ${ID} at index ${plIndex}`);
+//                log(`create new player with id ${ID} at index ${plIndex}`);
                 player = new Player(ID, plIndex, ob.socketID);
                 game.playersFull[ID] = player;
                 game.setTeam(player);
@@ -474,7 +427,7 @@ const playerConnectEvent = (gameID, playerID, boo) => {
         const socketIDs = playerArray.map(player => player.socketID);
         const player = playerArray[socketIDs.indexOf(playerID)];
         if (player) {
-            log(gameID, playerID, boo, (game ? 'yep' : 'nope'));
+//            log(gameID, playerID, boo, (game ? 'yep' : 'nope'));
             player.connected = boo;
             eventEmitter.emit('gameUpdate', game);
         }
