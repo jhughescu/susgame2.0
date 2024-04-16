@@ -25,7 +25,8 @@ const processData = (d) => {
         m[m[i]] = i;
     }
     // add a blank round so that any call to the rounds array can use round 1 etc (as apposed to 0)
-    d.rounds.unshift({n: 0})
+    d.rounds.unshift({n: 0});
+    d.teamsArray = Object.values(t);
     return d;
 }
 const assignTeams = (players) => {

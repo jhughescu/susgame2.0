@@ -176,29 +176,23 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const renderTemplate = (targ, temp, ob, cb) => {
-//        getPartials()
-//        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
-//        console.log(JSON.stringify(ob));
-//        console.log(ob);
-//        console.log(JSON.parse(JSON.stringify(Handlebars.partials)))
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
         }
+        $(`#${targ}`).css({opacity: 0});
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
-//            const compiledTemplate = Handlebars.compile(uncompiledTemplate);
             if (document.getElementById(targ)) {
                 document.getElementById(targ).innerHTML = compiledTemplate(ob);
             } else {
                 console.warn(`target HTML not found: ${targ}`);
             }
-//            console.log(`template returned from store: ${temp}`);
-//            console.log(compiledTemplate());
             if (cb) {
                 cb();
             }
+            $(`#${targ}`).css({opacity: 1});
         } else {
             // If this template is being requested for the first time we will have to fetch it from the server
             fetch(`/getTemplate?template=${temp}`, {
@@ -210,25 +204,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(response => response.text())
                 .then(uncompiledTemplate => {
-//                    console.log(`template fetched from server: ${temp}`);
-//                    console.log(JSON.parse(JSON.stringify(Handlebars.partials)));
                     const template = uncompiledTemplate;
-//                    console.log(`template:`);
-//                    console.log(template);
                     templateStore[temp] = uncompiledTemplate;
                     const compiledTemplate = Handlebars.compile(template);
-
-//                    console.log(`compiledTemplate:`)
-//                    console.log(compiledTemplate);
-//                    if (temp === 'sessionCardSystem') {
-//                        console.log(`compiledTemplate run:`)
-//                        console.log(compiledTemplate({password: 'sjdkl'}));
-//                    }
-//                    console.log(`compiledTemplate run with ob:`)
-//                    console.log(compiledTemplate(ob))
-//                    console.log(`ob:`)
-//                    console.log(ob)
-//                    document.getElementById(targ).innerHTML = compiledTemplate(ob);
                     if (document.getElementById(targ)) {
                         document.getElementById(targ).innerHTML = compiledTemplate(ob);
                     } else {
@@ -237,12 +215,41 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (cb) {
                         cb();
                     }
+
+                    $(`#${targ}`).animate({opacity: 1});
                 })
                 .catch(error => {
                     console.error('Error fetching or rendering template:', error);
                 });
         }
     };
+
+    console.log(`register it now!`);
+    const getDyno = (name) => {
+        console.log(`getDyno: ${name}`)
+        const partial = Handlebars.partials[name];
+        if (typeof partial === 'function') {
+            console.log('yep, is a funk');
+            const rp = new Handlebars.SafeString(partial(this));
+            console.log(rp);
+            return rp;
+        } else {
+            console.log('is not a funk')
+        }
+        return '';
+    }
+    Handlebars.registerHelper('dynamicPartialNO', getDyno);
+    Handlebars.registerHelper('dynamicPartial', function(partialName, options) {
+        console.log(`register dynamicPartial: ${partialName}`);
+        // Check if the partialName is defined and is a valid partial
+        if (Handlebars.partials[partialName]) {
+            // Include the specified partial
+            return new Handlebars.SafeString(Handlebars.partials[partialName](this));
+        } else {
+            // Handle the case where the specified partial is not found
+            return new Handlebars.SafeString('Partial not found');
+        }
+    });
 
     const copyObjectWithExclusions = (obj, exclusions) => {
         const newObj = {};
@@ -263,6 +270,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let qu = {};
         if (u.indexOf('?', 0) > -1) {
             let r = u.split('?')[1];
+//            console.log(r);
+            // exclude any hash value
+            r = r.replace(window.location.hash, '');
             r = r.split('&');
             r.forEach(q => {
                 q = q.split('=');

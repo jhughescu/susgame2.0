@@ -85,7 +85,7 @@
         "teams": "stakeholders"
     },
     "rounds": [
-        {"n": 1, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "subtemplateNO": "allocation", "teams": "mainTeams", "type": 1},
+        {"n": 1, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1},
         {"n": 2, "flag": "e1r2", "action": "startRoundE1R2", "id": "publicvoices 1", "teams": "publicVoices", "type": 2},
         {"n": 3, "flag": "e1r3", "action": "startRoundE1R3", "id": "collaboration", "teams": "mainTeams", "type": 1},
         {"n": 4, "flag": "e1r4", "action": "startRoundE1R4", "id": "publicvoices 2", "teams": "publicVoices", "type": 2}

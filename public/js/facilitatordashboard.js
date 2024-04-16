@@ -434,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('identifyPlayers');
         socket.emit('identifyPlayers', game);
     };
+
     const setupTab = (arg) => {
 //        console.log(`setupTab`)
         switch (arg) {
@@ -528,13 +529,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#assign', '#reset', '#identify', '#startRound'];
+        const ids = ['#assign', '#reset', '#identify', '#startRound', '#checkRound'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
 //        console.log(rSel);
         ids.forEach(id => {
             const element = $(id);
             element.off('click').on('click', () => {
+//                console.log(`click ${id}`)
                 switch (id) {
                     case '#assign':
                         assignTeams();
@@ -547,8 +549,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     case '#startRound':
                         const r = parseInt($('#roundInput').val());
-                        console.log(`startRound ${r}`)
+//                        console.log(`startRound ${r}`)
                         socket.emit('startRound', {gameID: game.uniqueID, round: r});
+                        break;
+                    case '#checkRound':
+                        const cr = parseInt($('#roundInput').val());
+                        socket.emit('checkRound', {gameID: game.uniqueID, round: cr}, (summary) => {
+//                            console.log(summary);
+                            showScoreSummary(summary, game.persistentData[game.persistentData.rounds[cr].teams]);
+                        });
                         break;
                 }
             });
@@ -558,6 +567,13 @@ document.addEventListener('DOMContentLoaded', function() {
             rVal.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
             rVal.val(parseInt(rVal.val()) < -1 ? -1 : rVal.val())
         })
+    };
+    const showScoreSummary = (summ, teams) => {
+        let str = 'Team submitted score:\n\n';
+        teams.forEach((t, i) => {
+            str += `${t.title}? ${summ[i]}\n`
+        });
+        alert(str);
     };
     const renderSession = () => {
         addToLogFeed(`renderSession (see console)`);

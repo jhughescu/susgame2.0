@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('a player');
-    console.log(window.location.pathname);
+//    console.log('a player');
+//    console.log(window.location.pathname);
 //    const socket = io('/player');
     const socket = io();
     let gID = null;
@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateGame(ob.game);
                     setPlayer(game);
                 }
-                console.log(`register player:`);
-                console.log(ob);
+//                console.log(`register player:`);
+//                console.log(ob);
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
@@ -41,17 +41,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 // use renderstate from localStorage if possible
                 // ob.renderState can overwrite stored renderstate
                 const srs = getStoredRenderState();
-//                console.log(Boolean(srs));
+                /*
                 if (srs) {
                     srs.source = 'localStorage'
                     updateRenderState(srs);
                 }
-//                console.log(`registerPlayer callback, ${Boolean(srs)}`);
-//                console.log(ob);
-//                updateRenderState(Boolean(srs) ? srs : ob.renderState);
+                */
                 if (ob.renderState) {
                     ob.renderState.source = `registerPlayer event`;
                     updateRenderState(ob.renderState);
+                }
+                const hash = window.location.hash;
+                if (hash) {
+//                    console.log(`do something with hash ${hash}`);
+                    updateRenderState({temp: `game.${hash.replace('#', '')}`});
+//                    console.log(renderState);
                 }
                 render(() => {
                     if (game.round > 0) {
@@ -166,19 +170,26 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // interactions
+    const setRoundState = (boo) => {
+        // store a state which can be used to check whether the current round has been 'activated' or not.
+        localStorage.setItem('roundState', boo);
+    };
+    const getRoundState = (boo) => {
+        return localStorage.getItem('roundState');
+    };
     const thisRoundScored = () => {
         return new Promise((resolve, reject) => {
             socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
                 const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                 const rID = `${game.round}.${player.teamObj.id}`;
                 const spi = scoreSumm.indexOf(rID);
-                console.log(scoreSumm, rID);
+//                console.log(scoreSumm, rID);
 //                console.log(`thisRoundScored: ${isS}`);
                 resolve({hasScore: spi > -1, scorePacket: sps[spi]});
             });
         })
     };
-    const setupAllocation = async () => {
+    const setupAllocationControl = async () => {
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
@@ -187,13 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const desc = $(`#actionDesc`);
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const hasS = await thisRoundScored();
-        console.log('see if the round has been scored already:');
-        console.log(hasS);
+//        console.log('see if the round has been scored already:');
+//        console.log(hasS);
         if (hasS.hasScore) {
             const vOb = {gameID: `game-${game.uniqueID}`, team: player.teamObj.id};
             socket.emit('getValues', vOb, (v) => {
-                console.log('test the values')
-                console.log(v)
+//                console.log('test the values')
+//                console.log(v)
                 ints.prop('disabled', true);
                 ints.addClass('disabled');
                 val.html(hasS.scorePacket.val);
@@ -229,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     socket.emit('submitValues', vob);
                     const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
                     socket.emit('submitScore', sob, (scores) => {
-                        setupAllocation();
+                        setupAllocationControl();
                     });
 
 //                    setupAllocation(false);
@@ -237,10 +248,26 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-    const activateYourmove = () => {
+    const activateYourmove = async () => {
         // light up the yourmove button & bring it into focus
         const ymb = $('.yourmove-btn');
         if (ymb.length > 0) {
+            ymb.removeClass('disabled');
+            ymb.off('click').on('click', () => {
+//                updateRenderState({temp: 'game.allocation', targ: 'main-content'});
+//                updateRenderState({temp: 'game.allocation'});
+                setRoundState(true);
+                setTimeout(async () => {
+//                    render();
+                    const rs = await new Promise((resolve, reject) => {
+                        socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
+                            console.log('we can go mofo');
+                            resolve(rs);
+                            render();
+                        });
+                    });
+                }, 1000);
+            });
             $('html, body').animate({
                 scrollTop: ymb.offset().top
             }, 300, () => {
@@ -254,11 +281,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const onStartRound = (r) => {
-        console.log(`onStartRound`)
-        console.log(r);
+//        console.log(`onStartRound`)
+//        console.log(r);
 //        console.log(ob.val);
         round = game.persistentData.rounds[r];
-        console.log(round);
+//        console.log(round);
         if (round) {
             if (round.type === 1) {
                 activateYourmove();
@@ -267,30 +294,33 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupHomeButton = async () => {
-//        console.log(`setupHomeButton`);
         const hb = $('.home_btn');
         if ($.isEmptyObject(returnRenderState)) {
-//            console.log('empty object');
             const rs = await new Promise((resolve, reject) => {
-//                console.log('off we go');
                 socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
                     resolve(rs);
-                    // how can I wait for this to occur before proceeding to the return?
                 });
             });
             rs.source = 'getRenderState event'
             returnRenderState = rs;
         }
-//        console.log(`returnRenderState:`);
-//        console.log(returnRenderState);
         hb.off('click');
         hb.on('click', async () => {
-//            renderState = Object.assign({}, returnRenderState);
+            setHash();
             updateRenderState(returnRenderState);
             resetScroll();
             render();
         });
-    }
+    };
+    const setHash = (hash) => {
+        hash = Boolean(hash) ? `#${hash}` : '';
+        if (!window.location.hash.includes(hash) || hash === '') {
+            let cURL = window.location.href;
+            cURL = cURL.replace(window.location.hash, '');
+            cURL += hash;
+            window.history.replaceState({}, '', cURL);
+        }
+    };
     const setupMainControl = () => {
 //        console.log(`setupMainControl`);
         const l = $('.link_main');
@@ -300,20 +330,16 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(lg)
         l.off('click');
         lg.on('click', () => {
-//            returnRenderState = Object.assign({}, renderState);
-//            renderState.temp = 'game.global';
-//            delete renderState.sub;
+            setHash(`global`);
             updateRenderState({temp: 'game.global', sub: null, ob: {}});
             resetScroll();
             render();
         });
         lc.on('click', () => {
-            returnRenderState = Object.assign({}, renderState);
-//            renderState.temp = 'game.connecton';
-//            renderState.ob = Object.values(game.persistentData.teams);
-            updateRenderState({temp: 'game.connecton', sub: null, ob: Object.values(game.persistentData.teams)});
-//            console.log(renderState.ob);
-//            delete renderState.sub;
+            setHash(`connecton`);
+//            returnRenderState = Object.assign({}, renderState);
+//            updateRenderState({temp: 'game.connecton', sub: null, ob: Object.values(game.persistentData.teams)});
+            updateRenderState({temp: 'game.connecton', sub: null});
             resetScroll();
             render();
         });
@@ -338,6 +364,9 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'connecton':
                 setupConnectonControl();
                 break;
+            case 'allocation':
+                setupAllocationControl();
+                break;
             default:
                 console.warn(`no controls defined for ${type}`);
         }
@@ -346,8 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let srs = localStorage.getItem('renderState');
         if (srs) {
             srs = JSON.parse(srs);
+            srs.source = 'localStorage';
         };
-        srs.source = 'localStorage';
         return srs;
     }
     const storeRenderState = () => {
@@ -373,13 +402,21 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const render = (cb) => {
         // render can accept an optional callback
-        console.log(`render`);
+        console.log(`render:`);
         console.log(renderState);
         if (typeof(renderState) === 'object') {
             const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') ? renderState.ob: {};
+            if (renderState.hasOwnProperty('tempActive')) {
+                // current state has two possible veriants, select which to use via getRoundState
+                renderState.temp = renderState[`temp${Boolean(getRoundState()) ? 'Active' : 'Passive'}`];
+            }
             const rType = renderState.temp.replace(GAMESTUB, '');
+            rOb.game = game;
+            if (renderState.hasOwnProperty('partialName')) {
+                rOb.partialName = renderState.partialName;
+            }
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 if (renderState.hasOwnProperty('sub')) {
@@ -410,6 +447,30 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRenderState({temp: 'game.gameover', ob: {}});
         render();
     };
+
+    // Select the target div element
+    const targetDiv = document.getElementById('insertion');
+
+    // Create a new MutationObserver instance
+    const observer = new MutationObserver((mutationsList, observer) => {
+        // Iterate through each mutation in the mutations list
+        mutationsList.forEach(mutation => {
+            // Check if the mutation type is 'childList' (indicating a change in the child elements)
+            if (mutation.type === 'childList') {
+                // Handle the change here
+                console.log('Change detected in the div:', mutation);
+                if ($('.home_btn').length > 0) {
+                    setupHomeButton();
+                }
+            }
+        });
+    });
+
+    // Configure the MutationObserver to watch for changes in the child nodes of the target div
+    const config = { childList: true };
+
+    // Start observing the target div for changes
+    observer.observe(targetDiv, config);
 
     socket.on('gameUpdate', (rgame) => {
 //        console.log(`game updated: ${getPlayerID()}`)

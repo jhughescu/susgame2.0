@@ -10,7 +10,7 @@ const sessionSchema = new Schema({
     players: Array,
     teams: Array,
     state: String,
-    progress: Number,
+    round: Number,
     scores: Array,
     values: Array
 });

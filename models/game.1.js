@@ -10,7 +10,7 @@ class Game {
         this.teams = [];
         this.teamObjects = {};
         this.persistentData = null;
-        this.round = -1;
+        this.round;
     }
 
     async loadPersistentData(type) {

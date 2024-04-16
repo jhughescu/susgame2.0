@@ -123,10 +123,10 @@ td#val_players {
 #contentTeams .link:first-child {
     color: yellow;
 }
-#contentControls table {
+#contentControls #roundTesting {
     width: 290px;
 }
-#contentControls table, tr, td {
+#contentControls #roundTesting tr, td {
     padding: 0px;
     margin: 0px;
     border: 0px;

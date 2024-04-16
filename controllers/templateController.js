@@ -52,8 +52,9 @@ const getPartials = async () => {
                 const pp = path.join(dir, file);
                 const template = fs.readFileSync(pp, 'utf8');
                 pList[id] = template;
+                console.log(` - ${id}`)
             }
-            console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered (getPartials)`);
+            console.log(`${files.length} partial${files.length > 1 ? 's' : ''} registered (getPartials yes)`);
             partialStore = pList;
         } else {
             pList = partialStore;

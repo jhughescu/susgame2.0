@@ -1,0 +1,38 @@
+<div class='round round2' id='allocation'>
+    {{#if currentRoundComplete}}
+    <div class="your-move-2">
+		<h2>Action choice</h2>
+		<p>{{pageState.action-choice}}</p>
+		<h2>Move description</h2>
+		<p>{{pageState.actionDesc}}</p>
+		<h2>Resources</h2>
+		<p>{{pageState.allocateVal}}</p>
+	</div>
+    {{else}}
+    {{#if isLead}}
+
+    <label for='action-choice'>Action choice</label>
+    <select id='action-choice' name='action-choice'>
+    <option value=''>Select an option...</option>
+    {{#each teamObj.actions}}
+    <option value='{{this}}'>{{this}}</option>
+    {{/each}}
+    </select>
+
+
+    <label for='move-description'>Move description</label>
+    <textarea id='actionDesc' placeholder='Add description here...'></textarea>
+    <label for='move-description'>Resources</label>
+    <div class='resources-container'>
+        <div class='resources-score'>
+            <p><span class='tempV'>0</span>/<span>10</span></p>
+        </div>
+        <div class='resources-buttons'>
+            <button class='resources-btn' id='vote_btn_minus'><i class='fa fa-minus'></i></button>
+            <button class='resources-btn' id='vote_btn_plus'><i class='fa fa-plus'></i></button>
+        </div>
+    </div>
+    <input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'>
+    {{/if}}
+    {{/if}}
+</div>

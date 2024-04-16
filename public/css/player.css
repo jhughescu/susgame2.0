@@ -23,7 +23,15 @@ body {
     padding: 20px;
 }
 
-
+.link_main {
+    cursor: pointer;
+}
+.link_main img {
+    opacity: 0.8;
+}
+.link_main img:hover {
+    opacity: 1;
+}
 
 .yourmove-btn {
   	background-color: #091932;
@@ -36,6 +44,7 @@ body {
 	margin: 12px 10px;
 }
 .yourmove-btn.disabled {
-  	background-color: #2f394a;
+  	background-color: #404a5c;
+    color: #d2dae3;
     cursor: default;
 }

@@ -296,6 +296,21 @@ const endGame = (game, cb) => {
 };
 const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
+    console.log(`getTheRenderState: ${id}, round: ${game.round}`);
+    const round = game.persistentData.rounds[game.round];
+    console.log(round)
+    console.log(game)
+    const leads = game.teams.map(c => c[0]);
+    const isLead = leads.includes(id);
+//    console.log(id);
+//    console.log(game.teams);
+    const team = game.teams.findIndex(t => t.includes(id));
+    const scoreRef = `${game.round}_${team}`;
+//    console.log(scoreRef);
+//    console.log(game.scores);
+    // check this value \/ , the map array should have only one element
+    const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
+//    console.log(hasScore);
     let rs = {};
     if (game.state === 'ended') {
         rs.temp = 'game.gameover';
@@ -305,24 +320,79 @@ const getTheRenderState = (game, id) => {
         // only remaining state is 'started'
         if (game.teams.length > 0) {
             rs.temp = 'game.main';
-            if (game.state === 'started' && game.round > -1 && game.persistentData.rounds[game.round].hasOwnProperty('subtemplate')) {
-                // set no sub for games  not currently started
-                rs.sub = `game.${game.persistentData.rounds[game.round].subtemplate}`;
+            rs.partialName = 'game-links';
+            if (game.state === 'started') {
+                if (isLead) {
+//                    console.log(round);
+//                    console.log(`is the lead, hasScore? ${hasScore}, (${typeof(hasScore)})`);
+                    if (hasScore) {
+//                        console.log(`gets the main page...`);
+                        rs.temp = 'game.main';
+//                        rs.partialName = 'game-links';
+                    } else {
+                        if (round) {
+                            if (round.n > 0) {
+                                rs.temp = 'game.allocation';
+                            }
+                        }
+                    }
+                } else {
+//                    rs.partialName = 'game-links'
+                }
             } else {
                 rs.sub = null;
             }
-//            rs.ob = {teamObj: getFullTeam(id, game)};
             rs.ob = game.playersFull[id];
         } else {
             rs.temp = 'game.intro';
         }
     }
+//    rs.partialName = 'test';
+    rs.stuff = `id: ${id}, isLead: '${isLead}, team: ${team}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
+    const rsCopy = Object.assign({}, rs);
+    delete rsCopy.ob;
+//    log('rs:');
+    log(rsCopy);
+    return rs;
+};
+const getTheRenderStateV1 = (game, id) => {
+    // returns an object which tells the player which template to render
+//    console.log(`getTheRenderState: ${id}`);
+    const leads = game.teams.map(c => c[0]);
+    const isLead = leads.includes(id);
+    let rs = {};
+    if (game.state === 'ended') {
+        rs.temp = 'game.gameover';
+    } else if (game.state === 'pending') {
+        rs.temp = 'game.pending';
+    } else {
+        // only remaining state is 'started'
+        if (game.teams.length > 0) {
+            rs.temp = 'game.main';
+            if (game.state === 'started' && game.round > -1 && game.persistentData.rounds[game.round].hasOwnProperty('template') && isLead) {
+                // set no sub for games  not currently started
+                rs.tempActive = `game.${game.persistentData.rounds[game.round].template}`;
+                rs.tempPassive = `game.main`;
+                rs.sub = null;
+                rs.id = id;
+            } else {
+                rs.sub = null;
+            }
+            rs.ob = game.playersFull[id];
+        } else {
+            rs.temp = 'game.intro';
+        }
+    }
+    rs.partialName = 'test';
+    const rsCopy = Object.assign({}, rs);
+    delete rsCopy.ob;
     log('rs:');
-    log(rs);
+    log(rsCopy);
     return rs;
 };
 const getRenderState = (ob, cb) => {
-//    console.log(`getRenderState`);
+    console.log(`getRenderState:`);
+    console.log(ob);
     cb(getTheRenderState(ob.game, ob.playerID));
 }
 const registerPlayer = (ob, cb) => {
@@ -410,12 +480,15 @@ const playerConnectEvent = (gameID, playerID, boo) => {
     }
 };
 
-const startRound = (ob) => {
+const startRound = async (ob) => {
+    console.log(`startRound:`);
+    console.log(ob);
     const gameID = ob.gameID;
     const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
     if (game) {
+        console.log(`yes, game`);
         const rounds = game.persistentData.rounds;
         const rIndex = ob.round - 1;
         if (ob.round > rounds.length) {
@@ -423,10 +496,43 @@ const startRound = (ob) => {
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
         } else {
             game.round = ob.round;
+            console.log(`change round to ${ob.round}`);
+            const session = await sessionController.updateSession(gameID, { round });
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
+            eventEmitter.emit('gameUpdate', game);
         }
     } else {
         log(`game not found: ${game_id}`);
+    }
+};
+const checkRound = (ob, cb) => {
+    // Check submitted scores against current round
+    const game = games[`game-${ob.gameID}`];
+    if (game) {
+        const round = ob.hasOwnProperty('round') ? ob.round : game.round;
+        const rScores = game.scores.filter(item => item.startsWith(round));
+        const gRound = game.persistentData.rounds[round];
+        const teams = game.persistentData[gRound.teams];
+        const ta = [];
+        teams.forEach(t => {
+//                console.log(t.title, t.id, rScores.filter(item => item.charAt(2) === t.id.toString()).length);
+            ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
+        })
+        console.log(ta);
+        cb(ta);
+//        console.log(round);
+//        console.log(game.scores);
+//        console.log(rScores);
+//        console.log(gRound);
+//        console.log(gRound.teams);
+//        console.log(teams.length);
+//        if (rScores.length === teams.length) {
+//            console.log(`all teams have scored`);
+//        } else {
+//
+//        }
+    } else {
+        console.log(`game not ready: ${ob.gameID}`);
     }
 };
 const scoreSubmitted = async (ob, cb) => {
@@ -442,6 +548,7 @@ const scoreSubmitted = async (ob, cb) => {
                 const game = games[`game-${ob.game}`];
                 if (game) {
                     game.scores = session.scores;
+                    checkRound(ob.game);
                     if (cb) {
                         cb(game.scores);
                     }
@@ -488,6 +595,7 @@ module.exports = {
     makeLead,
     resetTeams,
     startRound,
+    checkRound,
     scoreSubmitted,
     valuesSubmitted,
     getScorePackets,

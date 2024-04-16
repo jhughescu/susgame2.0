@@ -224,6 +224,9 @@ function initSocket(server) {
             socket.on('startRound', (ob) => {
                 gameController.startRound(ob);
             });
+            socket.on('checkRound', (ob, cb) => {
+                gameController.checkRound(ob, cb);
+            });
         }
         // End facilitator clients
 
