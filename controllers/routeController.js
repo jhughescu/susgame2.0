@@ -133,6 +133,11 @@ app.get('/loginfail', (req, res) => {
     res.sendFile(path.join(basePath, 'loginfail.html'));
 });
 
+app.get('/presentation', (req, res) => {
+    res.sendFile(path.join(basePath, 'presentation.html'));
+});
+
+
 // session stuff
 app.post('/admin/createSession', async (req, res) => {
     try {

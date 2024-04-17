@@ -10,7 +10,7 @@ const gfxController = require('./../controllers/gfxController');
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
-const logging = true;
+const logging = false;
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -173,6 +173,9 @@ const getGame = (id, cb) => {
 //        log(`presume searching with uniqueID`);
         gg = getGameWithUniqueID(id);
     }
+    if (!gg) {
+        console.log(`no game with ID ${id}`)
+    }
 //    log(gg);
     if (cb) {
         cb(gg);
@@ -181,18 +184,23 @@ const getGame = (id, cb) => {
 };
 const getGameWithUniqueID = (id) => {
     for (let g in games) {
-        if (games[g].uniqueID === id) {
+        console.log(games[g].uniqueID.toString(), id.toString())
+        console.log(games[g].uniqueID.toString() === id.toString())
+        if (games[g].uniqueID.toString() === id.toString()) {
 //            log(games[g].uniqueID)
             return games[g];
         }
     }
 };
 const getGameWithAddress = (add) => {
+//    console.log(`GETGAMEWITHADDRESS: ${add}`)
     for (let g in games) {
+//        console.log(games[g].address, add)
         if (games[g].address === add) {
             return games[g];
         }
     }
+    return null;
 };
 const getScorePackets = (gameID, cb) => {
     const game = games[gameID];
@@ -201,8 +209,6 @@ const getScorePackets = (gameID, cb) => {
         game.scores.forEach(s => {
             sps.push(new ScorePacket(s))
         });
-//        sps = game.getScorePackets();
-//        console.log(sps)
     } else {
         console.log(`no game with ID ${gameID}`);
     }
@@ -210,6 +216,21 @@ const getScorePackets = (gameID, cb) => {
         cb(sps);
     }
     return sps;
+};
+const getAllValues = (gameID, cb) => {
+    const game = games[gameID];
+    let vs = [];
+    if (game) {
+        game.values.forEach(v => {
+            vs.push(v);
+        });
+    } else {
+        console.log(`no game with ID ${gameID}`);
+    }
+    if (cb) {
+        cb(vs);
+    }
+    return vs;
 };
 const getValues = (idOb, cb) => {
     const game = games[idOb.gameID];
@@ -539,6 +560,7 @@ const valuesSubmitted = async (ob) => {
 module.exports = {
     getGame,
     getGameCount,
+    getGameWithAddress,
     startGame,
     endGame,
     restoreGame,
@@ -554,5 +576,6 @@ module.exports = {
     valuesSubmitted,
     getScorePackets,
     getRenderState,
+    getAllValues,
     getValues
 };

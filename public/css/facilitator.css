@@ -74,13 +74,17 @@ td#val_players {
     position: relative;
 }
 
+#tabGame #qrcode img {
+/*    display: none;*/
+    height: 200px;
+    float: right;
+}
 #tabGame #qrcode {
     position: absolute;
     top: 20px;
     right: 20px;
-    width: 148px;
-    height: 148px;
-/*    background-color: red;*/
+    width: 220px;
+    height: 200px;
 }
 .vertStack {
     display: flex;

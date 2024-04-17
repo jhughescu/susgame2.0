@@ -79,5 +79,8 @@ const checkSessionTimeoutAndRedirect = (req, res, next) => {
 const resetAdmin = () => {
     systemNow = Date.now();
 };
+const adminPasswordCheck = (pw) => {
+    return pw === process.env.ADMIN_PASSWORD;
+}
 
-module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect, facAuth, generateToken, verifyTokenExpiration };
+module.exports = { adminAuth, resetAdmin, checkSessionTimeoutAndRedirect, facAuth, generateToken, verifyTokenExpiration, adminPasswordCheck };

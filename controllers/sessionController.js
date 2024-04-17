@@ -1,5 +1,6 @@
 //const express = require('express');
 const securePassword = require('secure-random-password');
+const randomColour = require(`randomcolor`);
 const Session = require('../models/session');
 
 let select = '-_id -__v';
@@ -54,12 +55,18 @@ const generateAddress = (req) => {
     const suffix = `/game-${id}`;
     return suffix;
 };
+const generateColour = () => {
+    const c = randomColour();
+    return c;
+};
 
 
 async function getSessionWithID(id) {
-//    console.log(`getSessionWithID: ${id}`);
+    //    console.log(`getSessionWithID: ${id}`);
     try {
-        const session = await Session.findOne({ uniqueID: id }).select('-password -_id -__v');
+        const session = await Session.findOne({
+            uniqueID: id
+        }).select('-password -_id -__v');
         if (!session) {
             // If session is not found, return an error
             throw new Error(`getSessionWithID: Session not found (${id})`);
@@ -68,11 +75,13 @@ async function getSessionWithID(id) {
     } catch (err) {
         console.log(err);
     }
-}
+};
 async function getSessionWithAddress(id) {
-//    console.log(`getSessionWithAddress: ${id}`);
+    //    console.log(`getSessionWithAddress: ${id}`);
     try {
-        const session = await Session.findOne({ address: id }).select('-password -_id -__v');
+        const session = await Session.findOne({
+            address: id
+        }).select('-password -_id -__v');
         if (!session) {
             // If session is not found, return an error
             throw new Error(`getSessionWithAddress: Session not found (${id})`);
@@ -81,32 +90,45 @@ async function getSessionWithAddress(id) {
     } catch (err) {
         console.log(err);
     }
-}
+};
 async function getSessionPassword(id) {
-//    console.log('getfull');
+    //    console.log('getfull');
     try {
-        const session = await Session.findOne({ uniqueID: id }).select('password');
+        const session = await Session.findOne({
+            uniqueID: id
+        }).select('password');
         if (!session) {
             // If session is not found, return an error
             throw new Error('Session not found');
         }
-//        console.log('returning')
-//        console.log(session)
+        //        console.log('returning')
+        //        console.log(session)
         return session;
     } catch (err) {
         console.log(`getSessionPassword error:`);
         console.log(err);
     }
-}
+};
 async function getSessions(req, res) {
     try {
         let filter = select + ' -password';
-//        let filter = select;
         const existingSessions = await Session.find().select(filter);
         res.json(existingSessions);
     } catch (error) {
-        console.error('Error generating unique session ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+//        console.error('Error generating unique session ID:', error);
+        res.status(500).json({
+            error: 'Internal Server Error'
+        });
+    }
+};
+async function getSessionsSock(cb) {
+    // socket io version of the getSessions method; requires a callback for the return values
+    if (cb) {
+        let filter = select + ' -password';
+        const existingSessions = await Session.find().select(filter);
+        cb(existingSessions);
+    } else {
+        console.log(`getSessionsSock requires a callback function`)
     }
 }
 async function sessionExists(prop, val) {
@@ -115,12 +137,12 @@ async function sessionExists(prop, val) {
         const query = {};
         query[prop] = val;
         const session = await Session.find(query);
-//        console.log(session.length > 0);
+        //        console.log(session.length > 0);
         return session.length > 0;
     } catch (error) {
         console.log(error);
     }
-}
+};
 async function getSession(req, res) {
     try {
         let sessionId = null;
@@ -134,17 +156,19 @@ async function getSession(req, res) {
             // If sessionID is not present in query string or request body, return an error
             throw new Error('SessionID not provided');
         }
-//        console.log('getSession method');
-//        console.log('Session ID:', sessionId);
+        //        console.log('getSession method');
+        //        console.log('Session ID:', sessionId);
         let noPass = true;
         if (req.body.password) {
-//            console.log('password provided; if it matches, return the full session')
-//            console.log(req.body.password);
+            //            console.log('password provided; if it matches, return the full session')
+            //            console.log(req.body.password);
             noPass = !req.body.password === process.env.ADMIN_PASSWORD;
         }
         const boSelector = `-_id -__v${noPass ? ' -password' : ''}`;
-//        console.log(boSelector);
-        const session = await Session.findOne({ uniqueID: sessionId }).select(boSelector);
+        //        console.log(boSelector);
+        const session = await Session.findOne({
+            uniqueID: sessionId
+        }).select(boSelector);
 
         if (!session) {
             // If session is not found, return an error
@@ -154,33 +178,39 @@ async function getSession(req, res) {
         res.json(session);
     } catch (error) {
         console.error('Error retrieving session:', error.message);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({
+            error: error.message
+        });
     }
-}
+};
 async function updateSession(uniqueID, updateOb) {
     try {
-        const updatedSession = await Session.findOneAndUpdate(
-            { uniqueID },
-            updateOb,
-            { new: true }
+        const updatedSession = await Session.findOneAndUpdate({
+                uniqueID
+            },
+            updateOb, {
+                new: true
+            }
         ).select(select + ' -password');
-//        console.log('updatedSession', updatedSession);
+        //        console.log('updatedSession', updatedSession);
         return updatedSession;
     } catch (error) {
         console.error('Error updating document:', error);
         throw error;
     }
-}
+};
 async function newSession(req, res) {
     try {
         const dateID = getDateCode();
-//        console.log(`createSession ${dateID}`);
+        //        console.log(`createSession ${dateID}`);
         // Query the database to find documents with the given dateID
-        const existingSessions = await Session.find({ dateID });
-//        console.log(existingSessions)
+        const existingSessions = await Session.find({
+            dateID
+        });
+        //        console.log(existingSessions)
         // Determine the session ID for the new session
         const uniqueID = dateID + padNum(getTopNumber(existingSessions) + 1, 3);
-//        console.log(`sessionID: ${uniqueID}`);
+        //        console.log(`sessionID: ${uniqueID}`);
         // auto-generate password
         const password = generatePassword(6);
         const address = generateAddress(req);
@@ -188,31 +218,94 @@ async function newSession(req, res) {
         const type = req.body.valType;
         const state = 'pending';
         const progress = 0;
-//        console.log(type);
-//        console.log(`type: ${type}`);
-        const newSession = new Session({ dateID, uniqueID, password, address, type , state, progress});
+        const idColour = generateColour();
+        //        console.log(type);
+        //        console.log(`type: ${type}`);
+        const newSession = new Session({
+            dateID,
+            uniqueID,
+            password,
+            address,
+            type,
+            state,
+            progress,
+            idColour
+        });
 
         // Save the new session document to the database
         await newSession.save();
 
         // Send the generated session ID back to the client as a response
-        res.json({ uniqueID });
+        res.json({
+            uniqueID
+        });
         return newSession;
     } catch (error) {
         console.error('Error generating unique session ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({
+            error: 'Internal Server Error'
+        });
     }
-}
+};
 async function resetSession(id, cb) {
     // dev only method, return warning if not dev
     if (process.env.ISDEV) {
-        const session = await updateSession(id, {state: 'pending'});
+        const session = await updateSession(id, {
+            state: 'pending'
+        });
         if (session) {
             cb(session);
         }
     } else {
         cb('Not allowed');
     }
+};
+async function deleteSessionV1(ob, cb) {
+    // admin password has already been provided, no further auth required
+    const id = ob.sID;
+    let msg = '';
+    Session.deleteOne({
+            uniqueID: id
+        })
+        .then(result => {
+            msg = `successful deletion of session ${id}`;
+            console.log(msg);
+            return {
+                msg: msg
+            };
+        })
+        .catch(err => {
+            msg = `error deleting session ${id}`;
+            console.error(msg);
+            return {
+                msg: msg
+            };
+        })
+};
+async function deleteSession(ob) {
+    let msg = '';
+    try {
+        const result = await Session.deleteOne({uniqueID: ob.sID });
+        msg = `session ${ob.sID} has been deleted`;
+        console.log(msg);
+        return msg;
+    } catch (err) {
+        msg = `session ${ob.sID} not deleted`;
+        console.error(msg, err);
+        return msg;
+    }
 }
 
-module.exports = { getSession, updateSession, newSession, getSessions , getSession , getSessionWithID , getSessionPassword , getSessionWithAddress, resetSession};
+module.exports = {
+    getSession,
+    updateSession,
+    newSession,
+    getSessions,
+    getSessionsSock,
+    getSession,
+    getSessionWithID,
+    getSessionPassword,
+    getSessionWithAddress,
+    resetSession,
+    deleteSession
+};

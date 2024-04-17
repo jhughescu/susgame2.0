@@ -132,6 +132,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const launchPresentation = () => {
+         window.open(`/presentation?${game.address.replace('/', '')}`, '_blank');
+    };
     const launchFakeGenerator = () => {
 //        console.log(game);
         window.open(`/fakegenerator#${game.address}`, '_blank');
@@ -506,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const setupGameLinks = () => {
         if (game) {
             if (game.state === 'started') {
-                const ids = ['#gameReset', '#makeFakes', '#gameEnd'];
+                const ids = ['#gameReset', '#makeFakes', '#gameEnd', '#makePres'];
                 ids.forEach(id => {
                     const element = $(id);
                     element.off('click').on('click', () => {
@@ -516,6 +519,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 break;
                             case '#makeFakes':
                                 launchFakeGenerator();
+                                break;
+                            case '#makePres':
+                                launchPresentation();
                                 break;
                             case '#gameEnd':
                                 endGame();
@@ -611,9 +617,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const initSession = () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
-//        console.log(`initSession`);
-//        console.log(session);
-//        renderSession();
         setupBaseLinks();
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');

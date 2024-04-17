@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             });
     });
-
     document.getElementById('createSessionForm').addEventListener('submit', function(event) {
         const inputType = document.getElementById('type');
         const valType = parseInt(inputType.value);
@@ -84,9 +83,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         return response.json(); // Parse the response body as JSON
                     })
                     .then(data => {
-                        console.log(data)
+//                        console.log(data);
     //                    console.log(data.uniqueID)
                         alert(`Created session with uniqueID: ${data.uniqueID}`);
+                        updateView();
                     }).then(() => {
                         resetTimeout();
                     })
@@ -130,8 +130,32 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('error');
             console.log(err);
         }
-    }
+    };
+    async function deleteSession () {
+        const sID = $('#val_uniqueID').html();
+        const conf = confirm(`Request to delete session ${sID}.\nWARNING: this process deletes the named session from the database. This action cannot be undone.`);
+        if (conf) {
+            const pw = prompt('Enter the system password to continue with deletion.');
+            if (pw) {
+                const final = confirm(`Are you absolutely sure you want to delete session ${sID}? This is your last chance to back out...`);
+                if (final) {
+                    socket.emit('requestSessionDelete', { sID, pw }, (ob) => {
+                        updateView();
+                        alert(ob.msg);
+                    });
+                }
+            }
+        }
 
+    };
+
+    const updateView = () => {
+        if ($('#panel_sessions').length > 0) {
+            socket.emit('getSessionsSock', (s) => {
+                panel('sessions', s);
+            });
+        }
+    };
     const panel = (id, data) => {
         window.renderTemplate('panel', 'panel', {id: id, content: 'sessionPanel'}, () => {
             const p = $(`#panel_${id}`);
@@ -165,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Deselect the text
         window.getSelection().removeAllRanges();
     }
-
     const getSession = (sessionID) => {
         // Prompt the user to enter a password
         let password = prompt('Session password will be omitted from return unless admin password is provided here:', 'canary');
@@ -192,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#sessionDetail').fadeOut(300, function () {
                     const rOb = data;
 //                    const rOb = {password: 'socks'};
-                    window.renderTemplate('sessionDetail', 'sessionCardSystem', rOb, readyLaunch);
+                    window.renderTemplate('sessionDetail', 'sessionCardSystem', rOb, readySessionSpecificLinks);
                     $('#sessionDetail').fadeIn(300, () => {
                         const vp = $('#val_password');
                         vp.addClass('link');
@@ -218,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
             getSession(sessionId);
         });
     };
-    window.readyL = readySessionLinks;
     const readyDevLinks = () => {
         let us = $('#updateSession');
         us.off('click');
@@ -231,11 +253,14 @@ document.addEventListener('DOMContentLoaded', function() {
             resetTimeout();
         });
     };
-    const readyLaunch = () => {
+    const readySessionSpecificLinks = () => {
         const l = $('#launch');
-        l.off('click');
-        l.on('click', () => {
+        const d = $('#delete');
+        l.off('click').on('click', () => {
             facilitate();
+        });
+        d.off('click').on('click', () => {
+            deleteSession();
         });
     };
     const resetTimeout = () => {
@@ -258,4 +283,5 @@ document.addEventListener('DOMContentLoaded', function() {
         readySessionLinks();
         readyDevLinks();
     });
+    window.readyL = readySessionLinks;
 });

@@ -9,8 +9,13 @@ const generateQR = (data, id) => {
             console.error(err);
             return;
         }
-//        console.log(`generateQR, data: ${data}, id: ${id}`);
-        QRCode.toFile(`public/assets/qr/qrcode-${id}.png`, data, (err) => {
+        const options = {
+            size: 300,
+            type: 'svg'
+        }
+        const output = `public/assets/qr/qrcode-${id}.svg`;
+//        console.log(`generateQR, data: ${data}, id: ${id}, output: ${output}`);
+        QRCode.toFile(output, data, options, (err) => {
             if (err) {
                 console.error(err);
                 return;

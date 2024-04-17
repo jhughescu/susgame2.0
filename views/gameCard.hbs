@@ -4,12 +4,13 @@ Game detail:
     <tr><td>{{@key}}</td><td id='val_{{@key}}'>{{this}}</td></tr>
     {{/each}}
 </tbody></table>
-
+<br>
 <div class='vertstack'>
+    <div class='link{{#if gameInactive}} disabled{{/if}}' id='makePres'>Launch Presentation</div>
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='makeFakes'>Launch Fake Generator</div>
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameReset'>Reset game</div>
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameEnd'>End game</div>
 </div>
-<div id='qrcode'>
-    <img src='public/assets/qr/qrcode-{{game.uniqueID}}.png'>
+<div id='qrcode' style='background-color: {{game.idColour}}'>
+    <img src='public/assets/qr/qrcode-{{game.uniqueID}}.svg'>
 </div>

@@ -3,6 +3,7 @@ const { getEventEmitter } = require('./../controllers/eventController');
 const gameController = require('./../controllers/gameController');
 const routeController = require('./../controllers/routeController');
 const sessionController = require('./../controllers/sessionController');
+const adminController = require('./../controllers/adminController');
 
 const eventEmitter = getEventEmitter();
 
@@ -10,7 +11,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = false;
+const logging = true;
 
 const gameNamespaces = {};
 
@@ -230,6 +231,25 @@ function initSocket(server) {
         }
         // End facilitator clients
 
+        // Presentation client
+//        console.log(src);
+        if (Q.role === 'presentation') {
+            console.log('############################################## presentation connected:');
+//            console.log(src);
+//            console.log(Q);
+//            console.log();
+            socket.emit('setGame', gameController.getGameWithAddress(`/${Q.id}`));
+            socket.on('getScores', (gameID, cb) => {
+                gameController.getScorePackets(gameID, cb);
+            });
+            socket.on('getAllValues', (gameID, cb) => {
+                gameController.getAllValues(gameID, cb);
+            });
+            socket.on('getGame', (gameID, cb) => {
+                gameController.getGame(gameID, cb);
+            });
+        }
+        // End presentation clients
 //        socket.on('disconnect', () => {
 //            log('User disconnected (HTTP or WebSocket)');
 //        });
@@ -250,6 +270,45 @@ function initSocket(server) {
 //        log('A user connected to the admin dashboard');
         socket.on('disconnect', () => {
 //            log('User disconnected from the admin dashboard');
+        });
+        socket.on('requestSessionDelete', async (ob, cb) => {
+            const g = gameController.getGame(`${ob.sID}`);
+            let msg = '';
+            let okToDelete = false;
+            if (g) {
+//                console.log(`a game with that ID has been found: ${g.address}`);
+                const cliFac = getRoomSockets(`${g.address}-fac`);
+                const cliPla = getRoomSockets(`${g.address}`);
+                if (cliFac || cliPla) {
+//                    console.log(`${cliFac.size} facilitator window${cliFac.size > 1 ? 's' : ''} connected`);
+                    msg = `one or more clients are connected to the game ${g.address}, cannot delete the session at this time.`
+                } else {
+                    okToDelete = true;
+                    if (adminController.adminPasswordCheck(ob.pw)) {
+                        msg = await sessionController.deleteSession(ob);
+                    } else {
+                        msg = 'incorrect password provided, session not deleted';
+                    }
+                }
+            } else {
+                // no game at all, fine to delete
+                okToDelete = true;
+            }
+            if (okToDelete) {
+                if (adminController.adminPasswordCheck(ob.pw)) {
+                    msg = await sessionController.deleteSession(ob);
+                } else {
+                    msg = 'incorrect password provided, session not deleted';
+                }
+            }
+            cb({msg: msg});
+        });
+        socket.on('getSessionsSock', async (cb) => {
+//            if (adminController.adminPasswordCheck(ob.pw)) {
+                const s = sessionController.getSessionsSock(cb);
+//            } else {
+//                console.log(`can't get sessions without a password`)
+//            }
         });
 
         // Handle other socket events specific to the admin dashboard...

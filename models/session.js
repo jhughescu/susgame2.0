@@ -12,7 +12,8 @@ const sessionSchema = new Schema({
     state: String,
     round: Number,
     scores: Array,
-    values: Array
+    values: Array,
+    idColour: String
 });
 
 module.exports = mongoose.model('Session', sessionSchema);

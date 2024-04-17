@@ -12,11 +12,11 @@ class ScorePacket {
                 let s = round.split('_');
                 if (s.length === 5) {
                     // correct format, can proceed
-                    this.round = s[0];
-                    this.src = s[1];
-                    this.dest = s[2];
-                    this.val = s[3];
-                    this.type = s[4];
+                    this.round = parseInt(s[0]);
+                    this.src = parseInt(s[1]);
+                    this.dest = parseInt(s[2]);
+                    this.val = parseInt(s[3]);
+                    this.type = parseInt(s[4]);
                 }
             }
         }

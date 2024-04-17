@@ -24,7 +24,7 @@ class Game {
             console.error('Error reading or parsing JSON file:', error);
             throw error;
         }
-     };
+    };
     assignTeamsOrder () {
         // assign players to teams in the order they were registered:
 //        console.log(`assignTeams, have data? ${Boolean(this.persistentData)}`);
