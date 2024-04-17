@@ -54,6 +54,7 @@ async function startGame (o, cb) {
     if (cb) {
         cb(rg);
     }
+    showGames();
     return rg;
 };
 async function restoreGame (o, cb) {
@@ -304,6 +305,10 @@ const getFullTeam = (id, game) => {
 //    log(t);
     return t;
 };
+const showGames = () => {
+    console.log(`here are the games:`)
+    Object.keys(games).forEach(g => console.log(g));
+}
 const endGame = (game, cb) => {
     console.log(`end game with address ${game.address}`);
     routeController.destroyRoute(game.address);
@@ -314,6 +319,31 @@ const endGame = (game, cb) => {
         cb(game);
     }
     eventEmitter.emit('gameEnded', game);
+};
+const deleteGame = (gameID) => {
+    // Heavyweight deletion method. Called from socketController via sessionController, which have password safeguards etc.
+    // Do not implement via other modules without adding significant protection.
+    const killID = `game-${gameID}`;
+//    const game = getGame(killID);
+//    let gamez = Object.assign({}, games);
+//    console.log(`at the start we have ${Object.values(gamez).length} games in the system`);
+    const game = games[killID];
+//    console.log(games)
+    if (game) {
+//        console.log(`prepare to delete game`);
+//        showGames();
+        // remove any created assets:
+        gfxController.deleteQR(gameID);
+        // destroy any associated routes:
+        routeController.destroyRoute(game.address);
+        // finally destroy the entire game object:
+        delete games[killID];
+//        gamez = Object.assign({}, games);
+//        console.log(`at the final reckoning we have ${Object.values(gamez).length} games left in the system`);
+//        showGames();
+    } else {
+        console.log(`Attempt to delete game failed as no game with ID ${killID} has been initialised`);
+    }
 };
 const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
@@ -565,6 +595,7 @@ module.exports = {
     endGame,
     restoreGame,
     resetGame,
+    deleteGame,
     registerPlayer,
     playerConnectEvent,
     assignTeams,

@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sID = $('#val_uniqueID').html();
         const conf = confirm(`Request to delete session ${sID}.\nWARNING: this process deletes the named session from the database. This action cannot be undone.`);
         if (conf) {
-            const pw = prompt('Enter the system password to continue with deletion.');
+            const pw = prompt('Enter the system password to continue with deletion.', 'canary');
             if (pw) {
                 const final = confirm(`Are you absolutely sure you want to delete session ${sID}? This is your last chance to back out...`);
                 if (final) {

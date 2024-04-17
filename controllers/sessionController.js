@@ -288,11 +288,11 @@ async function deleteSession(ob) {
         const result = await Session.deleteOne({uniqueID: ob.sID });
         msg = `session ${ob.sID} has been deleted`;
         console.log(msg);
-        return msg;
+        return {msg: msg, success: true};
     } catch (err) {
         msg = `session ${ob.sID} not deleted`;
         console.error(msg, err);
-        return msg;
+        return {msg: msg, success: false};
     }
 }
 

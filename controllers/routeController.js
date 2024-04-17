@@ -54,8 +54,8 @@ const createRoute = (r) => {
     }
 };
 const destroyRoute = (id) => {
-//    console.log(`let's destroy a route: ${id}`);
-//    console.log(`before: ${app._router.stack.length}`);
+    console.log(`let's destroy a route: ${id}`);
+    console.log(`before: ${app._router.stack.length}`);
     const index = app._router.stack.findIndex(layer => {
         if (layer.route) {
             return layer.route.path === id;
@@ -65,7 +65,7 @@ const destroyRoute = (id) => {
     if (index) {
         app._router.stack.splice(index, 1);
     }
-//    console.log(`after: ${app._router.stack.length}`);
+    console.log(`after: ${app._router.stack.length}`);
 }
 // route definitions:
 app.get('/testbed', (req, res) => {

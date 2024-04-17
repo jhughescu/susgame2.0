@@ -301,7 +301,12 @@ function initSocket(server) {
                     msg = 'incorrect password provided, session not deleted';
                 }
             }
-            cb({msg: msg});
+            const cbMsg = typeof(msg) === 'string' ? {msg: msg, success: false} : msg;
+            if (cbMsg.success) {
+//                console.log('succcess - delete game next');
+                gameController.deleteGame(ob.sID);
+            }
+            cb(cbMsg);
         });
         socket.on('getSessionsSock', async (cb) => {
 //            if (adminController.adminPasswordCheck(ob.pw)) {
