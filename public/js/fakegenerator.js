@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //            session: session
         }
     });
-    socket.on('checkOnConnection', () => {
-    });
     function rsort () {
         return Math.floor(Math.random() * 3) - 1;
     }
@@ -22,6 +20,36 @@ document.addEventListener('DOMContentLoaded', function() {
             rn = 1;
         }
         return rn;
+    };
+    const indexSort = (a, b) => {
+        let rn = 0;
+        const sortVal = 'index';
+        if (a[sortVal] < b[sortVal]) {
+            rn = -1;
+        } else if (a[sortVal] > b[sortVal]) {
+            rn = 1;
+        }
+        return rn;
+    };
+    function reopenFakes(event) {
+        event.preventDefault();
+        socket.emit('getGame', gameID, (g) => {
+            // array of disconnected player:
+            const p = Object.values(g.playersFull).filter(pl => !pl.connected).sort(indexSort);
+            if (p.length === 0) {
+                alert('all registered fakes already open');
+                return;
+            }
+            p.forEach((pl, i) => {
+                setTimeout(() => {
+                    window.open(`${gameID}?fake=true&fid=${pl.id}`, '_blank');
+                    if (i === p.length - 1) {
+//                        alert(`all launched`);
+                    }
+                }, (i * 200));
+            });
+
+        });
     }
     function launchFakes(event) {
         event.preventDefault();
@@ -54,6 +82,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkInputType = () => {
 
     }
+
+    socket.on('checkOnConnection', () => {
+        //
+    });
+    socket.on('', () => {
+        //
+    });
+
     window.launchFakes = launchFakes;
+    window.reopenFakes = reopenFakes;
     window.checkInputType = checkInputType;
+
 });

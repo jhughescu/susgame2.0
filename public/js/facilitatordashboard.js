@@ -132,6 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const updateGame = (ngame) => {
+        // Method to use any time the game is updated (i.e never use "game = ...")
+//        console.log(game.mainTeamSize);
+//        console.log(ngame.mainTeamSize);
+        Object.assign(game, ngame);
+//        console.log(game.mainTeamSize);
+    };
     const launchPresentation = () => {
          window.open(`/presentation?${game.address.replace('/', '')}`, '_blank');
     };
@@ -154,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const T = game.persistentData.teams;
             const t = game.teams;
             Object.values(T).forEach((el, id) => {
-                if (el.hasOwnProperty('id')) {
+                if (el.hasOwnProperty('id') && t[id]) {
                     rendO[el.id] = {name: el.title, team: t[id].toString(), players: t[id]}
                 }
             });
@@ -168,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderControls = () => {
         if (game) {
             const hasTeams = game.teams.length > 0;
-            const rendO = {disableAssignTeams: hasTeams};
+            const rendO = {disableAssignTeams: hasTeams, game: game};
             window.renderTemplate('contentControls', 'facilitator.controls', rendO, () => {
                 setupControlLinks();
                 if (hasTeams) {
@@ -264,8 +271,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     };
     const renderPlayers = (l) => {
-        console.clear();
-        console.log(`renderPlayers`)
+//        console.clear();
+//        console.log(`renderPlayers`)
         if (game || l) {
 //            console.log(`yep - list provided? ${Boolean(l)}`);
 //            console.log(game);
@@ -277,29 +284,29 @@ document.addEventListener('DOMContentLoaded', function() {
             list.forEach((p, i) => {
 //                console.log(p.id)
                 if (pf.hasOwnProperty(p.id)) {
-                    console.log(`ID found in PF`);
+//                    console.log(`ID found in PF`);
 //                    console.log(pf[p.id]);
                     list[i] = pf[p.id];
                 } else if (p.id.hasOwnProperty('id')) {
-                    console.log(`p.id is an object which has an ID property: ${p.id.id}`)
+//                    console.log(`p.id is an object which has an ID property: ${p.id.id}`)
                     if (pf.hasOwnProperty(p.id.id)) {
-                        console.log(`yep, it should have been done`)
+//                        console.log(`yep, it should have been done`)
                         list[i] = pf[p.id.id];
                     } else {
-                        console.log(`${p.id.id} not found in PF`);
-                        console.log(pf);
+//                        console.log(`${p.id.id} not found in PF`);
+//                        console.log(pf);
                         // Seems to be a disconnected player
                         list[i] = p.id;
                     }
                 } else {
-                    console.log(`not found in playersFull: ${p.id}`)
-                    console.log(p.id)
+//                    console.log(`not found in playersFull: ${p.id}`)
+//                    console.log(p.id)
                 }
             });
 //            let list = l ? l : Object.values(Object.assign({}, game.playersFull));
             const pso = playerSortOrder;
-            console.log(list);
-            console.log(game);
+//            console.log(list);
+//            console.log(game);
             switch (pso.prop) {
                 case 'index':
                     list.sort(sortListIndex);
@@ -352,83 +359,89 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     };
-    const renderPlayersV1 = (l) => {
-        console.log(`renderPlayers`)
-        if (game || l) {
-            console.log(`yep`);
-            let list = l ? l : Object.values(Object.assign({}, game.playersFull));
-            const pso = playerSortOrder;
-            console.log(list);
-            console.log(game);
-            switch (pso.prop) {
-                case 'index':
-                    list.sort(sortListIndex);
-                    break;
-                case 'ID':
-                    list.sort(sortListID);
-                    break;
-                case 'team':
-                    list.sort(sortListTeam);
-                    break;
-                case 'isLead':
-                    list.sort(sortListisLead);
-                    break;
-                default:
-//                    console.log('nosort');
-            }
-            list = processPlayers(list);
-            clearTimeout(pso.timeout);
-//            pso.timeout = setTimeout(() => {console.log(list)}, 2000);
-            renderTemplate('contentPlayers', 'playerlist', list, () => {
-                $('.listSort').off('click');
-                $('.listSort').on('click', function () {
-                    pso.dir = pso.prop === this.textContent ? !pso.dir : true;
-                    pso.prop = this.textContent;
-                    renderPlayers();
-                    const index = $('.listSort').filter(function() {
-                        return $(this).text().trim() === pso.prop;
-                    }).index();
-                    $($('.listSort')[index]).addClass('highlight');
-                });
-                $('.makeLead').off('click');
-                $('.makeLead').on('click', function () {
-                    const leader = $(this).attr('id').split('_').splice(1);
-                    const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
-                    socket.emit('makeLead', leadObj);
-                });
-                $('.warning').off('click');
-                $('.warning').on('click', function () {
-//                    console.log($(this));
-                    // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
-                    const rowIndex = $(this).closest('tr').index() - 1;
-//                    console.log('Row index:', rowIndex);
-//                    console.log(list)
-                    alert(list[rowIndex].warningMessage)
-                });
-
-            })
+    const addWidget = (id, x, y) => {
+        const w = $(`#${id}`);
+        if (w.length === 0) {
+            // (can't use 'w' in here because this block runs only when 'w' does not exist)
+            renderTemplate('overlay', 'facilitator.widget', {id: id, partialName: id}, () => {
+                $(`#${id}`).css({left: `${x}px`, top: `${y}px`});
+                $(`#${id}`).draggable();
+            });
         }
     };
-    const assignTeams = () => {
-        socket.emit('assignTeams', {address: game.address, type: 'order'}, (rgame) => {
+    const playergraph = () => {
+        // graphically display the number of connected players
+        // Add the widget if it doesn't exist:
+        addWidget(`playergraph`, 400, 200);
+        const plc = Object.values(game.playersFull).filter(p => p.connected);
+        const plReq = game.mainTeamSize * game.persistentData.mainTeams.length;
+        let perc = (plc.length / plReq) * 100;
+        perc = perc > 100 ? 100 : perc;
+//        console.log(game);
+//        console.log(plc.length, plReq, perc);
+        $('#graph-inner').css({height: `${perc}%`});
+        $('#graph-n-count').html(plc.length);
+        $('#graph-n-total').html(plReq);
+    };
+    const previewTeams = () => {
+        const assOb = {address: game.address, type: 'order', preview: true};
+        socket.emit('assignTeams', assOb, (rgame) => {
+//            console.log(`previewTeams callback`)
 //            console.log(rgame);
             if (typeof(rgame) === 'string') {
-                alert('error assigning teams, try again');
                 alert(rgame);
             } else {
+                const tms = rgame.persistentData.teams;
+                const tm = rgame.teams;
+                let str = 'Team breakdown Preview:\n';
+                tm.forEach((t, i) => {
+                    str += `${tms['t' + i].title}:  ${t.join(', ')} (${t.length} players)\n`;
+                });
+                alert(str);
+            }
+        });
+    };
+    const setTeamSize = () => {
+//        console.log(`setTeamSize`);
+        const gameID = `game-${game.uniqueID}`;
+        const n = parseInt($('#teamInput').val());
+//        console.log({ gameID, n });
+        socket.emit('setTeamSize', { gameID, n }, (rgame) => {
+//            console.log(`setTeamSize callback:`);
+//            console.log(rgame);
+//            game = Object.assign(game, rgame);
+            updateGame(rgame);
+//            console.log(game);
+            renderControls();
+            playergraph();
+//            window.location.reload();
+        })
+    };
+    const assignTeams = (force) => {
+        const assOb = {address: game.address, type: 'order', preview: false};
+        if (force) {
+            assOb.force = true;
+        }
+        socket.emit('assignTeams', assOb, (rgame) => {
+            if (typeof(rgame) === 'string') {
+                const force = confirm(`${rgame} Click OK to assign teams regardless, or click cancel and try reducing the minimum team size.`);
+                if (force) {
+                    assignTeams(true);
+                }
+            } else {
                 addToLogFeed('teams assigned');
-                console.log('ready to check');
                 game = rgame;
                 renderControls();
-    //            renderTeams();
             }
         });
     };
     const resetTeams = () => {
-
         socket.emit('resetTeams', {address: game.address}, (rgame) => {
             addToLogFeed('teams reset');
-            game.teams = rgame.teams;
+            console.log(`resetTeams:`);
+            console.log(rgame);
+//            game.teams = rgame.teams;
+            game = rgame;
             renderControls();
 //            renderTeams();
         });
@@ -535,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#assign', '#reset', '#identify', '#startRound', '#checkRound'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#checkRound'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
 //        console.log(rSel);
@@ -544,6 +557,12 @@ document.addEventListener('DOMContentLoaded', function() {
             element.off('click').on('click', () => {
 //                console.log(`click ${id}`)
                 switch (id) {
+                    case '#preview':
+                        previewTeams();
+                        break;
+                    case '#resize':
+                        setTeamSize();
+                        break;
                     case '#assign':
                         assignTeams();
                         break;
@@ -555,13 +574,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     case '#startRound':
                         const r = parseInt($('#roundInput').val());
-//                        console.log(`startRound ${r}`)
                         socket.emit('startRound', {gameID: game.uniqueID, round: r});
                         break;
                     case '#checkRound':
                         const cr = parseInt($('#roundInput').val());
                         socket.emit('checkRound', {gameID: game.uniqueID, round: cr}, (summary) => {
-//                            console.log(summary);
                             showScoreSummary(summary, game.persistentData[game.persistentData.rounds[cr].teams]);
                         });
                         break;
@@ -569,9 +586,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         rSel.off('click').on('click', function () {
-            const rNow = parseInt(rVal.val());
-            rVal.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
-            rVal.val(parseInt(rVal.val()) < -1 ? -1 : rVal.val())
+            const iv = $(this).closest('td').prev('td').find('.valInput');
+            const rNow = parseInt(iv.val());
+            iv.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
+            iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
     };
     const showScoreSummary = (summ, teams) => {
@@ -693,6 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             renderGame();
             renderPlayers();
+            playergraph();
         }
     });
     socket.on('playerUpdate', (ob) => {
@@ -713,6 +732,9 @@ document.addEventListener('DOMContentLoaded', function() {
 //    window.showGame = showGame;
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
+    //
+    window.addWidget = addWidget;
+    //
     domInit();
 });
 

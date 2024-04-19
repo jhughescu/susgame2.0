@@ -147,7 +147,7 @@ const restoreClients = (address) => {
                     // game has connected clients, wait then refresh them
                     setTimeout(() => {
                         eventEmitter.emit('refreshSockets', address);
-                    }, 2000);
+                    }, 1000);
                 }
             }
         });
@@ -253,7 +253,7 @@ const assignTeams = (ob, cb) => {
     let t = null;
     switch (ob.type) {
         case 'order':
-            t = game.assignTeamsOrder();
+            t = game.assignTeamsOrder(ob);
             break;
         default:
             log('no order type specified');
@@ -261,11 +261,15 @@ const assignTeams = (ob, cb) => {
     if (t) {
         if (typeof(t) === 'object') {
             // successful return of team data
-            const uo = {teams: t};
-            sessionController.updateSession(game.uniqueID, uo);
+            // Don't run if previewing
             game.teams = t;
-            game.setTeams();
-            eventEmitter.emit('teamsAssigned', game);
+            if (!ob.preview) {
+                const uo = {teams: t};
+                sessionController.updateSession(game.uniqueID, uo);
+
+                game.setTeams();
+                eventEmitter.emit('teamsAssigned', game);
+            }
             if (cb) {
                 cb(game);
             }
@@ -284,10 +288,22 @@ const resetTeams = (ob, cb) => {
     const uo = {teams: t};
 //    log('reseeeter');
     sessionController.updateSession(game.uniqueID, uo);
+    game.unsetTeams();
     game.teams = t;
 //    log(game);
     if (cb) {
         cb(game);
+    }
+};
+const setTeamSize = (ob, cb) => {
+    const game = games[ob.gameID];
+    if (game) {
+        games[ob.gameID].mainTeamSize = ob.n;
+//        console.log(games[ob.gameID]);
+        cb(games[ob.gameID]);
+    } else {
+        console.log(`setTeamSize: no game with ID ${ob.gameID} exists`);
+        Object.keys(games).forEach(g => console.log(g))
     }
 };
 const getFullTeam = (id, game) => {
@@ -306,7 +322,7 @@ const getFullTeam = (id, game) => {
     return t;
 };
 const showGames = () => {
-    console.log(`here are the games:`)
+    console.log(`showGames:`)
     Object.keys(games).forEach(g => console.log(g));
 }
 const endGame = (game, cb) => {
@@ -599,8 +615,9 @@ module.exports = {
     registerPlayer,
     playerConnectEvent,
     assignTeams,
-    makeLead,
     resetTeams,
+    setTeamSize,
+    makeLead,
     startRound,
     checkRound,
     scoreSubmitted,

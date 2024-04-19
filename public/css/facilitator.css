@@ -1,6 +1,16 @@
 body {
     font-size: 1.1rem;
 }
+#overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(255, 0, 0, 0);
+    z-index: 999;
+    pointer-events: none;
+}
 td {
     padding: 3px 20px;
 }
@@ -127,10 +137,10 @@ td#val_players {
 #contentTeams .link:first-child {
     color: yellow;
 }
-#contentControls #roundTesting {
+#contentControls .mini {
     width: 290px;
 }
-#contentControls #roundTesting tr, td {
+#contentControls .mini tr, #contentControls .mini td {
     padding: 0px;
     margin: 0px;
     border: 0px;
@@ -140,11 +150,11 @@ td#val_players {
     pointer-events: none;
     text-align: center;
 }
-#roundTesting .buttonSet {
+.mini .buttonSet {
     display: flex;
     flex-direction: row;
 }
-#roundTesting .buttonSet button {
+.mini .buttonSet button {
     width: 30px;
     cursor: pointer;
 }

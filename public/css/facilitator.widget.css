@@ -1,0 +1,11 @@
+.widget {
+    pointer-events: all;
+    cursor: pointer;
+    position: absolute;
+    width: 150px;
+    height: 300px;
+/*    min-width: 150px;*/
+/*    min-height: 300px;*/
+    background-color: #0d131f;
+    border-radius: 10px;
+}

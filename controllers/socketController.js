@@ -11,7 +11,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = true;
+const logging = false;
 
 const gameNamespaces = {};
 
@@ -227,6 +227,9 @@ function initSocket(server) {
             });
             socket.on('checkRound', (ob, cb) => {
                 gameController.checkRound(ob, cb);
+            });
+            socket.on('setTeamSize', (ob, cb) => {
+                gameController.setTeamSize(ob, cb);
             });
         }
         // End facilitator clients

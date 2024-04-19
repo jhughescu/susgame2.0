@@ -1,13 +1,27 @@
 <div class='vertStack'>
+    <button id='preview'>Preview Teams</button>
+    <table class='mini' id='teamAssignment'><tbody>
+        <tr>
+            <td>
+                <button id='resize'>Set Team Size</button>
+            </td>
+            <td>
+                <input type="text" class="valInput" id="teamInput" value="{{game.mainTeamSize}}" readonly >
+            </td>
+            <td class='buttonSet'>
+                <button>-</button><button>+</button>
+            </td>
+        </tr>
+    </tbody></table>
     <button id='assign' {{#if disableAssignTeams}}disabled{{/if}}>Assign Teams</button>
     <button id='reset' {{#if disableAssignTeams}}{{else}}disabled{{/if}}>Reset Teams</button>
-    <table id='roundTesting'>
+    <table class='mini' id='roundTesting'>
         <tr>
             <td>
                 <button id='startRound'>Start round</button>
             </td>
             <td>
-                <input type="text" id="roundInput" value="1" readonly >
+                <input type="text" class="valInput" id="roundInput" value="1" readonly >
             </td>
             <td class='buttonSet'>
                 <button>-</button><button>+</button>

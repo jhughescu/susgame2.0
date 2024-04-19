@@ -11,6 +11,7 @@ class Game {
         this.teamObjects = {};
         this.persistentData = null;
         this.round;
+        this.mainTeamSize;
     }
 
     async loadPersistentData(type) {
@@ -20,22 +21,32 @@ class Game {
             this.persistentData = JSON.parse(data);
             const { processData } = require(`./../gamemodules/gameprocess_${type}.js`);
             this.persistentData = processData(this.persistentData);
+            if (this.mainTeamSize === undefined) {
+                console.log(`loadPersistentData sets the teamSize property (was ${this.mainTeamSize}, is now ${this.persistentData.teamSize})`);
+                this.mainTeamSize = this.persistentData.teamSize;
+            }
         } catch (error) {
             console.error('Error reading or parsing JSON file:', error);
             throw error;
         }
     };
-    assignTeamsOrder () {
+    assignTeamsOrder (ob) {
         // assign players to teams in the order they were registered:
-//        console.log(`assignTeams, have data? ${Boolean(this.persistentData)}`);
+//        console.log(`assignTeamsOrder:`);
+//        console.log(ob);
+        const force = Boolean(ob.force);
         if (this.persistentData) {
             let t = [];
             const pd = this.persistentData;
             const mt = pd.mainTeams;
-            const ts = pd.hasOwnProperty('teamSize') ? pd.teamSize : 5;
+//            const ts = pd.hasOwnProperty('teamSize') ? pd.teamSize : 5;
+            const ts = this.mainTeamSize === undefined ? 5 : this.mainTeamSize;
             let pl = this.players.slice();
             let mc = mt.length * ts;
             let sc = pl.length - mc;
+            if (sc < 0 && !force) {
+                return `You don't have enough players`;
+            }
             let assignError = false;
             mt.forEach((el, id) => {
                 t[id] = pl.splice(0, ts);
@@ -43,7 +54,9 @@ class Game {
                     // lead for all main teams wil be first in the array:
                     if (this.playersFull.hasOwnProperty(pr)) {
                         const player = this.playersFull[pr];
-                        player.isLead = i === 0;
+                        if (!ob.preview) {
+                            player.isLead = i === 0;
+                        }
                     } else {
                         console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> playersFull has no player with id ${pr}`);
                         assignError = true;
@@ -67,6 +80,23 @@ class Game {
                 });
             });
         }
+    }
+    unsetTeams () {
+        // set teams (teamObj) for all players in a game (init method)
+        console.log(`unsetTeams`)
+        let pf = this.playersFull;
+        for (var i in pf) {
+            pf[i].teamObj = null;
+            pf[i].isLead = null;
+        }
+
+//        if (this.teams.length > 0) {
+//            this.teams.forEach((tl, i) => {
+//                tl.forEach(p => {
+//                    this.playersFull[p].teamObj = {};
+//                });
+//            });
+//        }
     }
     setTeam (player) {
         // set the team (teamObj) for a single player (restore method)
