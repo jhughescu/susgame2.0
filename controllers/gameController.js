@@ -1,5 +1,6 @@
 let Game = null;
 let Player = null;
+let Presentation = null;
 let Team = null;
 let ScorePacket = null;
 const sessionController = require('./../controllers/sessionController');
@@ -10,7 +11,7 @@ const gfxController = require('./../controllers/gfxController');
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
-const logging = false;
+const logging = true;
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -31,9 +32,14 @@ async function startGame (o, cb) {
     if (!games.hasOwnProperty(game)) {
         Game = require(`./../models/game.${session.type}`);
         Player = require(`./../models/player.${session.type}`);
+        Presentation = require(`./../models/presentation.${session.type}`);
         Team = require(`./../models/team.${session.type}`);
         ScorePacket = require(`./../models/scorepacket.${session.type}`);
         const newGame = await new Game(session.uniqueID, session.type);
+        const presentation = await new Presentation(session.uniqueID, session.type);
+        await presentation.loadPersistentData();
+        presentation.currentSlide = session.slide;
+        newGame.presentation = presentation;
         games[game] = newGame;
     }
     // Only set state to 'started' if it is currently pending
@@ -54,7 +60,7 @@ async function startGame (o, cb) {
     if (cb) {
         cb(rg);
     }
-    showGames();
+//    showGames();
     return rg;
 };
 async function restoreGame (o, cb) {
@@ -164,7 +170,8 @@ const getGameCount = (cb) => {
 const getGame = (id, cb) => {
     let gg = null;
 //    log(`get game with id ${id}`);
-//    log(games)
+//    log(games);
+    id = id.toString();
     if (id.indexOf('/', 0) > -1) {
         // presume searching with address
 //        log(`presume searching with address`);
@@ -185,8 +192,8 @@ const getGame = (id, cb) => {
 };
 const getGameWithUniqueID = (id) => {
     for (let g in games) {
-        console.log(games[g].uniqueID.toString(), id.toString())
-        console.log(games[g].uniqueID.toString() === id.toString())
+//        console.log(games[g].uniqueID.toString(), id.toString())
+//        console.log(games[g].uniqueID.toString() === id.toString())
         if (games[g].uniqueID.toString() === id.toString()) {
 //            log(games[g].uniqueID)
             return games[g];

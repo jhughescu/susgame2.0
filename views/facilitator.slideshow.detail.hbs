@@ -1,0 +1,9 @@
+<div id='detailwrapper' class='detailwrapper {{#if valid}}{{else}}invalid{{/if}}'>
+    <div id='detailtitle'>{{info.title}}</div>
+    <br>
+    <table><tbody>
+    {{#each info}}
+        <tr><td>{{@key}}</td><td id='val_{{@key}}'>{{this}}</td></tr>
+    {{/each}}
+</tbody></table>
+</div>

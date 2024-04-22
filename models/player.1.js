@@ -8,8 +8,12 @@ class Player {
         this.stakeholderID = -1;
         this.teamObj = null;
         this.isLead;
+        this.isFake = this.isFake();
+    }
+
+    isFake() {
+        return this.id.indexOf('pf') > -1;
     }
 }
-
 
 module.exports = Player;

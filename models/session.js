@@ -11,6 +11,7 @@ const sessionSchema = new Schema({
     teams: Array,
     state: String,
     round: Number,
+    slide: Number,
     scores: Array,
     values: Array,
     idColour: String

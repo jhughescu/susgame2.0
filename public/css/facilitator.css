@@ -49,6 +49,9 @@ td#val_players {
     word-wrap: break-word;
 /*    background-color: green;*/
 }
+.fake {
+    color: #ef9a95;
+}
 
 /* Style the buttons that are used to open the tab content */
 .tab button {
@@ -134,7 +137,7 @@ td#val_players {
 .warning {
     color: #ff8900;
 }
-#contentTeams .link:first-child {
+.teams .link:first-child {
     color: yellow;
 }
 #contentControls .mini {

@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const startGame = () => {
         addToLogFeed('start new game');
         if (session.state === 'pending') {
+            socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
                 game = rgame;
                 addToLogFeed('game ready');
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game.mainTeamSize);
     };
     const launchPresentation = () => {
-         window.open(`/presentation?${game.address.replace('/', '')}`, '_blank');
+         window.open(`/presentation#${game.address.replace('/', '')}`, '_blank');
     };
     const launchFakeGenerator = () => {
 //        console.log(game);
@@ -166,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 //            console.log(rendO);
-            window.renderTemplate('controlsInfo', 'teamsCard', rendO);
+//            window.renderTemplate('controlsInfo', 'teamsCard', rendO);
             window.renderTemplate('contentTeams', 'teamsCard', rendO, () => {
                 setupTeamsLinks();
             });
@@ -359,20 +360,35 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     };
-    const addWidget = (id, x, y) => {
-        const w = $(`#${id}`);
-        if (w.length === 0) {
+//    const addWidget = (id, x, y, w, h, cb) => {
+    const addWidget = (id, ob, cb) => {
+        const wid = `#${id}`;
+        const wd = $(wid);
+        const rOb = {
+            x: ob.x ? ob.x : 0,
+            y: ob.y ? ob.y : 0,
+            w: ob.w ? ob.w : 0,
+            h: ob.h ? ob.h : 0,
+            ob: ob.ob ? ob.ob: {}
+        };
+        if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
-            renderTemplate('overlay', 'facilitator.widget', {id: id, partialName: id}, () => {
-                $(`#${id}`).css({left: `${x}px`, top: `${y}px`});
-                $(`#${id}`).draggable();
+            $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
+            $(wid).draggable();
+            renderTemplate(id, 'facilitator.widget', {id: id, partialName: id}, () => {
+                $(wid).css({left: `${ob.x}px`, top: `${ob.y}px`, width: `${ob.w}px`, height: `${ob.h}px`});
+                if (cb) {
+                    cb();
+                }
             });
         }
     };
     const playergraph = () => {
+//        console.log(`playergraph`);
+//        return;
         // graphically display the number of connected players
         // Add the widget if it doesn't exist:
-        addWidget(`playergraph`, 400, 200);
+        addWidget(`playergraph`, {x: 400, y: 200, w: 150, h: 300});
         const plc = Object.values(game.playersFull).filter(p => p.connected);
         const plReq = game.mainTeamSize * game.persistentData.mainTeams.length;
         let perc = (plc.length / plReq) * 100;
@@ -432,6 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 addToLogFeed('teams assigned');
                 game = rgame;
                 renderControls();
+                highlightTab('teams');
             }
         });
     };
@@ -452,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
-//        console.log(`setupTab`)
+//        console.log(`setupTab: ${arg}`)
         switch (arg) {
         case 'session':
             renderSession();
@@ -471,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderTeams();
             break;
         default:
-            console.log(`invalid argument provided.`);
+            console.log(`setupTab: invalid argument provided.`);
         }
 
     };
@@ -482,6 +499,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const cTab = $('#linkControls');
         gTab.prop('disabled', !gameOn);
         cTab.prop('disabled', !gameOn);
+    };
+    const highlightTab = (t) => {
+        const id = `#link${toCamelCase(t)}`;
+        const tab = $(id);
+//        console.log(id, tab);
+        const colin = tab.css('color');
+        const hlColour = 'red';
+        const del = 100;
+        const timer = 500;
+//        console.log(colin);
+//        tab;
+        tab.css({color: hlColour}).delay(del).animate({color: colin}, timer).animate({color: hlColour}, 10).delay(del).animate({color: colin}, timer).animate({color: hlColour}, 10).delay(del).animate({color: colin}, timer);
     };
     const setupBaseLinks = () => {
         // adding a timeout because some elements don't appear to be present at init (for some weird reason)
@@ -548,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#checkRound'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#checkRound', '#slideshow'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
 //        console.log(rSel);
@@ -572,6 +601,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     case '#identify':
                         identifyPlayers();
                         break;
+                    case '#slideshow':
+                        launchSlideshowControls();
+                        break;
                     case '#startRound':
                         const r = parseInt($('#roundInput').val());
                         socket.emit('startRound', {gameID: game.uniqueID, round: r});
@@ -592,6 +624,16 @@ document.addEventListener('DOMContentLoaded', function() {
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
     };
+    const launchSlideshowControls = () => {
+//        console.log(game);
+//        console.log(game.presentation.slideData);
+        addWidget('facilitator-slideshow-controls', {x: 400, y: 200, w: 600, h: 600}, () => {
+            window.slideContolsInit(game);
+        });
+    };
+    setTimeout(() => {
+        launchSlideshowControls();
+    }, 500);
     const showScoreSummary = (summ, teams) => {
         let str = 'Team submitted score:\n\n';
         teams.forEach((t, i) => {
@@ -684,7 +726,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setupTabLinks();
     }
     const showGame = () => {
-        console.log(game);
+//        console.log(game);
+        return game;
     };
 
     const sockInit = () => {
@@ -733,7 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
     //
-    window.addWidget = addWidget;
+    window.showGame = showGame;
     //
     domInit();
 });

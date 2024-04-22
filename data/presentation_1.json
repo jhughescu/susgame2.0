@@ -1,0 +1,43 @@
+{
+    "slideList": [
+        {"id": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game"},
+        {"id": "video", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape"},
+        {"id": "video", "type": "video", "srcRef": "v2", "title": "Welcome"},
+        {"id": "slide_020_entry", "title": "Address/session (no session? Use 'Reload slide' button)", "viewtype": "fullscreen1", "url": "null", "code": "null"},
+        {"id": "slide_110_stakeholders", "title": "Assign Teams (wait for <span class='allenrolled'>full enrolment</span>)", "viewtype": "frame1", "action": "rAssignTeams"},
+        {"id": "video", "type": "video", "srcRef": "v3", "title": "Resources"},
+        {"id": "video", "type": "video", "srcRef": "v4", "title": "PVPlayers"},
+        {"id": "video", "type": "video", "srcRef": "v5", "title": "Instruction"},
+        {"id": "video", "type": "video", "srcRef": "v7", "title": "2023 - 2030 Countup"},
+        {"id": "video", "type": "video", "srcRef": "v8", "title": "2030"},
+        {"id": "slide_210_checkdevice", "title": "First allocation round *", "viewtype": "frame1", "header": "check your device", "action": "startRoundE1R1"},
+        {"id": "slide_110_stakeholders", "title": "Teams Allocation (displays allocation results)", "viewtype": "frame1"},
+        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 1 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R2"},
+        {"id": "video", "type": "video", "srcRef": "v9", "title": "Disruption"},
+        {"id": "video", "type": "video", "srcRef": "v10", "title": "Recalculation"},
+        {"id": "video", "type": "video", "srcRef": "v11", "title": "Collaboration"},
+        {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration *", "viewtype": "frame1", "header": "Collaboration", "action": "startRoundE1R3"},
+        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 2 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R4"},
+        {"id": "slide_010_outro", "title": "Exit Screen", "viewtype": "fullscreen1", "header": "Sustainability Game"}
+    ],
+    "videoLinks": {
+        "v1": "4d35e81e-85e8-4fd3-8394-b0a100e3fbf8",
+        "v2": "929cbf78-615a-418b-bbf3-b0ff00cc187d",
+        "v3": "a9834d0f-53bc-4a88-986f-b0ff00cc189a",
+        "v4": "bc305fde-6f86-408a-9bab-b0ff00cc184e",
+        "v5": "224e2e51-19ff-4ef2-9454-b0ff00cc18c8",
+        "v6": "VIDEO_REMOVED",
+        "v7": "aa4c5871-0be7-4033-b085-b100009d8739",
+        "v8": "ef091e62-64eb-46d2-9bc8-b0a100e6036d",
+        "v9": "a26bf8d2-7484-4e71-82e5-b0a100e6179b",
+        "v10": "5e9e34eb-a58f-4dd0-b720-b0b900986c83",
+        "v11": "7877ce10-f67c-47f8-8dc7-b0a100edd3c2"
+    },
+    "videoEnv": "https://cranfield.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=",
+    "videoSettings": "&autoplay=true&offerviewer=false&showtitle=false&showbrand=false&captions=false&interactivity=none",
+    "removedSlides": [
+        {"id": "slide_230_stakeholderscollab", "title": "Teams Collaboration", "viewtype": "frame1", "header": "Collaboration"}
+
+    ]
+}
+

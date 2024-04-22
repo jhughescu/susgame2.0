@@ -56,40 +56,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return v;
     }
-    const getTemplatev1 = (temp, ob, cb) => {
-        // returns a compiled template, but does not render it
-        fetch(`/getTemplate?template=${temp}&data=${JSON.stringify(ob)}`)
-            .then(response => response.text())
-            .then(compiledTemplate => {
-                const template = compiledTemplate;
-                if (cb) {
-                    cb(template);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching or rendering template:', error);
-            });
+    const toCamelCase = (str) => {
+        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
+            return index !== 0 ? word.toLowerCase() : word.toUpperCase();
+        }).replace(/\s+/g, '');
     };
-    const getTemplateV2 = (temp, ob, cb) => {
-        // returns a compiled template, but does not render it
-        fetch(`/getTemplate?template=${temp}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(ob)
-            })
-            .then(response => response.text())
-            .then(compiledTemplate => {
-                const template = compiledTemplate;
-                if (cb) {
-                    cb(compiledTemplate);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching or rendering template:', error);
-            });
-    };
+
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
         if (templateStore.hasOwnProperty(temp)) {
@@ -148,38 +120,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
     };
-    const renderTemplateV1 = (targ, temp, ob, cb) => {
-        console.log(`renderTemplate, targ: ${targ}, temp: ${temp}`);
-//        console.log(JSON.stringify(ob));
-        if (ob === undefined) {
-            console.error('Error: Data object is undefined');
-            return;
-        }
-        fetch(`/getTemplate?template=${temp}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(ob)
-            })
-            .then(response => response.text())
-            .then(compiledTemplate => {
-                const template = compiledTemplate;
-                document.getElementById(targ).innerHTML = template;
-                if (cb) {
-                    cb();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching or rendering template:', error);
-            });
-    };
 
     const renderTemplate = (targ, temp, ob, cb) => {
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
         }
+        if (targ.indexOf('#', 0) === 0) {
+            targ = targ.replace('#', '');
+        }
+//        console.log(`targ: ${targ}`);
         $(`#${targ}`).css({opacity: 0});
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
@@ -285,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // In case of problems getting partials, check the order of system architecture.
     getPartials();
     window.procVal = procVal;
+    window.toCamelCase = toCamelCase;
     window.renderTemplate = renderTemplate;
     window.getTemplate = getTemplate;
     window.setupPanel = setupPanel;

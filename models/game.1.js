@@ -22,7 +22,7 @@ class Game {
             const { processData } = require(`./../gamemodules/gameprocess_${type}.js`);
             this.persistentData = processData(this.persistentData);
             if (this.mainTeamSize === undefined) {
-                console.log(`loadPersistentData sets the teamSize property (was ${this.mainTeamSize}, is now ${this.persistentData.teamSize})`);
+//                console.log(`loadPersistentData sets the teamSize property (was ${this.mainTeamSize}, is now ${this.persistentData.teamSize})`);
                 this.mainTeamSize = this.persistentData.teamSize;
             }
         } catch (error) {

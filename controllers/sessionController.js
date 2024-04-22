@@ -218,6 +218,7 @@ async function newSession(req, res) {
         const type = req.body.valType;
         const state = 'pending';
         const progress = 0;
+        const slide = 0;
         const idColour = generateColour();
         //        console.log(type);
         //        console.log(`type: ${type}`);
@@ -229,6 +230,7 @@ async function newSession(req, res) {
             type,
             state,
             progress,
+            slide,
             idColour
         });
 

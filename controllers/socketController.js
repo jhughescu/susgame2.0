@@ -4,6 +4,7 @@ const gameController = require('./../controllers/gameController');
 const routeController = require('./../controllers/routeController');
 const sessionController = require('./../controllers/sessionController');
 const adminController = require('./../controllers/adminController');
+const presentationController = require('./../controllers/presentationController');
 
 const eventEmitter = getEventEmitter();
 
@@ -164,7 +165,7 @@ function initSocket(server) {
                 gameController.getGame(id, cb);
             });
             socket.on('startGame', (o, cb) => {
-    //            log(`startGame`);
+                console.log(`startGame`);
                 gameController.startGame(o, cb);
             });
             socket.on('restoreGame', (o, cb) => {
@@ -234,13 +235,20 @@ function initSocket(server) {
         }
         // End facilitator clients
 
+        // presentation (or slideshow) controller
+        if (Q.role === 'presentation-control') {
+            socket.on('presentationEvent', (ob, cb) => {
+//                console.log(ob);
+                presentationController.pEvent(ob, cb);
+            });
+        }
         // Presentation client
 //        console.log(src);
         if (Q.role === 'presentation') {
-            console.log('############################################## presentation connected:');
+//            console.log('############################################## presentation connected:');
 //            console.log(src);
 //            console.log(Q);
-//            console.log();
+//            console.log(`seek game with address /${Q.id}`);
             socket.emit('setGame', gameController.getGameWithAddress(`/${Q.id}`));
             socket.on('getScores', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
@@ -321,6 +329,7 @@ function initSocket(server) {
 
         // Handle other socket events specific to the admin dashboard...
     });
+
 
 
     eventEmitter.on('gameUpdate', (game) => {

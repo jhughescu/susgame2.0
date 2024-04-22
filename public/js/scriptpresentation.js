@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     let socket = null;
     const estSocket = () => {
+//        console.log(`estSocket`)
         socket = io('', {
             query: {
                 role: 'presentation',
@@ -17,7 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         socket.on('setGame', (rgame) => {
             game = rgame;
-            console.log(game)
+//            console.log(`game`)
+//            console.log(game)
         });
         socket.on('gameUpdate', (game) => {
 
@@ -76,8 +78,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let v = game.values;
             const t = game.persistentData.teamsArray;
             let rArr = [];
+            console.log(game)
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 s = rs;
+                console.log(rs)
                 v = sortByProperty(v, 'team');
                 s = sortByProperty(s, 'src');
                 v.forEach((vu, i) => {

@@ -12,7 +12,7 @@
 
 <tr>
 <td>{{this.index}}</td>
-<td>{{this.id}}</td>
+<td{{#if this.isFake}} class='fake'{{/if}}>{{this.id}}</td>
     <td class='boo {{this.connected}}'><div class='circle'></div></td>
 <td {{#if this.warning}}class='link warning'{{/if}}>{{this.teamObj.title}}</td>
 <td class='boo {{this.isLead}}'>{{this.isLead}}</td>

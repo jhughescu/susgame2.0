@@ -34,20 +34,32 @@ document.addEventListener('DOMContentLoaded', function() {
     function reopenFakes(event) {
         event.preventDefault();
         socket.emit('getGame', gameID, (g) => {
-            // array of disconnected player:
-            const p = Object.values(g.playersFull).filter(pl => !pl.connected).sort(indexSort);
+            const pb = g.players;
+            const pf = g.playersFull;
+            const p = []
+            pb.forEach(pl => {
+                if (pf.hasOwnProperty(pl)) {
+                    if (!pf[pl].connected) {
+                        p.push({id: pl});
+                    }
+                } else {
+                    p.push({id: pl});
+                }
+            });
+//            console.log(pt);
             if (p.length === 0) {
                 alert('all registered fakes already open');
                 return;
+            } else {
+                const sure = confirm(`This will reopen ${p.length} fake client${p.length > 1 ? 's' : ''}, continue?`);
+                if (sure) {
+                    p.forEach((pl, i) => {
+                        setTimeout(() => {
+                            window.open(`${gameID}?fake=true&fid=${pl.id}`, '_blank');
+                        }, (i * 200));
+                    });
+                }
             }
-            p.forEach((pl, i) => {
-                setTimeout(() => {
-                    window.open(`${gameID}?fake=true&fid=${pl.id}`, '_blank');
-                    if (i === p.length - 1) {
-//                        alert(`all launched`);
-                    }
-                }, (i * 200));
-            });
 
         });
     }
