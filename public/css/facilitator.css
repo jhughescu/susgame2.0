@@ -99,6 +99,11 @@ td#val_players {
     width: 220px;
     height: 200px;
 }
+#tabGame #qrcode #colourStrip {
+    position: absolute;
+    height: 100%;
+    width: 20px;
+}
 .vertStack {
     display: flex;
     flex-direction: column;

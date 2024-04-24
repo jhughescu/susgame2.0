@@ -8,13 +8,23 @@ const { getEventEmitter } = require('./../controllers/eventController');
 
 const eventEmitter = getEventEmitter();
 const setPresentation = () => {};
+const showSlide = () => {
+    const slOb = presentation.slideData.slideList[presentation.currentSlide];
+    slOb.address = game.address;
+//    console.log(`showSlide`, slOb);
+    eventEmitter.emit('showSlide', slOb);
+};
 const nextSlide = (cb) => {
-    presentation.nextSlide(cb);
+    const rOb = presentation.nextSlide(cb);
+    Object.assign(game.presentation, rOb);
     sessionController.updateSession(game.uniqueID, {slide: presentation.currentSlide});
+    showSlide();
 };
 const previousSlide = (cb) => {
-    presentation.previousSlide(cb);
+    const rOb = presentation.previousSlide(cb);
+    Object.assign(game.presentation, rOb);
     sessionController.updateSession(game.uniqueID, {slide: presentation.currentSlide});
+    showSlide();
 };
 const reloadSlide = (cb) => {
     presentation.reloadSlide(cb);

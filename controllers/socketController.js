@@ -12,7 +12,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = false;
+const logging = true;
 
 const gameNamespaces = {};
 
@@ -237,6 +237,10 @@ function initSocket(server) {
 
         // presentation (or slideshow) controller
         if (Q.role === 'presentation-control') {
+//            console.log(Q)
+//            const roomID = `/${Q.id}-presControl`;
+//            console.log(`listening at ${roomID}`)
+//            socket.join(roomID);
             socket.on('presentationEvent', (ob, cb) => {
 //                console.log(ob);
                 presentationController.pEvent(ob, cb);
@@ -248,7 +252,13 @@ function initSocket(server) {
 //            console.log('############################################## presentation connected:');
 //            console.log(src);
 //            console.log(Q);
-//            console.log(`seek game with address /${Q.id}`);
+//            console.log(`seek game with address /${Q.id}: `);
+            const roomID = `/${Q.id}-pres`;
+//            const session = await sessionController.getSessionWithAddress(`/${Q.id}`);
+//            console.log(session)
+//            const roomID = `${session.uniqueID}-pres`;
+            socket.join(roomID);
+            log(`presentation joined ${roomID}`);
             socket.emit('setGame', gameController.getGameWithAddress(`/${Q.id}`));
             socket.on('getScores', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
@@ -258,6 +268,16 @@ function initSocket(server) {
             });
             socket.on('getGame', (gameID, cb) => {
                 gameController.getGame(gameID, cb);
+            });
+            socket.on('gotoNextSlide', (ob) => {
+//                console.log(`emit to ${ob.address}-fac`);
+//                const rooms = getRoomSockets(`${ob.address}-fac`);
+//                console.log('rooms', rooms)
+                io.to(`${ob.address}-fac`).emit('gotoNext');
+//                presentationController.pEvent({gameID: gameID, event: 'next'}, () => {
+//                    console.log(`empty callback`)
+//                });
+//                presentationController.nextSlide();
             });
         }
         // End presentation clients
@@ -415,6 +435,11 @@ function initSocket(server) {
     eventEmitter.on('refreshSockets', (id) => {
         io.to(id).emit('forceRefresh');
     });
+    eventEmitter.on('showSlide', (slOb) => {
+//        console.log('I hear you');
+//        console.log(slOb);
+        io.to(`${slOb.address}-pres`).emit('showSlide', slOb);
+    })
 
 
 };

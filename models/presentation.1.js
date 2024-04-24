@@ -32,12 +32,14 @@ class Presentation {
     };
 
     nextSlide(cb) {
-        console.log(`next`);
+//        console.log(`next`);
         const s = this.slideData.slideList;
         if (this.currentSlide < (s.length - 1)) {
             this.currentSlide += 1;
         }
-        cb({currentSlide: this.currentSlide, hasPrevious: true, hasNext: this.currentSlide < (s.length - 1)});
+        const rOb = {currentSlide: this.currentSlide, hasPrevious: true, hasNext: this.currentSlide < (s.length - 1)};
+        cb(rOb);
+        return rOb;
     };
     previousSlide(cb) {
         console.log(`previous`);

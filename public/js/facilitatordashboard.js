@@ -770,6 +770,10 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('gameWarning', (ob) => {
         alert(ob.warning)
     });
+    socket.on('gotoNext', () => {
+//        console.log(`facilitatorDashboard hears gotoNext`);
+        window.pEvent('next');
+    });
 
 
 //    window.showGame = showGame;

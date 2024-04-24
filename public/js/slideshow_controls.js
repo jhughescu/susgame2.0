@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const updatePresentation = (ob) => {
         Object.assign(presentation, ob);
-        console.log(presentation);
+//        console.log(presentation);
     };
     const updateSlidelist = () => {
         const sl = slides.slice();
@@ -34,17 +34,29 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sb_previous').attr({disabled: !presentation.hasPrevious});
         $('#sb_next').attr({disabled: !presentation.hasNext});
     };
+    const pEvent = (ev) => {
+        if (ev) {
+            socket.emit(`presentationEvent`, {gameID: game.uniqueID, event: ev}, (ob) => {
+                updatePresentation(ob);
+                showCurrentSlide();
+                updateSlidelist();
+            });
+        } else {
+            console.warn(`pEvent requires an event name (string)`);
+        }
+    }
     const setupControls = () => {
         const b = base.find('button');
         b.each((bt, el) => {
             let btn = $(el);
             let id = btn.attr('id').replace('sb_', '');
             btn.off('click').on('click', function () {
-                socket.emit(`presentationEvent`, {gameID: game.uniqueID, event: id}, (ob) => {
-                    updatePresentation(ob);
-                    showCurrentSlide();
-                    updateSlidelist();
-                });
+                pEvent(id);
+//                socket.emit(`presentationEvent`, {gameID: game.uniqueID, event: id}, (ob) => {
+//                    updatePresentation(ob);
+//                    showCurrentSlide();
+//                    updateSlidelist();
+//                });
             })
         });
     };
@@ -56,7 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePresentation({hasPrevious: presentation.currentSlide > 0, hasNext: presentation.currentSlide < slides.length - 1});
         showCurrentSlide();
         updateSlidelist();
-    }
+    };
+    // expose methods to the parent page (make available to scriptpresentation.js)
     window.slideContolsInit = init;
-
+    window.pEvent = pEvent;
 });

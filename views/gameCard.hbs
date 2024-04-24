@@ -11,6 +11,7 @@ Game detail:
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameReset'>Reset game</div>
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameEnd'>End game</div>
 </div>
-<div id='qrcode' style='background-color: {{game.idColour}}'>
+<div id='qrcode'>
+    <div id='colourStrip' style='background-color: {{game.idColour}}'></div>
     <img src='public/assets/qr/qrcode-{{game.uniqueID}}.svg'>
 </div>

@@ -347,14 +347,9 @@ const deleteGame = (gameID) => {
     // Heavyweight deletion method. Called from socketController via sessionController, which have password safeguards etc.
     // Do not implement via other modules without adding significant protection.
     const killID = `game-${gameID}`;
-//    const game = getGame(killID);
-//    let gamez = Object.assign({}, games);
-//    console.log(`at the start we have ${Object.values(gamez).length} games in the system`);
     const game = games[killID];
-//    console.log(games)
     if (game) {
 //        console.log(`prepare to delete game`);
-//        showGames();
         // remove any created assets:
         gfxController.deleteQR(gameID);
         // destroy any associated routes:
