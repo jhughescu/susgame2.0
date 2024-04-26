@@ -1,17 +1,16 @@
 {
     "slideList": [
-        {"id": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game"},
+        {"id": "slide_010_intro", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game"},
         {"id": "video", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape"},
         {"id": "video", "type": "video", "srcRef": "v2", "title": "Welcome"},
-        {"id": "slide_020_entry", "title": "Address/session (no session? Use 'Reload slide' button)", "viewtype": "fullscreen1", "url": "null", "code": "null"},
         {"id": "slide_110_stakeholders", "title": "Assign Teams (wait for <span class='allenrolled'>full enrolment</span>)", "viewtype": "frame1", "action": "rAssignTeams"},
         {"id": "video", "type": "video", "srcRef": "v3", "title": "Resources"},
         {"id": "video", "type": "video", "srcRef": "v4", "title": "PVPlayers"},
         {"id": "video", "type": "video", "srcRef": "v5", "title": "Instruction"},
         {"id": "video", "type": "video", "srcRef": "v7", "title": "2023 - 2030 Countup"},
         {"id": "video", "type": "video", "srcRef": "v8", "title": "2030"},
-        {"id": "slide_210_checkdevice", "title": "First allocation round *", "viewtype": "frame1", "header": "check your device", "action": "startRoundE1R1"},
-        {"id": "slide_110_stakeholders", "title": "Teams Allocation (displays allocation results)", "viewtype": "frame1"},
+        {"id": "slide_210_checkdevice", "type": "slide", "slide": "slide_210_checkdevice", "title": "First allocation round", "action": "startRound1"},
+        {"id": "slide_110_stakeholders", "type": "slide", "slide": "slide_110_stakeholders", "title": "Teams Allocation (displays allocation results)", "action": "showRound1", "viewtype": "frame1"},
         {"id": "slide_230_stakeholderscollab", "title": "Public Voices 1 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R2"},
         {"id": "video", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "video", "type": "video", "srcRef": "v10", "title": "Recalculation"},
@@ -36,7 +35,8 @@
     "videoEnv": "https://cranfield.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=",
     "videoSettings": "&autoplay=true&offerviewer=false&showtitle=false&showbrand=false&captions=false&interactivity=none",
     "removedSlides": [
-        {"id": "slide_230_stakeholderscollab", "title": "Teams Collaboration", "viewtype": "frame1", "header": "Collaboration"}
+        {"id": "slide_230_stakeholderscollab", "title": "Teams Collaboration", "viewtype": "frame1", "header": "Collaboration"},
+        {"id": "slide_020_entry", "title": "Address/session (no session? Use 'Reload slide' button)", "viewtype": "fullscreen1", "url": "null", "code": "null"}
 
     ]
 }

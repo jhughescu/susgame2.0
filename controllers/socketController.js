@@ -121,6 +121,7 @@ function initSocket(server) {
 //                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
                 });
                 socket.on('submitScore', (ob, cb) => {
+//                    console.log(`submitScore`)
                     const sp = gameController.scoreSubmitted(ob, cb);
                     io.to(facilitator).emit('scoreSubmitted', sp);
                 });
@@ -195,6 +196,11 @@ function initSocket(server) {
             socket.on('makeLead', (obj) => {
                 gameController.makeLead(obj);
             });
+            socket.on('refreshClient', (clOb) => {
+//                gameController.makeLead(obj);
+//                console.log(clOb);
+                io.to(clOb.socketID).emit('forceRefresh');
+            });
             socket.on('testPassword', async (ob, cb) => {
     //            console.log(`testPassword`);
                 let s = await sessionController.getSessionPassword(ob.session);
@@ -242,6 +248,7 @@ function initSocket(server) {
 //            console.log(`listening at ${roomID}`)
 //            socket.join(roomID);
             socket.on('presentationEvent', (ob, cb) => {
+//                console.log(`presentationEvent:`);
 //                console.log(ob);
                 presentationController.pEvent(ob, cb);
             });
@@ -362,6 +369,14 @@ function initSocket(server) {
 //        showRoomSize(roomName);
 //        io.to(roomName).emit('gameUpdate', game);
     });
+    eventEmitter.on('scoresUpdated', (game) => {
+        console.log(`on scoresUpdated:`);
+        console.log(game);
+        console.log(game.scores);
+        console.log(game.address);
+        const rp = `${game.address}-pres`;
+        io.to(rp).emit('scoresUpdated', game.scores);
+    });
     eventEmitter.on('singlePlayerGameUpdate', (ob) => {
         // requires an object: {player: <playerObject>, game}
         if (ob.hasOwnProperty('player') && ob.hasOwnProperty('game')) {
@@ -436,10 +451,25 @@ function initSocket(server) {
         io.to(id).emit('forceRefresh');
     });
     eventEmitter.on('showSlide', (slOb) => {
+        console.log('I hear you');
+        console.log(slOb);
+        if (slOb.hasOwnProperty('action')) {
+            gameController.presentationAction(slOb);
+        }
+        io.to(`${slOb.address}-pres`).emit('showSlide', slOb);
+    });
+    eventEmitter.on('updatePresentationProperty', (slOb) => {
 //        console.log('I hear you');
 //        console.log(slOb);
-        io.to(`${slOb.address}-pres`).emit('showSlide', slOb);
-    })
+        io.to(`${slOb.address}-pres`).emit('updateProperty', slOb);
+    });
+    eventEmitter.on('gameReady', (game) => {
+        const ID = `${game.address}-pres`;
+//        console.log(`I hear you, ID: ${ID}`);
+//        console.log(slOb);
+//        console.log(getRoomSockets(ID));
+        io.to(ID).emit('gameReady', game);
+    });
 
 
 };

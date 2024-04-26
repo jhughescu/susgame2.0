@@ -11,7 +11,7 @@ const gfxController = require('./../controllers/gfxController');
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
-const logging = true;
+const logging = false;
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -55,7 +55,8 @@ async function startGame (o, cb) {
     } catch (error) {
         console.error('Error loading persistent data:', error);
     }
-    log(`returned game is ready`);
+//    console.log(`returned game is ready`);
+    eventEmitter.emit('gameReady', rg);
 //    log(rg);
     if (cb) {
         cb(rg);
@@ -83,6 +84,7 @@ async function restoreGame (o, cb) {
 };
 async function resetGame(id, cb) {
     const game = getGameWithUniqueID(id);
+//    console.log(`resetGame ${id}`);
     if (game) {
         // Note: add a condition that only system admin can reset a game with state='ended'
         if (game.state === 'ended') {
@@ -101,7 +103,8 @@ async function resetGame(id, cb) {
             }
         });
         for (let i in game) {
-            if (typeof(game[i]) === 'object' && i !== 'persistentData') {
+            console.log(`reset ${i}`)
+            if (typeof(game[i]) === 'object' && i !== 'persistentData' && i !== 'presentation') {
                 if (game[i].hasOwnProperty('length')) {
                     game[i] = [];
                 } else {
@@ -110,7 +113,7 @@ async function resetGame(id, cb) {
             }
         }
         game.state = 'pending';
-        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: []});
+        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: 1});
         if (session) {
             log('return updated session here');
             log(session);
@@ -273,7 +276,6 @@ const assignTeams = (ob, cb) => {
             if (!ob.preview) {
                 const uo = {teams: t};
                 sessionController.updateSession(game.uniqueID, uo);
-
                 game.setTeams();
                 eventEmitter.emit('teamsAssigned', game);
             }
@@ -530,7 +532,12 @@ const startRound = async (ob) => {
 };
 const checkRound = (ob, cb) => {
     // Check submitted scores against current round
-    const game = games[`game-${ob.gameID}`];
+//    console.log(`checkRound`, ob, typeof(ob));
+//    console.log(Object.keys(games));
+    const gameID = typeof(ob) === 'string' || typeof(ob) === 'number' ? ob : ob.gameID;
+//    console.log(gameID)
+//    console.log(typeof(gameID))
+    const game = games[`game-${gameID}`];
     if (game) {
         const round = ob.hasOwnProperty('round') ? ob.round : game.round;
         const rScores = game.scores.filter(item => item.startsWith(round));
@@ -541,8 +548,10 @@ const checkRound = (ob, cb) => {
 //                console.log(t.title, t.id, rScores.filter(item => item.charAt(2) === t.id.toString()).length);
             ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
         })
-        console.log(ta);
-        cb(ta);
+//        console.log(ta);
+        if (cb) {
+            cb(ta);
+        }
 //        console.log(round);
 //        console.log(game.scores);
 //        console.log(rScores);
@@ -575,6 +584,8 @@ const scoreSubmitted = async (ob, cb) => {
                     if (cb) {
                         cb(game.scores);
                     }
+//                    console.log(`emit scoresUpdated`, game.scores);
+                    eventEmitter.emit('scoresUpdated', game);
                 } else {
                     console.log(`no game with ID game-${ob.game}`);
                 }
@@ -588,7 +599,7 @@ const scoreSubmitted = async (ob, cb) => {
         console.log(`no game with ID game-${ob.game}`);
         return false;
     }
-    };
+};
 const valuesSubmitted = async (ob) => {
     if (ob.hasOwnProperty('values')) {
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
@@ -602,6 +613,16 @@ const valuesSubmitted = async (ob) => {
         }
     } else {
         console.log('no values sent')
+    }
+};
+const presentationAction = (ob) => {
+    // An action triggered from a presentation frame
+    console.log(`presentationAction:`);
+    console.log(ob);
+    if (ob.action.toLowerCase().indexOf('startround', 0) > -1) {
+        const rOb = {gameID: getGameWithAddress(ob.address).uniqueID, round: ob.action.replace(/\D/g, '')};
+        console.log(rOb);
+        startRound(rOb);
     }
 };
 
@@ -624,6 +645,7 @@ module.exports = {
     checkRound,
     scoreSubmitted,
     valuesSubmitted,
+    presentationAction,
     getScorePackets,
     getRenderState,
     getAllValues,

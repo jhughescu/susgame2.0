@@ -1,5 +1,5 @@
 <table><tbody>
     {{#each this}}
-    <tr><td class='{{#if isCurrent}}current{{else}}{{/if}}'>{{this.title}}</td></tr>
+    <tr><td class='slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{this.title}}</td></tr>
     {{/each}}
 </tbody></table>

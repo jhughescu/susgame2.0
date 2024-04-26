@@ -166,3 +166,6 @@ td#val_players {
     width: 30px;
     cursor: pointer;
 }
+#slidelist {
+    pointer-events: auto;
+}

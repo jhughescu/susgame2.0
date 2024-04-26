@@ -79,7 +79,7 @@ const createTemplateQR = async (session) => {
     try {
         // Read the file asynchronously
         const fileContent = await fs.promises.readFile(filePath, 'utf8');
-        const content = fileContent.replace(colours.light, '{{light}}').replace(colours.dark, '{{dark}}');
+        const content = fileContent.replace(colours.light, '{{qrlight}}').replace(colours.dark, '{{qrdark}}');
         const dir = temPath.split('/').slice(0, 2).join('/');
         await ensureDirectoryExists(dir);
         await fs.promises.writeFile(temPath.replace('ID', session.uniqueID), content, 'utf8');

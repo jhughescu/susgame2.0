@@ -26,8 +26,19 @@ const previousSlide = (cb) => {
     sessionController.updateSession(game.uniqueID, {slide: presentation.currentSlide});
     showSlide();
 };
+const gotoSlide = (sl, cb) => {
+    if (presentation) {
+        if (presentation.gotoSlide) {
+            const rOb = presentation.gotoSlide(sl, cb);
+            Object.assign(game.presentation, rOb);
+            sessionController.updateSession(game.uniqueID, {slide: presentation.currentSlide});
+            showSlide();
+        }
+    }
+};
 const reloadSlide = (cb) => {
     presentation.reloadSlide(cb);
+    showSlide();
 };
 const play = (cb) => {
     presentation.play(cb);
@@ -36,7 +47,8 @@ const pause = (cb) => {
     presentation.pause(cb);
 };
 const toggleAutoPlay = (cb) => {
-    presentation.toggleAutoPlay(cb);
+    const slOb = {prop: 'autoplay', val: presentation.toggleAutoPlay(cb), address: game.address};
+    eventEmitter.emit('updatePresentationProperty', slOb);
 };
 const pEvent = (ob, cb) => {
 //    console.log(`pEvent:`, ob);
@@ -63,8 +75,11 @@ const pEvent = (ob, cb) => {
                 case 'auto':
                     toggleAutoPlay(cb);
                     break;
+                case 'gotoSlide':
+                    gotoSlide(ob.val, cb);
+                    break;
                 default:
-                    console.log(`I don't know what this is`);
+                    console.log(`presentationController: unknown pEvent event`);
             }
         }
     } else {

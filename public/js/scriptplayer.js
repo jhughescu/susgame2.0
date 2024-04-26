@@ -22,8 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
-//        console.log(initObj);
-//        console.log('reg player')
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
                 let res = ob.id;
@@ -32,35 +30,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateGame(ob.game);
                     setPlayer(game);
                 }
-//                console.log(`register player:`);
-//                console.log(ob);
-//                console.log(player);
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = lID + res;
                 }
                 localStorage.setItem(lID, res);
-                // use renderstate from localStorage if possible
-                // ob.renderState can overwrite stored renderstate
-//                const srs = getStoredRenderState();
-                /*
-                if (srs) {
-                    srs.source = 'localStorage'
-                    updateRenderState(srs);
-                }
-                */
                 if (ob.renderState) {
                     ob.renderState.source = `registerPlayer event`;
                     updateRenderState(ob.renderState);
                 }
                 const hash = window.location.hash;
                 if (hash) {
-//                    console.log(`do something with hash ${hash}`);
                     updateRenderState({temp: `game.${hash.replace('#', '')}`, tempType: `sub`});
-//                    console.log(JSON.parse(JSON.stringify(renderState)));
                 }
                 render(() => {
-//                    console.log(`register: ${game.round}`);
                     if (game.round > 0) {
                         onStartRound(game.round);
                     }
@@ -142,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateGame(game);
         setPlayer(game);
 //        renderState = {temp: 'game.main', ob: player};
-        updateRenderState({temp: 'game.main', ob: player});
+        updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
         render();
     };
     const showOverlay = (id, ob) => {
@@ -433,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 //            console.log(JSON.parse(JSON.stringify(renderState)));
             const show = Object.assign({}, renderState);
-//            console.log(show);
+            console.log(`updateRenderState`, show);
             delete renderState.note;
         }
     };

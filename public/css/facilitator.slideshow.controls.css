@@ -68,3 +68,9 @@
     font-weight: bold;
     color: black;
 }
+.auto_true {
+    background-color: green;
+}
+.auto_false {
+    background-color: red;
+}

@@ -263,51 +263,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return list;
     };
-    const renderPlayersV2 = () => {
-        let list = game.players;
-        list.forEach((p, i) => list[i] = {id: p, connected: false});
-        console.log(list);
-        renderTemplate('contentPlayers', 'playerlist', list, () => {
-
-        })
-    };
     const renderPlayers = (l) => {
-//        console.clear();
-//        console.log(`renderPlayers`)
         if (game || l) {
-//            console.log(`yep - list provided? ${Boolean(l)}`);
-//            console.log(game);
             let basicList = game.players;
             const pf = game.playersFull;
             basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
-
             let list = l ? l : basicList;
             list.forEach((p, i) => {
-//                console.log(p.id)
                 if (pf.hasOwnProperty(p.id)) {
-//                    console.log(`ID found in PF`);
-//                    console.log(pf[p.id]);
                     list[i] = pf[p.id];
                 } else if (p.id.hasOwnProperty('id')) {
-//                    console.log(`p.id is an object which has an ID property: ${p.id.id}`)
                     if (pf.hasOwnProperty(p.id.id)) {
-//                        console.log(`yep, it should have been done`)
                         list[i] = pf[p.id.id];
                     } else {
-//                        console.log(`${p.id.id} not found in PF`);
-//                        console.log(pf);
                         // Seems to be a disconnected player
                         list[i] = p.id;
                     }
-                } else {
-//                    console.log(`not found in playersFull: ${p.id}`)
-//                    console.log(p.id)
                 }
             });
-//            let list = l ? l : Object.values(Object.assign({}, game.playersFull));
             const pso = playerSortOrder;
-//            console.log(list);
-//            console.log(game);
             switch (pso.prop) {
                 case 'index':
                     list.sort(sortListIndex);
@@ -325,11 +299,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     list.sort(sortListisLead);
                     break;
                 default:
-//                    console.log('nosort');
             }
             list = processPlayers(list);
             clearTimeout(pso.timeout);
-//            pso.timeout = setTimeout(() => {console.log(list)}, 2000);
             renderTemplate('contentPlayers', 'playerlist', list, () => {
                 $('.listSort').off('click');
                 $('.listSort').on('click', function () {
@@ -347,13 +319,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
                     socket.emit('makeLead', leadObj);
                 });
+                $('.refresh').off('click');
+                $('.refresh').on('click', function () {
+//                    console.log(session);
+//                    console.log(game);
+                    const id = $(this).attr('id').split('_').splice(2);
+                    const pl = game.playersFull[`${id}`];
+                    const sock = pl.socketID;
+//                    console.log(pl);
+//                    console.log(sock);
+                    const clOb = {game: game.uniqueID, player: pl, socketID: sock};
+                    socket.emit(`refreshClient`, clOb);
+                });
                 $('.warning').off('click');
                 $('.warning').on('click', function () {
-//                    console.log($(this));
                     // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
                     const rowIndex = $(this).closest('tr').index() - 1;
-//                    console.log('Row index:', rowIndex);
-//                    console.log(list)
                     alert(list[rowIndex].warningMessage)
                 });
 

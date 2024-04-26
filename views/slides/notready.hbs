@@ -1,0 +1,17 @@
+{{> fog}}
+<div class='wrapper intro'>
+    <div id='circle-wrapper'>
+        <div class='circle' id='circle-fill'></div>
+    </div>
+    <div id='header'>
+        <p>INDEX</p>
+    </div>
+    <div class="big container intro fullscreen1">
+        <h1>Slide not ready</h1>
+        <table><tbody>
+            {{#each this}}
+            <tr><td>{{@key}}:</td><td id='val_{{@key}}'>{{this}}</td></tr>
+            {{/each}}
+        </tbody></table>
+    </div>
+</div>

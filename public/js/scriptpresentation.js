@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const targ = 'insertion';
+//    const renderOb = {qrlight: '#d1e5d133', qrdark: '#0d140d'};
+    const renderOb = {qrdark: '#ffffff88', qrlight: '#0d140d44'};
     let gameID = null;
     let game = null;
     let videoPlayer = null;
@@ -11,29 +13,46 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     let socket = null;
     const estSocket = () => {
-        //        console.log(`estSocket`);
         socket = io('', {
             query: {
                 role: 'presentation',
                 id: getSessionID()
-                //            session: session
             }
         });
         socket.on('setGame', (rgame) => {
             if (rgame) {
                 game = rgame;
             }
-            const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
-//            console.log(`initSlide`, initSlide);
-            if (initSlide) {
-                showSlide(initSlide);
+//            console.log(`on setGame:`);
+//            console.log(game);
+            if (game) {
+//                console.log(game);
+                const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
+                if (initSlide) {
+                    showSlide(initSlide);
+                }
             }
         });
+        socket.on('gameReady', (rGame) => {
+//            console.log(`oo, game is ready`, rGame);
+            game = rGame;
+        });
         socket.on('gameUpdate', (game) => {
-
+            console.log('a game update');
+        });
+        socket.on('scoresUpdated', (scores) => {
+//            console.log('a score update', scores);
+            onScoresUpdated(scores);
         });
         socket.on('showSlide', (slOb) => {
             showSlide(slOb);
+        });
+        socket.on('updateProperty', (slOb) => {
+            console.log(`updateProperty`, slOb);
+            const uOb = {};
+            uOb[slOb.prop] = slOb.val;
+            Object.assign(game.presentation, uOb);
+            console.log(game.presentation);
         });
     };
     const estPanopto  = () => {
@@ -47,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const init = () => {
         // Delay required to ensure game is started prior to init; find a better way to do this.
         setTimeout(() => {
-            estPanopto();
+//            estPanopto();
             estSocket();
         }, 500);
     };
@@ -89,45 +108,82 @@ document.addEventListener('DOMContentLoaded', function () {
             renderTemplate('insertion', 'slides/showvalues', v);
         })
     };
+    const prepScoresR1 = (sc) => {
+        // prep R1 scores & values for rendering. Takes an optional 'sc' arg.
+        // Returns an array of objects
+        // NOTE "values" are always set prior to "scores", so "values" can be assumed here
+        const t = game.persistentData.teamsArray;
+        let rArr = [];
+        let v = game.values;
+        let s = sc ? sc : game.scores;
+        console.log(game)
+        console.log(s)
+        console.log(v)
+        v = sortByProperty(v, 'team');
+        s = sortByProperty(s, 'src');
+        v.forEach((vu, i) => {
+            const ob = {
+                team: vu.team,
+                title: t[i].title,
+                action: vu.action,
+                description: vu.description,
+                value: s[i].val,
+                teamObj: t[i]
+            }
+            rArr[i] = ob;
+                                console.log(ob)
+        });
+        return rArr;
+    };
     const showRound1 = () => {
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             game = rgame;
-            let s = null;
-            let v = game.values;
-            const t = game.persistentData.teamsArray;
-            let rArr = [];
-            console.log(game)
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
-                s = rs;
-                console.log(rs)
-                v = sortByProperty(v, 'team');
-                s = sortByProperty(s, 'src');
-                v.forEach((vu, i) => {
-                    const ob = {
-                        team: vu.team,
-                        title: t[i].title,
-                        action: vu.action,
-                        description: vu.description,
-                        value: s[i].val,
-                        teamObj: t[i]
-                    }
-                    rArr[i] = ob;
-                    //                    console.log(ob)
-                });
-                renderTemplate(targ, 'slides/showround1', rArr);
+                renderTemplate(targ, 'slides/showround1', prepScoresR1(rs));
             });
 
         });
+    };
+    const getVidID = () => {
+        let vid = null;
+        if (getCurrentSlide().hasOwnProperty(`srcRef`)) {
+            vid = getCurrentSlide().srcRef;
+        }
+        return vid;
+    };
+    const onVideoEnd = () => {
+        console.log('a video has ended');
+        const ap = game.presentation.autoplay;
+        if (ap) {
+            socket.emit('gotoNextSlide', {gameID: game.uniqueID, address: game.address});
+        }
     };
     const showVideo = (slOb) => {
         renderTemplate(targ, 'slides/video_player', slOb, () => {
             goVideo(slOb.srcRef);
             videoPlayer = $('#videoPlayer');
+            setTimeout(() => {
+//                unmute();
+            }, 500);
         });
     };
     // Panopto API code:
     var embedApi;
     function goVideo(id) {
+        console.log(`goVideo:`);
+        return;
+        if (embedApi) {
+            delete embedApi.sessionID;
+            if (embedApi.events) {
+                delete embedApi.events.onIframeReady;
+                delete embedApi.events.onReady;
+                delete embedApi.events.onStateChange;
+                delete embedApi.events;
+            }
+            console.log('deleted:');
+            console.log(embedApi);
+        }
+        embedApi = {};
         embedApi = new EmbedApi("player", {
             width: "100%",
             height: "100%",
@@ -138,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
             //interactivity parameter controls if the user sees table of contents, discussions, notes, & in-video search
                 "interactivity": "none",
                 "showtitle": "false",
-                "hideoverlay": true,
+                "hideoverlay": false,
                 "showcontrols": true
             },
             events: {
@@ -151,18 +207,24 @@ document.addEventListener('DOMContentLoaded', function () {
     let int = null;
     let count = 0;
     function onPanoptoVideoReady () {
-//        console.log(`onPanoptoVideoReady`)
+        console.log(`onPanoptoVideoReady ${Math.random()}`);
         embedApi.seekTo(0);
-//        maxVol();
-//        unmute();
+        // knock out functionality below for now - it wil be required, but currently stops playback
+        /*
         setTimeout(() => {
             maxVol();
         }, 1000);
+        */
     };
     function onPanoptoIframeReady () {
         // The iframe is ready and the video is not yet loaded (on the splash screen)
         // Load video will begin playback
-//        console.log(`onPanoptoIframeReady`);
+        console.log(`onPanoptoIframeReady ${Math.random()}`);
+//        console.log(embedApi.sessionId);
+        const s = getCurrentSlide();
+        if (s.hasOwnProperty('srcRef')) {
+//            console.log(s.srcRef);
+        }
         embedApi.loadVideo();
 //        embedApi.seekTo(0);
     };
@@ -177,33 +239,67 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(ensureAudio, 4000);
     }
     const unmute = () => {
-        embedApi.unmuteVideo();
+//        embedApi.unmuteVideo();
+//        const ifr = $('#videoplayerframe');
+//        const vifr = ifr.contents().find('iframe');
+        const ifr = document.getElementById('videoplayerframe');
+//        const vifr = ifr.contentWindow.document.getElementById('iframe');
+        const vd = ifr.contentWindow.document;
+        const vifr = vd.getElementsByTagName('iframe')[0].contentWindow;
+        console.log(`the unmute:`);
+        console.log(ifr);
+        console.log(vifr);
+//        if (vifr.length > 0) {
+            vifr.postMessage(`{"msg":"iframeUnmute","source":"PanoptoEmbed","id":"player","data":""}`, `https://cranfield.cloud.panopto.eu`);
+//        }
     }
     const maxVol = () => {
         embedApi.setVolume(1);
     }
     function onPanoptoStateUpdate (state) {
         if (state === PlayerState.Ended) {
-//            console.log(`we're done here`);
-            if (autoplay) {
+            console.log(`A video has ended - multiple calls? ${Math.random()}`);
+            const ap = game.presentation.autoplay;
+            if (ap) {
                 socket.emit('gotoNextSlide', {gameID: game.uniqueID, address: game.address});
             }
         }
     };
     // End Panopto
     const showSlide = (slOb) => {
-        //        console.log(slOb);
+        console.log(`showSlide`, slOb);
         if (slOb.type === 'video') {
             showVideo(slOb)
-        } else {
-            const rOb = {gameID: game.uniqueID, light: '#d1e5d177', dark: '#0d140d'};
-            renderTemplate(targ, 'slides/slide_010_intro', rOb, () => {
+        } else if (slOb.type === 'slide') {
+            renderTemplate(targ, `slides/${slOb.slide}`, {}, () => {
+                if (slOb.hasOwnProperty('action')) {
+                    if (window[slOb.action]) {
+                        window[slOb.action]();
+                    }
+                }
+                const rOb = {gameID: game.uniqueID};
+                Object.assign(rOb, renderOb);
                 renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
 
                 })
             });
+        } else {
+            renderTemplate(targ, `slides/notready`, slOb, () => {});
         }
-        console.log(slOb);
+    };
+    const showGame = () => {
+        console.log(game.presentation);
+    };
+    const getCurrentSlide = () => {
+        const p = game.presentation;
+        const cs = p.currentSlide;
+        const s = p.slideData.slideList[cs];
+        return s;
+    };
+    const onScoresUpdated = (sc) => {
+        game.scores = sc;
+//        console.log(game);
+        showRound1();
     };
     init();
 
@@ -215,5 +311,8 @@ document.addEventListener('DOMContentLoaded', function () {
     window.unmute = unmute;
     window.maxVol = maxVol;
     window.ensureAudio = ensureAudio;
+    window.showGame = showGame;
+    window.getVidID = getVidID;
+    window.onVideoEnd = onVideoEnd;
 //    window.videoCheck = videoCheck;
 });
