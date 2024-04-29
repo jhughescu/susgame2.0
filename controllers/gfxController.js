@@ -7,7 +7,7 @@ const data = 'this is a QR code';
 
 const colours = {dark: '#252721', light: '#ffffff'}
 
-const generateQR = (data, id, session) => {
+const generateQR = (data, id) => {
     QRCode.toDataURL(data, (err, url) => {
         if (err) {
             console.error(err);
@@ -19,15 +19,14 @@ const generateQR = (data, id, session) => {
             border: 0,
             color: colours
         }
-        //        const output = `public/assets/qr/qrcode-${id}.svg`;
         const output = imgPath.replace('ID', id);
-        //        console.log(`generateQR, data: ${data}, id: ${id}, output: ${output}`);
         QRCode.toFile(output, data, options, (err) => {
             if (err) {
                 console.error(err);
                 return;
             } else {
-                createTemplateQR(session);
+                const tOb = {ID: id};
+                createTemplateQR(tOb);
             }
         });
     });
@@ -58,7 +57,8 @@ const deleteQRImg = (id) => {
     });
 }
 const generateSessionQR = (session) => {
-    generateQR(`${session.base}${session.address}`, session.uniqueID, session);
+    generateQR(`${session.base}${session.address}`, session.uniqueID);
+    generateQR(`${session.base}/presentation#${session.address.replace('/', '')}`, `${session.uniqueID}-presentation`);
 };
 const ensureDirectoryExists = async (directory) => {
     try {
@@ -73,23 +73,26 @@ const ensureDirectoryExists = async (directory) => {
         }
     }
 }
-const createTemplateQR = async (session) => {
-    const filePath = imgPath.replace('ID', session.uniqueID);
-    const outPath = temPath.replace('ID', session.uniqueID);
+const createTemplateQR = async (tOb) => {
+    // duplicates the content of a created QR code img and outputs as hbs
+    const ID = tOb.ID;
+    const filePath = imgPath.replace('ID', ID);
+    const outPath = temPath.replace('ID', ID);
     try {
         // Read the file asynchronously
         const fileContent = await fs.promises.readFile(filePath, 'utf8');
         const content = fileContent.replace(colours.light, '{{qrlight}}').replace(colours.dark, '{{qrdark}}');
         const dir = temPath.split('/').slice(0, 2).join('/');
         await ensureDirectoryExists(dir);
-        await fs.promises.writeFile(temPath.replace('ID', session.uniqueID), content, 'utf8');
+        await fs.promises.writeFile(temPath.replace('ID', ID), content, 'utf8');
+//        console.log(`wrote `)
         return fileContent;
     } catch (err) {
         throw err; // Throw any errors that occur
     }
 };
 module.exports = {
-    generateQR,
+//    generateQR,
     deleteQR,
     generateSessionQR,
 }

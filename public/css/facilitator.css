@@ -84,7 +84,7 @@ td#val_players {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-top: none;
-    position: relative;
+position: relative;
 }
 
 #tabGame #qrcode img {
@@ -92,14 +92,20 @@ td#val_players {
     height: 200px;
     float: right;
 }
-#tabGame #qrcode {
-    position: absolute;
+#tabGame #qrcodegame {
     top: 20px;
+}
+#tabGame #qrcodepres {
+    top: 300px;
+}
+#tabGame .qrcode {
+    position: absolute;
     right: 20px;
     width: 220px;
     height: 200px;
+    background-color: transparent;
 }
-#tabGame #qrcode #colourStrip {
+#tabGame .qrcode .colourStrip {
     position: absolute;
     height: 100%;
     width: 20px;

@@ -11,7 +11,13 @@ Game detail:
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameReset'>Reset game</div>
     <div class='link{{#if gameInactive}} disabled{{/if}}' id='gameEnd'>End game</div>
 </div>
-<div id='qrcode'>
-    <div id='colourStrip' style='background-color: {{game.idColour}}'></div>
+<div class='qrcode' id='qrcodegame'>
+   game:
+    <div class='colourStrip' style='background-color: {{game.idColour}}'></div>
     <img src='public/assets/qr/qrcode-{{game.uniqueID}}.svg'>
+</div>
+<div class='qrcode' id='qrcodepres'>
+   presentation:
+    <div class='colourStrip' style='background-color: {{game.idColour}}'></div>
+    <img src='public/assets/qr/qrcode-{{game.uniqueID}}-presentation.svg'>
 </div>
