@@ -52,6 +52,7 @@ async function facAuth(req, res, next) {
         const session = req.body.session;
         const password = req.body.password;
         const storedSession = await sessionController.getSessionPassword(session);
+        console.log(`facAuth, ${storedSession.password}, ${password}`)
         if (storedSession.password === password) {
             req.session = storedSession;
             next();

@@ -432,8 +432,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const render = (cb) => {
         // render can accept an optional callback
-//        console.log(`render:`);
-//        console.log(renderState);
         if (typeof(renderState) === 'object') {
             const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
@@ -442,8 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (renderState.hasOwnProperty('partialName')) {
                 rOb.partialName = renderState.partialName;
             }
-//            console.log(`what is the roundState? ${getRoundState()}`);
-//            console.log(renderState);
             if (renderState.tempType) {
                 if (renderState.tempType === 'interaction') {
 //                    console.log(`condition for interactive template`);
@@ -457,10 +453,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             const rType = renderState.temp.replace(GAMESTUB, '');
-//            console.log(`render template ${renderState.temp}:`);
-//            console.log(rOb);
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
+            console.log('rOb', rOb)
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 if (renderState.hasOwnProperty('sub')) {

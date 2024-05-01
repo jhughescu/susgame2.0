@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let game = null;
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
+    const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
     const gameState = {disconnected: [], timeout: -1}
 
     socket.on('checkOnConnection', () => {
@@ -181,6 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 setupControlLinks();
                 if (hasTeams) {
                     renderTeams();
+                }
+                if (localStorage.getItem(SLIDESHOW_CONTROL)) {
+                    launchSlideshowControls();
                 }
             });
         } else {
@@ -345,6 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
         const wd = $(wid);
+        const widID = `wid-${game.uniqueID}${wid}`;
         const rOb = {
             x: ob.x ? ob.x : 0,
             y: ob.y ? ob.y : 0,
@@ -355,9 +360,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
             $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
-            $(wid).draggable();
+            let stOb = localStorage.getItem(widID);
+            if (stOb) {
+//                console.log(JSON.parse(stOb));
+                Object.assign(rOb, JSON.parse(stOb));
+//                console.log(rOb);
+            }
+            $(wid).draggable({
+                stop: function () {
+//                    console.log(`drop ${$(this).position().left}`);
+                    const pOb = {x: $(this).position().left, y: $(this).position().top};
+                    const stOb = JSON.parse(localStorage.getItem(widID));
+                    localStorage.setItem(widID, JSON.stringify(Object.assign(stOb, pOb)));
+                }
+            });
+//            console.log(`make an item for ${wid} at game ${game.uniqueID}: wid-${game.uniqueID}${wid}`);
             renderTemplate(id, 'facilitator.widget', {id: id, partialName: id}, () => {
-                $(wid).css({left: `${ob.x}px`, top: `${ob.y}px`, width: `${ob.w}px`, height: `${ob.h}px`});
+//                $(wid).css({left: `${ob.x}px`, top: `${ob.y}px`, width: `${ob.w}px`, height: `${ob.h}px`});
+                $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
+                localStorage.setItem(widID, JSON.stringify(rOb));
                 if (cb) {
                     cb();
                 }
@@ -491,7 +512,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const timer = 500;
 //        console.log(colin);
 //        tab;
-        tab.css({color: hlColour}).delay(del).animate({color: colin}, timer).animate({color: hlColour}, 10).delay(del).animate({color: colin}, timer).animate({color: hlColour}, 10).delay(del).animate({color: colin}, timer);
+        tab.css({color: hlColour, 'background-color': 'yellow'})
+            .delay(del)
+            .animate({color: colin, 'background-color': 'transparent'}, timer)
+            .animate({color: hlColour, 'background-color': 'yellow'}, 10)
+            .delay(del)
+            .animate({color: colin, 'background-color': 'transparent'}, timer)
+            .animate({color: hlColour, 'background-color': 'yellow'}, 10)
+            .delay(del)
+            .animate({color: colin, 'background-color': 'transparent'}, timer);
     };
     const setupBaseLinks = () => {
         // adding a timeout because some elements don't appear to be present at init (for some weird reason)
@@ -608,13 +637,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const launchSlideshowControls = () => {
 //        console.log(game);
 //        console.log(game.presentation.slideData);
-        addWidget('facilitator-slideshow-controls', {x: 400, y: 200, w: 600, h: 600}, () => {
+        addWidget(SLIDESHOW_CONTROL, {x: 400, y: 200, w: 600, h: 600}, () => {
             window.slideContolsInit(game);
         });
     };
-    setTimeout(() => {
-        launchSlideshowControls();
-    }, 500);
     const showScoreSummary = (summ, teams) => {
         let str = 'Team submitted score:\n\n';
         teams.forEach((t, i) => {

@@ -113,7 +113,7 @@ async function resetGame(id, cb) {
             }
         }
         game.state = 'pending';
-        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: 1});
+        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: 0});
         if (session) {
             log('return updated session here');
             log(session);
@@ -532,11 +532,7 @@ const startRound = async (ob) => {
 };
 const checkRound = (ob, cb) => {
     // Check submitted scores against current round
-//    console.log(`checkRound`, ob, typeof(ob));
-//    console.log(Object.keys(games));
     const gameID = typeof(ob) === 'string' || typeof(ob) === 'number' ? ob : ob.gameID;
-//    console.log(gameID)
-//    console.log(typeof(gameID))
     const game = games[`game-${gameID}`];
     if (game) {
         const round = ob.hasOwnProperty('round') ? ob.round : game.round;
@@ -545,26 +541,29 @@ const checkRound = (ob, cb) => {
         const teams = game.persistentData[gRound.teams];
         const ta = [];
         teams.forEach(t => {
-//                console.log(t.title, t.id, rScores.filter(item => item.charAt(2) === t.id.toString()).length);
             ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
-        })
-//        console.log(ta);
+        });
+        console.log(`checkRound`, ta);
         if (cb) {
             cb(ta);
         }
-//        console.log(round);
-//        console.log(game.scores);
-//        console.log(rScores);
-//        console.log(gRound);
-//        console.log(gRound.teams);
-//        console.log(teams.length);
-//        if (rScores.length === teams.length) {
-//            console.log(`all teams have scored`);
-//        } else {
-//
-//        }
+        return ta;
     } else {
         console.log(`game not ready: ${ob.gameID}`);
+        return [false];
+    }
+};
+const endRound = (ob, cb) => {
+    console.log(`endRound:`);
+    console.log(ob);
+    const gameID = ob.gameID;
+    const round = ob.round;
+    const game_id = `game-${gameID}`;
+    const game = games[game_id];
+    if (game) {
+
+    } else {
+        console.log(`endGame cannot complete, no game exists with ID ${game_id}`);
     }
 };
 const scoreSubmitted = async (ob, cb) => {
@@ -574,13 +573,27 @@ const scoreSubmitted = async (ob, cb) => {
         let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
+//        console.log(game.scores);
+//        console.log(d);
+//        console.log(p);
+//        console.log(game.scores.indexOf(d));
+        if (game.scores.indexOf(d) > -1) {
+            // Duplicate scores are not allowed (score packets must be unique)
+            // In case of a duplicate score submission, callback the scores and end the method.
+            console.log(`oh no, a duplicate score`);
+            if (cb) {
+                cb(game.scores);
+            }
+            return;
+        }
         if (p) {
             const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
             if (session) {
                 const game = games[`game-${ob.game}`];
                 if (game) {
                     game.scores = session.scores;
-                    checkRound(ob.game);
+                    const complete = checkRound(ob.game).indexOf(false) === -1;
+                    console.log(`complete: ${complete}`);
                     if (cb) {
                         cb(game.scores);
                     }

@@ -116,24 +116,45 @@ document.addEventListener('DOMContentLoaded', function () {
         let rArr = [];
         let v = game.values;
         let s = sc ? sc : game.scores;
-        console.log(game)
-        console.log(s)
-        console.log(v)
-        v = sortByProperty(v, 'team');
-        s = sortByProperty(s, 'src');
-        v.forEach((vu, i) => {
+        let sStatic = s.slice(0);
+        if (v && s) {
+//            console.log(game);
+//            console.log(s);
+//            console.log(v);
+            v = sortByProperty(v, 'team');
+            s = sortByProperty(s, 'src');
+            v.forEach((vu, i) => {
+                const ob = {
+                    team: vu.team,
+                    title: t[vu.team].title,
+                    action: vu.action,
+                    description: vu.description,
+                    value: s[i].val,
+                    teamObj: t[vu.team]
+                }
+                rArr[i] = ob;
+//                console.log(ob)
+            });
+        }
+//        console.log(`scoreArray`, rArr);
+//        console.log(`sew`, sStatic);
+//        console.log('values', v);
+        let rArrNew = [];
+        sStatic.forEach(sp => {
+//            console.log(sp);
+            const vl = v.find(obj => obj.team === sp.src);
             const ob = {
-                team: vu.team,
-                title: t[i].title,
-                action: vu.action,
-                description: vu.description,
-                value: s[i].val,
-                teamObj: t[i]
-            }
-            rArr[i] = ob;
-                                console.log(ob)
+                team: sp.src,
+                title: t[sp.src].title,
+                action: vl.action,
+                description: vl.description,
+                value: sp.val,
+                teamObj: t[sp.src]
+            };
+            rArrNew.push(ob);
         });
-        return rArr;
+        console.log(`new array`, rArrNew)
+        return rArrNew;
     };
     const showRound1 = () => {
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
@@ -208,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let count = 0;
     function onPanoptoVideoReady () {
         console.log(`onPanoptoVideoReady ${Math.random()}`);
-        embedApi.seekTo(0);
+//        embedApi.seekTo(0);
         // knock out functionality below for now - it wil be required, but currently stops playback
         /*
         setTimeout(() => {

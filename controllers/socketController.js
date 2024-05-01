@@ -12,7 +12,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = true;
+const logging = false;
 
 const gameNamespaces = {};
 
@@ -370,10 +370,10 @@ function initSocket(server) {
 //        io.to(roomName).emit('gameUpdate', game);
     });
     eventEmitter.on('scoresUpdated', (game) => {
-        console.log(`on scoresUpdated:`);
-        console.log(game);
-        console.log(game.scores);
-        console.log(game.address);
+//        console.log(`on scoresUpdated:`);
+//        console.log(game);
+//        console.log(game.scores);
+//        console.log(game.address);
         const rp = `${game.address}-pres`;
         io.to(rp).emit('scoresUpdated', game.scores);
     });
