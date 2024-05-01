@@ -48,21 +48,22 @@ const verifyTokenExpiration = (req, res, next) => {
     });
 }
 async function facAuth(req, res, next) {
+    const session = req.body.session;
     try {
-        const session = req.body.session;
         const password = req.body.password;
         const storedSession = await sessionController.getSessionPassword(session);
-        console.log(`facAuth, ${storedSession.password}, ${password}`)
+        let msg = null;
         if (storedSession.password === password) {
             req.session = storedSession;
             next();
         } else {
             console.log('login fail');
-            res.redirect('/loginfail');
+            res.redirect(`/loginfail`);
         }
     } catch (error) {
         console.log('method fail');
-        res.redirect('/loginfail');
+        msg = `No session found with ID ${session}.`;
+        res.redirect(`/loginfail?message=${msg}`);
     }
 
 };

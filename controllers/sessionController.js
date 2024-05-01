@@ -99,12 +99,14 @@ async function getSessionPassword(id) {
         }).select('password');
         if (!session) {
             // If session is not found, return an error
+            /*
             const allS = await Session.find({type: 1});
             if (allS) {
                 console.log(allS)
             } else {
                 console.log('no chips')
             }
+            */
             throw new Error('Session not found');
         }
         //        console.log('returning')

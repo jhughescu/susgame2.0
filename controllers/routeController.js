@@ -130,7 +130,9 @@ app.get('/fakegenerator', (req, res) => {
 
 
 app.get('/loginfail', (req, res) => {
-    res.sendFile(path.join(basePath, 'loginfail.html'));
+//    res.sendFile(path.join(basePath, 'loginfail.html'));
+    const message = req.query.message || 'login failed'
+    res.render('loginfail', { message });
 });
 
 app.get('/presentation', (req, res) => {

@@ -5,57 +5,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Facilitator Login</title>
-    <link rel='stylesheet' href='../css/basics.css' type='text/css'>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel='stylesheet' href='/css/basics.css' type='text/css'>
+    <link rel='stylesheet' href='/css/home.css' type='text/css'>
+    <link rel='stylesheet' href='/css/fog.css' type='text/css'>
+    <style>
+        .central {
+            text-align: center;
+        }
+        button {
+/*            height: 30px;*/
+            margin-top: 20px;
+            font-size: 2.1rem;
+            border-radius: 6px;
+            padding: 0px 20px;
+        }
+        #eye-toggle {
+            width: 45px;
+        }
+        .fa img {
+            display: none;
+            margin: 0px auto;
+        }
+    </style>
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('#eye-toggle').hover(function() {
+                var passwordField = $('#password');
+                var passwordFieldType = passwordField.attr('type');
+                if (passwordFieldType == 'password') {
+                    passwordField.attr('type', 'text');
+//                    $(this).html('<i class="fa fa-eye-slash"></i>');
+                } else {
+                    passwordField.attr('type', 'password');
+                    $(this).html('<i class="fa fa-eye"></i>');
+                }
+            });
+        });
+
+    </script>
 </head>
 
 <body>
-    <h1>Game Facilitator Login</h1>
-    <h2>Facilitator Login</h2>
-    <form action="/facilitatorlogin" method="post">
-        <table>
-            <tbody>
-                <tr>
-                    <td><label for="session">Session:</label></td>
-                    <td>
-                        <input id="session" name="session" required>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <label for="password">Password:</label>
-                    </td>
-                    <td>
-                        <input type="password" id="password" name="password" required> <button id='submit' type="submit">Login</button>
 
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" onmouseover="showPassword()" onmouseout="hidePassword()">
-      <path d="M12.015 7c4.751 0 8.063 3.012 9.504 4.636-1.401 1.837-4.713 5.364-9.504 5.364-4.42 0-7.93-3.536-9.478-5.407 1.493-1.647 4.817-4.593 9.478-4.593zm0-2c-7.569 0-12.015 6.551-12.015 6.551s4.835 7.449 12.015 7.449c7.733 0 11.985-7.449 11.985-7.449s-4.291-6.551-11.985-6.551zm-.015 3c-2.209 0-4 1.792-4 4 0 2.209 1.791 4 4 4s4-1.791 4-4c0-2.208-1.791-4-4-4z"
-            fill="#ffffff"
-            stroke="#ffffff"
-            stroke-width="1"
-            stroke-linecap="round"
-            vector-effect="non-scaling-stroke"
-      />
-    </svg>
+    <div class='fogwrapper'>
+        <div id="foglayer_01" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_02" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_03" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+    </div>
 
-                        <script>
-                            function showPassword() {
-                                const passwordInput = document.getElementById('password');
-                                passwordInput.type = 'text';
-                            }
-                            function hidePassword() {
-                                const passwordInput = document.getElementById('password');
-                                passwordInput.type = 'password';
-                            }
+    <div class='wrapper intro'>
+        <div class="big container intro fullscreen1">
+            <form action="/facilitatorlogin" method="post">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><label for="session">Session:</label></td>
+                            <td>
+                                <input id="session" name="session" class='form-control' required value="240420001">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="password">Password:</label>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <input id="password" type="password" name="password" class="form-control" placeholder="Enter your password" value="tv6WHn">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" id="eye-toggle"><i class="fa fa-eye"></i></span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr><td colspan="2" class='central'><button id='submit' type="submit">Login</button></td></tr>
 
-                            //togglePasswordVisibility();
-                        </script>
-                    </td>
-                </tr>
+                    </tbody>
+                </table>
 
-            </tbody>
-        </table>
-
-    </form>
+            </form>
+        </div>
+    </div>
 
 </body>
 
