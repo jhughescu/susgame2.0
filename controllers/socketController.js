@@ -12,7 +12,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = false;
+const logging = true;
 
 const gameNamespaces = {};
 
@@ -260,18 +260,11 @@ function initSocket(server) {
 
         // presentation (or slideshow) controller
         if (Q.role === 'presentation-control') {
-//            console.log(Q)
-//            const roomID = `/${Q.id}-presControl`;
-//            console.log(`listening at ${roomID}`)
-//            socket.join(roomID);
             socket.on('presentationEvent', (ob, cb) => {
-//                console.log(`presentationEvent:`);
-//                console.log(ob);
                 presentationController.pEvent(ob, cb);
             });
         }
         // Presentation client
-//        console.log(src);
         if (Q.role === 'presentation') {
 //            console.log('############################################## presentation connected:');
 //            console.log(src);
@@ -305,9 +298,14 @@ function initSocket(server) {
             });
         }
         // End presentation clients
-//        socket.on('disconnect', () => {
-//            log('User disconnected (HTTP or WebSocket)');
-//        });
+        // videoPlayer client
+        if (Q.role === 'videoPlayer') {
+            const roomID = `/${Q.id}-videoPlayer`;
+            console.log(`we have a player: ${roomID}`);
+            socket.join(roomID);
+            showRoomSize(roomID);
+        }
+        // End videoPlayer clients
 
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
@@ -483,6 +481,12 @@ function initSocket(server) {
 //        console.log('I hear you');
 //        console.log(slOb);
         io.to(`${slOb.address}-pres`).emit('updateProperty', slOb);
+    });
+    eventEmitter.on('videoAction', aOb => {
+        console.log('an action for the presentation', aOb);
+        const vidRoom = `${aOb.address}-videoPlayer`;
+        showRoomSize(vidRoom);
+        io.to(vidRoom).emit('videoAction', aOb);
     });
     eventEmitter.on('gameReady', (game) => {
         const ID = `${game.address}-pres`;

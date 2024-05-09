@@ -1,7 +1,19 @@
 <html>
+    <head>
+        <script src='https://cdn.socket.io/4.5.4/socket.io.min.js'></script>
+    </head>
     <script>
+        const getSessionID = () => {
+            return window.parent.location.hash.replace('#', '');
+        };
+        const socket = io('', {
+            query: {
+                role: 'videoPlayer',
+                id: getSessionID()
+            }
+        });
         // Code to load the IFrame player API code asynchronously
-        var tag = document.createElement('script');
+        const tag = document.createElement('script');
 
 //        tag.src = "https://developers.panopto.com/scripts/embedapi.min.js";
         tag.src = "js/libs/panopto.embedapi.js";
@@ -9,7 +21,7 @@
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
          // The following function creates an <iframe> and Panopto player
-        var embedApi;
+        let embedApi = null;
         const getVidID = () => {
             const vid = window.parent.getVidID();
             return vid;
@@ -65,9 +77,31 @@
                 window.parent.onVideoEnd();
             }
         }
+
         const test = () => {
             console.log('test success');
         }
+        const videoAction = (ac) => {
+            switch (ac) {
+                case 'play':
+                    embedApi.playVideo();
+                    break;
+                case 'pause':
+                    embedApi.pauseVideo();
+                    break;
+                case 'unmute':
+                    embedApi.unmuteVideo();
+                    break;
+                default:
+                    console.log(`videoAction not understood`);
+            }
+        }
+
+        socket.on('videoAction', (aOb) => {
+            console.log(`hear videoAction`, aOb)
+            videoAction(aOb.action);
+        })
+
         window.test = test;
     </script>
 

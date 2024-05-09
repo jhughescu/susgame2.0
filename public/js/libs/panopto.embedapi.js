@@ -100,10 +100,10 @@ var LoginShownMessage = "iframeLoginShown",
                     id: this.iframeId,
                     data: o
                 };
-            console.log('API');
-            console.log(n);
-            console.log(JSON.stringify(n));
-            console.log("https://" + this.serverName);
+//            console.log('API');
+//            console.log(n);
+//            console.log(JSON.stringify(n));
+//            console.log("https://" + this.serverName);
             this.iframe.contentWindow.postMessage(JSON.stringify(n), "https://" + this.serverName)
         }, e
     }();

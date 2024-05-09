@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 "onStateChange": onPanoptoStateUpdate
             }
         });
+//        console.log(embedApi)
     };
     let int = null;
     let count = 0;
@@ -351,5 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.getVidID = getVidID;
     window.onVideoEnd = onVideoEnd;
     window.getCurrentSlide = getCurrentSlide;
+//    window.pauseVideo = pauseVideo;
+//    window.playVideo = playVideo;
 //    window.videoCheck = videoCheck;
 });

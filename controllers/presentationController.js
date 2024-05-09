@@ -45,15 +45,23 @@ const refreshWindow = () => {
     eventEmitter.emit('refreshPresentationWindow', rOb);
 }
 const play = (cb) => {
+    const rOb = {address: game.address, action: 'play'};
     presentation.play(cb);
+    eventEmitter.emit('videoAction', rOb);
 };
 const pause = (cb) => {
+    const rOb = {address: game.address, action: 'pause'};
     presentation.pause(cb);
+    eventEmitter.emit('videoAction', rOb);
 };
 const toggleAutoPlay = (cb) => {
     const slOb = {prop: 'autoplay', val: presentation.toggleAutoPlay(cb), address: game.address};
     eventEmitter.emit('updatePresentationProperty', slOb);
 };
+const unmute = () => {
+    const rOb = {address: game.address, action: 'unmute'};
+    eventEmitter.emit('videoAction', rOb);
+}
 const pEvent = (ob, cb) => {
 //    console.log(`pEvent:`, ob);
     game = gameController.getGame(ob.gameID);
@@ -84,6 +92,9 @@ const pEvent = (ob, cb) => {
                     break;
                 case 'gotoSlide':
                     gotoSlide(ob.val, cb);
+                    break;
+                case 'unmute':
+                    unmute(cb);
                     break;
                 default:
                     console.log(`presentationController: unknown pEvent event`);
