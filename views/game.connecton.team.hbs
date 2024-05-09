@@ -1,0 +1,29 @@
+<div class="team-header">
+	<div class="hero-image">
+		<div class="back-btn-title-bar">
+		<a class="back-btn" id='connecton_btn' title="Previous page"><img alt="Previous page icon" src="assets/backButton.svg"/></a>
+	</div>
+		<img alt="Company logo" class="company-logo" src="assets/GlobalNewsConnectOnLogos-02.svg"/>
+	</div>
+	<div class="team-info center">
+		<img class="team-icon" alt="Team icon" src="assets/icon-{{abbr}}.svg"/>
+		<h1>{{lead}}</h1>
+		<p>({{title}})</p>
+		<p>
+		{{#each bio.summary}}
+		{{this}}<br>
+        {{/each}}
+        </p>
+		<p>{{bio.followers}} followers</p>
+
+	</div>
+
+</div>
+	<!-- Main Content -->
+<div class="main-content">
+
+	<h2>About</h2>
+	{{#each bio.about}}
+	<p>{{this}}</p>
+	{{/each}}
+</div>

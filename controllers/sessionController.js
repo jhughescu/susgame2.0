@@ -200,7 +200,7 @@ async function updateSession(uniqueID, updateOb) {
                 new: true
             }
         ).select(select + ' -password');
-        //        console.log('updatedSession', updatedSession);
+//        console.log('updatedSession', updatedSession);
         return updatedSession;
     } catch (error) {
         console.error('Error updating document:', error);
@@ -215,21 +215,16 @@ async function newSession(req, res) {
         const existingSessions = await Session.find({
             dateID
         });
-        //        console.log(existingSessions)
         // Determine the session ID for the new session
         const uniqueID = dateID + padNum(getTopNumber(existingSessions) + 1, 3);
-        //        console.log(`sessionID: ${uniqueID}`);
         // auto-generate password
         const password = generatePassword(6);
         const address = generateAddress(req);
-        // Create a new session document
         const type = req.body.valType;
         const state = 'pending';
         const progress = 0;
         const slide = 0;
         const idColour = generateColour();
-        //        console.log(type);
-        //        console.log(`type: ${type}`);
         const newSession = new Session({
             dateID,
             uniqueID,

@@ -1,7 +1,8 @@
 class ScorePacket {
     constructor(round, src, dest, val, type) {
-        if (typeof(round) === 'number') {
-            this.round = round;
+        console.log(`scorepacket: ${round}`);
+        if (round.toString().indexOf('_', 0) === -1) {
+            this.round = parseInt(round.toString().replace(/\D/g, ''));
             this.src = src;
             this.dest = dest;
             this.val = val;

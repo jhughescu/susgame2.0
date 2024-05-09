@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
-
+    let socket = null;
+    let player = null;
+    let game = null;
     // templateStore maintains copies of each fetched template so they can be retrieved without querying the server
     const templateStore = {};
 
@@ -121,6 +123,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
 
+    const renderPartial = (targ, temp, ob, cb) => {
+        if (ob === undefined) {
+            console.error('Error: Data object is undefined');
+            return;
+        }
+        if (targ.indexOf('#', 0) === 0) {
+            targ = targ.replace('#', '');
+        }
+//        console.log(`targ: ${targ}`);
+        $(`#${targ}`).css({opacity: 0});
+        const part = Handlebars.partials[temp];
+//        console.log(part(ob));
+        if (document.getElementById(targ)) {
+                document.getElementById(targ).innerHTML = part(ob);
+            } else {
+                console.warn(`target HTML not found: ${targ}`);
+            }
+            if (cb) {
+                cb();
+            }
+            $(`#${targ}`).css({opacity: 1});
+    };
     const renderTemplate = (targ, temp, ob, cb) => {
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
@@ -200,6 +224,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return new Handlebars.SafeString('Partial not found');
         }
     });
+    Handlebars.registerHelper('moreThan', function(a, b, options) {
+        if (a > b) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    });
 
     const copyObjectWithExclusions = (obj, exclusions) => {
         const newObj = {};
@@ -231,16 +262,126 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return qu;
     };
+    const thisRoundScored = (pl) => {
+        console.log(`thisRoundScored: ${player === null}`);
+        const myPlayer = player === null ? pl : player;
+        console.log(myPlayer);
+        if (socket && myPlayer) {
+//            console.log(`we have a a socket, let's look for stuff`);
+            return new Promise((resolve, reject) => {
+                socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
+                    const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
+                    const rID = `${game.round}.${myPlayer.teamObj.id}`;
+                    const spi = scoreSumm.indexOf(rID);
+                    resolve({hasScore: spi > -1, scorePacket: sps[spi]});
+                });
+            })
+        } else {
+            console.log('no socket shared, cannot emit socket calls');
+        }
+    };
+    const setupAllocationControl = async (inOb) => {
+//        console.log('set it up');
+//        console.log(player);
+        const myPlayer = player === null ? inOb : player;
+//        console.log('myPlayer', myPlayer);
+        const butMinus = $('#vote_btn_minus');
+        const butPlus = $('#vote_btn_plus');
+        const val = $('.tempV');
+        const submit = $(`#buttonAllocate`);
+        const action = $(`#action-choice`);
+        const desc = $(`#actionDesc`);
+        const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
+//        console.log()
+        const hasS = await thisRoundScored(myPlayer);
+        if (hasS) {
+//            console.log('see if the round has been scored already:');
+//            console.log(hasS);
+            if (hasS.hasScore) {
+                const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
+                socket.emit('getValues', vOb, (v) => {
+    //                console.log('test the values')
+    //                console.log(v)
+                    ints.prop('disabled', true);
+                    ints.addClass('disabled');
+                    val.html(hasS.scorePacket.val);
+                    desc.html(v.description);
+                    action.val(v.action);
+                });
+            } else {
+                ints.off('click');
+                butPlus.on('click', () => {
+                    let v = parseInt(val.html());
+                    if (v < 10) {
+                        v += 1;
+                        val.html(v);
+                    }
+                });
+                butMinus.on('click', () => {
+                    let v = parseInt(val.html());
+                    if (v > 1) {
+                        v -= 1;
+                        val.html(v);
+                    }
+                });
+                submit.on('click', () => {
+                    let scoreV = parseInt(val.html());
+                    let actionV = action.val();
+                    let descV = desc.val();
+                    if (scoreV === 0 || actionV === '' || descV === '') {
+                        alert('Please complete all options and allocate at least 1 resource')
+                    } else {
+                        const tID = myPlayer.teamObj.id;
+                        let t = myPlayer.teamObj.id;
+                        const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
+//                        console.log(`the submission:`);
+//                        console.log(socket);
+                        socket.emit('submitValues', vob);
+                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
+                        socket.emit('submitScore', sob, (scores) => {
+                            setupAllocationControl();
+                        });
+
+    //                    setupAllocation(false);
+                    }
+                });
+            }
+        } else {
+            console.log(`Whoops, no 'round scored' object found`);
+        }
+    }
+    // the 'share' methods are for sharing objects defined in other code files
+    const socketShare = (sock) => {
+        socket = sock;
+        console.log('share it out; socket');
+
+    };
+    const playerShare = (pl) => {
+        player = pl;
+        console.log('share it out; player');
+
+    };
+    const gameShare = (g) => {
+        game = g;
+        console.log('share it out; game');
+
+    };
     // NOTE: parials are currently set up each time the system admin connects, so the method call below is safe for now.
     // In case of problems getting partials, check the order of system architecture.
     getPartials();
     window.procVal = procVal;
     window.toCamelCase = toCamelCase;
     window.renderTemplate = renderTemplate;
+    window.renderPartial = renderPartial;
     window.getTemplate = getTemplate;
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
     window.copyObjectWithExclusions = copyObjectWithExclusions;
     window.getQueries = getQueries;
     window.getPartials = getPartials;
+    window.socketShare = socketShare;
+    window.playerShare = playerShare;
+    window.gameShare = gameShare;
+    window.thisRoundScored = thisRoundScored;
+    window.setupAllocationControl = setupAllocationControl;
 });

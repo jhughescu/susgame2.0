@@ -77,6 +77,9 @@ app.get('/player', (req, res) => {
 app.get('/gameover', (req, res) => {
     res.sendFile(path.join(basePath, 'gameover.html'));
 });
+app.get('/teamtest', (req, res) => {
+    res.render(`game_connecton_team`);
+});
 
 
 app.get('/admin/systemlogin', (req, res) => {

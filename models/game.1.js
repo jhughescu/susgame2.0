@@ -113,23 +113,15 @@ class Game {
     }
     addLatecomer(player) {
         // add a latecomer to a team
-//        console.log(`addLatecomer`);
-//        console.log(player);
         let pd = this.persistentData;
         let mt = pd.mainTeams;
         let st = pd.secondaryTeams;
         let t = this.teams.slice((st[0].id), (st[st.length - 1].id + 1));
-//        console.log((st[0].id), (st[st.length - 1].id));
-//        console.log(t);
         t.forEach((s, i) => t[i] = {id: i, l: s.length});
-//        console.log(t);
         t.sort((a, b) => {if (a.l > b.l) {return 1} else if (a.l < b.l) {return -1} else {return 0}});
-//        console.log(t);
         // the id value of t[0] is now the index of the secondary team with the smallest number of members
         player.teamObj = st[t[0].id];
         this.teams[mt.length + t[0].id].push(player.id);
-//        console.log(player);
-//        console.log(this.teams);
 
 
     }

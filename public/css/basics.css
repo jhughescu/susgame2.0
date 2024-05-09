@@ -4,7 +4,7 @@ html, body {
 }
 body {
     font-family: monospace;
-    font-size: 1.5em;
+/*    font-size: 1.5em;*/
 }
 .buttonNO {
 	display: block;

@@ -196,6 +196,9 @@ function initSocket(server) {
             socket.on('makeLead', (obj) => {
                 gameController.makeLead(obj);
             });
+            socket.on('reassignTeam', (obj) => {
+                gameController.reassignTeam(obj);
+            });
             socket.on('refreshClient', (clOb) => {
 //                gameController.makeLead(obj);
 //                console.log(clOb);
@@ -234,6 +237,20 @@ function initSocket(server) {
             });
             socket.on('checkRound', (ob, cb) => {
                 gameController.checkRound(ob, cb);
+            });
+            socket.on('getScorePackets', (gameID, cb) => {
+                gameController.getScorePackets(gameID, cb);
+            });
+            socket.on('submitScore', (ob, cb) => {
+//                    console.log(`submitScore`)
+                const sp = gameController.scoreSubmitted(ob, cb);
+//                io.to(facilitator).emit('scoreSubmitted', sp);
+                socket.emit('scoreSubmitted', sp);
+            });
+            socket.on('submitValues', (ob) => {
+                const sp = gameController.valuesSubmitted(ob);
+//                io.to(facilitator).emit('valuesSubmitted', sp);
+                socket.emit('valuesSubmitted', sp);
             });
             socket.on('setTeamSize', (ob, cb) => {
                 gameController.setTeamSize(ob, cb);
@@ -363,19 +380,23 @@ function initSocket(server) {
         let roomName = `${game.address}-fac`;
 //        console.log(`gameUpdate emmitted to room ${roomName}`);
 //        showRoomSize(roomName);
-        io.to(roomName).emit('gameUpdate', game);
+        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
+        io.to(roomName).emit('gameUpdate', eGame);
 //        roomName = `${game.address}`;
 //        console.log(`gameUpdate emmitted to room ${roomName}`);
 //        showRoomSize(roomName);
 //        io.to(roomName).emit('gameUpdate', game);
     });
     eventEmitter.on('scoresUpdated', (game) => {
-//        console.log(`on scoresUpdated:`);
+        console.log(`on scoresUpdated:`);
 //        console.log(game);
-//        console.log(game.scores);
+        console.log(game.scores);
 //        console.log(game.address);
         const rp = `${game.address}-pres`;
         io.to(rp).emit('scoresUpdated', game.scores);
+        const rf = `${game.address}-fac`;
+        showRoomSize(rf);
+        io.to(rf).emit('gameUpdate', game);
     });
     eventEmitter.on('singlePlayerGameUpdate', (ob) => {
         // requires an object: {player: <playerObject>, game}
@@ -451,11 +472,11 @@ function initSocket(server) {
         io.to(id).emit('forceRefresh');
     });
     eventEmitter.on('showSlide', (slOb) => {
-        console.log('I hear you');
-        console.log(slOb);
-        if (slOb.hasOwnProperty('action')) {
+//        console.log('I hear you');
+//        console.log(slOb);
+//        if (slOb.hasOwnProperty('action')) {
             gameController.presentationAction(slOb);
-        }
+//        }
         io.to(`${slOb.address}-pres`).emit('showSlide', slOb);
     });
     eventEmitter.on('updatePresentationProperty', (slOb) => {
@@ -470,7 +491,11 @@ function initSocket(server) {
 //        console.log(getRoomSockets(ID));
         io.to(ID).emit('gameReady', game);
     });
-
+    eventEmitter.on('refreshPresentationWindow', gOb => {
+        console.log(`refresh pres window with address ${gOb.address}`);
+        const r = `${gOb.address}-pres`;
+        io.to(r).emit('refreshWindow');
+    });
 
 };
 

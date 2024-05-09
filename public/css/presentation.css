@@ -39,3 +39,12 @@ td {
     font-size: 6rem;
     font-weight: bold;
 }
+#devoverlay {
+    position: fixed;
+    z-index: 999999;
+    top: 20px;
+    left: 20px;
+    width: 1000px;
+    min-height: 200px;
+    background-color: rgba(4, 39, 59, 0.67);
+}

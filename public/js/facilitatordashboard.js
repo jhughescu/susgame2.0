@@ -72,7 +72,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (session.state === 'pending') {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
-                game = rgame;
+//                game = rgame;
+                updateGame(rgame);
                 addToLogFeed('game ready');
                 getSession(game.uniqueID, () => {
     //                console.log('game cb');
@@ -90,14 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
             addToLogFeed('game restore complete - game can recommence');
 //            console.log(rgame);
 //            console.log(rgame.assignTeams);
-            game = rgame;
+//            game = rgame;
+            updateGame(rgame);
             renderGame();
         });
     };
     const endGame = () => {
         socket.emit('endGame', game, (rgame) => {
             //returns modified game, render this
-            game = rgame;
+//            game = rgame;
+            updateGame(rgame);
             renderGame();
         });
         return;
@@ -109,7 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //                    console.log(`OK to end`)
                     socket.emit('endGame', game, (rgame) => {
                         //returns modified game, render this
-                        game = rgame;
+//                        game = rgame;
+                        updateGame(rgame);
                         renderGame();
                     });
                 } else {
@@ -136,10 +140,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const updateGame = (ngame) => {
         // Method to use any time the game is updated (i.e never use "game = ...")
-//        console.log(game.mainTeamSize);
-//        console.log(ngame.mainTeamSize);
-        Object.assign(game, ngame);
-//        console.log(game.mainTeamSize);
+        if (game) {
+            Object.assign(game, ngame);
+        } else {
+            game = Object.assign({}, ngame);
+            window.gameShare(game);
+            // \/ optional method; listens for change to game object (use in dev only)
+//            setupWatch(game, handleChange);
+        }
     };
     const launchPresentation = () => {
          window.open(`/presentation#${game.address.replace('/', '')}`, '_blank');
@@ -269,8 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const renderPlayers = (l) => {
         if (game || l) {
-            let basicList = game.players;
-            const pf = game.playersFull;
+            let basicList = game.players.slice(0);
+            const pf = Object.assign({}, game.playersFull);
+//            console.log(`I think this is the culprit, basicList is ${basicList.hasOwnProperty('length') ? 'array' : 'object'}, full list is ${pf.hasOwnProperty('length') ? 'array' : 'object'}`)
             basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
             let list = l ? l : basicList;
             list.forEach((p, i) => {
@@ -307,45 +316,18 @@ document.addEventListener('DOMContentLoaded', function() {
             list = processPlayers(list);
             clearTimeout(pso.timeout);
             renderTemplate('contentPlayers', 'playerlist', list, () => {
-                $('.listSort').off('click');
-                $('.listSort').on('click', function () {
-                    pso.dir = pso.prop === this.textContent ? !pso.dir : true;
-                    pso.prop = this.textContent;
-                    renderPlayers();
-                    const index = $('.listSort').filter(function() {
-                        return $(this).text().trim() === pso.prop;
-                    }).index();
-                    $($('.listSort')[index]).addClass('highlight');
-                });
-                $('.makeLead').off('click');
-                $('.makeLead').on('click', function () {
-                    const leader = $(this).attr('id').split('_').splice(1);
-                    const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
-                    socket.emit('makeLead', leadObj);
-                });
-                $('.refresh').off('click');
-                $('.refresh').on('click', function () {
-//                    console.log(session);
-//                    console.log(game);
-                    const id = $(this).attr('id').split('_').splice(2);
-                    const pl = game.playersFull[`${id}`];
-                    const sock = pl.socketID;
-//                    console.log(pl);
-//                    console.log(sock);
-                    const clOb = {game: game.uniqueID, player: pl, socketID: sock};
-                    socket.emit(`refreshClient`, clOb);
-                });
-                $('.warning').off('click');
-                $('.warning').on('click', function () {
-                    // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
-                    const rowIndex = $(this).closest('tr').index() - 1;
-                    alert(list[rowIndex].warningMessage)
-                });
+                setupPlayerControls();
 
             })
         }
     };
-//    const addWidget = (id, x, y, w, h, cb) => {
+    const renderScores = () => {
+        const ob = {scores: game.scores};
+        renderTemplate('contentScores', 'facilitator.scores', ob, () => {
+//            setupPlayerControls();
+
+        })
+    };
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
         const wd = $(wid);
@@ -357,26 +339,27 @@ document.addEventListener('DOMContentLoaded', function() {
             h: ob.h ? ob.h : 0,
             ob: ob.ob ? ob.ob: {}
         };
+//        console.log(JSON.parse(JSON.stringify(ob)));
+//        console.log(JSON.parse(JSON.stringify(rOb)));
+//        console.log(rOb);
+//        console.log(`add widget: ${id}, ${wd.length}`)
         if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
             $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
             let stOb = localStorage.getItem(widID);
             if (stOb) {
-//                console.log(JSON.parse(stOb));
                 Object.assign(rOb, JSON.parse(stOb));
-//                console.log(rOb);
             }
             $(wid).draggable({
                 stop: function () {
-//                    console.log(`drop ${$(this).position().left}`);
                     const pOb = {x: $(this).position().left, y: $(this).position().top};
                     const stOb = JSON.parse(localStorage.getItem(widID));
                     localStorage.setItem(widID, JSON.stringify(Object.assign(stOb, pOb)));
                 }
             });
-//            console.log(`make an item for ${wid} at game ${game.uniqueID}: wid-${game.uniqueID}${wid}`);
-            renderTemplate(id, 'facilitator.widget', {id: id, partialName: id}, () => {
-//                $(wid).css({left: `${ob.x}px`, top: `${ob.y}px`, width: `${ob.w}px`, height: `${ob.h}px`});
+            const tOb = {id: id, partialName: id};
+//            console.log(tOb);
+            renderTemplate(id, 'facilitator.widget', tOb, () => {
                 $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
                 localStorage.setItem(widID, JSON.stringify(rOb));
                 if (cb) {
@@ -420,19 +403,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const setTeamSize = () => {
-//        console.log(`setTeamSize`);
         const gameID = `game-${game.uniqueID}`;
         const n = parseInt($('#teamInput').val());
-//        console.log({ gameID, n });
         socket.emit('setTeamSize', { gameID, n }, (rgame) => {
-//            console.log(`setTeamSize callback:`);
-//            console.log(rgame);
-//            game = Object.assign(game, rgame);
             updateGame(rgame);
-//            console.log(game);
-            renderControls();
+//            renderControls();
             playergraph();
-//            window.location.reload();
         })
     };
     const assignTeams = (force) => {
@@ -448,8 +424,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else {
                 addToLogFeed('teams assigned');
-                game = rgame;
-                renderControls();
+//                game = rgame;
+                updateGame(rgame);
+//                renderControls();
                 highlightTab('teams');
             }
         });
@@ -460,8 +437,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`resetTeams:`);
             console.log(rgame);
 //            game.teams = rgame.teams;
-            game = rgame;
-            renderControls();
+//            game = rgame;
+            updateGame(rgame);
+//            renderControls();
 //            renderTeams();
         });
     };
@@ -471,26 +449,39 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
-//        console.log(`setupTab: ${arg}`)
-        switch (arg) {
-        case 'session':
-            renderSession();
-            setupSessionLinks();
-            break;
-        case 'game':
-            setupGameLinks();
-            break;
-        case 'controls':
-            renderControls();
-            break;
-        case 'players':
-            renderPlayers();
-            break;
-        case 'teams':
-            renderTeams();
-            break;
-        default:
-            console.log(`setupTab: invalid argument provided.`);
+//        console.log(`setupTab: ${window.toCamelCase(arg)}`);
+//        console.log($(`#content${window.toCamelCase(arg)}`));
+//        console.log($(`#content${window.toCamelCase(arg)}`).children().length);
+//        console.log(`currentTab: ${getCurrentTab().title}`);
+//        console.log(getCurrentTab());
+        const neverStatic = arg === 'players';
+        // Try running only if the tab has changed:
+        if ($(`#content${window.toCamelCase(arg)}`).children().length === 0 || neverStatic) {
+//            console.log(`yes, setupTab: ${window.toCamelCase(arg)}`);
+            switch (arg) {
+            case 'session':
+                renderSession();
+                setupSessionLinks();
+                break;
+            case 'game':
+                renderGame();
+                setupGameLinks();
+                break;
+            case 'controls':
+                renderControls();
+                break;
+            case 'players':
+                renderPlayers();
+                break;
+            case 'teams':
+                renderTeams();
+                break;
+            case 'scores':
+                renderScores();
+                break;
+            default:
+                console.log(`setupTab: invalid argument provided.`);
+            }
         }
 
     };
@@ -521,6 +512,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .animate({color: hlColour, 'background-color': 'yellow'}, 10)
             .delay(del)
             .animate({color: colin, 'background-color': 'transparent'}, timer);
+    };
+    const getCurrentTab = () => {
+        // return object representing currently open tab {el: <jQuery element>, title: <title>}
+        const t = $('.tabcontent:visible');
+        const ob = {title: 'noTab'};
+        if (t.length > 0) {
+            ob.el = t;
+            ob.title = t.attr('id').replace('tab', '').toLowerCase();
+        }
+        return ob;
     };
     const setupBaseLinks = () => {
         // adding a timeout because some elements don't appear to be present at init (for some weird reason)
@@ -587,14 +588,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#checkRound', '#slideshow'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
+//        console.log(`setupControlLinks`);
 //        console.log(rSel);
         ids.forEach(id => {
             const element = $(id);
             element.off('click').on('click', () => {
 //                console.log(`click ${id}`)
+                const r = parseInt($('#roundInput').val());
                 switch (id) {
                     case '#preview':
                         previewTeams();
@@ -615,8 +618,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         launchSlideshowControls();
                         break;
                     case '#startRound':
-                        const r = parseInt($('#roundInput').val());
-                        socket.emit('startRound', {gameID: game.uniqueID, round: r});
+                        tryStartRound(r)
+                        break;
+                    case '#completeRound':
+                        showRoundCompleter(r);
                         break;
                     case '#checkRound':
                         const cr = parseInt($('#roundInput').val());
@@ -634,12 +639,144 @@ document.addEventListener('DOMContentLoaded', function() {
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
     };
+    const setupPlayerControls = () => {
+        const pso = playerSortOrder;
+        $('.listSort').off('click');
+        $('.listSort').on('click', function () {
+            pso.dir = pso.prop === this.textContent ? !pso.dir : true;
+            pso.prop = this.textContent;
+            renderPlayers();
+            const index = $('.listSort').filter(function() {
+                return $(this).text().trim() === pso.prop;
+            }).index();
+            $($('.listSort')[index]).addClass('highlight');
+        });
+        $('.makeLead').off('click');
+        $('.makeLead').on('click', function () {
+            const leader = $(this).attr('id').split('_').splice(1);
+            const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
+            socket.emit('makeLead', leadObj);
+        });
+        $('.reassign').off('click');
+        $('.reassign').on('click', function () {
+            const leader = $(this).attr('id').split('_').splice(1);
+            const tID = parseInt(leader[0]);
+            const leadObj = {game: game.uniqueID, team: tID, player: leader[1]};
+            const ts = game.persistentData.teamsArray;
+            if (game.teams[tID].indexOf(leader[1]) === 0 && ts[tID].type !== 2) {
+//                console.log();
+                alert('Cannot reassign a team lead');
+                return;
+            }
+            let str = '';
+            let poss = [];
+//                    console.log(t)
+            ts.forEach(t => {
+                if (t.id != tID) {
+                    poss.push(t.id)
+                    str += `\n${t.id} ${t.title}`;
+                }
+            });
+            let newT = prompt(`Type the NUMBER of the team you would like to reassign ${leader[1]} to:${str}`);
+            if (newT) {
+                if (!isNaN(parseInt(newT))) {
+                    newT = parseInt(newT);
+                    if (poss.indexOf(newT) > -1) {
+                        const go = confirm(`You are about to move ${leader[1]} to the ${ts[newT].title} team, is this OK?`);
+                        leadObj.newTeam = newT;
+                        if (go) {
+                            socket.emit('reassignTeam', leadObj);
+                        }
+                    } else {
+                        alert(`Not possible, the allowed set of options is ${poss}.`);
+                    }
+                } else {
+                    alert('You need to enter the number for the team you wouold like to rassign to, please try again.');
+                }
+            } else {
+
+            }
+        });
+        $('.refresh').off('click');
+        $('.refresh').on('click', function () {
+//                    console.log(session);
+//                    console.log(game);
+            const id = $(this).attr('id').split('_').splice(2);
+            const pl = game.playersFull[`${id}`];
+            const sock = pl.socketID;
+//                    console.log(pl);
+//                    console.log(sock);
+            const clOb = {game: game.uniqueID, player: pl, socketID: sock};
+            socket.emit(`refreshClient`, clOb);
+        });
+        const rollovers = $('.rollover');
+//        console.log(rollovers.length);
+        rollovers.on('hover', function () {
+            alert(0)
+        })
+        $('.warning').off('click');
+        $('.warning').on('click', function () {
+            // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
+            const rowIndex = $(this).closest('tr').index() - 1;
+            alert(list[rowIndex].warningMessage)
+        });
+    };
     const launchSlideshowControls = () => {
 //        console.log(game);
 //        console.log(game.presentation.slideData);
         addWidget(SLIDESHOW_CONTROL, {x: 400, y: 200, w: 600, h: 600}, () => {
             window.slideContolsInit(game);
         });
+    };
+    const tryStartRound = (r) => {
+        const t = game.teams;
+        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
+        const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
+        const oneUp = (r - gr) === 1;
+        let ok = false;
+        let msg = `Cannot start round ${r}:\n`;
+        if (t.length === 0) {
+            // Teams not yet assigned, must wait for allocation
+            msg += `teams not yet assigned, must wait for allocation`;
+        } else if (r === gr) {
+                   // This is the round already in progress
+            msg += `this is the round already in progress`;
+        } else if (!ric) {
+            // Current round incomplete, must wait for completion
+            msg += `current round incomplete, must wait for completion`;
+        } else if (!oneUp) {
+            // Gap between rounds is not exactly 1, cannot continue
+            msg += `gap between rounds is not exactly 1, cannot continue`;
+        } else {
+            ok = true;
+        }
+        if (ok) {
+            alert(`OK to start round ${r}`);
+            socket.emit('startRound', {gameID: game.uniqueID, round: r});
+        } else {
+            alert(msg);
+        }
+//        console.log(`the teams: ${t}, ${t.length}`);
+//        console.log(game);
+//        console.log(`tryStartRound: ${r} (${typeof(r)}) - current: ${gr} (${typeof(gr)}), is next? ${r === gr + 1}`);
+        return;
+        if (t.length > 0) {
+            if (r != gr) {
+                if (r === (gr + 1) || r < 0) {
+                    if (game.round.toString().indexOf('*', 0) === -1 || (gr === 0 && r === 1)) {
+                        socket.emit('startRound', {gameID: game.uniqueID, round: r});
+                    } else {
+                        alert(`Current round (${gr}) not yet completed, cannot start round ${r}`);
+                    }
+                } else {
+                    alert(`Cannot start round ${r} - rounds must be completed sequentially (current round is ${gr}).`)
+                }
+            } else {
+                alert(`round ${r} is already in progress.`)
+            }
+        } else {
+            alert(`cannot start round ${r} before teams have been allocated.`);
+        }
     };
     const showScoreSummary = (summ, teams) => {
         let str = 'Team submitted score:\n\n';
@@ -648,10 +785,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         alert(str);
     };
+    const showRoundCompleter = () => {
+        const r = parseInt(game.round.toString().replace(/\D/g, ''));
+        if (r > 0) {
+            const round = game.persistentData.rounds[r];
+            const subs = round.submissions;
+            const teams = game.persistentData[round.teams];
+            // scores assumed to be always required:
+            const scores = game.scores.filter(sc => sc.startsWith(r));
+            console.log(`showRoundCompleter:`);
+            console.log(scores);
+            const rOb = {teams: []};
+            teams.forEach(t => {
+                if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
+                    rOb.teams.push(Object.assign({}, t));
+                }
+            });
+            $('#modal').modal({
+                closeExisting: true
+            });
+            rOb.isLead = true;
+            rOb.currentRoundComplete = false;
+    //        console.log(rOb);
+            if (rOb.teams.length > 0) {
+                renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
+                    let tl = $('.modtablinks');
+                    tl.off('click');
+                    tl.on('click', function () {
+        //                openTab($(this).attr('id').replace('link', ''));
+                        const tOb = {isLead: true, currentRoundComplete: false};
+                        const id = $(this).attr('id').replace('link_', '');
+                        tOb.teamObj = game.persistentData.teams[`t${id}`];
+                        const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
+                        pl.teamObj = Object.assign({}, tOb.teamObj);
+                        $('#formname').html(tOb.teamObj.title);
+                        renderPartial('formzone', 'game-allocation', tOb, () => {
+                            $('.resources-btn').css({
+                                width: '30px',
+                                height: '30px',
+                                'background-color': 'green'
+                            });
+                            window.setupAllocationControl(pl);
+                        });
+                    });
+                });
+            } else {
+                $(`#modaltheatre`).html(`Round ${r} is complete, no further input needed.`);
+            }
+        } else {
+            alert(`No round currently active.`);
+        }
+    };
     const renderSession = () => {
-        addToLogFeed(`renderSession (see console)`);
-        console.log(`renderSession`);
-        console.log(session);
+//        addToLogFeed(`renderSession (see console)`);
+//        console.log(`renderSession`);
+//        console.log(session);
         const targ = 'contentSession';
         window.setupObserver(targ, () => {
 //            console.log('mutationObserver detects change in sessionCard');
@@ -718,7 +906,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     };
     const openTab = (l) => {
-//        console.log(l)
+        const ct = getCurrentTab();
+        if (l !== ct.title && ct.hasOwnProperty('el')) {
+            $(`#content${window.toCamelCase(ct.title)}`).html('');
+        }
         window.location.hash = l.toLocaleLowerCase();
         const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`
         const tabcontent = $('.tabcontent');
@@ -736,10 +927,79 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game);
         return game;
     };
+    const compare = (a, b) => {
+        return JSON.stringify(a) === JSON.stringify(b);
+    };
+    let compCount = 0;
+    let changeReport = [];
+    const showChangeReport = () => {
+        const rep = changeReport.filter(obj => !obj.prop.includes('warning'));
+        rep.forEach(r => {
+            console.log(`${r.player} ${r.prop} from ${r.old} to ${r.new}`);
+        });
+    };
+    window.showChangeReport = showChangeReport;
+    const compareGames = (g, comp) => {
+        // compare a newly supplied game object with the existing game and reveal differences (dev method)
+        const src = g.hasOwnProperty('updateSource') ? g.updateSource : 'no source provided';
+        let out = [];
+        if (!compare(g[comp], game[comp])) {
+            out = [];
+            compCount++;
+//            console.log(` ----------- gameUpdate ${src}, mismatch found in "${comp}" (total found: ${compCount})`);
+//            console.log('old game', game[comp]);
+//            console.log('new game', g[comp]);
+            Object.entries(g[comp]).forEach((pl, i) => {
+                if (!compare(pl[1], game[comp][pl[0]])) {
+                    const pre = game[comp][pl[0]];
+                    const post = pl[1];
+                    for (let n in pre) {
+                        if (!compare(pre[n], post[n])) {
+//                            console.log(`mismatch between player objects ${pl[0]}: ${n}`);
+                            const ob = {player: pl[0], prop: n, old: pre[n], new: post[n]};
+                            changeReport.push(ob);
+                            out.push(n);
+                        }
+                    }
+                }
+            })
+        }
+        return out;
+    }
+
+
+    function handleChange(prop) {
+//        console.log(`change detected for property ${prop}`);
+        if (typeof(game.players[0]) !== 'string') {
+//            console.log(`Game has changed, players updated with non-string values: ${prop}`);
+//            console.log(game.players);
+        }
+    }
+
+    // Define a function to set up the watch
+    function setupWatch(obj, callback) {
+        // Iterate over each property of the object
+        for (let key in obj) {
+            // Get the current value of the property
+            let value = obj[key];
+
+            // Define a getter and setter for the property
+            Object.defineProperty(obj, key, {
+                get() {
+                    return value;
+                },
+                set(newValue) {
+                    value = newValue;
+                    callback(key); // Call the callback function with the property name
+                }
+            });
+        }
+    }
+
 
     const sockInit = () => {
-//        console.log(`sockInit`)
         const sessionID = getSessionID();
+        window.socketShare(socket);
         addToLogFeed(`sessionID: ${sessionID}`);
         if (sessionID) {
             getSession(sessionID);
@@ -749,19 +1009,28 @@ document.addEventListener('DOMContentLoaded', function() {
 //        setupBaseLinks();
     };
 
-    socket.on('test', () => {console.log('test')})
+    let renderInt = null;
+    socket.on('test', () => {console.log('test')});
     socket.on('gameUpdate', (g) => {
+//        console.log(`###############################################`);
+//        console.log(`gameUpdate:`, g);
         const pv = procVal;
-//        console.log(`attempt to update the game, ${pv(g.uniqueID)}, ${pv(getSessionID())}`);
-        // As there currently is no game-specific Facilitator room/namespace a conditional is required:
+        let comp = 'playersFull';
+        // cg will be an array of updated values, precluding any changes to props containing 'warning'
+        const cg = compareGames(g, comp).filter(str => !str.includes('warning'));
+        const displayedProperty = Boolean(cg.slice(0).indexOf('socketID', 0) === -1);
         if (pv(g.uniqueID) === pv(getSessionID())) {
             addToLogFeed('gameUpdate');
-            game = g;
-//            console.log(game)
-
-            renderGame();
-            renderPlayers();
+            updateGame(g);
+            if (displayedProperty) {
+                setupTab(getCurrentTab().title);
+//                console.log(`setupTab: ${getCurrentTab().title}`)
+            }
             playergraph();
+            if ($('#roundcompleter').length > 0) {
+                closeModal();
+                showRoundCompleter();
+            }
         }
     });
     socket.on('playerUpdate', (ob) => {
@@ -769,7 +1038,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('scoreSubmitted', (ob) => {
 //        console.log(`score submitted by ${ob.player.teamObj.title}:`);
-        console.log(ob);
+//        console.log(ob);
+        if ($('#roundcompleter').length > 0) {
+//            closeModal();
+//            showRoundCompleter();
+        }
 //        console.log(`action: ${ob.action}`);
 //        console.log(`description: ${ob.desc}`);
 //        console.log(`value assigned: ${ob.score}`)
@@ -785,9 +1058,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 //    window.showGame = showGame;
     renderTemplate = window.renderTemplate;
+    renderPartial = window.renderPartial;
     procVal = window.procVal;
     //
     window.showGame = showGame;
+    const closeModal = () => {
+        $('#modal').modal('close');
+        console.log('closed');
+        console.log($('#modal'));
+    }
+    window.closeModal = closeModal;
     //
     domInit();
 });

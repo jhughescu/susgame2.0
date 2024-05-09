@@ -16,11 +16,15 @@
     <td class='boo {{this.connected}}'><div class='circle'></div></td>
 <td {{#if this.warning}}class='link warning'{{/if}}>{{this.teamObj.title}}</td>
 <td class='boo {{this.isLead}}'>{{this.isLead}}</td>
-<td>
-{{#if this.teamObj.hasLead}}
-<button class='makeLead' id='makeLead_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}} {{#if this.connected}}{{else}} disabled{{/if}}>make lead</button>
-<button class='refresh' id='refreah_{{this.teamObj.id}}_{{this.id}}'}>Refresh</button>
-{{/if}}</td>
+
+
+<td>{{#if this.teamObj.hasLead}}
+    <button class='makeLead rollover' id='makeLead_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}} {{#if this.connected}}{{else}} disabled{{/if}}>make lead</button>
+    {{/if}}</td>
+    <td><button class='reassign rollover' id='reassign_{{this.teamObj.id}}_{{this.id}}'}>Reassign</button></td>
+    <td><button class='refresh rollover' id='refreah_{{this.teamObj.id}}_{{this.id}}'}>Refresh</button></td>
+
+
 </tr>
 {{/each}}
 </tbody></table>

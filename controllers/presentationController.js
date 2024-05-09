@@ -40,6 +40,10 @@ const reloadSlide = (cb) => {
     presentation.reloadSlide(cb);
     showSlide();
 };
+const refreshWindow = () => {
+    const rOb = {address: game.address};
+    eventEmitter.emit('refreshPresentationWindow', rOb);
+}
 const play = (cb) => {
     presentation.play(cb);
 };
@@ -71,6 +75,9 @@ const pEvent = (ob, cb) => {
                     break;
                 case 'reload':
                     reloadSlide(cb);
+                    break;
+                case 'refresh':
+                    refreshWindow(cb);
                     break;
                 case 'auto':
                     toggleAutoPlay(cb);

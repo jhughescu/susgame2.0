@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function () {
             Object.assign(game.presentation, uOb);
             console.log(game.presentation);
         });
+        socket.on('refreshWindow', () => {
+            window.location.reload();
+        });
     };
     const estPanopto  = () => {
         // Loads the Panopto API script for controlling video content
@@ -287,8 +290,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     // End Panopto
+    const devInfo = (slOb) => {
+        const p = $('#devoverlay');
+        if (p.length > 0) {
+            if (p.is(':visible')) {
+                p.html('');
+                renderTemplate('devoverlay', 'presentation.devinfo', slOb, () => {
+                    p.fadeIn();
+                });
+            }
+        }
+    }
     const showSlide = (slOb) => {
-        console.log(`showSlide`, slOb);
+//        console.log(`showSlide`, slOb);
+        devInfo(slOb);
         if (slOb.type === 'video') {
             showVideo(slOb)
         } else if (slOb.type === 'slide') {
@@ -335,5 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showGame = showGame;
     window.getVidID = getVidID;
     window.onVideoEnd = onVideoEnd;
+    window.getCurrentSlide = getCurrentSlide;
 //    window.videoCheck = videoCheck;
 });

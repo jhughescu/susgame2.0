@@ -125,6 +125,8 @@ position: relative;
 .playerlist td, th {
 /*    background-color: green;*/
     padding: 5px 20px 0px 0px;
+    padding: 0px;
+    padding: 1px 2px;
 }
 .boo.true {
     color: #33cc33;
@@ -177,4 +179,7 @@ position: relative;
 }
 #slidelist span:hover {
     background-color: #8beffc;
+}
+.modal {
+    color: black;
 }

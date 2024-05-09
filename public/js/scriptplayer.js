@@ -17,13 +17,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const fake = qu.fake === 'true';
 //    console.log(fake);
     const updateGame = (ob) => {
-        Object.assign(game, ob);
+        if ($.isEmptyObject(game)) {
+            game = ob;
+            window.gameShare(game);
+        } else {
+            Object.assign(game, ob);
+        }
     };
     const registerwithGame = () => {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
+        window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
             if (ob) {
+                console.log(`registerwithGame`, ob);
                 let res = ob.id;
                 if (ob.game) {
                     ob.game = JSON.parse(ob.game);
@@ -39,9 +46,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     ob.renderState.source = `registerPlayer event`;
                     updateRenderState(ob.renderState);
                 }
-                const hash = window.location.hash;
+                let hash = window.location.hash;
                 if (hash) {
-                    updateRenderState({temp: `game.${hash.replace('#', '')}`, tempType: `sub`});
+                    let rOb = {temptype: 'sub'};
+                    if (/\d/.test(hash)) {
+                        // number found in hash; assume a team page, fetch object accordingly
+                        const n = parseInt(hash.match(/\d+/)[0]);
+                        rOb.ob = Object.assign({}, game.persistentData.teams[`t${n}`]);
+                        delete rOb.ob.game;
+                        hash = hash.replace(/\d/g, '');
+                    }
+                    rOb.temp = `game.${hash.replace('#', '')}`;
+                    updateRenderState(rOb);
                 }
                 render(() => {
                     if (game.round > 0) {
@@ -119,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game)
         const t = getTeam(game);
         player = game.playersFull[getPlayerID()];
+        window.playerShare(player);
 //        console.log(player);
     };
     const teamsAssigned = (game) => {
@@ -170,19 +187,17 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(rs, typeof(rs));
         return rs;
     };
-    const thisRoundScored = () => {
+    const thisRoundScoredCOMMON = () => {
         return new Promise((resolve, reject) => {
             socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
                 const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                 const rID = `${game.round}.${player.teamObj.id}`;
                 const spi = scoreSumm.indexOf(rID);
-//                console.log(scoreSumm, rID);
-//                console.log(`thisRoundScored: ${isS}`);
                 resolve({hasScore: spi > -1, scorePacket: sps[spi]});
             });
         })
     };
-    const setupAllocationControl = async () => {
+    const setupAllocationControlGone = async () => {
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
@@ -233,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     socket.emit('submitValues', vob);
                     const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
                     socket.emit('submitScore', sob, (scores) => {
-                        setupAllocationControl();
+                        window.setupAllocationControl();
                     });
 
 //                    setupAllocation(false);
@@ -291,7 +306,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const setupHomeButton = async () => {
         const hb = $('.home_btn');
-//        console.log(`setupHomeButton`, hb)
         if ($.isEmptyObject(returnRenderState)) {
             const rs = await new Promise((resolve, reject) => {
                 socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
@@ -303,19 +317,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         hb.off('click');
         hb.on('click', async () => {
-//            console.log('clicked');
             setHash();
             homeState();
             setRoundState(false);
             resetScroll();
             render();
-//            console.log(`run the round check here`);
-//            console.log(game.round);
             const round = game.persistentData.rounds[game.round];
             if (round) {
                 const rs = await thisRoundScored();
-//                console.log(rs);
-//                console.log(rs.hasScore);
                 if (!rs.hasScore) {
                     activateYourmove();
                 }
@@ -325,6 +334,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const setHash = (hash) => {
         hash = Boolean(hash) ? `#${hash}` : '';
+//        console.log(`setHash: ${hash}`);
+//        if (!window.location.hash.includes(hash) || hash === '') {
         if (!window.location.hash.includes(hash) || hash === '') {
             let cURL = window.location.href;
             cURL = cURL.replace(window.location.hash, '');
@@ -333,23 +344,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const setupMainControl = () => {
-//        console.log(`setupMainControl`);
         const l = $('.link_main');
         const ls = $(`#link_resources`);
         const lg = $(`#link_global`);
         const lc = $(`#link_connecton`);
-//        console.log(lg)
         l.off('click');
         lg.on('click', () => {
             setHash(`global`);
-            updateRenderState({temp: 'game.global', sub: null, tempType: 'sub', ob: {}});
+            updateRenderState({temp: 'game.global', sub: null, tempType: 'sub', ob: {hasContent: true}});
             resetScroll();
             render();
         });
         lc.on('click', () => {
             setHash(`connecton`);
-//            returnRenderState = Object.assign({}, renderState);
-//            updateRenderState({temp: 'game.connecton', sub: null, ob: Object.values(game.persistentData.teams)});
             updateRenderState({temp: 'game.connecton', sub: null, tempType: 'sub'});
             resetScroll();
             render();
@@ -361,6 +368,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const setupConnectonControl = () => {
 //        console.log(`setupConnectonControl`);
         setupHomeButton();
+        const a = $('a');
+        a.off('click').on('click', function () {
+            const t = $(this).attr('id').split('_')[1];
+            const tm = Object.assign({}, game.persistentData.teams[`t${t}`]);
+            tm.game = {};
+            delete tm.game;
+            setHash(`connecton.team${t}`)
+            updateRenderState({temp: `game.connecton.team`, ob: tm});
+            render(() => {
+                console.log(`ok, we can set up the button now`)
+            });
+        })
+    };
+    const setupTeamControl = () => {
+        // Just needs a return to Connecton button
+        const b = $('#connecton_btn');
+        b.off('click').on('click', () => {
+            updateRenderState({temp: 'game.connecton', ob: {}});
+            // Note: set hash to 'reset' first, as the setHash method will not overwrite hash if it includes the new hash
+            setHash('reset');
+            setHash('connecton');
+            render();
+        });
     };
     const setupControl = (type) => {
         // On template rendered, set up any controls
@@ -376,7 +406,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 setupConnectonControl();
                 break;
             case 'allocation':
-                setupAllocationControl();
+                window.setupAllocationControl();
+                break;
+            case 'connecton.team':
+                setupTeamControl();
                 break;
             default:
                 console.warn(`no controls defined for ${type}`);
@@ -598,6 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
+    //
+//    window.renderTeam = renderTeam;
     /*
     window.addEventListener('beforeunload', function(event) {
         // Cancel the event as stated by the standard.
