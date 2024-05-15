@@ -26,6 +26,8 @@ const log = (msg) => {
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
     const session = JSON.parse(o);
+//    console.log(`gameController startGame, session:`);
+//    console.log(session);
     const game = `game-${session.uniqueID}`;
     log(`startGame: ${game}`);
     let rg = null;
@@ -43,11 +45,21 @@ async function startGame (o, cb) {
         games[game] = newGame;
     }
     // Only set state to 'started' if it is currently pending
+//    console.log(`session.state: ${session.state}`);
     if (session.state ===  'pending') {
-        sessionController.updateSession(session.uniqueID, {state: 'started'});
-    }
-    rg = games[game];
 
+        const rSession = await sessionController.updateSession(session.uniqueID, {state: 'started'});
+        if (rSession) {
+            session.state = rSession.state;
+//            console.log('OK, the return is good');
+//            console.log(`session`, session);
+//            console.log(`rSession`, rSession);
+
+        }
+    }
+
+    rg = games[game];
+    Object.assign(rg, session);
     routeController.createRoute(`${session.address}`);
     gfxController.generateSessionQR(session);
     try {
@@ -58,20 +70,14 @@ async function startGame (o, cb) {
 
     const smts = session.mainTeamSize;
     const pdts = rg.persistentData.teamSize;
-//    console.log('sort out mainTeamSize here');
-//    console.log(smts);
-//    console.log(pdts);
     if (!smts) {
         sessionController.updateSession(session.uniqueID, {mainTeamSize: pdts});
     }
-//    console.log(smts);
-//    console.log(`returned game is ready`);
     eventEmitter.emit('gameReady', rg);
-//    log(rg);
     if (cb) {
+//        console.log('game to return:', rg);
         cb(rg);
     }
-//    showGames();
     return rg;
 };
 async function restoreGame (o, cb) {
@@ -462,69 +468,62 @@ const deleteGame = (gameID) => {
 };
 const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
-//    console.log(`getTheRenderState ${id}`)
-//    console.log(game);
-//    console.log(id);
     let rs = {};
     // Ensure current game data by deriving & fetching from the games object:
     game = games[`game-${game.uniqueID}`];
     if (game) {
-    //    log(`getTheRenderState: ${id}, round: ${game.round}`);
-        const round = game.persistentData.rounds[game.round];
-        let leads = game.teams.map(c => c[0]);
-//        console.log(`leads: ${leads}`);
-        // trim the 'leads' array so it only uses main teams (sub teams have no lead)
-        leads = leads.splice(0, game.persistentData.mainTeams.length);
-//        console.log(`leads: ${leads}`);
-        const isLead = leads.includes(id);
-        const team = game.teams.findIndex(t => t.includes(id));
-        const teamObj = game.persistentData.teams[`t${team}`];
-        let hasLead = false;
-        if (teamObj) {
-            hasLead = teamObj.hasLead;
-        }
-//        console.log(team);
-//        console.log(teamObj);
-        const scoreRef = `${game.round}_${team}`;
-        // check this value \/ , the map array should have only one element
-        const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
-
-        if (game.state === 'ended') {
-            rs.temp = 'game.gameover';
-        } else if (game.state === 'pending') {
-            rs.temp = 'game.pending';
-        } else {
-            // only remaining state is 'started'
-            if (game.teams.length > 0) {
-                rs.temp = 'game.main';
-                rs.partialName = 'game-links';
-                if (game.state === 'started') {
-                    if (isLead || !hasLead) {
-                        if (hasScore && hasLead) {
-                            rs.temp = 'game.main';
-                        } else {
-                            if (round) {
-//                                console.log(`getTheRenderState, round: ${round}`)
-                                if (round.n > 0) {
-//                                    rs.temp = 'game.allocation';
-                                    rs.temp =  `game.${round.template}`;
-                                    rs.tempType = 'interaction';
+        if (game.persistentData) {
+        //    log(`getTheRenderState: ${id}, round: ${game.round}`);
+            const round = game.persistentData.rounds[game.round];
+            let leads = game.teams.map(c => c[0]);
+            // trim the 'leads' array so it only uses main teams (sub teams have no lead)
+            leads = leads.splice(0, game.persistentData.mainTeams.length);
+    //        console.log(`leads: ${leads}`);
+            const isLead = leads.includes(id);
+            const team = game.teams.findIndex(t => t.includes(id));
+            const teamObj = game.persistentData.teams[`t${team}`];
+            let hasLead = false;
+            if (teamObj) {
+                hasLead = teamObj.hasLead;
+            }
+            const scoreRef = `${game.round}_${team}`;
+            // check this value \/ , the map array should have only one element
+            const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
+            if (game.state === 'ended') {
+                rs.temp = 'game.gameover';
+            } else if (game.state === 'pending') {
+                rs.temp = 'game.pending';
+            } else {
+                // only remaining state is 'started'
+                if (game.teams.length > 0) {
+                    rs.temp = 'game.main';
+                    rs.partialName = 'game-links';
+                    if (game.state === 'started') {
+                        if (isLead || !hasLead) {
+                            if (hasScore && hasLead) {
+                                rs.temp = 'game.main';
+                            } else {
+                                if (round) {
+                                    if (round.n > 0) {
+                                        rs.temp =  `game.${round.template}`;
+                                        rs.tempType = 'interaction';
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        rs.sub = null;
                     }
+                    rs.ob = game.playersFull[id];
                 } else {
-                    rs.sub = null;
+                    rs.temp = 'game.intro';
                 }
-                rs.ob = game.playersFull[id];
-            } else {
-                rs.temp = 'game.intro';
             }
+            rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
+            rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
+            const rsCopy = Object.assign({}, rs);
+            delete rsCopy.ob;
         }
-        rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
-        rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
-        const rsCopy = Object.assign({}, rs);
-        delete rsCopy.ob;
     } else {
         console.log(`getTheRenderState cannot complete; game not defined ()`)
     }
@@ -659,21 +658,19 @@ const checkRound = (ob, cb) => {
     const gameID = typeof(ob) === 'string' || typeof(ob) === 'number' ? ob : ob.gameID;
     const game = games[`game-${gameID}`];
     if (game) {
-
         const round = ob.hasOwnProperty('round') ? ob.round : game.round;
         if (round > 0) {
             const rScores = game.scores.filter(item => item.startsWith(round));
             const gRound = game.persistentData.rounds[round];
-    //        console.log(`checkRound:`);
-    //        console.log(round);
-    //        console.log(rScores);
-    //        console.log(gRound);
             const teams = game.persistentData[gRound.teams];
+//            console.log(`rScores`, rScores);
+//            console.log(`gRound`, gRound);
+//            console.log(`teams`, teams);
             const ta = [];
             teams.forEach(t => {
                 ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
             });
-            console.log(`checkRound`, ta);
+//            console.log(`ta`, ta);
             if (cb) {
                 cb(ta);
             }
@@ -707,7 +704,11 @@ const scoreSubmitted = async (ob, cb) => {
         let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
-        if (game.scores.indexOf(d) > -1) {
+        console.log(`scoreSubmitted:`);
+        console.log(`game.scores:`, game.scores);
+        console.log(`d:`, d);
+        console.log(`p:`, p);
+        if (game.scores.indexOf(p) > -1) {
             // Duplicate scores are not allowed (score packets must be unique)
             // In case of a duplicate score submission, callback the scores and end the method.
             console.log(`oh no, a duplicate score`);
@@ -747,7 +748,7 @@ const scoreSubmitted = async (ob, cb) => {
 };
 const scoreForAverageSubmitted = async (ob, cb) => {
     // A score, or set of scores, submitted which must be averaged out over a team
-    console.log(`scoreForAverageSubmitted`);
+//    console.log(`scoreForAverageSubmitted`);
     const sc = ob.scoreCode;
     const gameID = `game-${ob.game}`;
     const game = games[gameID];
@@ -761,12 +762,18 @@ const scoreForAverageSubmitted = async (ob, cb) => {
 //            console.log(sp);
             scOut.push(p);
         });
-        console.log(scOut);
+//        console.log(scOut);
 //        const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
         const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
         if (session) {
+
             game.scores = session.scores;
+            const roundComplete = checkRound(ob.game).indexOf(false) === -1;
+//            console.log(`complete: ${roundComplete}`);
             eventEmitter.emit('scoresUpdated', game);
+            if (roundComplete) {
+                endRound(ob);
+            }
         }
         let ssp = filterScorePackets(gameID, 'round', 2);
         ssp = filterScorePackets(gameID, 'src', sc[0].src, ssp);

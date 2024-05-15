@@ -376,7 +376,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         socket.emit('submitValues', vob);
                         const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
                         socket.emit('submitScore', sob, (scores) => {
-                            setupAllocationControl();
+//                            setupAllocationControl();
+//                            window.location.reload();
                         });
 
     //                    setupAllocation(false);

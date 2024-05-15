@@ -185,13 +185,15 @@ function initSocket(server) {
 //                console.log(`on getGame`)
                 gameController.getGame(id, cb);
             });
-            socket.on('startGame', (o, cb) => {
-//                console.log(`startGame`);
-                gameController.startGame(o, cb);
+            socket.on('startGame', async (o, cb) => {
+                const g = await gameController.startGame(o, cb);
+                if (g) {
+                    // if there are any players connected, refresh the clients
+                    io.to(g.address).emit('forceRefresh');
+                }
             });
-//            console.log('socketController restoreGame listener established');
             socket.on('restoreGame', (o, cb) => {
-//                console.log(`restoreGame heard in socketController`);
+                console.log(`restoreGame heard in socketController`);
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {

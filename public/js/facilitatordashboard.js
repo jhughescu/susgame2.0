@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
 //                game = rgame;
+                console.log(`startGame callback, rgame:`, rgame);
                 updateGame(rgame);
                 addToLogFeed('game ready');
                 getSession(game.uniqueID, () => {
@@ -337,11 +338,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const renderScores = () => {
-        const ob = {scores: game.scores};
-        renderTemplate('contentScores', 'facilitator.scores', ob, () => {
-//            setupPlayerControls();
+        if (game) {
+            const ob = {scores: game.scores};
+            renderTemplate('contentScores', 'facilitator.scores', ob, () => {
+    //            setupPlayerControls();
 
-        })
+            })
+        }
     };
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
@@ -470,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log($(`#content${window.toCamelCase(arg)}`).children().length);
 //        console.log(`currentTab: ${getCurrentTab().title}`);
 //        console.log(getCurrentTab());
-        const alwaysUpdate = ['players', 'scores'];
+        const alwaysUpdate = ['players', 'scores', 'game', 'session'];
         const neverStatic = alwaysUpdate.indexOf(arg, 0) > -1;
         // Try running only if the tab has changed:
         if ($(`#content${window.toCamelCase(arg)}`).children().length === 0 || neverStatic) {

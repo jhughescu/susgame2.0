@@ -73,15 +73,17 @@ class Game {
     }
     setTeams () {
         // set teams (teamObj) for all players in a game (init method)
-        let pt = this.persistentData.teams;
-        if (this.teams.length > 0) {
-            this.teams.forEach((tl, i) => {
-                const t = pt[`t${i}`];
-                tl.forEach(p => {
-                    this.playersFull[p].teamObj = t;
+        if (this.persistentData) {
+            let pt = this.persistentData.teams;
+            if (this.teams.length > 0) {
+                this.teams.forEach((tl, i) => {
+                    const t = pt[`t${i}`];
+                    tl.forEach(p => {
+                        this.playersFull[p].teamObj = t;
+                    });
                 });
-            });
-        }
+            }
+        } else {}
     }
     unsetTeams () {
         // set teams (teamObj) for all players in a game (init method)
@@ -102,16 +104,18 @@ class Game {
     }
     setTeam (player) {
         // set the team (teamObj) for a single player (restore method)
-        let pt = this.persistentData.teams;
-//        let id = 'fake';
-//        console.log(`set teamObj for player ${player.id}`);
-        this.teams.forEach((t, i) => {
-            if (t.includes(player.id)) {
-//                console.log(`allocate team ${pt[`t${i}`].title}`);
-                player.teamObj = pt[`t${i}`];
-                player.isLead = t[0] === player.id;
-            }
-        })
+        if (this.persistentData) {
+            let pt = this.persistentData.teams;
+    //        let id = 'fake';
+    //        console.log(`set teamObj for player ${player.id}`);
+            this.teams.forEach((t, i) => {
+                if (t.includes(player.id)) {
+    //                console.log(`allocate team ${pt[`t${i}`].title}`);
+                    player.teamObj = pt[`t${i}`];
+                    player.isLead = t[0] === player.id;
+                }
+            })
+        }
     }
     addLatecomer(player) {
         // add a latecomer to a team
