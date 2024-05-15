@@ -45,8 +45,25 @@ document.addEventListener('DOMContentLoaded', function () {
         // Later, you can disconnect the observer when it's no longer needed
         // observer.disconnect();
     };
+    const checkDevMode = async () => {
+//        console.log('checking devMode A');
+        return new Promise((resolve, reject) => {
+//            console.log('checking devMode B');
+            socket.on('returnDevMode', (isDev) => {
+//                console.log(`return: ${isDev}`);
+                resolve(isDev);
+            });
+            socket.emit('checkDevMode');
 
-    //    setupObserver('myTargetElement');
+
+            // Handle errors
+            socket.on('error', (error) => {
+                // Reject the promise with the error message
+                console.warn(`checkDevMode error ${error}`)
+                reject(error);
+            });
+        });
+    }
     const procVal = (v) => {
         // process values into numbers, booleans etc
         if (!isNaN(parseInt(v))) {
@@ -262,10 +279,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return qu;
     };
+    const filterScorePackets = (sp, prop, val) => {
+        const spo = [];
+        val = procVal(val);
+        sp.forEach(s => {
+            if (s[prop] === val) {
+                spo.push(s);
+            }
+        });
+        return spo;
+    };
     const thisRoundScored = (pl) => {
-        console.log(`thisRoundScored: ${player === null}`);
         const myPlayer = player === null ? pl : player;
-        console.log(myPlayer);
         if (socket && myPlayer) {
 //            console.log(`we have a a socket, let's look for stuff`);
             return new Promise((resolve, reject) => {
@@ -273,13 +298,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                     const rID = `${game.round}.${myPlayer.teamObj.id}`;
                     const spi = scoreSumm.indexOf(rID);
-                    resolve({hasScore: spi > -1, scorePacket: sps[spi]});
+                    resolve({hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)});
                 });
             })
         } else {
             console.log('no socket shared, cannot emit socket calls');
         }
     };
+    const sortBy = (array, property) => {
+        return array.sort((a, b) => {
+            if (a[property] < b[property]) {
+                return -1;
+            }
+            if (a[property] > b[property]) {
+                return 1;
+            }
+            return 0;
+        });
+    }
+    // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
 //        console.log('set it up');
 //        console.log(player);
@@ -349,21 +386,95 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             console.log(`Whoops, no 'round scored' object found`);
         }
-    }
+    };
+    const setupVoteControl = async (inOb) => {
+        console.log(`setupVoteControl:`);
+//        console.log(game);
+        const myPlayer = player === null ? inOb : player;
+        const butAdj = $('.resources-btn');
+        const butMinus = $('.vote_btn_minus');
+        const butPlus = $('.vote_btn_plus');
+        const vAvailDisp = $('#vAvail');
+        const vTotalDisp = $('#vTotal');
+        const val = $('.value');
+        const submit = $(`#buttonAllocate`);
+        const ints = $('.vote_btn_minus, .vote_btn_plus, #buttonAllocate');
+//        let hasS = await thisRoundScored(myPlayer);
+//        hasS = false;
+        const vTotal = player.teamObj.votes;
+        const r = parseInt(game.round);
+        vAvailDisp.html(0);
+        vTotalDisp.html(vTotal);
+//        console.log(`setupVoteControl:`);
+        const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
+        socket.emit('getAggregates', aOb, (a, sp, report) => {
+//            console.log(`get aggregated scores:`);
+//            console.log(a);
+//            console.log(sp);
+//            console.log(report);
+            const myScores = filterScorePackets(sp, 'type', procVal(player.index));
+            const playerHasScored = Boolean(myScores.length);
+//            console.log(`playerHasScored: ${playerHasScored}`);
+            if (playerHasScored) {
+                console.log(`this player has already scored:`);
+                console.log(myScores);
+                butMinus.addClass('disabled');
+                butPlus.addClass('disabled');
+                submit.addClass('disabled');
+                let t = 0;
+                val.each((i, v) => {
+                    $(v).html(myScores[i].val);
+                    t += Math.abs(myScores[i].val);
+                });
+                vAvailDisp.html(t);
+            } else {
+                console.log('player has not scored');
+                butAdj.off('click').on('click', function () {
+                let t = 0;
+                val.each((i, v) => {
+                    if($(v).closest('tr').attr('id') !== $(this).closest('tr').attr('id')) {
+                        t += Math.abs(parseInt($(v).html()));
+                    }
+                });
+                // player.teamObj.votes must be the same for each player at setup
+                const avail = vTotal - t;
+                const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
+                const h = $(this).parent().parent().parent().find('.value');
+                let v = parseInt(h.html());
+                if (Math.abs(v + adj) <= Math.abs(avail)) {
+                    v += adj;
+                    h.html(v);
+                }
+                vAvailDisp.html(Math.abs(t) + Math.abs(v));
+            });
+            submit.on('click', () => {
+                const sOb = {scoreCode: [], game: game.uniqueID, player: player.id};
+                val.each((i, v) => {
+                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), type: procVal(player.index)});
+
+                });
+                socket.emit('submitScoreForAverage', sOb);
+//                setupVoteControl();
+                window.location.reload();
+            });
+            }
+        });
+
+    };
     // the 'share' methods are for sharing objects defined in other code files
     const socketShare = (sock) => {
         socket = sock;
-        console.log('share it out; socket');
+//        console.log('share it out; socket');
 
     };
     const playerShare = (pl) => {
         player = pl;
-        console.log('share it out; player');
+//        console.log('share it out; player');
 
     };
     const gameShare = (g) => {
         game = g;
-        console.log('share it out; game');
+//        console.log('share it out; game');
 
     };
     // NOTE: parials are currently set up each time the system admin connects, so the method call below is safe for now.
@@ -384,4 +495,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.gameShare = gameShare;
     window.thisRoundScored = thisRoundScored;
     window.setupAllocationControl = setupAllocationControl;
+    window.setupVoteControl = setupVoteControl;
+    window.checkDevMode = checkDevMode;
 });

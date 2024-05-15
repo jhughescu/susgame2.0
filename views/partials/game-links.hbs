@@ -8,7 +8,12 @@
     <div class='grid-item-3 link_main' id='link_connecton'>
         <img alt='Connect On logo' src='assets/GlobalNewsConnectOnLogos-02.svg' />
     </div>
+    {{#if hasLead}}
     {{#if isLead}}
         {{> yourmove}}
     {{/if}}
+    {{else}}
+        {{>yourmove}}
+    {{/if}}
+
 </div>

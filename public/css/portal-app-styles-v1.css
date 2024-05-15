@@ -355,6 +355,8 @@ input[type=submit]:hover {
 input[type=submit].disabled {
     cursor: default;
     background-color: #404040;
+    background-color: #575656;
+    color: #bab6b6;
 }
 form label{
 	font-size: 17pt;
@@ -385,6 +387,7 @@ form label{
 }
 .resources-btn.disabled {
   	background-color: #2f394a;
+    color: #bab6b6;
     cursor: default;
 }
 

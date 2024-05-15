@@ -28,13 +28,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let session = null;
     let game = null;
+    let gameSeekTimeout = null;
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
     const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
     const gameState = {disconnected: [], timeout: -1}
 
     socket.on('checkOnConnection', () => {
-//        console.log('connected one way or another, find out if there is a game on');
+//        console.log('connected one way or another, find out if there is a game on, game:');
+//        console.log('no hang on, I will erase the game and start again regardless');
+        game = null;
+//        console.log(game);
         addToLogFeed('connected to app');
         sockInit();
     });
@@ -85,16 +89,27 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(`cannot start game (session ${session.state})`)
         }
     };
-    const restoreGame = () => {
+    const emitRestoreGame = () => {
         socket.emit('restoreGame', JSON.stringify(session), (rgame) => {
-//            console.log('restoreGame callback');
-            addToLogFeed('game restore complete - game can recommence');
-//            console.log(rgame);
-//            console.log(rgame.assignTeams);
-//            game = rgame;
-            updateGame(rgame);
-            renderGame();
+            // Extra check to ensure game is not updated unnecessarily
+            if (game == null) {
+//                console.log('I SHOULD ONLY HAPPEN ONCE')
+                clearTimeout(gameSeekTimeout);
+                addToLogFeed('game restore complete - game can recommence');
+                updateGame(rgame);
+                renderGame();
+            }
         });
+    };
+    const restoreGame = () => {
+        // restoreGame must complete successfully for the game to be reestablished
+        // This method will repeat until game is established
+//        console.log(`restoreGame, game === null? ${game === null}`);
+        if (game === null) {
+            emitRestoreGame();
+            clearTimeout(gameSeekTimeout);
+            gameSeekTimeout = setTimeout(restoreGame, 200);
+        }
     };
     const endGame = () => {
         socket.emit('endGame', game, (rgame) => {
@@ -449,12 +464,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
+//        console.log(`setupTab: ${arg}`);
 //        console.log(`setupTab: ${window.toCamelCase(arg)}`);
 //        console.log($(`#content${window.toCamelCase(arg)}`));
 //        console.log($(`#content${window.toCamelCase(arg)}`).children().length);
 //        console.log(`currentTab: ${getCurrentTab().title}`);
 //        console.log(getCurrentTab());
-        const neverStatic = arg === 'players';
+        const alwaysUpdate = ['players', 'scores'];
+        const neverStatic = alwaysUpdate.indexOf(arg, 0) > -1;
         // Try running only if the tab has changed:
         if ($(`#content${window.toCamelCase(arg)}`).children().length === 0 || neverStatic) {
 //            console.log(`yes, setupTab: ${window.toCamelCase(arg)}`);
@@ -733,7 +750,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const gr = parseInt(game.round.toString().replace(/\D/g, ''));
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
         const oneUp = (r - gr) === 1;
-        let ok = false;
+        const idm = socket.emit('checkDevMode', (dm) => {
+            console.log(`idm ${dm}`);
+        });
+        let ok = idm;
         let msg = `Cannot start round ${r}:\n`;
         if (t.length === 0) {
             // Teams not yet assigned, must wait for allocation
@@ -870,12 +890,21 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-    const initSession = () => {
+    const initSession = async () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
         setupBaseLinks();
+//        console.log(`initSession, session:`, session);
+//        console.log(session);
+//        const dm = await window.checkDevMode();
+//        console.log('powwwwwwwwwwwwww');
+//        console.log(`devMode: ${dm}`);
+//        console.log(`session.state: ${session.state}`);
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
+//            console.log('session already started, restore');
             restoreGame();
+        } else {
+//            console.log('session not started, no action');
         }
     };
     const getSession = (sessionId) => {
@@ -998,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     const sockInit = () => {
+//        console.log(`sockInit`);
         const sessionID = getSessionID();
         window.socketShare(socket);
         addToLogFeed(`sessionID: ${sessionID}`);
@@ -1019,7 +1049,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
         const cg = compareGames(g, comp).filter(str => !str.includes('warning'));
         const displayedProperty = Boolean(cg.slice(0).indexOf('socketID', 0) === -1);
+//        console.log(`cg`, cg);
+//        console.log(`displayedProperty`, displayedProperty);
         if (pv(g.uniqueID) === pv(getSessionID())) {
+//            console.log('ID match, OK to update')
             addToLogFeed('gameUpdate');
             updateGame(g);
             if (displayedProperty) {
@@ -1037,15 +1070,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     });
     socket.on('scoreSubmitted', (ob) => {
-//        console.log(`score submitted by ${ob.player.teamObj.title}:`);
-//        console.log(ob);
-        if ($('#roundcompleter').length > 0) {
-//            closeModal();
-//            showRoundCompleter();
-        }
-//        console.log(`action: ${ob.action}`);
-//        console.log(`description: ${ob.desc}`);
-//        console.log(`value assigned: ${ob.score}`)
+        // Nothing here, look for gameUpdate instead
     });
     socket.on('gameWarning', (ob) => {
         alert(ob.warning)
@@ -1054,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`facilitatorDashboard hears gotoNext`);
         window.pEvent('next');
     });
+
 
 
 //    window.showGame = showGame;

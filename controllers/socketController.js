@@ -84,7 +84,7 @@ function initSocket(server) {
         src = `/${src}`;
         const Q = socket.handshake.query;
 
-        // Player clients
+        // Player clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (src.indexOf('/game', 0) > -1) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
@@ -121,9 +121,12 @@ function initSocket(server) {
 //                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
                 });
                 socket.on('submitScore', (ob, cb) => {
-//                    console.log(`submitScore`)
                     const sp = gameController.scoreSubmitted(ob, cb);
                     io.to(facilitator).emit('scoreSubmitted', sp);
+                });
+                socket.on('submitScoreForAverage', (ob, cb) => {
+                    const sp = gameController.scoreForAverageSubmitted(ob, cb);
+//                    io.to(facilitator).emit('scoreForAverageSubmitted', sp);
                 });
                 socket.on('submitValues', (ob) => {
                     const sp = gameController.valuesSubmitted(ob);
@@ -135,13 +138,25 @@ function initSocket(server) {
                 socket.on('getValues', (idOb, cb) => {
                     gameController.getValues(idOb, cb);
                 });
+                socket.on('getAggregates', (ob, cb) => {
+                    gameController.createAggregate(ob, cb);
+                });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
+//                console.log(Boolean(gameController.getGameWithAddress(src)));
+                if (!Boolean(gameController.getGameWithAddress(src))) {
+                    console.log(`game not ready, request a retry`);
+                    socket.emit('waitForGame');
+//                    res.status(404).set('Refresh', '5;url=/'); // Refresh after 5 seconds and redirect to the home page
+//                    res.send('Game not ready yet. Please wait and refresh the page.');
+
+//                    return; // Exit the function to prevent further processing
+                }
             }
 
         }
-        // End player clients
+        // End player clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        // Facilitator clients
+        // Facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'facilitator') {
             // this is a dashboard - needs further conditions to distinguish from system admin (which currently uses a namespace)
             socket.emit('checkOnConnection');
@@ -161,15 +176,22 @@ function initSocket(server) {
             socket.on('disconnect', () => {
     //            log('User disconnected from a facilitator dashboard');
             });
+            socket.on('checkDevMode', () => {
+                const isDev = process.env.ISDEV;
+//                console.log(`socketController isDev: ${isDev}, emit returnDevMode`);
+                socket.emit('returnDevMode', isDev);
+            })
             socket.on('getGame', (id, cb) => {
 //                console.log(`on getGame`)
                 gameController.getGame(id, cb);
             });
             socket.on('startGame', (o, cb) => {
-                console.log(`startGame`);
+//                console.log(`startGame`);
                 gameController.startGame(o, cb);
             });
+//            console.log('socketController restoreGame listener established');
             socket.on('restoreGame', (o, cb) => {
+//                console.log(`restoreGame heard in socketController`);
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {
@@ -256,15 +278,15 @@ function initSocket(server) {
                 gameController.setTeamSize(ob, cb);
             });
         }
-        // End facilitator clients
+        // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        // presentation (or slideshow) controller
+        // presentation (or slideshow) controller ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation-control') {
             socket.on('presentationEvent', (ob, cb) => {
                 presentationController.pEvent(ob, cb);
             });
         }
-        // Presentation client
+        // Presentation client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation') {
 //            console.log('############################################## presentation connected:');
 //            console.log(src);
@@ -297,15 +319,16 @@ function initSocket(server) {
 //                presentationController.nextSlide();
             });
         }
-        // End presentation clients
-        // videoPlayer client
+        // End presentation clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // videoPlayer client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'videoPlayer') {
             const roomID = `/${Q.id}-videoPlayer`;
             console.log(`we have a player: ${roomID}`);
             socket.join(roomID);
             showRoomSize(roomID);
         }
-        // End videoPlayer clients
+        // End videoPlayer clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {

@@ -268,6 +268,60 @@ const getScorePackets = (gameID, cb) => {
     }
     return sps;
 };
+const filterScorePackets = (gameID, prop, val, spIn) => {
+    const sp = spIn ? spIn : getScorePackets(gameID);
+    const spo = [];
+    sp.forEach(s => {
+        if (s[prop] === val) {
+            spo.push(s);
+        }
+    });
+    return spo;
+};
+const createAggregate = (ob, cb) => {
+    // filter score packets for round and src, then create aggregate/average values for each dest
+    const gameID = ob.gameID;
+    const round = ob.round;
+    const src = ob.src;
+    const game = games[gameID];
+    let a = [];
+    let report = '';
+    if (game) {
+        let spStatic = game.getScorePackets().slice(0);
+        spStatic.forEach((p, i) => {spStatic[i] = new ScorePacket(p)});
+        let sp = game.getScorePackets().slice(0);
+        report += `number of score packets: ${sp.length}`;
+        sp.forEach((s, i) => {
+            if (typeof(s) !== 'object') {
+                sp[i] = new ScorePacket(s);
+            }
+        });
+        sp = filterScorePackets(gameID, 'round', round, sp);
+        report += `, after filtering: ${sp.length}`;
+        const dests = Array.from(new Set(sp.map(item => item.dest)));
+        dests.forEach(d => {
+            const spsd = filterScorePackets(gameID, 'dest', d, sp);
+            report += `\n${d} - dest-specific packets: ${spsd.length}`;
+            let valTotal = 0;
+            const agOb = {dest: d, valTotal: 0, valAverage: 0, valCount: 0}
+            spsd.forEach((p, i) => {
+                valTotal += p.val;
+                agOb.valCount = (i + 1);
+                agOb.valTotal = valTotal;
+                agOb.valAverage = valTotal / (i + 1);
+            });
+            a[d] = agOb;
+        });
+
+        if (cb) {
+            cb(a, spStatic, report);
+        } else {
+            console.log(`createAggregate error: no callback sent`)
+        }
+    } else {
+        console.log(`createAggregate error; no ame with ID ${gameID}`);
+    }
+};
 const getAllValues = (gameID, cb) => {
     const game = games[gameID];
     let vs = [];
@@ -408,15 +462,29 @@ const deleteGame = (gameID) => {
 };
 const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
+//    console.log(`getTheRenderState ${id}`)
+//    console.log(game);
+//    console.log(id);
     let rs = {};
     // Ensure current game data by deriving & fetching from the games object:
     game = games[`game-${game.uniqueID}`];
     if (game) {
     //    log(`getTheRenderState: ${id}, round: ${game.round}`);
         const round = game.persistentData.rounds[game.round];
-        const leads = game.teams.map(c => c[0]);
+        let leads = game.teams.map(c => c[0]);
+//        console.log(`leads: ${leads}`);
+        // trim the 'leads' array so it only uses main teams (sub teams have no lead)
+        leads = leads.splice(0, game.persistentData.mainTeams.length);
+//        console.log(`leads: ${leads}`);
         const isLead = leads.includes(id);
         const team = game.teams.findIndex(t => t.includes(id));
+        const teamObj = game.persistentData.teams[`t${team}`];
+        let hasLead = false;
+        if (teamObj) {
+            hasLead = teamObj.hasLead;
+        }
+//        console.log(team);
+//        console.log(teamObj);
         const scoreRef = `${game.round}_${team}`;
         // check this value \/ , the map array should have only one element
         const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
@@ -431,13 +499,15 @@ const getTheRenderState = (game, id) => {
                 rs.temp = 'game.main';
                 rs.partialName = 'game-links';
                 if (game.state === 'started') {
-                    if (isLead) {
-                        if (hasScore) {
+                    if (isLead || !hasLead) {
+                        if (hasScore && hasLead) {
                             rs.temp = 'game.main';
                         } else {
                             if (round) {
+//                                console.log(`getTheRenderState, round: ${round}`)
                                 if (round.n > 0) {
-                                    rs.temp = 'game.allocation';
+//                                    rs.temp = 'game.allocation';
+                                    rs.temp =  `game.${round.template}`;
                                     rs.tempType = 'interaction';
                                 }
                             }
@@ -451,7 +521,8 @@ const getTheRenderState = (game, id) => {
                 rs.temp = 'game.intro';
             }
         }
-        rs.stuff = `id: ${id}, isLead: '${isLead}, team: ${team}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
+        rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
+        rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
         const rsCopy = Object.assign({}, rs);
         delete rsCopy.ob;
     } else {
@@ -674,6 +745,38 @@ const scoreSubmitted = async (ob, cb) => {
         return false;
     }
 };
+const scoreForAverageSubmitted = async (ob, cb) => {
+    // A score, or set of scores, submitted which must be averaged out over a team
+    console.log(`scoreForAverageSubmitted`);
+    const sc = ob.scoreCode;
+    const gameID = `game-${ob.game}`;
+    const game = games[gameID];
+    const scOut = [];
+    if (game) {
+        sc.forEach(s => {
+//            console.log(s);
+            let sp = new ScorePacket(game.round, s.src, s.dest, s.val, s.type);
+            let p = sp.getPacket();
+            let d = sp.getDetail();
+//            console.log(sp);
+            scOut.push(p);
+        });
+        console.log(scOut);
+//        const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
+        const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
+        if (session) {
+            game.scores = session.scores;
+            eventEmitter.emit('scoresUpdated', game);
+        }
+        let ssp = filterScorePackets(gameID, 'round', 2);
+        ssp = filterScorePackets(gameID, 'src', sc[0].src, ssp);
+//        console.log(`stored scores:`);
+//        console.log(ssp);
+
+    } else {
+        console.log(`scoreForAverageSubmitted: game not found (game-${ob.game})`);
+    }
+};
 const valuesSubmitted = async (ob) => {
     if (ob.hasOwnProperty('values')) {
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
@@ -725,6 +828,8 @@ module.exports = {
     startRound,
     checkRound,
     scoreSubmitted,
+    scoreForAverageSubmitted,
+    createAggregate,
     valuesSubmitted,
     presentationAction,
     getScorePackets,

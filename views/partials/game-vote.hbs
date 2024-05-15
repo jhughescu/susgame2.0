@@ -1,0 +1,22 @@
+<div class='round round2 voteform' id='vote'>
+    <table><tbody>
+        {{#each game.persistentData.mainTeams}}
+        <tr style='background-color: {{this.displayColour}};' id='row-{{this.id}}'>
+            <td style='background-image: url("assets/icons_{{this.abbrCap}}white 1.svg")'>{{this.title}}</td>
+            <td>
+                <div class='resources-buttons' id='resources-buttons-{{this.id}}'>
+                    <button class='resources-btn vote_btn_minus' id='vote_btn_minus-{{this.id}}'><i class='fa fa-minus'></i></button>
+                    <button class='resources-btn vote_btn_plus' id='vote_btn_plus-{{this.id}}'><i class='fa fa-plus'></i></button>
+                </div>
+            </td>
+            <td>
+                <div class='resources-score-team' id='resources-team-{{this.id}}'>
+                    <p><span class='value'>0</span></p>
+                </div>
+            </td>
+        </tr>
+        <tr><td></td><td></td><td></td></tr>
+        {{/each}}
+    </tbody></table>
+    <div id='voteformsumm'><span id='vAvail'>0</span>/<span id='vTotal'>10</span><br><br><input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'></div>
+</div>

@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
 //    console.log(fake);
+    const showGame = () => {
+        return game;
+    };
     const updateGame = (ob) => {
         if ($.isEmptyObject(game)) {
             game = ob;
@@ -28,7 +31,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
+        console.log('reg with game')
         socket.emit('registerPlayer', initObj, (ob) => {
+            console.log(`the callback`)
             if (ob) {
                 console.log(`registerwithGame`, ob);
                 let res = ob.id;
@@ -93,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const getGames = () => {
         socket.emit('getGameCount', (g) => {
+            console.log(`getGameCount callback: ${g}`);
             if (g === 0) {
                 if (Date.now() - now < 10000) {
                     setTimeout(getGames, 500);
@@ -187,75 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(rs, typeof(rs));
         return rs;
     };
-    const thisRoundScoredCOMMON = () => {
-        return new Promise((resolve, reject) => {
-            socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
-                const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
-                const rID = `${game.round}.${player.teamObj.id}`;
-                const spi = scoreSumm.indexOf(rID);
-                resolve({hasScore: spi > -1, scorePacket: sps[spi]});
-            });
-        })
-    };
-    const setupAllocationControlGone = async () => {
-        const butMinus = $('#vote_btn_minus');
-        const butPlus = $('#vote_btn_plus');
-        const val = $('.tempV');
-        const submit = $(`#buttonAllocate`);
-        const action = $(`#action-choice`);
-        const desc = $(`#actionDesc`);
-        const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
-        const hasS = await thisRoundScored();
-//        console.log('see if the round has been scored already:');
-//        console.log(hasS);
-        if (hasS.hasScore) {
-            const vOb = {gameID: `game-${game.uniqueID}`, team: player.teamObj.id};
-            socket.emit('getValues', vOb, (v) => {
-//                console.log('test the values')
-//                console.log(v)
-                ints.prop('disabled', true);
-                ints.addClass('disabled');
-                val.html(hasS.scorePacket.val);
-                desc.html(v.description);
-                action.val(v.action);
-            });
-        } else {
-            ints.off('click');
-            butPlus.on('click', () => {
-                let v = parseInt(val.html());
-                if (v < 10) {
-                    v += 1;
-                    val.html(v);
-                }
-            });
-            butMinus.on('click', () => {
-                let v = parseInt(val.html());
-                if (v > 1) {
-                    v -= 1;
-                    val.html(v);
-                }
-            });
-            submit.on('click', () => {
-                let scoreV = parseInt(val.html());
-                let actionV = action.val();
-                let descV = desc.val();
-                if (scoreV === 0 || actionV === '' || descV === '') {
-                    alert('Please complete all options and allocate at least 1 resource')
-                } else {
-                    const tID = player.teamObj.id;
-                    let t = player.teamObj.id;
-                    const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
-                    socket.emit('submitValues', vob);
-                    const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
-                    socket.emit('submitScore', sob, (scores) => {
-                        window.setupAllocationControl();
-                    });
-
-//                    setupAllocation(false);
-                }
-            });
-        }
-    };
     const activateYourmove = async () => {
         // light up the yourmove button & bring it into focus
         console.log(`activateYourmove`);
@@ -266,7 +203,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 setRoundState(true);
                 const rs = await new Promise((resolve, reject) => {
                     socket.emit('getRenderState', {game: game, playerID: player.id}, (rs) => {
-//                        console.log(rs);
+                        console.log(`game`, game);
+                        console.log(`renderState`, rs);
+
                         resolve(rs);
                         updateRenderState(rs);
                         render();
@@ -289,13 +228,14 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`onStartRound: ${r}`);
 //        console.log(r);
         round = game.persistentData.rounds[r];
-//        console.log(round);
+//        console.log(`round`, round);
+//        console.log(`player`, player);
         if (r === -1) {
             updateRenderState({temp: 'game.main', partialName: 'game-links'});
             render();
         }
         if (round) {
-            if (round.type === 1) {
+            if (round.type === player.teamObj.type) {
                 const rs = await thisRoundScored();
                 if (!rs.hasScore) {
                     activateYourmove();
@@ -408,6 +348,9 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'allocation':
                 window.setupAllocationControl();
                 break;
+            case 'vote':
+                window.setupVoteControl();
+                break;
             case 'connecton.team':
                 setupTeamControl();
                 break;
@@ -475,7 +418,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (renderState.tempType) {
                 if (renderState.tempType === 'interaction') {
-//                    console.log(`condition for interactive template`);
                     // interactions must be 'activated' for their templates to be rendered, otherwise the home template should be rendered (with trigger button enabled)
                     if (getRoundState()) {
 //                        console.log(`button has been clicked, interactive template allowed`)
@@ -488,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const rType = renderState.temp.replace(GAMESTUB, '');
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
-            console.log('rOb', rOb)
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 if (renderState.hasOwnProperty('sub')) {
@@ -575,63 +516,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         render();
     });
-    socket.on('testRoundGONE', (game) => {
-//        console.log('testRound heard');
-        if (player.teamObj.hasLead && player.isLead) {
-            const rOb = player.teamObj;
-            rOb.currentRoundComplete = false;
-            updateRenderState({sub: 'game.allocation'})
-            renderTemplate(`sub`, 'game.allocation', rOb, () => {
-                const butMinus = $('#vote_btn_minus');
-                const butPlus = $('#vote_btn_plus');
-                const val = $('.tempV');
-                const submit = $(`#buttonAllocate`);
-                const action = $(`#action-choice`);
-                const desc = $(`#actionDesc`);
-                console.log(submit)
-                console.log(val.html())
-                butPlus.off('click');
-                butPlus.on('click', () => {
-                    let v = parseInt(val.html());
-                    if (v < 10) {
-                        v += 1;
-                        val.html(v)
-                    }
-                });
-                butMinus.off('click');
-                butMinus.on('click', () => {
-                    let v = parseInt(val.html());
-                    if (v > 1) {
-                        v -= 1;
-                        val.html(v)
-                    }
-                });
-                submit.off('click');
-
-                submit.on('click', () => {
-                    let scoreV = parseInt(val.html());
-                    let actionV = action.val();
-                    let descV = desc.val();
-                    const tID = player.teamObj.id;
-                    let t = player.teamObj.id;
-                    let ob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
-                    socket.emit('submitScore', ob);
-                });
-            });
-        } else {
-            console.log('not a lead')
-        }
-    });
     socket.on('forceRefresh', () => {
-        console.log('make me refresh');
+//        console.log('make me refresh');
         window.location.reload();
+//        console.log(`I feel refreshed`)
     });
     socket.on('startRound', (ob) => {
         onStartRound(ob.val);
     });
+    socket.on('waitForGame', () => {
+//        console.log('waitForGame - connected but no game, try again in a minute');
+//        window.location.reload();
+    })
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
     //
+    window.showGame = showGame;
 //    window.renderTeam = renderTeam;
     /*
     window.addEventListener('beforeunload', function(event) {

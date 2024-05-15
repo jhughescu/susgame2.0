@@ -54,6 +54,7 @@ class Game {
                     // lead for all main teams wil be first in the array:
                     if (this.playersFull.hasOwnProperty(pr)) {
                         const player = this.playersFull[pr];
+//                        console.log(player)
                         if (!ob.preview) {
                             player.isLead = i === 0;
                         }
@@ -66,6 +67,7 @@ class Game {
             // assume two sub teams - method should be modified if this number is ever in doubt.
             t.push(pl.splice(0, Math.ceil(pl.length / 2)));
             t.push(pl.splice(0));
+            console.log(t);
             return assignError ? 'error assigning teams' : t;
         }
     }
@@ -135,6 +137,7 @@ class Game {
         return this.scores;
     }
     getScorePackets() {
+        this.scorePackets = [];
         this.scores.forEach(s => {
             this.scorePackets.push(s);
         });

@@ -12,5 +12,10 @@ SHOULD NOT BE USED
     </div>
     {{#if isLead}}
         {{> yourmove}}
+    {{else}}
+        {{#if teamObj.hasLead}}
+        {{else}}
+        {{> yourmove}}
+        {{/if}}
     {{/if}}
 </div>

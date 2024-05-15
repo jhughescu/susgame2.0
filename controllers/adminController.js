@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const sessionController = require('./../controllers/sessionController');
 // systemtimeout is the duration of inactivity before the system admin loses contact
-const systemtimeout = 20 * 60 * 1000;
+//  20240513 VERY long timeout set to effectively switch off timeout
+const systemtimeout = 20 * 60 * 1000 * 999999999999;
 // v low value means timeout will never be expired on entry
 let systemNow = -1 * 1000 * 60 * 60 * 24 * 365 * 100;
 

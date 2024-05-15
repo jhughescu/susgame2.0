@@ -1,6 +1,6 @@
 class ScorePacket {
     constructor(round, src, dest, val, type) {
-        console.log(`scorepacket: ${round}`);
+//        console.log(`scorepacket, round: ${round} (${typeof(round)})`);
         if (round.toString().indexOf('_', 0) === -1) {
             this.round = parseInt(round.toString().replace(/\D/g, ''));
             this.src = src;
