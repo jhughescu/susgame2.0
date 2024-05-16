@@ -1051,23 +1051,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
-        const cg = compareGames(g, comp).filter(str => !str.includes('warning'));
-        const displayedProperty = Boolean(cg.slice(0).indexOf('socketID', 0) === -1);
-//        console.log(`cg`, cg);
-//        console.log(`displayedProperty`, displayedProperty);
-        if (pv(g.uniqueID) === pv(getSessionID())) {
-//            console.log('ID match, OK to update')
-            addToLogFeed('gameUpdate');
-            updateGame(g);
-            if (displayedProperty) {
-                setupTab(getCurrentTab().title);
-//                console.log(`setupTab: ${getCurrentTab().title}`)
+        const cg = compareGames(g, comp);
+        if (cg) {
+            const cgf = cg.filter(str => !str.includes('warning'));
+            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
+            if (pv(g.uniqueID) === pv(getSessionID())) {
+                addToLogFeed('gameUpdate');
+                updateGame(g);
+                if (displayedProperty) {
+                    setupTab(getCurrentTab().title);
+                }
+                playergraph();
+                if ($('#roundcompleter').length > 0) {
+                    closeModal();
+                    showRoundCompleter();
+                }
             }
-            playergraph();
-            if ($('#roundcompleter').length > 0) {
-                closeModal();
-                showRoundCompleter();
-            }
+        } else {
+            console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
         }
     });
     socket.on('playerUpdate', (ob) => {
