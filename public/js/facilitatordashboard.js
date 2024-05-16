@@ -372,7 +372,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 stop: function () {
                     const pOb = {x: $(this).position().left, y: $(this).position().top};
                     const stOb = JSON.parse(localStorage.getItem(widID));
-                    localStorage.setItem(widID, JSON.stringify(Object.assign(stOb, pOb)));
+                    if (pOb && stOb) {
+                        localStorage.setItem(widID, JSON.stringify(Object.assign(stOb, pOb)));
+                    }
                 }
             });
             const tOb = {id: id, partialName: id};
@@ -973,30 +975,29 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showChangeReport = showChangeReport;
     const compareGames = (g, comp) => {
         // compare a newly supplied game object with the existing game and reveal differences (dev method)
-        const src = g.hasOwnProperty('updateSource') ? g.updateSource : 'no source provided';
-        let out = [];
-        if (!compare(g[comp], game[comp])) {
-            out = [];
-            compCount++;
-//            console.log(` ----------- gameUpdate ${src}, mismatch found in "${comp}" (total found: ${compCount})`);
-//            console.log('old game', game[comp]);
-//            console.log('new game', g[comp]);
-            Object.entries(g[comp]).forEach((pl, i) => {
-                if (!compare(pl[1], game[comp][pl[0]])) {
-                    const pre = game[comp][pl[0]];
-                    const post = pl[1];
-                    for (let n in pre) {
-                        if (!compare(pre[n], post[n])) {
-//                            console.log(`mismatch between player objects ${pl[0]}: ${n}`);
-                            const ob = {player: pl[0], prop: n, old: pre[n], new: post[n]};
-                            changeReport.push(ob);
-                            out.push(n);
+        if (game) {
+            const src = g.hasOwnProperty('updateSource') ? g.updateSource : 'no source provided';
+            let out = [];
+            if (!compare(g[comp], game[comp])) {
+                out = [];
+                compCount++;
+                Object.entries(g[comp]).forEach((pl, i) => {
+                    if (!compare(pl[1], game[comp][pl[0]])) {
+                        const pre = game[comp][pl[0]];
+                        const post = pl[1];
+                        for (let n in pre) {
+                            if (!compare(pre[n], post[n])) {
+    //                            console.log(`mismatch between player objects ${pl[0]}: ${n}`);
+                                const ob = {player: pl[0], prop: n, old: pre[n], new: post[n]};
+                                changeReport.push(ob);
+                                out.push(n);
+                            }
                         }
                     }
-                }
-            })
+                })
+            }
+            return out;
         }
-        return out;
     }
 
 

@@ -289,16 +289,43 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return spo;
     };
-    const thisRoundScored = (pl) => {
+    const thisRoundScoredV2 = (pl) => {
         const myPlayer = player === null ? pl : player;
         if (socket && myPlayer) {
-//            console.log(`we have a a socket, let's look for stuff`);
             return new Promise((resolve, reject) => {
-                socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
+                socket.emit('getScores', `game-${game.uniqueID}`, (sps) => {
+                    console.log(`getScores returns`, sps)
                     const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                     const rID = `${game.round}.${myPlayer.teamObj.id}`;
                     const spi = scoreSumm.indexOf(rID);
-                    resolve({hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)});
+                    console.log(`scoreSumm`, scoreSumm);
+                    console.log(`rID`, rID);
+                    console.log(`spi`, spi);
+                    const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
+                    console.log(`resOb`, resOb);
+                    resolve(resOb);
+                });
+            })
+        } else {
+            console.log('no socket shared, cannot emit socket calls');
+        }
+    };
+    const thisRoundScored = (pl) => {
+        const myPlayer = player === null ? pl : player;
+        console.log(`thisRoundScored`, myPlayer)
+        if (socket && myPlayer) {
+            return new Promise((resolve, reject) => {
+                socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
+                    console.log(`getScorePackets returns`, sps)
+                    const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
+                    const rID = `${game.round}.${myPlayer.teamObj.id}`;
+                    const spi = scoreSumm.indexOf(rID);
+                    console.log(`scoreSumm`, scoreSumm);
+                    console.log(`rID`, rID);
+                    console.log(`spi`, spi);
+                    const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
+                    console.log(`resOb`, resOb);
+                    resolve(resOb);
                 });
             })
         } else {
@@ -318,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
-//        console.log('set it up');
+        console.log('set it up');
 //        console.log(player);
         const myPlayer = player === null ? inOb : player;
 //        console.log('myPlayer', myPlayer);
@@ -331,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
 //        console.log()
         const hasS = await thisRoundScored(myPlayer);
+        console.log(`hasS`, hasS);
         if (hasS) {
 //            console.log('see if the round has been scored already:');
 //            console.log(hasS);
@@ -376,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         socket.emit('submitValues', vob);
                         const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
                         socket.emit('submitScore', sob, (scores) => {
-//                            setupAllocationControl();
+                            setupAllocationControl();
 //                            window.location.reload();
                         });
 

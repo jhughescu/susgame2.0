@@ -100,7 +100,7 @@ async function restoreGame (o, cb) {
 };
 async function resetGame(id, cb) {
     const game = getGameWithUniqueID(id);
-//    console.log(`resetGame ${id}`);
+    const exclusions = ['presentation', 'persistentData', 'players'];
     if (game) {
         // Note: add a condition that only system admin can reset a game with state='ended'
         if (game.state === 'ended') {
@@ -108,7 +108,17 @@ async function resetGame(id, cb) {
         } else {
 
         }
+
+        // ADD A NEW CONDITION HERE THAT PREVENTS THE ERASURE OF 'PLAYERS'
+        // NOTE: TRY JUST NOT RESETTING THE SESSION; IF THE STORED DATA SURVIVES THIS MAY BE ENOUGH
+
+
+
         eventEmitter.emit('resetAll', game.address);
+//        Object.entries(game).forEach(([p, v]) => {
+//            console.log(p);
+//            console.log(v);
+//        });
         Object.entries(game).forEach(value => {
             if (typeof(value) === 'object') {
                 if (value.hasOwnProperty.length) {
@@ -119,8 +129,9 @@ async function resetGame(id, cb) {
             }
         });
         for (let i in game) {
-            console.log(`reset ${i}`)
-            if (typeof(game[i]) === 'object' && i !== 'persistentData' && i !== 'presentation') {
+            console.log(`reset ${i}? ${exclusions.indexOf(i, 0) === -1}`)
+//            if (typeof(game[i]) === 'object' && i !== 'persistentData' && i !== 'presentation') {
+            if (typeof(game[i]) === 'object' && exclusions.indexOf(i, 0) === -1) {
                 if (game[i].hasOwnProperty('length')) {
                     game[i] = [];
                 } else {
@@ -131,8 +142,8 @@ async function resetGame(id, cb) {
         game.state = 'pending';
         const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: 0, round: 0});
         if (session) {
-            log('return updated session here');
-            log(session);
+//            log('return updated session here');
+//            log(session);
             if (cb) {
                 cb(session);
             }
@@ -259,10 +270,30 @@ const getGameWithAddress = (add) => {
     }
     return null;
 };
+const getScores = (gameID, cb) => {
+    console.log(`getScores`);
+    const game = games[gameID];
+    let ss = [];
+    if (game) {
+        console.log(`game.scores`, game.scores);
+        game.scores.forEach(s => {
+            ss.push(s)
+        });
+    } else {
+        console.log(`no game with ID ${gameID}`);
+    }
+    if (cb) {
+        console.log(`getScores callback, ss:`, ss);
+        cb(ss);
+    }
+    return ss;
+};
 const getScorePackets = (gameID, cb) => {
+    console.log(`getScorePackets`);
     const game = games[gameID];
     let sps = [];
     if (game) {
+        console.log(`game.scores`, game.scores);
         game.scores.forEach(s => {
             sps.push(new ScorePacket(s))
         });
@@ -270,6 +301,7 @@ const getScorePackets = (gameID, cb) => {
         console.log(`no game with ID ${gameID}`);
     }
     if (cb) {
+        console.log(`getScorePackets callback, sps:`, sps);
         cb(sps);
     }
     return sps;
@@ -283,6 +315,11 @@ const filterScorePackets = (gameID, prop, val, spIn) => {
         }
     });
     return spo;
+};
+const getRoundNum = (rs) => {
+    // since round has become a string, it is useful to be able access just the numeric aspect
+
+    return parseInt(rs.toString().replace(/\D/g, ''));
 };
 const createAggregate = (ob, cb) => {
     // filter score packets for round and src, then create aggregate/average values for each dest
@@ -473,8 +510,9 @@ const getTheRenderState = (game, id) => {
     game = games[`game-${game.uniqueID}`];
     if (game) {
         if (game.persistentData) {
-        //    log(`getTheRenderState: ${id}, round: ${game.round}`);
+            log(`getTheRenderState: ${id}, game.round: ${game.round}`);
             const round = game.persistentData.rounds[game.round];
+//            console.log(`round`, round);
             let leads = game.teams.map(c => c[0]);
             // trim the 'leads' array so it only uses main teams (sub teams have no lead)
             leads = leads.splice(0, game.persistentData.mainTeams.length);
@@ -486,7 +524,8 @@ const getTheRenderState = (game, id) => {
             if (teamObj) {
                 hasLead = teamObj.hasLead;
             }
-            const scoreRef = `${game.round}_${team}`;
+//            console.log(`trying it out: ${game.round}`);
+            const scoreRef = game.round ? `${getRoundNum(game.round)}_${team}` : null;
             // check this value \/ , the map array should have only one element
             const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
             if (game.state === 'ended') {
@@ -693,21 +732,26 @@ const endRound = async (ob, cb) => {
     const game = games[game_id];
     if (game) {
         const session = await sessionController.updateSession(ob.game, {round: `${game.round}*`});
+        if (session) {
+            game.round = session.round;
+            eventEmitter.emit('gameUpdate', game);
+        }
     } else {
         console.log(`endGame cannot complete, no game exists with ID ${game_id}`);
     }
 };
 const scoreSubmitted = async (ob, cb) => {
+    console.log(`scoreSubmitted`);
     const sc = ob.scoreCode;
     const game = games[`game-${ob.game}`];
     if (game) {
         let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
-        console.log(`scoreSubmitted:`);
-        console.log(`game.scores:`, game.scores);
-        console.log(`d:`, d);
-        console.log(`p:`, p);
+//        console.log(`scoreSubmitted:`);
+//        console.log(`game.scores:`, game.scores);
+//        console.log(`d:`, d);
+//        console.log(`p:`, p);
         if (game.scores.indexOf(p) > -1) {
             // Duplicate scores are not allowed (score packets must be unique)
             // In case of a duplicate score submission, callback the scores and end the method.
@@ -723,9 +767,11 @@ const scoreSubmitted = async (ob, cb) => {
                 const game = games[`game-${ob.game}`];
                 if (game) {
                     game.scores = session.scores;
+                    console.log(`scores set: `, game.scores);
                     const roundComplete = checkRound(ob.game).indexOf(false) === -1;
 //                    console.log(`complete: ${roundComplete}`);
                     if (cb) {
+                        console.log(`scoreSubmitted callback`);
                         cb(game.scores);
                     }
                     eventEmitter.emit('scoresUpdated', game);
@@ -785,6 +831,7 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     }
 };
 const valuesSubmitted = async (ob) => {
+    console.log(`#################################### give ####### me ####### a ####### break #####################`);
     if (ob.hasOwnProperty('values')) {
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
         if (session) {

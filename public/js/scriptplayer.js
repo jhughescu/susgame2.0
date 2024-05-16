@@ -224,23 +224,33 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-    const onStartRound = async (r) => {
-//        console.log(`onStartRound: ${r}`);
-//        console.log(r);
+    const onStartRound = async (ob) => {
+//        console.log(`onStartRound, ob:`, ob);
+        if (ob.game) {
+            updateGame(ob.game);
+        }
+        //    \/ two different possible arg types - not ideal, but a quick type check fixes it.
+        const r = typeof(ob) === 'object' ? ob.val : ob;
+//        console.log(`r ${r}`);
+//        console.log(game.persistentData.rounds)
         round = game.persistentData.rounds[r];
-//        console.log(`round`, round);
-//        console.log(`player`, player);
         if (r === -1) {
             updateRenderState({temp: 'game.main', partialName: 'game-links'});
             render();
         }
         if (round) {
+//            console.log(`yep, round is OK`);
             if (round.type === player.teamObj.type) {
+//                console.log('conditions met');
                 const rs = await thisRoundScored();
                 if (!rs.hasScore) {
                     activateYourmove();
                 }
+            } else {
+//                console.log(`conditions not met`);
             }
+        } else {
+//            console.log('no round at all')
         }
     };
 
@@ -522,7 +532,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`I feel refreshed`)
     });
     socket.on('startRound', (ob) => {
-        onStartRound(ob.val);
+        console.log(`startRound heard, ob:`, ob);
+        onStartRound(ob);
     });
     socket.on('waitForGame', () => {
 //        console.log('waitForGame - connected but no game, try again in a minute');

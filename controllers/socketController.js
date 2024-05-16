@@ -12,7 +12,7 @@ let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = true;
+const logging = false;
 
 const gameNamespaces = {};
 
