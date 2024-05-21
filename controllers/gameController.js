@@ -518,16 +518,23 @@ const newGetTheRenderState = (game, id) => {
                 rs.ob = player;
                 const team = player.teamObj;
                 if (team) {
-                    console.log('second hurdle')
-                    const roundComplete = game.round.toString().indexOf('*', 0) > -1;
-                    const roundNum = tools.justNumber(game.round);
-                    const roundInfo = game.persistentData.rounds[roundNum];
+                    console.log('second hurdle');
+
+                    let roundComplete = false;
+                    let roundNum = null;
+                    let roundInfo = {}
+                    let inThisRound = false;
+                    if (game.round) {
+                        roundComplete = game.round.toString().indexOf('*', 0) > -1;
+                        roundNum = tools.justNumber(game.round);
+                        roundInfo = game.persistentData.rounds[roundNum];
+                        inThisRound = team.type === roundInfo.type;
+                    }
                     const scores = game.scores;
                     const scorePackets = [];
                     scores.forEach(s => {scorePackets.push(new ScorePacket(s))})
                     const playerHasScored = filterScorePackets(game.uniqueID, 'type', tools.justNumber(player.id), scorePackets).length > 0;
                     const canInteract = player.isLead || !team.hasLead;
-                    const inThisRound = team.type === roundInfo.type;
                     const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
                     const scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
                     console.log(`newGetTheRenderState, gameState:`, game.state);
