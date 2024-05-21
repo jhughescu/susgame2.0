@@ -1,4 +1,5 @@
 const fs = require('fs');
+const ScorePacket = require('./scorepacket.1.js');
 class Game {
     constructor(uniqueID, type) {
         this.uniqueID = uniqueID;
@@ -7,6 +8,7 @@ class Game {
         this.playersFull = {};
         this.scores = [];
         this.scorePackets = [];
+        this.detailedScorePackets = [];
         this.teams = [];
         this.teamObjects = {};
         this.persistentData = null;
@@ -146,6 +148,13 @@ class Game {
             this.scorePackets.push(s);
         });
         return this.scorePackets;
+    }
+    getDetailedScorePackets() {
+        this.detailedScorePackets = [];
+        this.scores.forEach(s => {
+            this.detailedScorePackets.push(new ScorePacket(s));
+        });
+        return this.detailedScorePackets;
     }
 }
 module.exports = Game;

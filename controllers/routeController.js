@@ -160,7 +160,6 @@ app.post('/admin/getSession', async (req, res) => {
 });
 
 
-
 app.post('/getTemplate', (req, res) => {
     templateController.getTemplate(req, res);
 });

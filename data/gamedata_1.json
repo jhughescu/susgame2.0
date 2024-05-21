@@ -8,11 +8,12 @@
             "abbr": "gov",
             "actions": ["(Re)Orientate", "Learn", "Dialogue", "(Dis)Incentivise", "Invest", "Demonstrate", "Other"],
             "bio": {
-                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
-                "followers": "14,560",
+                "summary" : ["Food safety and standards policy maker", "35 member countries", "HQ Brussels, Belgium"],
+                "followers": "102,560",
                 "about" : [
-                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
-                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                    "The Eurasia Food Evaluation Bureau (EFEB) is a government body providing independent scientific advice on existing and emerging food-related risks. This advice informs regulation, standards and guidelines put in place in member countries and helps to protect consumers from risks in the food chain. Our remit covers: food and feed safety, nutrition, animal health and welfare, plant protection, plant health.",
+                    "We listen to, and act upon, guidance from our member countries who have their own, individual structures for food safety and quality. We host independent forums to reduce potential conflicts of interest between what individual countries’ wishes and the interests of the larger group. We strive to find consensus across very different geographies and cultures.",
+                    "While we do not have direct, decision-making authority we exercise considerable influence. Nations from Germany, to Russia, Turkey and Ukraine are obliged to participate in our processes. We are working collectively to achieve the highest global standards in food safety and quality. Our 2027 strategy reinforces our commitment to sustainability with a focus on transparency, digitalisation and traceability."
                 ]
             }
         },
@@ -24,11 +25,13 @@
             "abbr": "icm",
             "actions": ["Dialogue", "Mobilise", "Cancel", "Invest", "Demonstrate", "Create", "Other"],
             "bio": {
-                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
-                "followers": "14,560",
+                "summary" : ["Foodtech influencer and entrepreneur", "5 million social media followers", "Helsinki, Finland"],
+                "followers": "5.1m",
                 "about" : [
-                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
-                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                    "I’m a ‘Food Waste Warrior’ and entrepreneur fighting food waste through better design - of markets and manufacturing. I believe waste is a design failure that can only be tackled by reconfiguring how whole systems for trading and consuming food operate.",
+                    "I started out rescuing unsold meals from eateries. I founded Too Good to Waste, a food waste fighting app that connects businesses that have unsold food with consumers who want to purchase, collect and enjoy it. Globally we have over 20 million users and 40,000 partners. We’ve rescued 30 million meals.",
+                    "That lead to rescuing unsold food from local farms. I co-developed a platform called RackNow that enables food producers, eateries and retailers to trade with one another directly, in real-time, in local areas. It is increasing local trade, lowering costs and getting more fresh, local produce onto our tables.",
+                    "My newest project is rescuing vegetable peelings, stale bread and overripe fruit from the compost bin! I’ve teamed up with scientists at Colombia University to develop ingredients and recipes for 3D food printers from scraps that would otherwise be thrown out – to supply 3D food factories of the future."
                 ]
             }
         },
@@ -40,11 +43,12 @@
             "abbr": "web",
             "actions": ["Mobilise", "Dialogue", "Invest", "(Dis)Incentivise", "Demonstrate", "Create", "Other"],
             "bio": {
-                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
-                "followers": "14,560",
+                "summary" : ["For-profit, publicly listed corporation", "Global", "30,000 stores", "HQ Seattle, USA"],
+                "followers": "3m",
                 "about" : [
-                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
-                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                    "A business-to-business foodservice wholesaler that procures, processes, warehouses and distributes fresh, frozen, ambient and non-food products to customers within the foodservice and catering industry; including local authorities, NHS trusts, defence contractors, hotel and restaurant chains as well as many independent operators in the hospitality industry.",
+                    "During COVID, we had to adapt to survive when many of our hospitality customers closed-down. Warehouses were full of stock ready for the supply chain, and we responded quickly by launching a business-to-customer model that could redistribute products more widely. Many of our customers now operate dark kitchens for delivery services only.",
+                    "Our long term strategy looks to balance resilience with the transparency of supply chains and growing issues of modern slavery. This is in addition to our long-standing work to reduce food waste and loss alongside addressing the environmental impacts of packaging and logistics."
                 ]
             }
         },
@@ -56,11 +60,11 @@
             "abbr": "cso",
             "actions": ["Mobilise & Act", "Dialogue", "Mobilise & Rally", "Provide", "Invest", "Create", "Other"],
             "bio": {
-                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
-                "followers": "14,560",
+                "summary" : ["Charity", "Member of Chaintrade International, representing 2 million farmers", "HQ London, UK"],
+                "followers": "200,000",
                 "about" : [
-                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
-                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                    "We are a global coalition working to secure a better deal for small scale farmers and workers who are marginalised from trade. Our most visible tool is a certification scheme that compels buyers to meet minimum, fair standards when they trade with small farmers, workers and their organisatons. Consumer brands that use our certified commodities are allowed to display the ChainReaction Mark on their packaging, to drive shopper demand. We also help small farmers to develop co-operatives and democratic decision-making processes in their businesses and communities.",
+                    "We have a network of supporters who help to raise awareness of the issues of unfair trade and fundraise to support – through campaigns like The Endangered Aisle which highlighted the extinction of small-scale producers caused by climate change and TrueCost: an app that shows the full social and environmental costs of unfairly traded goods vs goods that meet ChainReaction standards, in shoppers’ baskets. We mobilise our grassroots support to lobby national governments to deliver climate and trade justice."
                 ]
             }
         },
@@ -72,35 +76,58 @@
             "abbr": "se",
             "actions": ["Dialogue", "Mobilise", "Create", "Promote", "Invest", "Demonstrate", "Other"],
             "bio": {
-                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
-                "followers": "14,560",
+                "summary" : ["Food wholesaler and distributor", "4 UK distribution centres", "HQ Johannesburg, South Africa"],
+                "followers": "10,200",
                 "about" : [
-                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
-                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                    "A business-to-business food service wholesaler that procures, processes, warehouses and distributes fresh, frozen, ambient and non-food products to customers within the foodservice and catering industry; including local authorities, NHS trusts, defence contractors, hotel and restaurant chains as well as many independent operators in the hospitality industry.",
+                    "During COVID, we had to adapt to survive when many of our hospitality customers closed down. Warehouses were full of stock ready for the supply chain, and we responded quickly by launching a business-to-customer model that could redistribute products more widely. Many of our customers now operate dark kitchens for delivery services only.",
+                    "Our long-term strategy looks to balance resilience with the transparency of supply chains and the growing issues of modern slavery. This is in addition to our long-standing work to reduce food waste and loss alongside addressing the environmental impacts of packaging and logistics."
                 ]
             }
         },
         "t5": {
             "id": 5,
             "title": "Public Voices 1",
+            "lead": "Switch?",
             "abbr": "pv1",
             "active": -1,
             "likes": true,
             "weight": 3,
             "hasMax": false,
             "hasLead": false,
-            "type": 2
+            "type": 2,
+            "bio": {
+                "summary" : ["Charity and subsidiary, private company", "853,000 paying, voting members", "HQ Glasgow, Scotland"],
+                "followers": "442,000",
+                "about" : [
+                    "Switch? is the UK’s consumer champion and a member of the European Consumer Association, standing up for consumers’ interests. We are the independent consumer voice that influences politicians and lawmakers and holds businesses to account. We are always on consumers’ side, fighting their corner and working to make them more powerful.",
+                    "We make our members’ lives simpler, cheaper and safer by assessing and recommending products, offering consumer law and financial advice, and through supplier ‘switching’ and ‘vetting’ services.",
+                    "We track consumer trends, conduct research and find practical solutions to problems from online scams to safety issues. We convene Collective Purchase Schemes offering our members cheaper purchases through buying together as a group.",
+                    "We educate and advocate on consumer issues, promoting compliance with consumer laws, taking legal action to uphold consumers’ rights and lobbying for legislation to boost choice and protection."
+                ]
+            }
         },
         "t6": {
             "id": 6,
             "title": "Public Voices 2",
+            "lead": "BaroBank Group",
             "abbr": "pv2",
             "active": -1,
             "likes": true,
             "weight": 3,
             "hasMax": false,
             "hasLead": false,
-            "type": 2
+            "type": 2,
+            "bio": {
+                "summary" : ["Cooperative Bank", "$74 Billion loans to food and agri sector worldwide", "HQ Utrecht, NL"],
+                "followers": "336,560",
+                "about" : [
+                    "BaroBank Group started as a small group of credit unions founded by farmers, who wanted to support one another to invest in modernisation. Their cooperative spirit has expanded our network of independent, local banks to become a financial services hub - governed by Barobank Nederland.",
+                    "We operate in 38 countries offering a full range of financial services to private banking customers in The Netherlands and agribusiness clients from New Zealand to Brazil. We have 9.9 million clients and 2 million members, who input to strategies and policies through regional, Member Councils.",
+                    "Finding cooperative solutions to today’s central challenges makes us tick. Local BaroBanks are embedded in their communities, investing in joint solutions that benefit everyone: our clients, their neighbourhoods and the world. Working together, we are futureproofing our businesses and lives.",
+                    "With our clients across the food value chain - from farm to fork – we are speeding up the transition to a fair, sustainable food system. We are focused on food, climate and energy, and inclusivity"
+                ]
+            }
         }
     },
     "settings": {
@@ -117,7 +144,7 @@
         "type": 1,
         "scores": {"eras": {"era1": [], "era2" : []}}
     },
-    "teamSize": 5,
+    "teamSize": 1,
     "prefixes": {
         "player": "player-"
     },

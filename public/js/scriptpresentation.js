@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //                console.log(game);
                 const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
                 if (initSlide) {
+                    console.log('init', initSlide)
                     showSlide(initSlide);
                 }
             }
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
             onScoresUpdated(scores);
         });
         socket.on('showSlide', (slOb) => {
+            console.log(`socket event`, slOb)
             showSlide(slOb);
         });
         socket.on('updateProperty', (slOb) => {
@@ -308,7 +310,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (slOb.type === 'video') {
             showVideo(slOb)
         } else if (slOb.type === 'slide') {
-            renderTemplate(targ, `slides/${slOb.slide}`, {}, () => {
+            const slideID = `slides/${slOb.slide}`;
+            console.log(`slideID`, slideID);
+            console.log(`slOb`, slOb);
+            console.log(`renderOb`, renderOb);
+            console.log(`game`, game)
+            renderTemplate(targ, slideID, game, () => {
                 if (slOb.hasOwnProperty('action')) {
                     if (window[slOb.action]) {
                         window[slOb.action]();
@@ -316,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 const rOb = {gameID: game.uniqueID};
                 Object.assign(rOb, renderOb);
+                console.log(`rOb`, rOb)
                 renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
 
                 })

@@ -80,6 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return index !== 0 ? word.toLowerCase() : word.toUpperCase();
         }).replace(/\s+/g, '');
     };
+    const justNumber = (i) => {
+        // returns just the numeric character(s) of a string/number
+        const out = parseInt(i.toString().replace(/\D/g, ''));
+        return out;
+    };
 
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
@@ -283,6 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const spo = [];
         val = procVal(val);
         sp.forEach(s => {
+//            console.log(`${prop} comparison - val: ${val}, s: ${s[prop]}`)
             if (s[prop] === val) {
                 spo.push(s);
             }
@@ -311,20 +317,35 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const thisRoundScored = (pl) => {
+
+
+
+
+        // NOTE adjust this method to allow for different behaviour between type 1 and 2 teams
+        // i.e. type 1 has only 1 active player, so any score counts. With type 2 any player can score so only player-specifc scores should count.
+
+
+
+
+
         const myPlayer = player === null ? pl : player;
-        console.log(`thisRoundScored`, myPlayer)
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
-                    console.log(`getScorePackets returns`, sps)
+                    const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
+                    const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'type';
+//                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
+//                    console.log(filterScorePackets(sps, specificProp, specificID));
+                    const myScores = filterScorePackets(sps, specificProp, specificID);
+//                    console.log(myScores.length);
+//                    console.log(`new era, thisRoundScored? ${myScores.length > 0}`);
                     const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                     const rID = `${game.round}.${myPlayer.teamObj.id}`;
                     const spi = scoreSumm.indexOf(rID);
-                    console.log(`scoreSumm`, scoreSumm);
-                    console.log(`rID`, rID);
-                    console.log(`spi`, spi);
                     const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
-                    console.log(`resOb`, resOb);
+                    // NEW:
+                    resOb.hasScore = myScores.length > 0;
+//                    console.log(resOb);
                     resolve(resOb);
                 });
             })
@@ -345,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
-        console.log('set it up');
+//        console.log('set it up');
 //        console.log(player);
         const myPlayer = player === null ? inOb : player;
 //        console.log('myPlayer', myPlayer);
@@ -358,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
 //        console.log()
         const hasS = await thisRoundScored(myPlayer);
-        console.log(`hasS`, hasS);
+//        console.log(`hasS`, hasS);
         if (hasS) {
 //            console.log('see if the round has been scored already:');
 //            console.log(hasS);
@@ -417,9 +438,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
-        console.log(`setupVoteControl:`);
-//        console.log(game);
+//        console.log(`setupVoteControl:`);
         const myPlayer = player === null ? inOb : player;
+        const hasS = await thisRoundScored(myPlayer);
+//        console.log(`hasS`, hasS);
         const butAdj = $('.resources-btn');
         const butMinus = $('.vote_btn_minus');
         const butPlus = $('.vote_btn_plus');
@@ -428,25 +450,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const val = $('.value');
         const submit = $(`#buttonAllocate`);
         const ints = $('.vote_btn_minus, .vote_btn_plus, #buttonAllocate');
-//        let hasS = await thisRoundScored(myPlayer);
-//        hasS = false;
         const vTotal = player.teamObj.votes;
         const r = parseInt(game.round);
         vAvailDisp.html(0);
         vTotalDisp.html(vTotal);
-//        console.log(`setupVoteControl:`);
         const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
         socket.emit('getAggregates', aOb, (a, sp, report) => {
-//            console.log(`get aggregated scores:`);
-//            console.log(a);
-//            console.log(sp);
-//            console.log(report);
             const myScores = filterScorePackets(sp, 'type', procVal(player.index));
             const playerHasScored = Boolean(myScores.length);
-//            console.log(`playerHasScored: ${playerHasScored}`);
             if (playerHasScored) {
-                console.log(`this player has already scored:`);
-                console.log(myScores);
                 butMinus.addClass('disabled');
                 butPlus.addClass('disabled');
                 submit.addClass('disabled');
@@ -457,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 vAvailDisp.html(t);
             } else {
-                console.log('player has not scored');
+//                console.log('player has not scored');
                 butAdj.off('click').on('click', function () {
                 let t = 0;
                 val.each((i, v) => {
@@ -484,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 socket.emit('submitScoreForAverage', sOb);
 //                setupVoteControl();
-                window.location.reload();
+//                window.location.reload();
             });
             }
         });
@@ -510,6 +522,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // In case of problems getting partials, check the order of system architecture.
     getPartials();
     window.procVal = procVal;
+    window.justNumber = justNumber;
     window.toCamelCase = toCamelCase;
     window.renderTemplate = renderTemplate;
     window.renderPartial = renderPartial;
@@ -526,4 +539,5 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setupAllocationControl = setupAllocationControl;
     window.setupVoteControl = setupVoteControl;
     window.checkDevMode = checkDevMode;
+    window.sortBy = sortBy;
 });

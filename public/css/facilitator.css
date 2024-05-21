@@ -183,3 +183,19 @@ position: relative;
 .modal {
     color: black;
 }
+.right-align {
+    text-align: right;
+}
+#scoresummaries table {
+    font-size: 0.8rem;
+}
+#scoresummaries td:nth-child(even) {
+    color: cyan;
+}
+#scoresummaries td {
+    padding: 1px 6px;
+}
+#scoresummaries .downloader {
+    padding-top: 20px;
+    padding-bottom: 30px;
+}

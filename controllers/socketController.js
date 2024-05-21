@@ -5,6 +5,7 @@ const routeController = require('./../controllers/routeController');
 const sessionController = require('./../controllers/sessionController');
 const adminController = require('./../controllers/adminController');
 const presentationController = require('./../controllers/presentationController');
+const downloadController = require('./../controllers/downloadController');
 
 const eventEmitter = getEventEmitter();
 
@@ -262,6 +263,9 @@ function initSocket(server) {
             socket.on('checkRound', (ob, cb) => {
                 gameController.checkRound(ob, cb);
             });
+            socket.on('getDetailedScorePackets', (gameID, cb) => {
+                gameController.getDetailedScorePackets(gameID, cb);
+            });
             socket.on('getScorePackets', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
             });
@@ -278,6 +282,22 @@ function initSocket(server) {
             });
             socket.on('setTeamSize', (ob, cb) => {
                 gameController.setTeamSize(ob, cb);
+            });
+            socket.on('requestCSV', (ob, cb) => {
+//                console.log(`requestCSV`, ob)
+                const data = ob;
+                if (data) {
+//                    console.log(data);
+//                    return;
+                    const csv = downloadController.convertToCSV(data);
+                    if (cb) {
+                        cb(csv);
+                    } else {
+                        console.log(`requestCSV: no callback provided`)
+                    }
+                } else {
+                    console.log('requestCSV: no data returned');
+                }
             });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

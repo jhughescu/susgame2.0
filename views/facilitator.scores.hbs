@@ -1,4 +1,44 @@
 scores:
-{{#each scores}}
-<p>{{this}}</p>
-{{/each}}
+<div id='scoresummaries'>
+    <div class='tab'>
+        <button class='tablinksScore' id='linkRaw'>Raw</button>
+        <button class='tablinksScore' id='linkR1'>Round 1</button>
+        <button class='tablinksScore' id='linkR2'>Round 2</button>
+    </div>
+    <div id='tabRaw' class='tabcontentScore'>
+        <h4>Raw</h4>
+        {{#each scores}}
+        <div>{{this}}</div>
+        {{/each}}
+        <br><br>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnscores'>Download as CSV</button></div>
+    </div>
+    <div id='tabR1' class='tabcontentScore'>
+        <h4>Round 1</h4>
+        <table><tbody>
+        {{#each scoresR1}}
+        <tr>{{> score-packet-td}}</tr>
+        {{/each}}
+        </tbody></table>
+        <br><br>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnscoresR1'>Download as CSV</button></div>
+    </div>
+    <div id='tabR2' class='tabcontentScore'>
+        <h4>Round 2</h4>
+        Aggregates:
+        <table><tbody>
+        {{#each aggregates}}
+        <tr>{{> aggregate-score-td}}</tr>
+        {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnaggregates'>Download as CSV</button></div>
+        All:
+        <table><tbody>
+        {{#each scoresR2}}
+        <tr>{{> score-packet-td}}</tr>
+        {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnscoresR2'>Download as CSV</button></div>
+
+    </div>
+</div>

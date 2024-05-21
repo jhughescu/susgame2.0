@@ -60,3 +60,9 @@ table, td, tr {
 .danger {
     color: red;
 }
+.devnote {
+    color: #4242b9;
+    font-weight: bold;
+    font-style: italic;
+    text-align: center;
+}

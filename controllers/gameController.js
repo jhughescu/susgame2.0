@@ -7,11 +7,12 @@ const sessionController = require('./../controllers/sessionController');
 const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
 const gfxController = require('./../controllers/gfxController');
+const tools = require('./../controllers/tools');
 
 const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
-const logging = false;
+const logging = true;
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -289,11 +290,14 @@ const getScores = (gameID, cb) => {
     return ss;
 };
 const getScorePackets = (gameID, cb) => {
-    console.log(`getScorePackets`);
+//    console.log(`getScorePackets`);
+    if (gameID.toString().indexOf('game', 0) === -1) {
+        gameID = `game-${gameID}`
+    }
     const game = games[gameID];
     let sps = [];
     if (game) {
-        console.log(`game.scores`, game.scores);
+//        console.log(`game.scores`, game.scores);
         game.scores.forEach(s => {
             sps.push(new ScorePacket(s))
         });
@@ -301,7 +305,7 @@ const getScorePackets = (gameID, cb) => {
         console.log(`no game with ID ${gameID}`);
     }
     if (cb) {
-        console.log(`getScorePackets callback, sps:`, sps);
+//        console.log(`getScorePackets callback, sps:`, sps);
         cb(sps);
     }
     return sps;
@@ -503,15 +507,79 @@ const deleteGame = (gameID) => {
         console.log(`Attempt to delete game failed as no game with ID ${killID} has been initialised`);
     }
 };
+const newGetTheRenderState = (game, id) => {
+    let rs = {};
+    game = games[`game-${game.uniqueID}`];
+    if (game) {
+        if (game.persistentData) {
+//            if (game.teams.length > 0) {
+//            console.log('first hurdle')
+                const player = game.playersFull[id];
+                rs.ob = player;
+                const team = player.teamObj;
+                if (team) {
+                    console.log('second hurdle')
+                    const roundComplete = game.round.toString().indexOf('*', 0) > -1;
+                    const roundNum = tools.justNumber(game.round);
+                    const roundInfo = game.persistentData.rounds[roundNum];
+                    const scores = game.scores;
+                    const scorePackets = [];
+                    scores.forEach(s => {scorePackets.push(new ScorePacket(s))})
+                    const playerHasScored = filterScorePackets(game.uniqueID, 'type', tools.justNumber(player.id), scorePackets).length > 0;
+                    const canInteract = player.isLead || !team.hasLead;
+                    const inThisRound = team.type === roundInfo.type;
+                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+                    const scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
+                    console.log(`newGetTheRenderState, gameState:`, game.state);
+                    const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
+                    console.log(msg);
+                    rs.msg = msg;
+                    rs.temp = 'game.main';
+                    rs.partialName = 'game-links';
+                } else {
+                    if (game.state === 'ended') {
+                        rs.temp = 'game.gameover';
+                    } else if (game.state === 'pending') {
+                        rs.temp = 'game.pending';
+                    } else {
+                        if (game.teams.length > 0) {
+                            // only remaining state is 'started'
+                            // default state is always main page with links
+                            rs.temp = 'game.main';
+                            rs.partialName = 'game-links';
+                            if (!scoreCompletionMetric && canInteract && inThisRound) {
+                                rs.temp =  `game.${roundInfo.template}`;
+                                rs.tempType = 'interaction';
+                                console.log(rs);
+                            }
+                        } else {
+                            rs.temp = 'game.intro';
+                        }
+                    }
+                }
+//            }
+        }
+    }
+//    console.log(rs);
+    return rs;
+}
 const getTheRenderState = (game, id) => {
+    const newRs = newGetTheRenderState(game, id);
     // returns an object which tells the player which template to render
     let rs = {};
     // Ensure current game data by deriving & fetching from the games object:
     game = games[`game-${game.uniqueID}`];
     if (game) {
         if (game.persistentData) {
-            log(`getTheRenderState: ${id}, game.round: ${game.round}`);
-            const round = game.persistentData.rounds[game.round];
+            const gameRound = tools.justNumber(game.round);
+            let roundComplete = false;
+            if (game.round) {
+                roundComplete = game.round.toString().indexOf('*', 0) > -1;
+            }
+//            log(`~~~~~~~~~~~~~~~~~~~~ getTheRenderState: ${id}, game.round: ${gameRound}`);
+            const player = game.playersFull[id];
+//            console.log(player)
+            const round = game.persistentData.rounds[gameRound];
 //            console.log(`round`, round);
             let leads = game.teams.map(c => c[0]);
             // trim the 'leads' array so it only uses main teams (sub teams have no lead)
@@ -525,9 +593,15 @@ const getTheRenderState = (game, id) => {
                 hasLead = teamObj.hasLead;
             }
 //            console.log(`trying it out: ${game.round}`);
-            const scoreRef = game.round ? `${getRoundNum(game.round)}_${team}` : null;
+            const scoreRef = gameRound ? `${getRoundNum(gameRound)}_${team}` : null;
             // check this value \/ , the map array should have only one element
+//            console.log(`here is where we check if the round has been scored already; if it has, input forms will not be rendered.`);
             const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
+//            console.log(`scoreRef`, scoreRef);
+//            console.log(`hasScore`, hasScore);
+//            console.log(`roundComplete`, roundComplete);
+//            console.log(`what about round?`, round);
+//            console.log(`what about game.round?`, gameRound);
             if (game.state === 'ended') {
                 rs.temp = 'game.gameover';
             } else if (game.state === 'pending') {
@@ -558,16 +632,21 @@ const getTheRenderState = (game, id) => {
                     rs.temp = 'game.intro';
                 }
             }
-            rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
-            rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
+//            rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
+//            rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
             const rsCopy = Object.assign({}, rs);
-            delete rsCopy.ob;
+//            console.log(rs)
+//            delete rsCopy.ob;
         }
     } else {
         console.log(`getTheRenderState cannot complete; game not defined ()`)
     }
 //    log('rs:');
 //    log(rsCopy);
+//    Object.assign(rs, newRs);
+//    return {old: rs, new: newRs};
+    rs.newRs = newRs;
+    rs = newRs;
     return rs;
 };
 const getRenderState = (ob, cb) => {
@@ -741,17 +820,13 @@ const endRound = async (ob, cb) => {
     }
 };
 const scoreSubmitted = async (ob, cb) => {
-    console.log(`scoreSubmitted`);
+//    console.log(`scoreSubmitted`);
     const sc = ob.scoreCode;
     const game = games[`game-${ob.game}`];
     if (game) {
         let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
-//        console.log(`scoreSubmitted:`);
-//        console.log(`game.scores:`, game.scores);
-//        console.log(`d:`, d);
-//        console.log(`p:`, p);
         if (game.scores.indexOf(p) > -1) {
             // Duplicate scores are not allowed (score packets must be unique)
             // In case of a duplicate score submission, callback the scores and end the method.
@@ -767,9 +842,7 @@ const scoreSubmitted = async (ob, cb) => {
                 const game = games[`game-${ob.game}`];
                 if (game) {
                     game.scores = session.scores;
-                    console.log(`scores set: `, game.scores);
                     const roundComplete = checkRound(ob.game).indexOf(false) === -1;
-//                    console.log(`complete: ${roundComplete}`);
                     if (cb) {
                         console.log(`scoreSubmitted callback`);
                         cb(game.scores);
@@ -794,28 +867,21 @@ const scoreSubmitted = async (ob, cb) => {
 };
 const scoreForAverageSubmitted = async (ob, cb) => {
     // A score, or set of scores, submitted which must be averaged out over a team
-//    console.log(`scoreForAverageSubmitted`);
     const sc = ob.scoreCode;
     const gameID = `game-${ob.game}`;
     const game = games[gameID];
     const scOut = [];
     if (game) {
         sc.forEach(s => {
-//            console.log(s);
             let sp = new ScorePacket(game.round, s.src, s.dest, s.val, s.type);
             let p = sp.getPacket();
             let d = sp.getDetail();
-//            console.log(sp);
             scOut.push(p);
         });
-//        console.log(scOut);
-//        const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
         const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
         if (session) {
-
             game.scores = session.scores;
             const roundComplete = checkRound(ob.game).indexOf(false) === -1;
-//            console.log(`complete: ${roundComplete}`);
             eventEmitter.emit('scoresUpdated', game);
             if (roundComplete) {
                 endRound(ob);
@@ -823,8 +889,6 @@ const scoreForAverageSubmitted = async (ob, cb) => {
         }
         let ssp = filterScorePackets(gameID, 'round', 2);
         ssp = filterScorePackets(gameID, 'src', sc[0].src, ssp);
-//        console.log(`stored scores:`);
-//        console.log(ssp);
 
     } else {
         console.log(`scoreForAverageSubmitted: game not found (game-${ob.game})`);
@@ -863,6 +927,21 @@ const presentationAction = (ob) => {
     }
 };
 
+const get = (id, prop) => {
+
+    const game = games[`game-${id}`];
+
+    let p = null;
+    if (game) {
+        let dsp = game.getDetailedScorePackets();
+        console.log(dsp);
+        if (game.hasOwnProperty(prop)) {
+            p = game[prop];
+        }
+    }
+    return p;
+}
+
 module.exports = {
     getGame,
     getGameCount,
@@ -889,5 +968,6 @@ module.exports = {
     getScorePackets,
     getRenderState,
     getAllValues,
-    getValues
+    getValues,
+    get
 };

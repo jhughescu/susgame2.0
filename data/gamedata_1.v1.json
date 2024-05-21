@@ -1,0 +1,137 @@
+{
+    "teams": {
+        "t0": {
+            "id": 0,
+            "title": "Government",
+            "lead": "Eurasia Food Evaluation Bureau (EFEB)",
+            "displayColour": "#0099C4",
+            "abbr": "gov",
+            "actions": ["(Re)Orientate", "Learn", "Dialogue", "(Dis)Incentivise", "Invest", "Demonstrate", "Other"],
+            "bio": {
+                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
+                "followers": "14,560",
+                "about" : [
+                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
+                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                ]
+            }
+        },
+        "t1": {
+            "id": 1,
+            "title": "Individual Change Maker",
+            "lead": "Jamie Bernath",
+            "displayColour": "#95C11F",
+            "abbr": "icm",
+            "actions": ["Dialogue", "Mobilise", "Cancel", "Invest", "Demonstrate", "Create", "Other"],
+            "bio": {
+                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
+                "followers": "14,560",
+                "about" : [
+                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
+                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                ]
+            }
+        },
+        "t2": {
+            "id": 2,
+            "title": "Well-established Business",
+            "lead": "Brewbucks",
+            "displayColour": "#633E8C",
+            "abbr": "web",
+            "actions": ["Mobilise", "Dialogue", "Invest", "(Dis)Incentivise", "Demonstrate", "Create", "Other"],
+            "bio": {
+                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
+                "followers": "14,560",
+                "about" : [
+                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
+                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                ]
+            }
+        },
+        "t3": {
+            "id": 3,
+            "title": "Civil Society Organisation",
+            "lead": "ChainReAction Foundation",
+            "displayColour": "#D1356F",
+            "abbr": "cso",
+            "actions": ["Mobilise & Act", "Dialogue", "Mobilise & Rally", "Provide", "Invest", "Create", "Other"],
+            "bio": {
+                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
+                "followers": "14,560",
+                "about" : [
+                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
+                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                ]
+            }
+        },
+        "t4": {
+            "id": 4,
+            "title": "Small Enterprise",
+            "lead": "Sunfoods",
+            "displayColour": "#F6C310",
+            "abbr": "se",
+            "actions": ["Dialogue", "Mobilise", "Create", "Promote", "Invest", "Demonstrate", "Other"],
+            "bio": {
+                "summary" : ["Charity Co-founder | DePollute", "Headquartered in e-Estonia"],
+                "followers": "14,560",
+                "about" : [
+                    "DePollute is a charity, working in partnership with big brands and businesses to challenge and support them on their sustainability journeys.",
+                    "As a co-founder, I have brought together a collective of freelance Expert Associates from across Europe. Together we are delivering environmental services with the imagination the future demands."
+                ]
+            }
+        },
+        "t5": {
+            "id": 5,
+            "title": "Public Voices 1",
+            "abbr": "pv1",
+            "active": -1,
+            "likes": true,
+            "weight": 3,
+            "hasMax": false,
+            "hasLead": false,
+            "type": 2
+        },
+        "t6": {
+            "id": 6,
+            "title": "Public Voices 2",
+            "abbr": "pv2",
+            "active": -1,
+            "likes": true,
+            "weight": 3,
+            "hasMax": false,
+            "hasLead": false,
+            "type": 2
+        }
+    },
+    "settings": {
+        "teamMax": 6
+    },
+    "defaults": {
+        "active": 1,
+        "votes": 10,
+        "likes": false,
+        "weight": 2,
+        "hasMax": true,
+        "hasLead": true,
+        "rounds": "",
+        "type": 1,
+        "scores": {"eras": {"era1": [], "era2" : []}}
+    },
+    "teamSize": 5,
+    "prefixes": {
+        "player": "player-"
+    },
+    "definitions": {
+        "teams": "stakeholders"
+    },
+    "rounds": [
+        {"n": 1, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1, "submissions": ["scores", "values"]},
+        {"n": 2, "flag": "e1r2", "action": "startRoundE1R2", "id": "publicvoices 1", "template": "vote", "teams": "secondaryTeams", "type": 2, "submissions": ["values"]},
+        {"n": 3, "flag": "e1r3", "action": "startRoundE1R3", "id": "collaboration", "teams": "mainTeams", "type": 1},
+        {"n": 4, "flag": "e1r4", "action": "startRoundE1R4", "id": "publicvoices 2", "teams": "secondaryTeams", "type": 2}
+    ],
+    "actions": ["action 1", "action 2", "action 3", "action 4", "action 5"],
+    "constants": {
+        "presentation": "suspresstore"
+    }
+}

@@ -42,6 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
         addToLogFeed('connected to app');
         sockInit();
     });
+    const getStoragePrefix = () => {
+        const sp = `facilitator-${game.uniqueID}sid-`;
+        return sp;
+    };
     const addToLogFeed = (msg) => {
         logFeed.push(`${logFeed.length + 1}: ${msg}`);
         logFeedArchive.push(`${logFeed.length + 1}: ${msg}`);
@@ -337,15 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     };
-    const renderScores = () => {
-        if (game) {
-            const ob = {scores: game.scores};
-            renderTemplate('contentScores', 'facilitator.scores', ob, () => {
-    //            setupPlayerControls();
-
-            })
-        }
-    };
+    let renderTimeout = null;
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
         const wd = $(wid);
@@ -661,6 +657,108 @@ document.addEventListener('DOMContentLoaded', function() {
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
     };
+    const renderScores = () => {
+        if (game) {
+            const ob = {scores: game.scores};
+            // run on a timeout to avoid multiple interations in dev
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(() => {
+                socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+//                    console.log(sp);
+                    ob.scorePackets = sp;
+                    const scoresR1 = sp.filter(p => p.round === 1);
+                    const scoresR2 = sp.filter(p => p.round === 2);
+                    window.sortBy(scoresR2, 'dest');
+                    const dests = Array.from(new Set(scoresR2.map(item => item.dest)));
+//                    console.log(dests)
+                    ob.scoresR1 = scoresR1;
+                    ob.scoresR2 = scoresR2;
+                    ob.aggregates = [];
+                    dests.forEach(d => {
+                        const destScores = scoresR2.filter(p => p.dest === d);
+//                        console.log(destScores);
+                        const tOb = {total: 0, average: 0, count: 0, team: game.persistentData.teamsArray[d].title}
+                        destScores.forEach(s => {
+                            tOb.count += 1;
+                            tOb.total += s.val;
+                            tOb.average = Math.round((tOb.total / tOb.count) * 1000) / 1000;
+                        });
+                        ob[`aggregate${d}`] = Object.assign({}, tOb);
+                        ob.aggregates.push(tOb);
+                    });
+                    game.scoreBreakdown = Object.assign({}, ob);
+//                    console.log(ob);
+                    renderTemplate('contentScores', 'facilitator.scores', ob, () => {
+                        setupScoreControls();
+                    })
+                })
+            }, 1000);
+
+        }
+    };
+    const openScoreTab = (l) => {
+        const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`;
+        localStorage.setItem(`${getStoragePrefix()}scoretab`, id);
+        const tabcontent = $('.tabcontentScore');
+        const tablinks = $('.tablinksScore');
+        const tabTarg = $(`#tab${id}`);
+        const tabLink = $(`#link${id}`);
+        tabcontent.hide();
+        tablinks.removeClass('active');
+        tabTarg.show();
+        tabLink.addClass('active');
+    };
+    const setupScoreControls = () => {
+        const dlb = $('.downloadBtn');
+        if (game.scores.length > 0) {
+            dlb.off('click').on('click', function () {
+                const id = $(this).attr('id').replace($(this).attr('class'), '');
+                const round = window.justNumber($(this).closest('.tabcontentScore').attr('id'));
+                const fileID = `round${round}-${id}`;
+                const ob = game.scoreBreakdown[id];
+                console.log(`object to download:`, fileID, ob);
+                downloadScores(ob, fileID);
+            });
+        } else {
+            dlb.prop('disabled', true);
+        }
+        // tabs
+        let tl = $('.tablinksScore');
+        tl.off('click');
+        tl.on('click', function () {
+            openScoreTab($(this).attr('id').replace('link', ''));
+        });
+        const savedTab = localStorage.getItem(`${getStoragePrefix()}scoretab`);
+        openScoreTab(savedTab ? savedTab.toLowerCase() : 'raw');
+    };
+
+    const fdetchAndDownloadScores = async () => {
+        socket.emit('getScorePackets', game.uniqueID, (sp) => {
+            downloadScores(sp, 'allpackets');
+        });
+    };
+    const downloadScores = async (ob, id) => {
+            socket.emit('requestCSV', ob, (csv) => {
+                try {
+                    const csvData = csv
+                    // Create a Blob from the CSV data
+                    const blob = new Blob([csvData], { type: 'text/csv' });
+                    // Create a link element
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+//                    link.download = 'data.csv';
+                    link.download = `scores_${id}.csv`;
+                    // Append the link to the body and click it
+                    document.body.appendChild(link);
+                    link.click();
+                    // Clean up
+                    document.body.removeChild(link);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+
+    };
     const setupPlayerControls = () => {
         const pso = playerSortOrder;
         $('.listSort').off('click');
@@ -752,7 +850,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const tryStartRound = (r) => {
         const t = game.teams;
-        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
+//        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
+        const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
         const oneUp = (r - gr) === 1;
         const idm = socket.emit('checkDevMode', (dm) => {
@@ -811,7 +910,8 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(str);
     };
     const showRoundCompleter = () => {
-        const r = parseInt(game.round.toString().replace(/\D/g, ''));
+//        const r = parseInt(game.round.toString().replace(/\D/g, ''));
+        const r = window.justNumber(game.round);
         if (r > 0) {
             const round = game.persistentData.rounds[r];
             const subs = round.submissions;
@@ -885,7 +985,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setupGameLinks();
         });
         // Render the game object excluding the persistent data
-        let rOb = {game: window.copyObjectWithExclusions(game, ['persistentData', 'playersFull'])};
+        let rOb = {game: window.copyObjectWithExclusions(game, ['persistentData', 'playersFull', 'scorePackets', 'detailedScorePackets', 'teamObjects', 'presentation', 'updateSource', 'teams', 'players', 'scores', 'values'])};
         rOb.gameInactive = rOb.game.state !== 'started';
         if (clear) {
             $(`#${targ}`).html('');
@@ -930,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 session = data;
                 session.base = window.location.origin;
+                session.playerURL = `${session.base}${session.address}`
                 addToLogFeed('session data found:');
 //            console.log(data)
                 addToLogFeed(`${JSON.stringify(data).substr(0, 45)}...`);
