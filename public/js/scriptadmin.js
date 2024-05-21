@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const getTeams = () => {
 
         socket.emit('getTeams', (t) => {
-//            console.log(t);
             teams = t;
         })
     };

@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const sessionSchema = new Schema({
     uniqueID: Number,
+    name: String,
     dateID: Number,
     type: Number,
     password: String,

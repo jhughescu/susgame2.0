@@ -166,6 +166,11 @@ position: relative;
     pointer-events: none;
     text-align: center;
 }
+#contentControls input.nameInput {
+    width: 120px;
+    pointer-events: all;
+    text-align: left;
+}
 .mini .buttonSet {
     display: flex;
     flex-direction: row;

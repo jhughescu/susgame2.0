@@ -192,6 +192,7 @@ async function getSession(req, res) {
     }
 };
 async function updateSession(uniqueID, updateOb) {
+//    console.log(`updateSession ${uniqueID}`)
     try {
         const updatedSession = await Session.findOneAndUpdate({
                 uniqueID
@@ -203,7 +204,8 @@ async function updateSession(uniqueID, updateOb) {
 //        console.log('updatedSession', updatedSession);
         return updatedSession;
     } catch (error) {
-        console.error('Error updating document:', error);
+        console.log('Error updating document:');
+//        console.error('Error updating document:', error);
         throw error;
     }
 };
@@ -299,7 +301,7 @@ async function deleteSession(ob) {
         console.error(msg, err);
         return {msg: msg, success: false};
     }
-}
+};
 
 module.exports = {
     getSession,

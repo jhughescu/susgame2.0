@@ -1,6 +1,6 @@
 Stored Sessions:
 <table><tbody>
 {{#each sessions}}
-<tr><td><div class='getSession link' data-session-id='{{this.uniqueID}}'>{{this.uniqueID}}</div></td></tr>
+<tr><td><div class='getSession link' data-session-id='{{this.uniqueID}}'>{{this.uniqueID}}{{#if this.hasName}}: {{this.name}}{{/if}}</div></td></tr>
 {{/each}}
 </tbody></table>

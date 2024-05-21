@@ -206,6 +206,26 @@ function initSocket(server) {
             socket.on('endGame', (game, cb) => {
                 gameController.endGame(game, cb);
             });
+            socket.on('sessionNameChange', async (ob, cb) => {
+//                console.log(ob);
+//                console.log(`${ob.gameID}`, {name: ob.name});
+                gameController.changeName(ob);
+                return;
+                const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
+                if (sesh) {
+                    console.log(sesh);
+                    if (cb) {
+                        console.log('yes cb')
+                        cb(sesh);
+                        io.to(ob.gameID)
+                    } else {
+                        console.log('no cb')
+                    }
+                } else {
+                    console.log('not a sesh')
+                }
+//                sessionController.updateSession(ob.game, {name: ob.name});
+            });
             socket.on('assignTeams', (ob, cb) => {
                 gameController.assignTeams(ob, cb);
             });

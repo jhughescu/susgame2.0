@@ -167,7 +167,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 p.find('#sessionDetail').html('');
                 p.hide();
             });
-
+            data.forEach(s => {
+                s.hasName = s.hasOwnProperty('name');
+            });
+            console.log(data)
             window.renderTemplate('sessionList', 'sessionList', {sessions: data}, readySessionLinks);
         });
 //

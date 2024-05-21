@@ -23,6 +23,9 @@ const log = (msg) => {
         }
     }
 };
+const error = (msg) => {
+    console.log(`>>>>>>>>>>> gameController error: ${msg}`);
+};
 
 async function startGame (o, cb) {
     // startGame will create a new game if one does not exist, and return the Game in either case
@@ -270,6 +273,16 @@ const getGameWithAddress = (add) => {
         }
     }
     return null;
+};
+const changeName = async (ob) => {
+    const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
+    const game = games[`game-${ob.gameID}`];
+    if (sesh && game) {
+        game.name = sesh.name;
+        eventEmitter.emit('gameUpdate', game);
+    } else {
+        error(`gameController: can't change name, game or session undefined`)
+    }
 };
 const getScores = (gameID, cb) => {
     console.log(`getScores`);
@@ -537,9 +550,9 @@ const newGetTheRenderState = (game, id) => {
                     const canInteract = player.isLead || !team.hasLead;
                     const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
                     const scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
-                    console.log(`newGetTheRenderState, gameState:`, game.state);
+//                    console.log(`newGetTheRenderState, gameState:`, game.state);
                     const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
-                    console.log(msg);
+//                    console.log(msg);
                     rs.msg = msg;
                     rs.temp = 'game.main';
                     rs.partialName = 'game-links';
@@ -957,6 +970,7 @@ module.exports = {
     endGame,
     restoreGame,
     resetGame,
+    changeName,
     deleteGame,
     registerPlayer,
     playerConnectEvent,

@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
 //        console.log(`setupControlLinks`);
@@ -617,6 +617,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(`click ${id}`)
                 const r = parseInt($('#roundInput').val());
                 switch (id) {
+                    case '#setName':
+                        const sn = $('#nameInput').val();
+                        if (sn) {
+                            socket.emit('sessionNameChange', {gameID: game.uniqueID, name: sn});
+                        } else {
+                            alert('no name provided')
+                        }
+//                        setSessionName();
+                        break;
                     case '#preview':
                         previewTeams();
                         break;
@@ -1148,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('test', () => {console.log('test')});
     socket.on('gameUpdate', (g) => {
 //        console.log(`###############################################`);
-//        console.log(`gameUpdate:`, g);
+        console.log(`gameUpdate:`, g);
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
