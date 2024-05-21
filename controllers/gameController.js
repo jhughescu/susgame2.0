@@ -531,7 +531,7 @@ const newGetTheRenderState = (game, id) => {
                 rs.ob = player;
                 const team = player.teamObj;
                 if (team) {
-                    console.log('second hurdle');
+//                    console.log('second hurdle');
 
                     let roundComplete = false;
                     let roundNum = null;
