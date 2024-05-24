@@ -479,12 +479,14 @@ form label{
 
 .grid-item-2{
 	grid-column: 1 / span 1;
-	background: #e4003a;
+/*    JH \/ */
+/*	background: #e4003a;*/
 	}
 
 .grid-item-3{
 	grid-column: 2 / span 1;
-	background: #006cb5;
+/*    JH \/ */
+/*	background: #006cb5;*/
 	}
 
 /* Icon Background Colours */

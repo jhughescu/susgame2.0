@@ -540,4 +540,5 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setupVoteControl = setupVoteControl;
     window.checkDevMode = checkDevMode;
     window.sortBy = sortBy;
+    window.filterScorePackets = filterScorePackets;
 });

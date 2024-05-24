@@ -556,6 +556,18 @@ const newGetTheRenderState = (game, id) => {
                     rs.msg = msg;
                     rs.temp = 'game.main';
                     rs.partialName = 'game-links';
+                    rs.summary = {
+                        canInteract: canInteract,
+                        intThisRound: inThisRound,
+                        playerHasScored: playerHasScored,
+                        teamHasScored: teamHasScored,
+                        scoreCompletionMetric: scoreCompletionMetric
+                    };
+                    if (!scoreCompletionMetric && canInteract && inThisRound) {
+                        rs.temp =  `game.${roundInfo.template}`;
+                        rs.tempType = 'interaction';
+//                        console.log(rs);
+                    }
                 } else {
                     if (game.state === 'ended') {
                         rs.temp = 'game.gameover';
@@ -567,10 +579,13 @@ const newGetTheRenderState = (game, id) => {
                             // default state is always main page with links
                             rs.temp = 'game.main';
                             rs.partialName = 'game-links';
+                            console.log('the test:');
                             if (!scoreCompletionMetric && canInteract && inThisRound) {
                                 rs.temp =  `game.${roundInfo.template}`;
                                 rs.tempType = 'interaction';
                                 console.log(rs);
+                            } else {
+                                console.log(`conditions not met`)
                             }
                         } else {
                             rs.temp = 'game.intro';

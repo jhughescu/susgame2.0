@@ -666,6 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
     };
+    const buildScoreDetail = (s) => {
+        s.forEach(sp => {
+            sp.teamSrc = game.persistentData.teamsArray[sp.src].title;
+            sp.teamDest = game.persistentData.teamsArray[sp.dest].title;
+            console.log(sp);
+        });
+        return s;
+    }
     const renderScores = () => {
         if (game) {
             const ob = {scores: game.scores};
@@ -673,19 +681,16 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(renderTimeout);
             renderTimeout = setTimeout(() => {
                 socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
-//                    console.log(sp);
                     ob.scorePackets = sp;
-                    const scoresR1 = sp.filter(p => p.round === 1);
-                    const scoresR2 = sp.filter(p => p.round === 2);
+                    const scoresR1 = buildScoreDetail(sp.filter(p => p.round === 1));
+                    const scoresR2 = buildScoreDetail(sp.filter(p => p.round === 2));
                     window.sortBy(scoresR2, 'dest');
                     const dests = Array.from(new Set(scoresR2.map(item => item.dest)));
-//                    console.log(dests)
                     ob.scoresR1 = scoresR1;
                     ob.scoresR2 = scoresR2;
                     ob.aggregates = [];
                     dests.forEach(d => {
                         const destScores = scoresR2.filter(p => p.dest === d);
-//                        console.log(destScores);
                         const tOb = {total: 0, average: 0, count: 0, team: game.persistentData.teamsArray[d].title}
                         destScores.forEach(s => {
                             tOb.count += 1;
@@ -695,8 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ob[`aggregate${d}`] = Object.assign({}, tOb);
                         ob.aggregates.push(tOb);
                     });
-                    game.scoreBreakdown = Object.assign({}, ob);
-//                    console.log(ob);
+                    game.scoreBreakdown = Object.assign({}, ob);//                    console.log(ob);
                     renderTemplate('contentScores', 'facilitator.scores', ob, () => {
                         setupScoreControls();
                     })
@@ -1157,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('test', () => {console.log('test')});
     socket.on('gameUpdate', (g) => {
 //        console.log(`###############################################`);
-        console.log(`gameUpdate:`, g);
+//        console.log(`gameUpdate:`, g);
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'

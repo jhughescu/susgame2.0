@@ -194,7 +194,7 @@ position: relative;
 #scoresummaries table {
     font-size: 0.8rem;
 }
-#scoresummaries td:nth-child(even) {
+#scoresummaries td:nth-child(even), #scoresummaries .dynamic {
     color: cyan;
 }
 #scoresummaries td {

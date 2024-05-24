@@ -34,7 +34,7 @@ body {
     cursor: pointer;
 }
 .link_main img {
-    opacity: 0.8;
+    opacity: 0.9;
 }
 .link_main img:hover {
     opacity: 1;
@@ -99,4 +99,10 @@ input[type=submit] {
     padding: 0px;
     text-align: center;
     width: 130px;
+}
+.main-content p:last-child {
+    padding-bottom: 50px;
+}
+.team-link {
+    cursor: pointer;
 }
