@@ -225,6 +225,7 @@ async function newSession(req, res) {
         const type = req.body.valType;
         const state = 'pending';
         const progress = 0;
+        const round = 0;
         const slide = 0;
         const idColour = generateColour();
         const newSession = new Session({
@@ -235,6 +236,7 @@ async function newSession(req, res) {
             type,
             state,
             progress,
+            round,
             slide,
             idColour
         });

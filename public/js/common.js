@@ -81,9 +81,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }).replace(/\s+/g, '');
     };
     const justNumber = (i) => {
-        // returns just the numeric character(s) of a string/number
-        const out = parseInt(i.toString().replace(/\D/g, ''));
-        return out;
+        if (i !== undefined && i !== null) {
+//            console.log(`converting ${i}`);
+            // returns just the numeric character(s) of a string/number
+            const out = parseInt(i.toString().replace(/\D/g, ''));
+            return out;
+        } else {
+            console.log(`no value passed to justNumber`)
+        }
     };
 
     const getTemplate = (temp, ob, cb) => {
@@ -333,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
                     const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
-                    const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'type';
+                    const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
 //                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
 //                    console.log(filterScorePackets(sps, specificProp, specificID));
                     const myScores = filterScorePackets(sps, specificProp, specificID);
@@ -423,7 +428,8 @@ document.addEventListener('DOMContentLoaded', function () {
 //                        console.log(`the submission:`);
 //                        console.log(socket);
                         socket.emit('submitValues', vob);
-                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID};
+//                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: player.index};
+                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: justNumber(player.id)};
                         socket.emit('submitScore', sob, (scores) => {
                             setupAllocationControl();
 //                            window.location.reload();
@@ -440,8 +446,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const setupVoteControl = async (inOb) => {
 //        console.log(`setupVoteControl:`);
         const myPlayer = player === null ? inOb : player;
+//        console.log(myPlayer);
+        const plIndex = procVal(player.index) - 1;
+        const plID = justNumber(player.id);
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
+//        console.log(`plIndex: ${plIndex}`);
+//        console.log(`plID: ${plID}`);
         const butAdj = $('.resources-btn');
         const butMinus = $('.vote_btn_minus');
         const butPlus = $('.vote_btn_plus');
@@ -456,8 +467,14 @@ document.addEventListener('DOMContentLoaded', function () {
         vTotalDisp.html(vTotal);
         const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
         socket.emit('getAggregates', aOb, (a, sp, report) => {
-            const myScores = filterScorePackets(sp, 'type', procVal(player.index));
+//            console.log(`sp`, sp);
+
+//            const myScores = filterScorePackets(sp, 'client', plIndex);
+            const myScores = filterScorePackets(sp, 'client', plID);
+//            console.log(`myScores`, myScores);
             const playerHasScored = Boolean(myScores.length);
+//            console.log(`playerHasScored: ${playerHasScored}`);
+
             if (playerHasScored) {
                 butMinus.addClass('disabled');
                 butPlus.addClass('disabled');
@@ -491,11 +508,14 @@ document.addEventListener('DOMContentLoaded', function () {
             submit.on('click', () => {
                 const sOb = {scoreCode: [], game: game.uniqueID, player: player.id};
                 val.each((i, v) => {
-                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), type: procVal(player.index)});
+//                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: procVal(player.index)});
+                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: justNumber(player.id)});
 
                 });
+//                console.log(player);
+//                console.log(sOb);
                 socket.emit('submitScoreForAverage', sOb);
-//                setupVoteControl();
+                setupVoteControl();
 //                window.location.reload();
             });
             }

@@ -69,9 +69,10 @@ const getRoomSockets = (id) => {
     const roomName = id;
     const room = io.sockets.adapter.rooms.get(roomName);
     if (room) {
+//        console.log(room)
         return room;
     } else {
-        return null;
+        return new Set([]);
     }
 };
 // Function to initialize socket.io
@@ -145,7 +146,7 @@ function initSocket(server) {
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
                 if (!Boolean(gameController.getGameWithAddress(src))) {
-                    console.log(`game not ready, request a retry`);
+//                    console.log(`game not ready, request a retry`);
                     socket.emit('waitForGame');
 //                    res.status(404).set('Refresh', '5;url=/'); // Refresh after 5 seconds and redirect to the home page
 //                    res.send('Game not ready yet. Please wait and refresh the page.');
@@ -366,7 +367,7 @@ function initSocket(server) {
         // videoPlayer client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'videoPlayer') {
             const roomID = `/${Q.id}-videoPlayer`;
-            console.log(`we have a player: ${roomID}`);
+//            console.log(`we have a player: ${roomID}`);
             socket.join(roomID);
             showRoomSize(roomID);
         }
@@ -441,25 +442,34 @@ function initSocket(server) {
 
     eventEmitter.on('gameUpdate', (game) => {
         let roomName = `${game.address}-fac`;
-//        console.log(`gameUpdate emmitted to room ${roomName}`);
-//        showRoomSize(roomName);
+//        console.log(`gameUpdate emmitted to room ${roomName} (facilitators)`);
+        showRoomSize(roomName);
         const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
         io.to(roomName).emit('gameUpdate', eGame);
-//        roomName = `${game.address}`;
-//        console.log(`gameUpdate emmitted to room ${roomName}`);
-//        showRoomSize(roomName);
-//        io.to(roomName).emit('gameUpdate', game);
+        roomName = `${game.address}`;
+//        console.log(`gameUpdate emmitted to room ${roomName} (players)`);
+        showRoomSize(roomName);
+        io.to(roomName).emit('gameUpdate', eGame);
     });
     eventEmitter.on('scoresUpdated', (game) => {
+
+        // NOTE scoresUpdated is being used by the presentation but should really be replaced by the more general & useful gameUpdate event
         console.log(`on scoresUpdated:`);
-//        console.log(game);
-        console.log(game.scores);
-//        console.log(game.address);
-        const rp = `${game.address}-pres`;
-        io.to(rp).emit('scoresUpdated', game.scores);
-        const rf = `${game.address}-fac`;
-        showRoomSize(rf);
-        io.to(rf).emit('gameUpdate', game);
+
+        const rooms = ['-pres', '-fac', '']; /* empty value for the player clients */
+        rooms.forEach(r => {
+            const room = `${game.address}${r}`;
+//            console.log(`emit to room ${room} which has some socket(s)`);
+//            showRoomSize(room)
+            console.log(`emit to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//            console.log(getRoomSockets(room));
+            io.to(room).emit('gameUpdate', game);
+        });
+//        const rp = `${game.address}-pres`;
+//        io.to(rp).emit('scoresUpdated', game.scores);
+//        const rf = `${game.address}-fac`;
+//        showRoomSize(rf);
+//        io.to(rf).emit('gameUpdate', game);
     });
     eventEmitter.on('singlePlayerGameUpdate', (ob) => {
         // requires an object: {player: <playerObject>, game}

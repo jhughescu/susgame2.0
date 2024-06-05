@@ -2,8 +2,8 @@ scores:
 <div id='scoresummaries'>
     <div class='tab'>
         <button class='tablinksScore' id='linkRaw'>Raw</button>
-        <button class='tablinksScore' id='linkR1'>Round 1</button>
-        <button class='tablinksScore' id='linkR2'>Round 2</button>
+        <button class='tablinksScore' id='linkR1'>Round 1{{#if gameInfo.round1}}<span>*</span>{{/if}}</button>
+        <button class='tablinksScore' id='linkR2'>Round 2{{#if gameInfo.round2}}<span>*</span>{{/if}}</button>
     </div>
     <div id='tabRaw' class='tabcontentScore'>
         <h4>Raw</h4>
@@ -14,7 +14,7 @@ scores:
         <div class='downloader'><button class='downloadBtn' id='downloadBtnscores'>Download as CSV</button></div>
     </div>
     <div id='tabR1' class='tabcontentScore'>
-        <h4>Round 1</h4>
+        <h4>Round 1{{#if gameInfo.round1}} <span class='dynamic'>(current{{#if gameInfo.roundComplete}} - completed{{/if}})</span>{{/if}}</h4>
         <table><tbody>
         {{#each scoresR1}}
         <tr>{{> score-packet-detail-r1-td}}</tr>
@@ -24,11 +24,25 @@ scores:
         <div class='downloader'><button class='downloadBtn' id='downloadBtnscoresR1'>Download as CSV</button></div>
     </div>
     <div id='tabR2' class='tabcontentScore'>
-        <h4>Round 2</h4>
+        <h4>Round 2{{#if gameInfo.round2}} <span class='dynamic'>(current{{#if gameInfo.roundComplete}} - completed{{/if}})</span>{{/if}}</h4>
         Aggregates:
         <table><tbody>
         {{#each aggregates}}
         <tr>{{> aggregate-score-td}}</tr>
+        {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnaggregates'>Download as CSV</button></div>
+        Expenditure by team:
+        <table><tbody>
+        {{#each expenditure}}
+        <tr>{{> aggregate-score-td}}</tr>
+        {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnaggregates'>Download as CSV</button></div>
+        Expenditure by player:
+        <table><tbody>
+        {{#each perPlayer}}
+        <tr>{{> player-score-td}}</tr>
         {{/each}}
         </tbody></table>
         <div class='downloader'><button class='downloadBtn' id='downloadBtnaggregates'>Download as CSV</button></div>
