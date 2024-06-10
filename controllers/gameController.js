@@ -323,6 +323,18 @@ const getScorePackets = (gameID, cb) => {
     }
     return sps;
 };
+const getTotals1 = (gameID, cb) => {
+    if (gameID.toString().indexOf('game', 0) === -1) {
+        gameID = `game-${gameID}`
+    }
+    const game = games[gameID];
+    if (game) {
+//        console.log('we have a game');
+        cb(game.getTotals1())
+    } else {
+//        console.log('no game no way');
+    }
+};
 const filterScorePackets = (gameID, prop, val, spIn) => {
     const sp = spIn ? spIn : getScorePackets(gameID);
     const spo = [];
@@ -549,12 +561,16 @@ const newGetTheRenderState = (game, id) => {
                     const scores = game.scores;
                     const scorePackets = [];
                     scores.forEach(s => {scorePackets.push(new ScorePacket(s))});
-                    rs.snow = {scores: scores, playerScores:  filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)};
+//                    rs.snow = {scores: scores, playerScores:  filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)};
 //                    const playerIdentifier = roundInfo.hasOwnProperty('type') ?
 //                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets).length > 0;
-                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), scorePackets).length > 0;
+                    const roundScores = filterScorePackets(game.uniqueID, 'round', roundNum, scorePackets);
+//                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), scorePackets).length > 0;
+                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), roundScores).length > 0;
                     canInteract = player.isLead || !team.hasLead;
-                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+//                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+//                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, roundScores).length > 0;
                     scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
 //                    console.log(`scoreCompletionMetric:`, scoreCompletionMetric);
                     if (scoreCompletionMetric === undefined) {
@@ -572,7 +588,10 @@ const newGetTheRenderState = (game, id) => {
                         intThisRound: inThisRound,
                         playerHasScored: playerHasScored,
                         teamHasScored: teamHasScored,
-                        scoreCompletionMetric: scoreCompletionMetric
+                        scoreCompletionMetric: scoreCompletionMetric,
+                        gameRound: roundNum,
+                        teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
+                        roundScoresChecked: roundScores
                     };
                     if (!scoreCompletionMetric && canInteract && inThisRound) {
                         rs.temp =  `game.${roundInfo.template}`;
@@ -1031,6 +1050,7 @@ module.exports = {
     valuesSubmitted,
     presentationAction,
     getScorePackets,
+    getTotals1,
     getRenderState,
     getAllValues,
     getValues,

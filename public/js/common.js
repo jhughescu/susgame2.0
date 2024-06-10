@@ -90,6 +90,25 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(`no value passed to justNumber`)
         }
     };
+    const roundNumber = (n) => {
+        return Math.round(n * 1000) / 1000;
+    };
+    const roundAll = (o) => {
+        for (let i in o) {
+//            console.log(o[i]);
+            if (!isNaN(o[i])) {
+                o[i] = roundNumber(o[i]);
+            }
+            if (typeof(o[i]) === 'object') {
+                for (let j in o[i]) {
+                    if (!isNaN(o[i][j])) {
+                        o[i][j] = roundNumber(o[i][j]);
+                    }
+                }
+            }
+        }
+        return o;
+    };
 
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
@@ -258,6 +277,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return options.inverse(this);
         }
     });
+    Handlebars.registerHelper('notSameTeam', function(aID, bID, options) {
+        if(justNumber(aID) !== justNumber(bID)) {
+            return options.fn(this);
+        }
+    })
 
     const copyObjectWithExclusions = (obj, exclusions) => {
         const newObj = {};
@@ -341,12 +365,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
 //                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
 //                    console.log(filterScorePackets(sps, specificProp, specificID));
-                    const myScores = filterScorePackets(sps, specificProp, specificID);
+                    const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
+                    const myScores = filterScorePackets(roundScores, specificProp, specificID);
+
 //                    console.log(myScores.length);
+                    console.log(roundScores);
+                    console.log(myScores);
 //                    console.log(`new era, thisRoundScored? ${myScores.length > 0}`);
                     const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
-                    const rID = `${game.round}.${myPlayer.teamObj.id}`;
+                    const rID = `${justNumber(game.round)}.${myPlayer.teamObj.id}`;
                     const spi = scoreSumm.indexOf(rID);
+
+                    console.log(`scoreSumm`, scoreSumm);
+                    console.log(`rID`, rID);
+
+                    console.log(`sps`, sps);
+                    console.log(`spi`, spi);
                     const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
                     // NEW:
                     resOb.hasScore = myScores.length > 0;
@@ -358,13 +392,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('no socket shared, cannot emit socket calls');
         }
     };
-    const sortBy = (array, property) => {
+    const sortBy = (array, property, inv) => {
         return array.sort((a, b) => {
             if (a[property] < b[property]) {
-                return -1;
+                return inv ? 1 : -1;
             }
             if (a[property] > b[property]) {
-                return 1;
+                return inv ? -1 : 1;
             }
             return 0;
         });
@@ -386,9 +420,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
         if (hasS) {
-//            console.log('see if the round has been scored already:');
-//            console.log(hasS);
+            console.log('see if the round has been scored already:');
+            console.log(hasS);
             if (hasS.hasScore) {
+                console.log('has score');
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
     //                console.log('test the values')
@@ -400,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     action.val(v.action);
                 });
             } else {
+                console.log('no score, OK to go')
                 ints.off('click');
                 butPlus.on('click', () => {
                     let v = parseInt(val.html());
@@ -505,11 +541,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 vAvailDisp.html(Math.abs(t) + Math.abs(v));
             });
-            submit.on('click', () => {
+            submit.off('click').on('click', () => {
                 const sOb = {scoreCode: [], game: game.uniqueID, player: player.id};
+//                console.log(`submit clicked`);
                 val.each((i, v) => {
 //                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: procVal(player.index)});
-                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: justNumber(player.id)});
+//                    console.log(v);
+//                    console.log($(v));
+//                    console.log($(v).attr('id'));
+//                    console.log(justNumber($(v).attr('id')));
+                    sOb.scoreCode.push({src: player.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(player.id)});
 
                 });
 //                console.log(player);
@@ -543,6 +584,8 @@ document.addEventListener('DOMContentLoaded', function () {
     getPartials();
     window.procVal = procVal;
     window.justNumber = justNumber;
+    window.roundNumber = roundNumber;
+    window.roundAll = roundAll;
     window.toCamelCase = toCamelCase;
     window.renderTemplate = renderTemplate;
     window.renderPartial = renderPartial;

@@ -4,6 +4,8 @@ scores:
         <button class='tablinksScore' id='linkRaw'>Raw</button>
         <button class='tablinksScore' id='linkR1'>Round 1{{#if gameInfo.round1}}<span>*</span>{{/if}}</button>
         <button class='tablinksScore' id='linkR2'>Round 2{{#if gameInfo.round2}}<span>*</span>{{/if}}</button>
+        <button class='tablinksScore' id='linkTotals1'>Totals 2030</button>
+        <button class='tablinksScore' id='linkR3'>Round 3{{#if gameInfo.round3}}<span>*</span>{{/if}}</button>
     </div>
     <div id='tabRaw' class='tabcontentScore'>
         <h4>Raw</h4>
@@ -53,6 +55,25 @@ scores:
         {{/each}}
         </tbody></table>
         <div class='downloader'><button class='downloadBtn' id='downloadBtnscoresR2'>Download as CSV</button></div>
-
+    </div>
+    <div id='tabTotals1' class='tabcontentScore'>
+        <h4>2030 Totals</h4>
+        <table class='nostripe'><tbody>
+            <tr><th>team</th><th>self</th><th>PV 1</th><th>PV 2</th><th>PV total</th><th>total</th></tr>
+            {{#each totals2030Simple}}
+            <tr><td>{{this.team}}</td><td>{{self}}</td><td>{{pv1}}</td><td>{{pv2}}</td><td>{{pvTotal}}</td><td>{{grandTotal}}</td></tr>
+            {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtntotals2030Simple'>Download as CSV</button></div>
+    </div>
+    <div id='tabR3' class='tabcontentScore'>
+        <h4>Round 3{{#if gameInfo.round3}} <span class='dynamic'>(current{{#if gameInfo.roundComplete}} - completed{{/if}})</span>{{/if}}</h4>
+        All:
+        <table><tbody>
+        {{#each teamAlloc}}
+        <tr>{{> score-packet-detail-r3}}</tr>
+        {{/each}}
+        </tbody></table>
+        <div class='downloader'><button class='downloadBtn' id='downloadBtnscoresR2'>Download as CSV</button></div>
     </div>
 </div>

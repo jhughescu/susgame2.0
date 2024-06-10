@@ -674,8 +674,138 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(sp);
         });
         return s;
-    }
-    const renderScores = () => {
+    };
+    const bestScore = (a, b) => {
+        // sort array of teams based on [val].grandTotal
+        const val = 'summary2030';
+        if (a[val].grandTotal > b[val].grandTotal) {
+            return -1;
+        } else if (a[val].grandTotal < b[val].grandTotal) {
+            return 1;
+        } else {
+            return 0;
+        }
+    };
+    const emitWithPromise = (event, data) => {
+        return new Promise((resolve, reject) => {
+            socket.emit(event, data, (response) => {
+                resolve(response);
+            });
+        });
+    };
+    const renderScores = async () => {
+        if (game) {
+            const ob = {scores: game.scores};
+            const gp = game.persistentData;
+            // run on a timeout to avoid multiple interations in dev
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(async () => {
+
+                let t1 = await emitWithPromise('getTotals1', game.uniqueID);
+                if (t1) {
+                    t1 = JSON.parse(t1);
+                    t1 = roundAll(t1);
+                }
+
+                console.log(`i also got t1`, t1);
+                socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+                    ob.scorePackets = sp;
+                    const scores = {};
+                    gp.rounds.forEach(r => {
+                        scores[`scoresR${r.n}`] = buildScoreDetail(sp.filter(p => p.round === r.n));
+                        ob[`scoresR${r.n}`] = scores[`scoresR${r.n}`];
+                    });
+                    window.sortBy(scores.scoresR2, 'dest');
+                    const dests = Array.from(new Set(scores.scoresR2.map(item => item.dest)));
+                    let srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
+//                    console.log(srcs)
+                    const plrs = Array.from(new Set(scores.scoresR2.map(item => item.client)));
+                    ob.aggregates = [];
+                    ob.expenditure = [];
+                    ob.perPlayer = [];
+                    ob.teamAlloc = [];
+                    // R2
+                    // Calculate R2 expendature per PV team
+                    srcs.forEach(s => {
+                        const srcScores = scores.scoresR2.filter(p => p.src === s);
+                        const tOb = {team: gp.teamsArray[s].title, total: 0, count: 0, average: 0};
+                        srcScores.forEach(sc => {
+                            tOb.total += Math.abs(sc.val);
+                            tOb.count += (sc.val === 0 ? 0 : 1);
+                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
+                        });
+                        ob.expenditure.push(tOb)
+                    });
+                    // Aggregated scores received by each stakeholder
+                    dests.forEach(d => {
+                        const destScores = scores.scoresR2.filter(p => p.dest === d);
+                        const tOb = {total: 0, average: 0, count: 0, team: gp.teamsArray[d].title};
+                        destScores.forEach(s => {
+                            tOb.count += (s.val === 0 ? 0 : 1);
+                            tOb.total += s.val;
+                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
+                        });
+                        ob[`aggregate${d}`] = Object.assign({}, tOb);
+                        ob.aggregates.push(tOb);
+                    });
+                    // R2 expenditure by player
+                    plrs.forEach(s => {
+                        const plScores = scores.scoresR2.filter(p => p.client === s);
+                        const tOb = {total: 0, count: 0, average: 0, player: game.players[s]};
+                        plScores.forEach(sc => {
+                            tOb.count += sc.val === 0 ? 0 : 1;
+                            tOb.total += Math.abs(sc.val);
+                        });
+                        ob.perPlayer.push(tOb);
+                    });
+                    // R3
+                    srcs = Array.from(new Set(scores.scoresR3.map(item => item.src)));
+                    srcs.forEach(s => {
+                        const plScores = scores.scoresR3.filter(p => p.src === s);
+                        const tOb = {teamSrc: gp.teamsArray[s].title, scores: []};
+                        plScores.forEach(sc => {
+                            tOb.scores.push({dest: gp.teamsArray[sc.dest].title, val: sc.val});
+                        });
+                        ob.teamAlloc.push(tOb);
+                    });
+                    // Totals
+                    // 2030
+                    ob.totals2030Simple = t1;
+                    const mapT1 = {
+                        t: 'team',
+                        gt: 'grandTotal',
+                        s: 'self',
+                        s1: 'pv1',
+                        s2: 'pv2',
+                        st: 'pvTotal'
+                    };
+                    ob.totals2030Simple.forEach(t => {
+                        t.t = gp.teamsArray[t.t].title;
+                        for (let i in mapT1) {
+                            if (t.hasOwnProperty(i)) {
+                                t[mapT1[i]] = t[i];
+                                delete t[i];
+                            }
+                        }
+                    });
+                    sortBy(ob.totals2030Simple, 'grandTotal', true);
+                    game.scoreBreakdown = Object.assign({}, ob);
+                    ob.gameInfo = {
+                        roundComplete: game.round.toString().indexOf('*', 0) > -1
+                    };
+                    game.persistentData.rounds.forEach(r => {
+                        ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
+                    });
+                    console.log(`render scores with`, ob);
+                    renderTemplate('contentScores', 'facilitator.scores', ob, () => {
+                        setupScoreControls();
+                    })
+                })
+            }, 1000);
+
+        }
+    };
+    const renderScoresV1 = () => {
         if (game) {
             const ob = {scores: game.scores};
             // run on a timeout to avoid multiple interations in dev
@@ -685,13 +815,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     ob.scorePackets = sp;
                     const scoresR1 = buildScoreDetail(sp.filter(p => p.round === 1));
                     const scoresR2 = buildScoreDetail(sp.filter(p => p.round === 2));
+                    const scoresR3 = buildScoreDetail(sp.filter(p => p.round === 3));
+                    const scores = {};
+                    game.persistentData.rounds.forEach(r => {
+                        scores[`scoresR${r.n}`] = buildScoreDetail(sp.filter(p => p.round === r.n));
+                    });
                     window.sortBy(scoresR2, 'dest');
-                    const dests = Array.from(new Set(scoresR2.map(item => item.dest)));
-                    const srcs = Array.from(new Set(scoresR2.map(item => item.src)));
-                    const plrs = Array.from(new Set(scoresR2.map(item => item.client)));
+                    const dests = Array.from(new Set(scores.scoresR2.map(item => item.dest)));
+                    const srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
+                    const plrs = Array.from(new Set(scores.scoresR2.map(item => item.client)));
 //                    console.log(plrs);
-                    ob.scoresR1 = scoresR1;
-                    ob.scoresR2 = scoresR2;
+                    ob.scoresR1 = scores.scoresR1;
+                    ob.scoresR2 = scores.scoresR2;
+                    ob.scoresR3 = scores.scoresR3;
                     ob.aggregates = [];
                     ob.expenditure = [];
                     ob.perPlayer = [];
@@ -706,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ob.expenditure.push(tOb)
                     });
                     dests.forEach(d => {
-                        const destScores = scoresR2.filter(p => p.dest === d);
+                        const destScores = scores.scoresR2.filter(p => p.dest === d);
                         const tOb = {total: 0, average: 0, count: 0, team: game.persistentData.teamsArray[d].title};
                         destScores.forEach(s => {
                             tOb.count += (s.val === 0 ? 0 : 1);
@@ -717,26 +853,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         ob.aggregates.push(tOb);
                     });
                     plrs.forEach(s => {
-//                        console.log(game.persistentData.teamsArray)
-//                        console.log(s);
-                        const plScores = scoresR2.filter(p => p.client === s);
+                        const plScores = scores.scoresR2.filter(p => p.client === s);
                         const tOb = {total: 0, count: 0, average: 0, player: game.players[s]};
-//                        console.log(`number of scores: ${plScores.length}`);
-//                        console.log(plScores);
                         plScores.forEach(sc => {
-//                            console.log(sc)
                             tOb.count += sc.val === 0 ? 0 : 1;
                             tOb.total += Math.abs(sc.val);
                         });
-//                        console.log(tOb);
                         ob.perPlayer.push(tOb);
                     });
                     game.scoreBreakdown = Object.assign({}, ob);
                     ob.gameInfo = {
-                        round1: justNumber(game.round) === 1,
-                        round2: justNumber(game.round) === 2,
                         roundComplete: game.round.toString().indexOf('*', 0) > -1
                     };
+                    game.persistentData.rounds.forEach(r => {
+                        ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
+                    });
                     console.log(`render scores with`, ob);
                     renderTemplate('contentScores', 'facilitator.scores', ob, () => {
                         setupScoreControls();
@@ -764,7 +895,10 @@ document.addEventListener('DOMContentLoaded', function() {
             dlb.off('click').on('click', function () {
                 const id = $(this).attr('id').replace($(this).attr('class'), '');
                 const round = window.justNumber($(this).closest('.tabcontentScore').attr('id'));
-                const fileID = `round${round}-${id}`;
+                let fileID = `${id}`;
+                if (round) {
+                    fileID = `round${round}-${fileID}`;
+                }
                 const ob = game.scoreBreakdown[id];
                 console.log(`object to download:`, fileID, ob);
                 downloadScores(ob, fileID);
@@ -901,8 +1035,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const tryStartRound = (r) => {
         const t = game.teams;
 //        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
-        console.log(`tryStartRound: ${r}`)
-        console.log(game)
+//        console.log(`tryStartRound: ${r}`);
+//        console.log(game);
         const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
         const oneUp = (r - gr) === 1;
@@ -910,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`idm ${dm}`);
         });
         let ok = idm;
-        ok = false;
+//        ok = false;
         let msg = `Cannot start round ${r}:\n`;
         if (t.length === 0) {
             // Teams not yet assigned, must wait for allocation

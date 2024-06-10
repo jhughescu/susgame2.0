@@ -191,11 +191,17 @@ position: relative;
 .right-align {
     text-align: right;
 }
+.roundheader {
+    text-decoration: line-through;
+}
 #scoresummaries table {
     font-size: 0.8rem;
 }
 #scoresummaries td:nth-child(even), #scoresummaries .dynamic {
     color: cyan;
+}
+#scoresummaries .nostripe td:nth-child(even) {
+    color: inherit;
 }
 #scoresummaries td {
     padding: 1px 6px;

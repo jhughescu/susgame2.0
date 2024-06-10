@@ -1,6 +1,7 @@
 <div class='round round2 voteform' id='vote'>
     <table><tbody>
         {{#each game.persistentData.mainTeams}}
+        {{#notSameTeam id ../id}}
         <tr style='background-color: {{this.displayColour}};' id='row-{{this.id}}'>
             <td style='background-image: url("assets/icons_{{this.abbrCap}}white 1.svg")'>{{this.title}}</td>
             <td>
@@ -11,11 +12,12 @@
             </td>
             <td>
                 <div class='resources-score-team' id='resources-team-{{this.id}}'>
-                    <p><span class='value'>0</span></p>
+                    <p><span class='value' id='voteValue{{this.id}}'>0</span></p>
                 </div>
             </td>
         </tr>
         <tr><td></td><td></td><td></td></tr>
+        {{/notSameTeam}}
         {{/each}}
     </tbody></table>
     <div id='voteformsumm'><span id='vAvail'>0</span>/<span id='vTotal'>10</span><br><br><input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'></div>

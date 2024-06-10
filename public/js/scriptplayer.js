@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const activateYourmoveButton = () => {
         const ymb = $('.yourmove-btn');
-//        console.log(`button vis? ${ymb.length > 0}`)
+        console.log(ymb);
         if (ymb.length > 0) {
             const rOb = Object.assign({}, renderState);
             rOb.active = false;
@@ -239,11 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setRoundState(true);
                 const rs = await new Promise((resolve, reject) => {
                     const idOb = {game: game, playerID: player.id};
-//                    console.log(`idOb`, idOb);
                     socket.emit('getRenderState', idOb, (rs) => {
-//                        console.log(`this is me`, player); filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)+=
-//                        console.log(`getRenderState callback`, rs);
-                        console.log(rs.msg);
                         resolve(rs);
                         updateRenderState(rs);
                         const rOb = Object.assign({}, renderState);
@@ -640,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setPlayer(game);
 //        updateRenderState({source: 'gameUpdate event', temp: 'game.main', ob: player});
         render();
+        activateYourmove();
     });
     socket.on('test', () => {
         console.log('testing')

@@ -22,8 +22,12 @@ const justNumber = (i) => {
     }
     return out;
 };
+const roundNumber = (n) => {
+    return Math.round(n * 1000) / 1000;
+};
 module.exports = {
     procVal,
     toCamelCase,
-    justNumber
+    justNumber,
+    roundNumber
 }

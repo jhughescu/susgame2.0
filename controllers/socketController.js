@@ -290,6 +290,10 @@ function initSocket(server) {
             socket.on('getScorePackets', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
             });
+            socket.on('getTotals1', (gameID, cb) => {
+//                console.log('have the sock')
+                gameController.getTotals1(gameID, cb);
+            });
             socket.on('submitScore', (ob, cb) => {
 //                    console.log(`submitScore`)
                 const sp = gameController.scoreSubmitted(ob, cb);

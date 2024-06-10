@@ -1,5 +1,6 @@
 const fs = require('fs');
 const ScorePacket = require('./scorepacket.1.js');
+const tools = require('./../controllers/tools');
 class Game {
     constructor(uniqueID, type) {
         this.uniqueID = uniqueID;
@@ -155,6 +156,50 @@ class Game {
             this.detailedScorePackets.push(new ScorePacket(s));
         });
         return this.detailedScorePackets;
+    }
+    getTotals1() {
+        const gp = this.persistentData;
+        const sp = this.getDetailedScorePackets();
+        const scores = {};
+        gp.rounds.forEach(r => {
+            scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
+        });
+        const srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
+        const out = [];
+        gp.mainTeams.forEach(t => {
+            const scO = {team: t.id, r1: scores.scoresR1.filter(sc => sc.dest === t.id), r2: scores.scoresR2.filter(sc => sc.dest === t.id), summary2030: {self: 0, supportTotal: 0, grandTotal: 0}};
+            if (scO.r1.length > 0 && scO.r2.length > 0) {
+                scO.summary2030.self = scO.r1[0].val;
+                srcs.forEach(s => {
+                    const ssc = scO.r2.filter(sc => sc.src === s);
+                    if (!scO.summary2030.hasOwnProperty(`src${s}`)) {
+                        scO.summary2030[`src${s}`] = {total: 0, average: 0, count: ssc.length};
+                    }
+                    ssc.forEach(sc => {
+                        scO.summary2030[`src${s}`].total += sc.val;
+                        scO.summary2030[`src${s}`].average = scO.summary2030[`src${s}`].total / ssc.length;
+                    });
+                    scO.summary2030.supportTotal += scO.summary2030[`src${s}`].average;
+                    scO.summary2030.grandTotal = scO.summary2030.self * scO.summary2030.supportTotal;
+                    scO.summary2030.supportTotal = scO.summary2030.supportTotal;
+                });
+//                const av5 = scO.summary2030.src5.hasOwnProperty(`average`) ? scO.summary2030.src5.average : 0;
+//                const av6 = scO.summary2030.src6.hasOwnProperty(`average`) ? scO.summary2030.src6.average : 0;
+                const av5 = scO.summary2030.hasOwnProperty(`src5`) ? scO.summary2030.src5.average : 0;
+                const av6 = scO.summary2030.hasOwnProperty(`src6`) ? scO.summary2030.src6.average : 0;
+                out.push({
+                    t: scO.team,
+                    s: scO.summary2030.self,
+                    s1: av5,
+                    s2: av6,
+                    st: av5 + av6,
+                    gt: scO.summary2030.self * (av5 + av6)
+                });
+            }
+        });
+//        console.log(out);
+        return JSON.stringify(out);
+//        return `here totals be ${this.players.length} ${this.scores.length} ${this.scorePackets.length} ${this.getDetailedScorePackets().length}`;
     }
 }
 module.exports = Game;
