@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const resetPlayer = () => {
         localStorage.clear();
-        updateRenderState({temp: 'game.intro'});
+        updateRenderState({temp: 'game.pending'});
         render();
     };
     const getGames = () => {
@@ -258,42 +258,44 @@ document.addEventListener('DOMContentLoaded', function() {
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
-        const home = renderState.temp.indexOf('main', 0) > -1;
-        const interaction = renderState.tempType === 'interaction';
-        const hasScored = false;
-        const round = game.persistentData.rounds[procVal(game.round)];
-        const rs = await thisRoundScored();
+        if (renderState.temp) {
+            const home = renderState.temp.indexOf('main', 0) > -1;
+            const interaction = renderState.tempType === 'interaction';
+            const hasScored = false;
+            const round = game.persistentData.rounds[procVal(game.round)];
+            const rs = await thisRoundScored();
 
-//        console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
-//        console.log(`round`, round);
-//        console.log(`game.round`, game.round);
-//        console.log(`NEW - have I scored?`, iHaveScored(rs));
-//        console.log(`thisRoundScored`, rs);
-//        console.log(`renderState`, renderState);
-//        console.log(`game`, game);
-//        console.log(`player`, player);
-        if (round.n > 0) {
-//            console.log('there is a round in progress');
-            // need further conditionals here - is this player invloved in the current round? Is the round already complete?
-            if (game.round.toString().indexOf('*', 0) === -1) {
-//                console.log(`round not complete`)
-                if (!iHaveScored(rs)) {
-//                    console.log(`I've not scored`);
-                    if (!home && !interaction) {
-                        gotoHomeState();
-                        render(activateYourmoveButton);
+    //        console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
+    //        console.log(`round`, round);
+    //        console.log(`game.round`, game.round);
+    //        console.log(`NEW - have I scored?`, iHaveScored(rs));
+    //        console.log(`thisRoundScored`, rs);
+    //        console.log(`renderState`, renderState);
+    //        console.log(`game`, game);
+    //        console.log(`player`, player);
+            if (round.n > 0) {
+    //            console.log('there is a round in progress');
+                // need further conditionals here - is this player invloved in the current round? Is the round already complete?
+                if (game.round.toString().indexOf('*', 0) === -1) {
+    //                console.log(`round not complete`)
+                    if (!iHaveScored(rs)) {
+    //                    console.log(`I've not scored`);
+                        if (!home && !interaction) {
+                            gotoHomeState();
+                            render(activateYourmoveButton);
+                        } else {
+                            activateYourmoveButton();
+                        }
                     } else {
-                        activateYourmoveButton();
+                        console.log(`I've already scored, apparently`)
                     }
                 } else {
-                    console.log(`I've already scored, apparently`)
+                    // '*' in the round - round is complete
+                    console.log('the current round is complete');
                 }
             } else {
-                // '*' in the round - round is complete
-                console.log('the current round is complete');
+                console.log('no round right now')
             }
-        } else {
-            console.log('no round right now')
         }
     };
     const iHaveScored = (sOb) => {
@@ -481,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setupTeamControl();
                 break;
             default:
-                console.warn(`no controls defined for ${type}`);
+//                console.warn(`no controls defined for ${type}`);
         }
     };
     const getStoredRenderState = () => {
@@ -580,6 +582,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`active`, getStoredRenderState().active);
 //            console.log(renderStateServer)
 //            rOb.temp = 'game.allocation';
+            console.log(`renderState.temp`, renderState.temp);
+            console.log(`rOb`, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
@@ -600,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const onGameEnd = () => {
-        console.log(`onGameEnd`);
+//        console.log(`onGameEnd`);
         localStorage.clear();
 //        renderState = {temp: 'game.gameover', ob: {}};
         updateRenderState({temp: 'game.gameover', ob: {}});
@@ -653,13 +657,13 @@ document.addEventListener('DOMContentLoaded', function() {
         identifyPlayer();
     });
     socket.on('identifySinglePlayer', (pl) => {
-        console.log(`id me: ${pl}, ${player.id}`);
+//        console.log(`id me: ${pl}, ${player.id}`);
         if (pl === player.id) {
             identifyPlayer();
         }
     });
     socket.on('gameOver', () => {
-        console.log(`gameOver heard`);
+//        console.log(`gameOver heard`);
         onGameEnd();
     });
     socket.on('renderPlayer', (rOb) => {

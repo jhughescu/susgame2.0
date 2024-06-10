@@ -142,6 +142,7 @@ function initSocket(server) {
                 });
                 socket.on('getAggregates', (ob, cb) => {
                     gameController.createAggregate(ob, cb);
+
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
@@ -304,6 +305,14 @@ function initSocket(server) {
                 const sp = gameController.valuesSubmitted(ob);
 //                io.to(facilitator).emit('valuesSubmitted', sp);
                 socket.emit('valuesSubmitted', sp);
+            });
+            socket.on('getAggregates', (ob, cb) => {
+                gameController.createAggregate(ob, cb);
+
+            });
+            socket.on('submitScoreForAverage', (ob, cb) => {
+                const sp = gameController.scoreForAverageSubmitted(ob, cb);
+//                    io.to(facilitator).emit('scoreForAverageSubmitted', sp);
             });
             socket.on('setTeamSize', (ob, cb) => {
                 gameController.setTeamSize(ob, cb);

@@ -361,31 +361,33 @@ document.addEventListener('DOMContentLoaded', function () {
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
-                    const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
-                    const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
-//                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
-//                    console.log(filterScorePackets(sps, specificProp, specificID));
-                    const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
-                    const myScores = filterScorePackets(roundScores, specificProp, specificID);
+                    if (myPlayer.teamObj) {
+                        const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
+                        const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
+    //                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
+    //                    console.log(filterScorePackets(sps, specificProp, specificID));
+                        const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
+                        const myScores = filterScorePackets(roundScores, specificProp, specificID);
 
-//                    console.log(myScores.length);
-                    console.log(roundScores);
-                    console.log(myScores);
-//                    console.log(`new era, thisRoundScored? ${myScores.length > 0}`);
-                    const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
-                    const rID = `${justNumber(game.round)}.${myPlayer.teamObj.id}`;
-                    const spi = scoreSumm.indexOf(rID);
+    //                    console.log(myScores.length);
+//                        console.log(roundScores);
+//                        console.log(myScores);
+    //                    console.log(`new era, thisRoundScored? ${myScores.length > 0}`);
+                        const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
+                        const rID = `${justNumber(game.round)}.${myPlayer.teamObj.id}`;
+                        const spi = scoreSumm.indexOf(rID);
 
-                    console.log(`scoreSumm`, scoreSumm);
-                    console.log(`rID`, rID);
+//                        console.log(`scoreSumm`, scoreSumm);
+//                        console.log(`rID`, rID);
 
-                    console.log(`sps`, sps);
-                    console.log(`spi`, spi);
-                    const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
-                    // NEW:
-                    resOb.hasScore = myScores.length > 0;
-//                    console.log(resOb);
-                    resolve(resOb);
+//                        console.log(`sps`, sps);
+//                        console.log(`spi`, spi);
+                        const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
+                        // NEW:
+                        resOb.hasScore = myScores.length > 0;
+    //                    console.log(resOb);
+                        resolve(resOb);
+                    }
                 });
             })
         } else {
@@ -420,10 +422,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
         if (hasS) {
-            console.log('see if the round has been scored already:');
-            console.log(hasS);
+//            console.log('see if the round has been scored already:');
+//            console.log(hasS);
             if (hasS.hasScore) {
-                console.log('has score');
+//                console.log('has score');
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
     //                console.log('test the values')
@@ -435,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     action.val(v.action);
                 });
             } else {
-                console.log('no score, OK to go')
+//                console.log('no score, OK to go')
                 ints.off('click');
                 butPlus.on('click', () => {
                     let v = parseInt(val.html());
@@ -465,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //                        console.log(socket);
                         socket.emit('submitValues', vob);
 //                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: player.index};
-                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: justNumber(player.id)};
+                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: justNumber(myPlayer.id)};
                         socket.emit('submitScore', sob, (scores) => {
                             setupAllocationControl();
 //                            window.location.reload();
@@ -480,11 +482,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
-//        console.log(`setupVoteControl:`);
+        console.log(`setupVoteControl:`);
         const myPlayer = player === null ? inOb : player;
-//        console.log(myPlayer);
-        const plIndex = procVal(player.index) - 1;
-        const plID = justNumber(player.id);
+        console.log(myPlayer);
+        const plIndex = procVal(myPlayer.index) - 1;
+        const plID = justNumber(myPlayer.id);
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
 //        console.log(`plIndex: ${plIndex}`);
@@ -497,20 +499,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const val = $('.value');
         const submit = $(`#buttonAllocate`);
         const ints = $('.vote_btn_minus, .vote_btn_plus, #buttonAllocate');
-        const vTotal = player.teamObj.votes;
+        const vTotal = myPlayer.teamObj.votes;
         const r = parseInt(game.round);
         vAvailDisp.html(0);
         vTotalDisp.html(vTotal);
         const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
+        console.log('emit it');
         socket.emit('getAggregates', aOb, (a, sp, report) => {
-//            console.log(`sp`, sp);
-
-//            const myScores = filterScorePackets(sp, 'client', plIndex);
+            console.log('back')
             const myScores = filterScorePackets(sp, 'client', plID);
-//            console.log(`myScores`, myScores);
             const playerHasScored = Boolean(myScores.length);
-//            console.log(`playerHasScored: ${playerHasScored}`);
-
             if (playerHasScored) {
                 butMinus.addClass('disabled');
                 butPlus.addClass('disabled');
@@ -521,44 +519,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     t += Math.abs(myScores[i].val);
                 });
                 vAvailDisp.html(t);
+                console.log(`already scored, not doing nuffin`);
             } else {
-//                console.log('player has not scored');
+                console.log('player has not scored');
                 butAdj.off('click').on('click', function () {
-                let t = 0;
-                val.each((i, v) => {
-                    if($(v).closest('tr').attr('id') !== $(this).closest('tr').attr('id')) {
-                        t += Math.abs(parseInt($(v).html()));
+                    let t = 0;
+                    val.each((i, v) => {
+                        if($(v).closest('tr').attr('id') !== $(this).closest('tr').attr('id')) {
+                            t += Math.abs(parseInt($(v).html()));
+                        }
+                    });
+                    // player.teamObj.votes must be the same for each player at setup
+                    const avail = vTotal - t;
+                    const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
+                    const h = $(this).parent().parent().parent().find('.value');
+                    let v = parseInt(h.html());
+                    if (Math.abs(v + adj) <= Math.abs(avail)) {
+                        v += adj;
+                        h.html(v);
                     }
+                    vAvailDisp.html(Math.abs(t) + Math.abs(v));
                 });
-                // player.teamObj.votes must be the same for each player at setup
-                const avail = vTotal - t;
-                const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
-                const h = $(this).parent().parent().parent().find('.value');
-                let v = parseInt(h.html());
-                if (Math.abs(v + adj) <= Math.abs(avail)) {
-                    v += adj;
-                    h.html(v);
-                }
-                vAvailDisp.html(Math.abs(t) + Math.abs(v));
-            });
-            submit.off('click').on('click', () => {
-                const sOb = {scoreCode: [], game: game.uniqueID, player: player.id};
-//                console.log(`submit clicked`);
-                val.each((i, v) => {
-//                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: procVal(player.index)});
-//                    console.log(v);
-//                    console.log($(v));
-//                    console.log($(v).attr('id'));
-//                    console.log(justNumber($(v).attr('id')));
-                    sOb.scoreCode.push({src: player.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(player.id)});
+                submit.off('click').on('click', () => {
+                    const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
+    //                console.log(`submit clicked`);
+                    val.each((i, v) => {
+    //                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: procVal(player.index)});
+    //                    console.log(v);
+    //                    console.log($(v));
+    //                    console.log($(v).attr('id'));
+    //                    console.log(justNumber($(v).attr('id')));
+                        sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
 
+                    });
+    //                console.log(player);
+                    console.log('submitScoreForAverage', sOb);
+                    socket.emit('submitScoreForAverage', sOb);
+                    setupVoteControl(myPlayer);
+    //                window.location.reload();
                 });
-//                console.log(player);
-//                console.log(sOb);
-                socket.emit('submitScoreForAverage', sOb);
-                setupVoteControl();
-//                window.location.reload();
-            });
             }
         });
 

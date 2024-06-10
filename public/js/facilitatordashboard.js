@@ -916,7 +916,7 @@ document.addEventListener('DOMContentLoaded', function() {
         openScoreTab(savedTab ? savedTab.toLowerCase() : 'raw');
     };
 
-    const fdetchAndDownloadScores = async () => {
+    const fetchAndDownloadScores = async () => {
         socket.emit('getScorePackets', game.uniqueID, (sp) => {
             downloadScores(sp, 'allpackets');
         });
@@ -1098,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const showRoundCompleter = () => {
 //        const r = parseInt(game.round.toString().replace(/\D/g, ''));
+        console.log(`showRoundCompleter`)
         const r = window.justNumber(game.round);
         if (r > 0) {
             const round = game.persistentData.rounds[r];
@@ -1105,39 +1106,42 @@ document.addEventListener('DOMContentLoaded', function() {
             const teams = game.persistentData[round.teams];
             // scores assumed to be always required:
             const scores = game.scores.filter(sc => sc.startsWith(r));
-            console.log(`showRoundCompleter:`);
-            console.log(scores);
-            const rOb = {teams: []};
+            const rOb = {teams: [], players: []};
             teams.forEach(t => {
                 if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
                     rOb.teams.push(Object.assign({}, t));
                 }
+                const game.teams[t.id]);
             });
             $('#modal').modal({
                 closeExisting: true
             });
             rOb.isLead = true;
             rOb.currentRoundComplete = false;
-    //        console.log(rOb);
             if (rOb.teams.length > 0) {
                 renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
                     let tl = $('.modtablinks');
                     tl.off('click');
                     tl.on('click', function () {
-        //                openTab($(this).attr('id').replace('link', ''));
                         const tOb = {isLead: true, currentRoundComplete: false};
                         const id = $(this).attr('id').replace('link_', '');
                         tOb.teamObj = game.persistentData.teams[`t${id}`];
                         const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
+                        tOb.game = game;
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
-                        renderPartial('formzone', 'game-allocation', tOb, () => {
+//                        console.log(`rendering the input device`);
+//                        console.log(round);
+//                        console.log(tOb);
+//                        renderPartial('formzone', 'game-allocation', tOb, () => {
+                        renderPartial('formzone', `game-${round.template}`, tOb, () => {
                             $('.resources-btn').css({
                                 width: '30px',
                                 height: '30px',
                                 'background-color': 'green'
                             });
                             window.setupAllocationControl(pl);
+                            window.setupVoteControl(pl);
                         });
                     });
                 });
@@ -1166,7 +1170,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const renderGame = (clear) => {
         // 'clear' is a Boolean, when true the game card will be rendered blank
-        addToLogFeed(`renderGame`);
+//        addToLogFeed(`renderGame`);
+//        console.log(`render the game (doesn't get from server)`);
         const targ = 'contentGame';
         window.setupObserver(targ, () => {
             setupGameLinks();
@@ -1351,8 +1356,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 playergraph();
                 if ($('#roundcompleter').length > 0) {
-                    closeModal();
-                    showRoundCompleter();
+                    if ($('#roundcompleter').is(':visible')) {
+                        closeModal();
+                        showRoundCompleter();
+                    }
                 }
             }
         } else {
