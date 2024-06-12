@@ -73,7 +73,10 @@ td {
 /*    background-color: blue;*/
 }
 .barchart tr {
-    height: 50%;
+    height: 45%;
+}
+.barchart tr:nth-child(2) {
+    height: 10%;
 }
 .barchart tr, td {
     padding: 2px 10px;
@@ -83,11 +86,35 @@ td {
     vertical-align: bottom;
 /*    display: none;*/
 }
+.barchart .icon {
+/*    padding: 20px;*/
+    height: 90px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 90px;
+}
 .bar {
 /*    width: 100px;*/
     position: relative;
     height: 0px;
 /*    background-color: aqua;*/
+}
+.barchart .totalNum {
+    width: 100px;
+    position: relative;
+    text-align: center;
+    margin: 0px auto;
+    height: 0px;
+}
+.bar:after {
+/*
+    content: '10';
+    position: relative;
+    bottom: 0px;
+    text-align: center;
+    width: inherit;
+    margin: 0px auto;
+*/
 }
 .bar table, td {
     border-collapse: collapse;

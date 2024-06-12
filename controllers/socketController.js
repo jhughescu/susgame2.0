@@ -374,6 +374,10 @@ function initSocket(server) {
 //                });
 //                presentationController.nextSlide();
             });
+            socket.on('getTotals1', (gameID, cb) => {
+//                console.log('have the sock')
+                gameController.getTotals1(gameID, cb);
+            });
         }
         // End presentation clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

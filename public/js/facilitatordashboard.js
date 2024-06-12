@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     };
-    const emitWithPromise = (event, data) => {
+    const emitWithPromiseCOMMONNOW = (event, data) => {
         return new Promise((resolve, reject) => {
             socket.emit(event, data, (response) => {
                 resolve(response);
@@ -701,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(renderTimeout);
             renderTimeout = setTimeout(async () => {
 
-                let t1 = await emitWithPromise('getTotals1', game.uniqueID);
+                let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
                 if (t1) {
                     t1 = JSON.parse(t1);
                     t1 = roundAll(t1);

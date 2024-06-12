@@ -116,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return o;
     };
+    const emitWithPromise = (theSocket, event, data) => {
+        return new Promise((resolve, reject) => {
+            theSocket.emit(event, data, (response) => {
+                resolve(response);
+            });
+        });
+    };
 
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
@@ -409,6 +416,15 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('no socket shared, cannot emit socket calls');
         }
     };
+    const sortNumber = (a, b) => {
+        if (a > b) {
+            return -1;
+        } else if (a < b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    };
     const sortBy = (array, property, inv) => {
         return array.sort((a, b) => {
             if (a[property] < b[property]) {
@@ -600,6 +616,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.justNumber = justNumber;
     window.roundNumber = roundNumber;
     window.roundAll = roundAll;
+    window.emitWithPromise = emitWithPromise;
     window.toCamelCase = toCamelCase;
     window.renderTemplate = renderTemplate;
     window.renderPartial = renderPartial;
@@ -618,5 +635,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setupVoteControl = setupVoteControl;
     window.checkDevMode = checkDevMode;
     window.sortBy = sortBy;
+    window.sortNumber = sortNumber;
     window.filterScorePackets = filterScorePackets;
 });

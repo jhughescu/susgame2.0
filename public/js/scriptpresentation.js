@@ -66,18 +66,18 @@ document.addEventListener('DOMContentLoaded', function () {
         currentSlideObject = Object.assign({}, slOb);
     };
     const onGameUpdate = (rGame) => {
-        console.log('a game update:');
-        console.log(`watching for ${watchFor}`);
+//        console.log('a game update:');
+//        console.log(`watching for ${watchFor}`);
         if (watchFor) {
-            console.log(game[watchFor] === rGame[watchFor]);
-            console.log(game[watchFor]);
-            console.log(rGame[watchFor]);
+//            console.log(game[watchFor] === rGame[watchFor]);
+//            console.log(game[watchFor]);
+//            console.log(rGame[watchFor]);
             if (game[watchFor] !== rGame[watchFor]) {
                 updateSlide()
             }
         }
         game = rGame;
-        console.log(game);
+//        console.log(game);
 
     };
     const estPanopto  = () => {
@@ -227,11 +227,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
         })
     };
-    const renderTotals = () => {
+
+    const emitWithPromiseCOMMONNOW = (event, data) => {
+        return new Promise((resolve, reject) => {
+            socket.emit(event, data, (response) => {
+                resolve(response);
+            });
+        });
+    };
+    const renderTotals = async () => {
+        setWatch('scores');
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
+        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+        t1 = JSON.parse(t1);
+        t1 = t1.map(s => s.gt);
+        let tAbs = t1.map(s => s = Math.abs(s));
+        const max = tAbs.sort(sortNumber)[0];
+        const mult = 100 / max;
         barsPos.each((i, b) => {
-            const perc = (Math.random() * 200) - 100;
+            const perc = t1[i] * mult;
+
             let newH = perc;
             let neg = Math.abs(newH);
             if (newH < 0) {
@@ -239,7 +255,15 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 neg = 0;
             }
+//            console.log($(b).parent().height());
+            const positive = (newH / 100) * $(b).parent().height();
+            const negative = (neg / 100) * $(b).parent().height();
             $(b).animate({height: `${newH}%`});
+            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
+            total.html(roundNumber(t1[i]));
+            const tPos = neg === 0 ? positive + 50 : positive;
+            total.animate({bottom: `${tPos}px`});
+//            total.animate({top: `${negative}px`});
             $(`#b${i}Neg`).animate({height: `${neg}%`});
         });
     };

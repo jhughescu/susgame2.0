@@ -4,10 +4,13 @@
         <div class='barchart'>
             <table><tbody>
                 <tr>
-                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Pos' style='background-color: {{displayColour}};'></div></td>{{/each}}
+                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Pos' style='background-color: {{displayColour}};'></div><div class='totalNum' id='tn{{id}}Pos'></div></td>{{/each}}
                 </tr>
                 <tr>
-                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Neg' style='background-color: {{displayColour}};'></div></td>{{/each}}
+                {{#each persistentData.mainTeams}}<td><div class='icon' id='i{{id}}' style='background-image: url("assets/icons_{{this.abbrCap}}white 1.svg")'></div></td>{{/each}}
+                </tr>
+                <tr>
+                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Neg' style='background-color: {{displayColour}};'></div><div class='totalNum' id='tn{{id}}Neg'></div></td>{{/each}}
                 </tr>
             </tbody></table>
         </div>
