@@ -82,7 +82,11 @@ class Game {
                 this.teams.forEach((tl, i) => {
                     const t = pt[`t${i}`];
                     tl.forEach(p => {
-                        this.playersFull[p].teamObj = t;
+                        if (this.playersFull[p]) {
+                            this.playersFull[p].teamObj = t;
+                        } else {
+                            console.log(`cannot assign team to {p}`);
+                        }
                     });
                 });
             }
