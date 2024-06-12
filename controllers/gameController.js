@@ -543,82 +543,84 @@ const newGetTheRenderState = (game, id) => {
                 let scoreCompletionMetric = false;
                 let canInteract = false;
                 let inThisRound = false;
-                rs.ob = player;
-                const team = player.teamObj;
-                if (team) {
-//                    console.log('second hurdle');
+                if (player) {
+                    rs.ob = player;
+                    const team = player.teamObj;
+                    if (team) {
+    //                    console.log('second hurdle');
 
-                    let roundComplete = false;
-                    let roundNum = null;
-                    let roundInfo = {}
-                    inThisRound = false;
-                    if (game.round) {
-                        roundComplete = game.round.toString().indexOf('*', 0) > -1;
-                        roundNum = tools.justNumber(game.round);
-                        roundInfo = game.persistentData.rounds[roundNum];
-                        inThisRound = team.type === roundInfo.type;
-                    }
-                    const scores = game.scores;
-                    const scorePackets = [];
-                    scores.forEach(s => {scorePackets.push(new ScorePacket(s))});
-//                    rs.snow = {scores: scores, playerScores:  filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)};
-//                    const playerIdentifier = roundInfo.hasOwnProperty('type') ?
-//                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets).length > 0;
-                    const roundScores = filterScorePackets(game.uniqueID, 'round', roundNum, scorePackets);
-//                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), scorePackets).length > 0;
-                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), roundScores).length > 0;
-                    canInteract = player.isLead || !team.hasLead;
-//                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
-//                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
-                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, roundScores).length > 0;
-                    scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
-//                    console.log(`scoreCompletionMetric:`, scoreCompletionMetric);
-                    if (scoreCompletionMetric === undefined) {
-                        // crappy conditional designed to avoid server crash
-                        scoreCompletionMetric = false;
-                    }
-//                    console.log(`newGetTheRenderState, gameState:`, game.state);
-                    const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
-//                    console.log(msg);
-                    rs.msg = msg;
-                    rs.temp = 'game.main';
-                    rs.partialName = 'game-links';
-                    rs.summary = {
-                        canInteract: canInteract,
-                        intThisRound: inThisRound,
-                        playerHasScored: playerHasScored,
-                        teamHasScored: teamHasScored,
-                        scoreCompletionMetric: scoreCompletionMetric,
-                        gameRound: roundNum,
-                        teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
-                        roundScoresChecked: roundScores
-                    };
-                    if (!scoreCompletionMetric && canInteract && inThisRound) {
-                        rs.temp =  `game.${roundInfo.template}`;
-                        rs.tempType = 'interaction';
-//                        console.log(rs);
-                    }
-                } else {
-                    if (game.state === 'ended') {
-                        rs.temp = 'game.gameover';
-                    } else if (game.state === 'pending') {
-                        rs.temp = 'game.pending';
+                        let roundComplete = false;
+                        let roundNum = null;
+                        let roundInfo = {}
+                        inThisRound = false;
+                        if (game.round) {
+                            roundComplete = game.round.toString().indexOf('*', 0) > -1;
+                            roundNum = tools.justNumber(game.round);
+                            roundInfo = game.persistentData.rounds[roundNum];
+                            inThisRound = team.type === roundInfo.type;
+                        }
+                        const scores = game.scores;
+                        const scorePackets = [];
+                        scores.forEach(s => {scorePackets.push(new ScorePacket(s))});
+    //                    rs.snow = {scores: scores, playerScores:  filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)};
+    //                    const playerIdentifier = roundInfo.hasOwnProperty('type') ?
+    //                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets).length > 0;
+                        const roundScores = filterScorePackets(game.uniqueID, 'round', roundNum, scorePackets);
+    //                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), scorePackets).length > 0;
+                        const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), roundScores).length > 0;
+                        canInteract = player.isLead || !team.hasLead;
+    //                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+    //                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
+                        const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, roundScores).length > 0;
+                        scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
+    //                    console.log(`scoreCompletionMetric:`, scoreCompletionMetric);
+                        if (scoreCompletionMetric === undefined) {
+                            // crappy conditional designed to avoid server crash
+                            scoreCompletionMetric = false;
+                        }
+    //                    console.log(`newGetTheRenderState, gameState:`, game.state);
+                        const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
+    //                    console.log(msg);
+                        rs.msg = msg;
+                        rs.temp = 'game.main';
+                        rs.partialName = 'game-links';
+                        rs.summary = {
+                            canInteract: canInteract,
+                            intThisRound: inThisRound,
+                            playerHasScored: playerHasScored,
+                            teamHasScored: teamHasScored,
+                            scoreCompletionMetric: scoreCompletionMetric,
+                            gameRound: roundNum,
+                            teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
+                            roundScoresChecked: roundScores
+                        };
+                        if (!scoreCompletionMetric && canInteract && inThisRound) {
+                            rs.temp =  `game.${roundInfo.template}`;
+                            rs.tempType = 'interaction';
+    //                        console.log(rs);
+                        }
                     } else {
-                        if (game.teams.length > 0) {
-                            // only remaining state is 'started'
-                            // default state is always main page with links
-                            rs.temp = 'game.main';
-                            rs.partialName = 'game-links';
-//                            console.log('the test:');
-                            if (!scoreCompletionMetric && canInteract && inThisRound) {
-                                rs.temp =  `game.${roundInfo.template}`;
-                                rs.tempType = 'interaction';
-                                console.log(rs);
-                            } else {
-                                console.log(`conditions not met`)
-                            }
+                        if (game.state === 'ended') {
+                            rs.temp = 'game.gameover';
+                        } else if (game.state === 'pending') {
+                            rs.temp = 'game.pending';
                         } else {
-                            rs.temp = 'game.intro';
+                            if (game.teams.length > 0) {
+                                // only remaining state is 'started'
+                                // default state is always main page with links
+                                rs.temp = 'game.main';
+                                rs.partialName = 'game-links';
+    //                            console.log('the test:');
+                                if (!scoreCompletionMetric && canInteract && inThisRound) {
+                                    rs.temp =  `game.${roundInfo.template}`;
+                                    rs.tempType = 'interaction';
+                                    console.log(rs);
+                                } else {
+                                    console.log(`conditions not met`)
+                                }
+                            } else {
+                                rs.temp = 'game.intro';
+                            }
                         }
                     }
                 }
