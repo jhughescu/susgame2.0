@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (player) {
             return `ls-${player.id}-${id}`;
         } else {
-            console.warn(`cannot get storage ID - player not defined`);
+//            console.warn(`cannot get storage ID - player not defined`);
         }
     };
     const addToStorage = (id, ob) => {
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
-            console.log('regPlayer callback:', ob);
+//            console.log('regPlayer callback:', ob);
             if (ob) {
                 let res = ob.id;
                 if (ob.game) {
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const activateYourmoveButton = () => {
         const ymb = $('.yourmove-btn');
-        console.log(ymb);
+//        console.log(ymb);
         if (ymb.length > 0) {
             const rOb = Object.assign({}, renderState);
             rOb.active = false;
@@ -263,14 +263,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const interaction = renderState.tempType === 'interaction';
             const hasScored = false;
             const round = game.persistentData.rounds[procVal(game.round)];
+            const inThisRound = round.type === player.teamObj.type;
             const rs = await thisRoundScored();
 
-    //        console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
+//            console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
     //        console.log(`round`, round);
     //        console.log(`game.round`, game.round);
     //        console.log(`NEW - have I scored?`, iHaveScored(rs));
     //        console.log(`thisRoundScored`, rs);
-    //        console.log(`renderState`, renderState);
+//            console.log(`inThisRound`, inThisRound);
+//            console.log(`renderState`, renderState);
     //        console.log(`game`, game);
     //        console.log(`player`, player);
             if (round.n > 0) {
@@ -278,16 +280,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 // need further conditionals here - is this player invloved in the current round? Is the round already complete?
                 if (game.round.toString().indexOf('*', 0) === -1) {
     //                console.log(`round not complete`)
-                    if (!iHaveScored(rs)) {
-    //                    console.log(`I've not scored`);
-                        if (!home && !interaction) {
-                            gotoHomeState();
-                            render(activateYourmoveButton);
+                    if (inThisRound) {
+                        if (!iHaveScored(rs)) {
+        //                    console.log(`I've not scored`);
+                            if (!home && !interaction) {
+                                gotoHomeState();
+                                render(activateYourmoveButton);
+                            } else {
+    //                            if (interaction) {
+                                    activateYourmoveButton();
+    //                            }
+                            }
                         } else {
-                            activateYourmoveButton();
+                            console.log(`I've already scored, apparently`)
                         }
-                    } else {
-                        console.log(`I've already scored, apparently`)
                     }
                 } else {
                     // '*' in the round - round is complete
@@ -500,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return srs;
     };
     const setRenderStateLocal = (ob) => {
-        console.log(`setRenderStateLocal is the ONLY way to store a render state locally`)
+//        console.log(`setRenderStateLocal is the ONLY way to store a render state locally`)
         // make renderStateLocal into a duplicate of (not a pointer to) the arg.
         renderStateLocal = typeof(ob) === 'string' ? JSON.parse(ob) : Object.assign({}, ob);
         // 'ob' is player info, no need to store that - unless preserveOb = true
@@ -512,9 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Only allow storage of correctly defined state data
         if (renderStateLocal.hasOwnProperty('temp')) {
             addToStorage('renderState', renderStateLocal);
-            console.log(`renderState stored with temp ${renderState.temp}`);
+//            console.log(`renderState stored with temp ${renderState.temp}`);
         } else {
-            console.warn(`renderState not stored as no 'temp' property found`);
+//            console.warn(`renderState not stored as no 'temp' property found`);
         }
     };
     const updateRenderState = (ob) => {
@@ -582,8 +588,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`active`, getStoredRenderState().active);
 //            console.log(renderStateServer)
 //            rOb.temp = 'game.allocation';
-            console.log(`renderState.temp`, renderState.temp);
-            console.log(`rOb`, rOb);
+//            console.log(`renderState.temp`, renderState.temp);
+//            console.log(`rOb`, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
@@ -600,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         } else {
-            console.warn('rendering not possible; renderState undefined');
+//            console.warn('rendering not possible; renderState undefined');
         }
     };
     const onGameEnd = () => {

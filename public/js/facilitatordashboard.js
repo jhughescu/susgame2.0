@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     t1 = roundAll(t1);
                 }
 
-                console.log(`i also got t1`, t1);
+//                console.log(`i also got t1`, t1);
                 socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
                     ob.scorePackets = sp;
                     const scores = {};
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     game.persistentData.rounds.forEach(r => {
                         ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
                     });
-                    console.log(`render scores with`, ob);
+//                    console.log(`render scores with`, ob);
                     renderTemplate('contentScores', 'facilitator.scores', ob, () => {
                         setupScoreControls();
                     })
@@ -1098,6 +1098,101 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const showRoundCompleter = () => {
 //        const r = parseInt(game.round.toString().replace(/\D/g, ''));
+//        console.log(`showRoundCompleter`)
+        const r = window.justNumber(game.round);
+        if (r > 0) {
+            const round = game.persistentData.rounds[r];
+            const subs = round.submissions;
+            const teams = game.persistentData[round.teams];
+            // scores assumed to be always required:
+//            const scores = game.scores.filter(sc => sc.startsWith(r));
+            const scorePackets = filterScorePackets(game.scores.map(unpackScore), 'round', round.n);
+//            console.log(`scorePackets`, scorePackets);
+            let scorers = [];
+//            console.log(`round`, round);
+//            console.log(`teams`, teams);
+            const rOb = {teams: [], players: [], scorers: []};
+            if (round.type === 1) {
+                // teams score
+                scorers = teams;
+            } else {
+                // players score
+                teams.forEach(t => {
+//                    console.log(t)
+                    const tm = game.teams[t.id];
+                    tm.forEach(p => {
+//                        console.log(game.playersFull[p]);
+                        scorers.push(game.playersFull[p]);
+                    });
+                });
+            }
+//            console.log(`scorers`, scorers);
+//            console.log(`scorePackets`, scorePackets);
+
+            scorers.forEach(t => {
+//                if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
+//                console.log(t);
+                const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
+                if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
+//                    console.log('comp', comp)
+//                    console.log(`scorer has not scored:`, filterScorePackets(scorePackets, comp.prop, comp.val));
+                    rOb.scorers.push(Object.assign({flag: round.type === 1 ? t.title : `${t.teamObj.title} ${t.id}`}, t));
+                } else {
+//                    console.log(`scorer HAS scored`);
+                }
+            });
+            $('#modal').modal({
+                closeExisting: true
+            });
+            rOb.isLead = true;
+            rOb.currentRoundComplete = false;
+            if (rOb.scorers.length > 0) {
+                renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
+                    let tl = $('.modtablinks');
+                    tl.off('click');
+                    tl.on('click', function () {
+                        const tOb = {isLead: true, currentRoundComplete: false};
+                        const id = $(this).attr('id').replace('link_', '');
+//                        console.log(`id: ${id}, round type: ${round.type}`);
+                        if (round.type === 1) {
+                            tOb.teamObj = game.persistentData.teams[`t${id}`];
+                        } else {
+                            game.teams.forEach((t, i) => {
+//                                console.log(t)
+                                if (t.indexOf(id, 0) > -1) {
+                                    tOb.teamObj = game.persistentData.teams[`t${i}`];
+                                }
+                            });
+                        }
+//                        const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
+                        const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
+//                        console.log('pl', pl);
+                        tOb.game = game;
+                        pl.teamObj = Object.assign({}, tOb.teamObj);
+                        $('#formname').html(tOb.teamObj.title);
+                        renderPartial('formzone', `game-${round.template}`, tOb, () => {
+                            $('.resources-btn').css({
+                                width: '30px',
+                                height: '30px',
+                                'background-color': 'green'
+                            });
+                            if (round.type === 1) {
+                                window.setupAllocationControl(pl);
+                            } else {
+                                window.setupVoteControl(pl);
+                            }
+                        });
+                    });
+                });
+            } else {
+                $(`#modaltheatre`).html(`Round ${r} is complete, no further input needed.`);
+            }
+        } else {
+            alert(`No round currently active.`);
+        }
+    };
+    const showRoundCompleterV1 = () => {
+//        const r = parseInt(game.round.toString().replace(/\D/g, ''));
         console.log(`showRoundCompleter`)
         const r = window.justNumber(game.round);
         if (r > 0) {
@@ -1106,12 +1201,47 @@ document.addEventListener('DOMContentLoaded', function() {
             const teams = game.persistentData[round.teams];
             // scores assumed to be always required:
             const scores = game.scores.filter(sc => sc.startsWith(r));
+            const scorePackets = game.scores.map(unpackScore);
+            console.log(`game.scores`, game.scores);
+            console.log(`scorePackets`, scorePackets);
+            console.log(filterScorePackets(scorePackets, 'round', round.n));
+//            console.log(filterScorePackets(scorePackets, 'src', 0));
+//            console.log(filterScorePackets(scorePackets, 'val', 1));
+            let scorers = [];
+            console.log(`round`, round);
+            console.log(`teams`, teams);
             const rOb = {teams: [], players: []};
+            if (round.type === 1) {
+                // teams score
+                scorers = teams;
+            } else {
+                // players score
+                teams.forEach(t => {
+//                    console.log(t)
+                    const tm = game.teams[t.id];
+                    tm.forEach(p => {
+//                        console.log(game.playersFull[p]);
+                        scorers.push(game.playersFull[p]);
+                    });
+                });
+            }
+            console.log(`scorers`, scorers);
+            console.log(`scores`, scores);
+
             teams.forEach(t => {
                 if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
                     rOb.teams.push(Object.assign({}, t));
                 }
-                const game.teams[t.id]);
+//                console.log(game.teams[t.id]);
+                if (round.type === 2) {
+                    // all players must score
+                    const tm = game.teams[t.id];
+                    tm.forEach(p => {
+//                        console.log(game.playersFull[p]);
+                    });
+                } else {
+
+                }
             });
             $('#modal').modal({
                 closeExisting: true
@@ -1130,18 +1260,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         tOb.game = game;
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
-//                        console.log(`rendering the input device`);
-//                        console.log(round);
-//                        console.log(tOb);
-//                        renderPartial('formzone', 'game-allocation', tOb, () => {
                         renderPartial('formzone', `game-${round.template}`, tOb, () => {
                             $('.resources-btn').css({
                                 width: '30px',
                                 height: '30px',
                                 'background-color': 'green'
                             });
-                            window.setupAllocationControl(pl);
-                            window.setupVoteControl(pl);
+                            if (round.type === 1) {
+                                window.setupAllocationControl(pl);
+                            } else {
+                                window.setupVoteControl(pl);
+                            }
                         });
                     });
                 });

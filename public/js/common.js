@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', function () {
     let game = null;
     // templateStore maintains copies of each fetched template so they can be retrieved without querying the server
     const templateStore = {};
+    const scoreMap = {
+        0: 'round',
+        1: 'src',
+        2: 'dest',
+        3: 'val',
+        4: 'client'
+    };
 
     // Define the setupObserver function to accept an element ID as an argument
     const setupObserver = (elementId, cb) => {
@@ -324,6 +331,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return spo;
     };
+    const unpackScore = (s) => {
+        const sa = s.split('_');
+        const o = {};
+        sa.forEach((ss, i) => {
+            o[scoreMap[i]] = justNumber(ss);
+        });
+        return o;
+    };
     const thisRoundScoredV2 = (pl) => {
         const myPlayer = player === null ? pl : player;
         if (socket && myPlayer) {
@@ -598,6 +613,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.playerShare = playerShare;
     window.gameShare = gameShare;
     window.thisRoundScored = thisRoundScored;
+    window.unpackScore = unpackScore;
     window.setupAllocationControl = setupAllocationControl;
     window.setupVoteControl = setupVoteControl;
     window.checkDevMode = checkDevMode;

@@ -1,0 +1,15 @@
+<div class='wrapper intro'>
+
+    <div class="big container">
+        <div class='barchart'>
+            <table><tbody>
+                <tr>
+                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Pos' style='background-color: {{displayColour}};'></div></td>{{/each}}
+                </tr>
+                <tr>
+                {{#each persistentData.mainTeams}}<td><div class='bar' id='b{{id}}Neg' style='background-color: {{displayColour}};'></div></td>{{/each}}
+                </tr>
+            </tbody></table>
+        </div>
+    </div>
+</div>

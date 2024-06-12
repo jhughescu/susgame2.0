@@ -201,10 +201,24 @@ position: relative;
     color: cyan;
 }
 #scoresummaries .nostripe td:nth-child(even) {
-    color: inherit;
+/*    color: inherit;*/
 }
 #scoresummaries td {
-    padding: 1px 6px;
+    padding: 2px 16px;
+}
+#scoresummaries td:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.12);
+}
+#scoresummaries .totals td.emphasis {
+    background-color: rgba(0, 0, 0, 0.29);
+    color: cyan;
+}
+#scoresummaries .totals td.grand {
+    background-color: rgba(0, 0, 0, 0.53);
+    color: yellow;
+}
+#scoresummaries .totals tr:nth-child(2) td:first-child {
+    color: #01f401;
 }
 #scoresummaries .downloader {
     padding-top: 20px;

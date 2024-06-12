@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let game = null;
     let videoPlayer = null;
     let autoplay = true;
+    let watchFor = null;
+    let currentSlideObject = null;
     const getSessionID = () => {
         const ID = window.location.hash.replace('#', '');
         gameID = ID;
@@ -38,11 +40,11 @@ document.addEventListener('DOMContentLoaded', function () {
 //            console.log(`oo, game is ready`, rGame);
             game = rGame;
         });
-        socket.on('gameUpdate', (game) => {
-            console.log('a game update');
+        socket.on('gameUpdate', (rGame) => {
+            onGameUpdate(rGame);
         });
         socket.on('scoresUpdated', (scores) => {
-//            console.log('a score update', scores);
+            console.log('a score update', scores);
             onScoresUpdated(scores);
         });
         socket.on('showSlide', (slOb) => {
@@ -60,6 +62,24 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.reload();
         });
     };
+    const setCurrentSlideObject = (slOb) => {
+        currentSlideObject = Object.assign({}, slOb);
+    };
+    const onGameUpdate = (rGame) => {
+        console.log('a game update:');
+        console.log(`watching for ${watchFor}`);
+        if (watchFor) {
+            console.log(game[watchFor] === rGame[watchFor]);
+            console.log(game[watchFor]);
+            console.log(rGame[watchFor]);
+            if (game[watchFor] !== rGame[watchFor]) {
+                updateSlide()
+            }
+        }
+        game = rGame;
+        console.log(game);
+
+    };
     const estPanopto  = () => {
         // Loads the Panopto API script for controlling video content
         var tag = document.createElement('script');
@@ -67,6 +87,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         console.log('Panopto API ready');
+    };
+    const setWatch = (l) => {
+        // set a property of the game to watch
+        console.log(`watch for ${l}`);
+        watchFor = l;
     };
     const init = () => {
         // Delay required to ensure game is started prior to init; find a better way to do this.
@@ -165,6 +190,8 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             game = rgame;
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+                setWatch('scores')
+                console.log(`got r1`, rs);
                 renderTemplate(targ, 'slides/showround1', prepScoresR1(rs));
             });
 
@@ -193,6 +220,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 500);
         });
     };
+
+    // Specific actions
+    const showGameQR = (rOb) => {
+        renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
+
+        })
+    };
+    const renderTotals = () => {
+        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
+        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
+        barsPos.each((i, b) => {
+            const perc = (Math.random() * 200) - 100;
+            let newH = perc;
+            let neg = Math.abs(newH);
+            if (newH < 0) {
+                newH = 0;
+            } else {
+                neg = 0;
+            }
+            $(b).animate({height: `${newH}%`});
+            $(`#b${i}Neg`).animate({height: `${neg}%`});
+        });
+    };
+    // End specific actions
+
+
     // Panopto API code:
     var embedApi;
     function goVideo(id) {
@@ -303,33 +356,49 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         }
-    }
+    };
+    const slideAction = (slOb) => {
+        const rOb = {gameID: game.uniqueID};
+
+        console.log(slOb.hasOwnProperty('action'));
+        if (slOb.hasOwnProperty('action')) {
+            console.log(slOb.action)
+            if (window[slOb.action]) {
+                console.log('yes');
+                window[slOb.action](rOb);
+            } else {
+                console.log('no');
+            }
+        }
+    };
     const showSlide = (slOb) => {
-//        console.log(`showSlide`, slOb);
+        console.log(`showSlide`, slOb);
         devInfo(slOb);
         if (slOb.type === 'video') {
             showVideo(slOb)
         } else if (slOb.type === 'slide') {
             const slideID = `slides/${slOb.slide}`;
             console.log(`slideID`, slideID);
-            console.log(`slOb`, slOb);
-            console.log(`renderOb`, renderOb);
-            console.log(`game`, game)
+//            console.log(`slOb`, slOb);
+//            console.log(`renderOb`, renderOb);
+//            console.log(`game`, game);
             renderTemplate(targ, slideID, game, () => {
-                if (slOb.hasOwnProperty('action')) {
-                    if (window[slOb.action]) {
-                        window[slOb.action]();
-                    }
-                }
                 const rOb = {gameID: game.uniqueID};
+                slideAction(slOb);
                 Object.assign(rOb, renderOb);
-                console.log(`rOb`, rOb)
-                renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
-
-                })
+                setCurrentSlideObject(slOb);
             });
         } else {
             renderTemplate(targ, `slides/notready`, slOb, () => {});
+        }
+    };
+    const updateSlide = () => {
+//        showSlide(currentSlideObject);
+        const slOb = currentSlideObject;
+        if (slOb) {
+            if (slOb.action) {
+                slideAction(slOb);
+            }
         }
     };
     const showGame = () => {
@@ -353,6 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showScores = showScores;
     window.showValues = showValues;
     window.showRound1 = showRound1;
+    window.showGameQR = showGameQR;
+    window.renderTotals = renderTotals;
     window.unmute = unmute;
     window.maxVol = maxVol;
     window.ensureAudio = ensureAudio;

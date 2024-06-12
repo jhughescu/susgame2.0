@@ -1,6 +1,6 @@
 {
     "slideList": [
-        {"id": "slide_010_intro", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game"},
+        {"id": "slide_010_intro", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game", "action": "showGameQR"},
         {"id": "video", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape"},
         {"id": "video", "type": "video", "srcRef": "v2", "title": "Welcome"},
         {"id": "slide_110_stakeholders", "title": "Assign Teams (wait for <span class='allenrolled'>full enrolment</span>)", "viewtype": "frame1", "action": "rAssignTeams"},
@@ -15,7 +15,7 @@
         {"id": "video", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "video", "type": "video", "srcRef": "v10", "title": "Recalculation"},
         {"id": "video", "type": "video", "srcRef": "v11", "title": "Collaboration"},
-        {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration *", "viewtype": "frame1", "header": "Collaboration", "action": "startRoundE1R3"},
+        {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration *", "viewtype": "frame1", "header": "Collaboration", "type": "slide", "slide": "slide_3010_2030_total", "action": "renderTotals"},
         {"id": "slide_230_stakeholderscollab", "title": "Public Voices 2 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R4"},
         {"id": "slide_010_outro", "title": "Exit Screen", "viewtype": "fullscreen1", "header": "Sustainability Game"}
     ],
