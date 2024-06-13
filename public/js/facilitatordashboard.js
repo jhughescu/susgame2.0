@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     console.log(`session reset`);
                     session = rtn;
+                    localStorage.clear();
                     renderSession();
                 }
             });
