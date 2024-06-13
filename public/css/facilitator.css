@@ -224,3 +224,6 @@ position: relative;
     padding-top: 20px;
     padding-bottom: 30px;
 }
+button.remove {
+    color: red;
+}

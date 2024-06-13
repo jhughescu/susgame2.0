@@ -180,15 +180,15 @@ async function reassignTeam (ob) {
     // assign a player to a different team
     const game = games[`game-${ob.game}`];
     if (game) {
-        console.log(ob);
+//        console.log(ob);
         let oldT = game.teams[ob.team].slice();
         let newT = game.teams[ob.newTeam].slice();
 //        console.log(oldT);
 //        console.log(newT);
         oldT.splice(oldT.indexOf(ob.player), 1);
         newT.push(ob.player);
-        console.log(`new team`, newT);
-        console.log(`old team`, oldT);
+//        console.log(`new team`, newT);
+//        console.log(`old team`, oldT);
 //        return;
 //        t.splice(t.indexOf(ob.player), 1);
 //        t.unshift(ob.player);
@@ -205,6 +205,32 @@ async function reassignTeam (ob) {
         console.log(`cannot reassign player; no game with ID game-${ob.game}`)
     }
 
+};
+async function removePlayer (ob) {
+    const pl = ob.player;
+//    console.log(`remove player ${pl}`);
+//    console.log(ob)
+    const game = games[`game-${ob.game}`];
+    if (game) {
+        // remove player from any teams they belong to
+        // NOTE leaving this out for now, removing players assigned to a team may have unexpected consequences
+        const t = game.teams.filter(tm => tm.indexOf(pl, 0) > -1);
+        game.teams.forEach(tm => {
+//            console.log(tm)
+//            console.log(ob.player, tm.indexOf(ob.player))
+        });
+//        console.log(t);
+//        console.log(game.players);
+//        console.log(game.players.indexOf(pl, 0));
+        const newP = game.players.splice(game.players.indexOf(pl, 0), 1);
+//        console.log(newP);
+//        console.log(game.players);
+        const session = await sessionController.updateSession(ob.game, {players: game.players});
+        eventEmitter.emit('gameUpdate', game);
+//        eventEmitter.emit('singlePlayerGameUpdate', {player: player, game});
+    } else {
+        console(`can't remove player, specifed game doesn't exist.`);
+    }
 };
 
 const restoreClients = (address) => {
@@ -1040,6 +1066,7 @@ module.exports = {
     registerPlayer,
     playerConnectEvent,
     assignTeams,
+    removePlayer,
     resetTeams,
     setTeamSize,
     makeLead,

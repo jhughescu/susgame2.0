@@ -65,15 +65,18 @@ document.addEventListener('DOMContentLoaded', function() {
         renderLogFeed();
     };
     const resetSession = () => {
-        socket.emit('resetSession', session.uniqueID, (rtn) => {
-            if (typeof(rtn) === 'string') {
-                alert(rtn);
-            } else {
-                console.log(`session reset`);
-                session = rtn;
-                renderSession();
-            }
-        });
+        const w = confirm('Are you sure you want to reset the session?');
+        if (w) {
+            socket.emit('resetSession', session.uniqueID, (rtn) => {
+                if (typeof(rtn) === 'string') {
+                    alert(rtn);
+                } else {
+                    console.log(`session reset`);
+                    session = rtn;
+                    renderSession();
+                }
+            });
+        }
     };
     const startGame = () => {
         addToLogFeed('start new game');
@@ -1003,15 +1006,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         $('.refresh').off('click');
         $('.refresh').on('click', function () {
-//                    console.log(session);
-//                    console.log(game);
             const id = $(this).attr('id').split('_').splice(2);
             const pl = game.playersFull[`${id}`];
             const sock = pl.socketID;
-//                    console.log(pl);
-//                    console.log(sock);
             const clOb = {game: game.uniqueID, player: pl, socketID: sock};
             socket.emit(`refreshClient`, clOb);
+        });
+        $(`.remove`).off('click').on('click', function () {
+            const id = $(this).attr('id').split('_')[2];
+            const plOb = {game: game.uniqueID, player: id};
+            console.log(plOb);
+            console.log(plOb.player);
+            console.log(typeof(plOb.player));
+            console.log(game.playersFull[`${id}`]);
+            if (game.playersFull.hasOwnProperty(`${id}`)) {
+                const player = game.playersFull[`${id}`];
+                if (player.isLead) {
+                    alert('cannot remove a team lead, assign a new lead before trying again');
+                    return;
+                }
+                if (player.connected) {
+                    alert('Note: removing a currently connected player may cause unexpected results');
+//                    return;
+                }
+                if (player.hasOwnProperty('teamObj')) {
+                    alert('Note: removing a player already assigned to a team may cause unexpected results');
+//                    return;
+                }
+
+            }
+            const warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
+            if (warn) {
+                socket.emit('removePlayer', plOb);
+            }
         });
         const rollovers = $('.rollover');
 //        console.log(rollovers.length);
@@ -1049,6 +1076,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (t.length === 0) {
             // Teams not yet assigned, must wait for allocation
             msg += `teams not yet assigned, must wait for allocation`;
+            ok = false;
+            // Note - NEVER allow scoring prior to team assignment
         } else if (r === gr) {
                    // This is the round already in progress
             msg += `this is the round already in progress`;
@@ -1061,6 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             ok = true;
         }
+
         if (ok) {
             alert(`OK to start round ${r}`);
             socket.emit('startRound', {gameID: game.uniqueID, round: r});
@@ -1131,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             scorers.forEach(t => {
 //                if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
-//                console.log(t);
+                console.log(t);
                 const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
                 if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
 //                    console.log('comp', comp)

@@ -87,6 +87,7 @@ function initSocket(server) {
         const Q = socket.handshake.query;
 
         // Player clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         if (src.indexOf('/game', 0) > -1) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
@@ -251,6 +252,12 @@ function initSocket(server) {
 //                console.log(clOb);
                 io.to(clOb.socketID).emit('forceRefresh');
             });
+            socket.on('removePlayer', (plOb) => {
+//                gameController.makeLead(obj);
+//                console.log(clOb);
+                gameController.removePlayer(plOb);
+//                io.to(clOb.socketID).emit('forceRefresh');
+            });
             socket.on('testPassword', async (ob, cb) => {
     //            console.log(`testPassword`);
                 let s = await sessionController.getSessionPassword(ob.session);
@@ -342,6 +349,7 @@ function initSocket(server) {
                 presentationController.pEvent(ob, cb);
             });
         }
+
         // Presentation client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation') {
 //            console.log('############################################## presentation connected:');

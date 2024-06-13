@@ -260,7 +260,8 @@ async function resetSession(id, cb) {
     // dev only method, return warning if not dev
     if (process.env.ISDEV) {
         const session = await updateSession(id, {
-            state: 'pending'
+            state: 'pending',
+            players: []
         });
         if (session) {
             cb(session);

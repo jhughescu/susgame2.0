@@ -94,7 +94,7 @@ class Game {
     }
     unsetTeams () {
         // set teams (teamObj) for all players in a game (init method)
-        console.log(`unsetTeams`)
+//        console.log(`unsetTeams`)
         let pf = this.playersFull;
         for (var i in pf) {
             pf[i].teamObj = null;
@@ -117,7 +117,8 @@ class Game {
     //        console.log(`set teamObj for player ${player.id}`);
             this.teams.forEach((t, i) => {
                 if (t.includes(player.id)) {
-    //                console.log(`allocate team ${pt[`t${i}`].title}`);
+                    console.log(`allocate team ${pt[`t${i}`].title}`);
+                    console.log(t);
                     player.teamObj = pt[`t${i}`];
                     player.isLead = t[0] === player.id;
                 }
@@ -133,9 +134,12 @@ class Game {
         t.forEach((s, i) => t[i] = {id: i, l: s.length});
         t.sort((a, b) => {if (a.l > b.l) {return 1} else if (a.l < b.l) {return -1} else {return 0}});
         // the id value of t[0] is now the index of the secondary team with the smallest number of members
-        player.teamObj = st[t[0].id];
-        this.teams[mt.length + t[0].id].push(player.id);
-
+        if (player) {
+            player.teamObj = st[t[0].id];
+            this.teams[mt.length + t[0].id].push(player.id);
+        } else {
+            console.log('error adding latecomer - ask client to refresh browser');
+        }
 
     }
     addNewScore(playerID, score) {
