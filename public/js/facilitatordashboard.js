@@ -1022,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(game.playersFull[`${id}`]);
             if (game.playersFull.hasOwnProperty(`${id}`)) {
                 const player = game.playersFull[`${id}`];
+                console.log(player);
                 if (player.isLead) {
                     alert('cannot remove a team lead, assign a new lead before trying again');
                     return;
@@ -1030,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Note: removing a currently connected player may cause unexpected results');
 //                    return;
                 }
-                if (player.hasOwnProperty('teamObj')) {
+                if (player.teamObj) {
                     alert('Note: removing a player already assigned to a team may cause unexpected results');
 //                    return;
                 }
