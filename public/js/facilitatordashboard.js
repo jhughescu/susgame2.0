@@ -1016,13 +1016,13 @@ document.addEventListener('DOMContentLoaded', function() {
         $(`.remove`).off('click').on('click', function () {
             const id = $(this).attr('id').split('_')[2];
             const plOb = {game: game.uniqueID, player: id};
-            console.log(plOb);
-            console.log(plOb.player);
-            console.log(typeof(plOb.player));
-            console.log(game.playersFull[`${id}`]);
+//            console.log(plOb);
+//            console.log(plOb.player);
+//            console.log(typeof(plOb.player));
+//            console.log(game.playersFull[`${id}`]);
             if (game.playersFull.hasOwnProperty(`${id}`)) {
                 const player = game.playersFull[`${id}`];
-                console.log(player);
+//                console.log(player);
                 if (player.isLead) {
                     alert('cannot remove a team lead, assign a new lead before trying again');
                     return;
