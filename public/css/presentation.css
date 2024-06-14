@@ -59,6 +59,25 @@ td {
     background-color: rgba(4, 39, 59, 0.67);
 }
 
+
+
+
+/* Intro slide */
+
+.intro #url {
+    font-size: 2rem;
+    text-transform: lowercase;
+    position: absolute;
+    right: 40px;
+    bottom: 20px;
+    color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(22, 26, 19, 0.42);
+/*    display: none;*/
+}
+
+
+/* End intro slide */
+
 /* Bar chart slide */
 .barchart {
 /*    background-color: red;*/

@@ -223,8 +223,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Specific actions
     const showGameQR = (rOb) => {
+        console.log(`showGameQR`, rOb);
+        rOb = Object.assign(rOb, renderOb);
         renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
-
+            console.log('rendered');
         })
     };
 
@@ -386,14 +388,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const slideAction = (slOb) => {
         const rOb = {gameID: game.uniqueID};
 
-        console.log(slOb.hasOwnProperty('action'));
+        console.log(`slide has action`, slOb.hasOwnProperty('action'));
         if (slOb.hasOwnProperty('action')) {
-            console.log(slOb.action)
+            console.log(`the action is`, slOb.action)
             if (window[slOb.action]) {
-                console.log('yes');
+                console.log('action exists in the code');
                 window[slOb.action](rOb);
             } else {
-                console.log('no');
+                console.log('action does not exist in code');
             }
         }
     };

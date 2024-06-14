@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Facilitator Login</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel='stylesheet' href='/css/basics.css' type='text/css'>
+    <link rel='stylesheet' href='/css/home.css' type='text/css'>
+    <link rel='stylesheet' href='/css/fog.css' type='text/css'>
+    <style>
+        .central {
+            text-align: center;
+        }
+        button {
+/*            height: 30px;*/
+            margin-top: 20px;
+            font-size: 2.1rem;
+            border-radius: 6px;
+            padding: 0px 20px;
+        }
+        #eye-toggle {
+            width: 45px;
+        }
+        .fa img {
+            display: none;
+            margin: 0px auto;
+        }
+        td:first-child {
+            text-align: right;
+        }
+    </style>
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('#eye-toggle').hover(function() {
+                var passwordField = $('#password');
+                var passwordFieldType = passwordField.attr('type');
+                if (passwordFieldType == 'password') {
+                    passwordField.attr('type', 'text');
+//                    $(this).html('<i class="fa fa-eye-slash"></i>');
+                } else {
+                    passwordField.attr('type', 'password');
+                    $(this).html('<i class="fa fa-eye"></i>');
+                }
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+
+    <div class='fogwrapper'>
+        <div id="foglayer_01" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_02" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+        <div id="foglayer_03" class="fog">
+            <div class="image01"></div>
+            <div class="image02"></div>
+        </div>
+    </div>
+    <div class='wrapper intro'>
+        <div class="big container intro fullscreen1">
+            <h1>System Administration</h1>
+<!--    <h2>Admin Login</h2>-->
+            <form action="/admin/systemlogin" method="post">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="canary" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+</html>
