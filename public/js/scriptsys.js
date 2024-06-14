@@ -220,10 +220,9 @@ document.addEventListener('DOMContentLoaded', function() {
 //                    const rOb = {password: 'socks'};
                     window.renderTemplate('sessionDetail', 'sessionCardSystem', rOb, readySessionSpecificLinks);
                     $('#sessionDetail').fadeIn(300, () => {
-                        const vp = $('#val_password');
+                        let vp = $('#val_password').add($(`#val_uniqueID`));
                         vp.addClass('link');
-                        vp.off('click');
-                        vp.on('click', function() {
+                        vp.off('click').on('click', function() {
                             copyToClipboard($(this).attr('id'));
                         });
                     });
