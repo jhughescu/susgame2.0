@@ -245,6 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let tAbs = t1.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
         const mult = 100 / max;
+        $(`.totalNum`).html('');
         barsPos.each((i, b) => {
             const perc = t1[i] * mult;
 
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const negative = (neg / 100) * $(b).parent().height();
             $(b).animate({height: `${newH}%`});
             const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-            $(`.totalNum`).html('');
+
             total.html(roundNumber(t1[i]));
             const tPos = neg === 0 ? positive + 50 : positive;
             total.animate({bottom: `${tPos}px`});

@@ -54,7 +54,8 @@ async function facAuth(req, res, next) {
         const password = req.body.password;
         const storedSession = await sessionController.getSessionPassword(session);
         let msg = null;
-        if (storedSession.password === password) {
+        // 20240614 can now log on to any session with the admin password
+        if (storedSession.password === password || password === process.env.ADMIN_PASSWORD) {
             req.session = storedSession;
             next();
         } else {
