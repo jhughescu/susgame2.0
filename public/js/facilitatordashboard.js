@@ -1132,17 +1132,18 @@ document.addEventListener('DOMContentLoaded', function() {
 //        const r = parseInt(game.round.toString().replace(/\D/g, ''));
 //        console.log(`showRoundCompleter`)
         const r = window.justNumber(game.round);
+        const pf = game.playersFull;
+        if ($.isEmptyObject(pf)) {
+            alert(`Can't complete this action, game.playersFull is not defined. Try reconnecting any fake player clients.`);
+            return;
+        }
         if (r > 0) {
             const round = game.persistentData.rounds[r];
             const subs = round.submissions;
             const teams = game.persistentData[round.teams];
             // scores assumed to be always required:
-//            const scores = game.scores.filter(sc => sc.startsWith(r));
             const scorePackets = filterScorePackets(game.scores.map(unpackScore), 'round', round.n);
-//            console.log(`scorePackets`, scorePackets);
             let scorers = [];
-//            console.log(`round`, round);
-//            console.log(`teams`, teams);
             const rOb = {teams: [], players: [], scorers: []};
             if (round.type === 1) {
                 // teams score
@@ -1150,24 +1151,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // players score
                 teams.forEach(t => {
-//                    console.log(t)
                     const tm = game.teams[t.id];
                     tm.forEach(p => {
-//                        console.log(game.playersFull[p]);
                         scorers.push(game.playersFull[p]);
                     });
                 });
             }
 //            console.log(`scorers`, scorers);
 //            console.log(`scorePackets`, scorePackets);
-
             scorers.forEach(t => {
-//                if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
-                console.log(t);
+//                console.log(t);
                 const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
                 if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
-//                    console.log('comp', comp)
-//                    console.log(`scorer has not scored:`, filterScorePackets(scorePackets, comp.prop, comp.val));
                     rOb.scorers.push(Object.assign({flag: round.type === 1 ? t.title : `${t.teamObj.title} ${t.id}`}, t));
                 } else {
 //                    console.log(`scorer HAS scored`);
