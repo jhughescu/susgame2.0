@@ -36,17 +36,21 @@ async function startGame (o, cb) {
     log(`startGame: ${game}`);
     let rg = null;
     if (!games.hasOwnProperty(game)) {
-        Game = require(`./../models/game.${session.type}`);
-        Player = require(`./../models/player.${session.type}`);
-        Presentation = require(`./../models/presentation.${session.type}`);
-        Team = require(`./../models/team.${session.type}`);
-        ScorePacket = require(`./../models/scorepacket.${session.type}`);
-        const newGame = await new Game(session.uniqueID, session.type);
-        const presentation = await new Presentation(session.uniqueID, session.type);
-        await presentation.loadPersistentData();
-        presentation.currentSlide = session.slide;
-        newGame.presentation = presentation;
-        games[game] = newGame;
+        if (session.hasOwnProperty('type')) {
+            Game = require(`./../models/game.${session.type}`);
+            Player = require(`./../models/player.${session.type}`);
+            Presentation = require(`./../models/presentation.${session.type}`);
+            Team = require(`./../models/team.${session.type}`);
+            ScorePacket = require(`./../models/scorepacket.${session.type}`);
+            const newGame = await new Game(session.uniqueID, session.type);
+            const presentation = await new Presentation(session.uniqueID, session.type);
+            await presentation.loadPersistentData();
+            presentation.currentSlide = session.slide;
+            newGame.presentation = presentation;
+            games[game] = newGame;
+        } else {
+            console.log('cannot start game, session has no "type" property');
+        }
     }
     // Only set state to 'started' if it is currently pending
 //    console.log(`session.state: ${session.state}`);
@@ -241,7 +245,7 @@ async function removePlayer (ob, cb) {
         console(`can't remove player, specifed game doesn't exist.`);
     }
 };
-async function changeName (ob) {
+async function changeName (ob, cb) {
 //    console.log(`changeName:`);
     if (isNaN(ob.gameID)) {
         ob.gameID = parseInt(ob.gameID);
@@ -254,6 +258,10 @@ async function changeName (ob) {
         if (game) {
             game.name = sesh.name;
             eventEmitter.emit('gameUpdate', game);
+
+        }
+        if (cb) {
+            cb(sesh.uniqueID);
         }
     } else {
         error(`gameController: can't change name, game or session undefined`)

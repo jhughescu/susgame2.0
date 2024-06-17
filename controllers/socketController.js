@@ -86,6 +86,66 @@ function initSocket(server) {
         src = `/${src}`;
         const Q = socket.handshake.query;
 
+        // System admin client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (Q.role === 'systemadmin') {
+            console.log('system admin connected');
+            socket.on('disconnect', () => {
+    //            log('User disconnected from the admin dashboard');
+            });
+            socket.on('requestSessionDelete', async (ob, cb) => {
+                const g = gameController.getGame(`${ob.sID}`);
+                let msg = '';
+                let okToDelete = false;
+                if (g) {
+    //                console.log(`a game with that ID has been found: ${g.address}`);
+                    const cliFac = getRoomSockets(`${g.address}-fac`);
+                    const cliPla = getRoomSockets(`${g.address}`);
+                    if (cliFac || cliPla) {
+    //                    console.log(`${cliFac.size} facilitator window${cliFac.size > 1 ? 's' : ''} connected`);
+                        msg = `one or more clients are connected to the game ${g.address}, cannot delete the session at this time.`
+                    } else {
+                        okToDelete = true;
+                        if (adminController.adminPasswordCheck(ob.pw)) {
+                            msg = await sessionController.deleteSession(ob);
+                        } else {
+                            msg = 'incorrect password provided, session not deleted';
+                        }
+                    }
+                } else {
+                    // no game at all, fine to delete
+                    okToDelete = true;
+                }
+                if (okToDelete) {
+                    if (adminController.adminPasswordCheck(ob.pw)) {
+                        msg = await sessionController.deleteSession(ob);
+                    } else {
+                        msg = 'incorrect password provided, session not deleted';
+                    }
+                }
+                const cbMsg = typeof(msg) === 'string' ? {msg: msg, success: false} : msg;
+                if (cbMsg.success) {
+    //                console.log('succcess - delete game next');
+                    gameController.deleteGame(ob.sID);
+                }
+                cb(cbMsg);
+            });
+            socket.on('getSessionsSock', async (cb) => {
+//                console.log('new approach #####################################');
+    //            if (adminController.adminPasswordCheck(ob.pw)) {
+                    const s = sessionController.getSessionsSock(cb);
+    //            } else {
+    //                console.log(`can't get sessions without a password`)
+    //            }
+            });
+            socket.on('sessionNameChange', async (ob, cb) => {
+                console.log('snc')
+                gameController.changeName(ob, cb);
+            });
+        }
+        // End ystem admin client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
         // Player clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         if (src.indexOf('/game', 0) > -1) {
@@ -398,6 +458,9 @@ function initSocket(server) {
         }
         // End videoPlayer clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
+
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method
@@ -409,9 +472,10 @@ function initSocket(server) {
     });
 
     // Define a separate namespace for socket.io connections related to the admin dashboard
-    adminDashboardNamespace = io.of('/admin/systemdashboard');
+    adminDashboardNamespace = io.of('/admin/systemdashboardGONENOWMOVEDTONEWSYSTEMADMINROLE');
     adminDashboardNamespace.on('connection', (socket) => {
 //        log('A user connected to the admin dashboard');
+        /*
         socket.on('disconnect', () => {
 //            log('User disconnected from the admin dashboard');
         });
@@ -460,9 +524,9 @@ function initSocket(server) {
 //            }
         });
         socket.on('sessionNameChange', async (ob, cb) => {
-            gameController.changeName(ob);
+            gameController.changeName(ob, cb);
         });
-
+        */
         // Handle other socket events specific to the admin dashboard...
     });
 

@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = io('/admin/systemdashboard');
+//    const socket = io('/admin/systemdashboard');
+    const socket = io('', {
+        query: {
+            role: 'systemadmin'
+        }
+    });
     const getScores = () => {
         const total = 15;
         const map = `a_b_c_d_0`;
@@ -127,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sID = $('#val_uniqueID').html();
         const conf = confirm(`Request to delete session ${sID}.\nWARNING: this process deletes the named session from the database. This action cannot be undone.`);
         if (conf) {
-            const pw = prompt('Enter the system password to continue with deletion.', 'canary');
+            const pw = prompt('Enter the system password to continue with deletion.');
             if (pw) {
                 const final = confirm(`Are you absolutely sure you want to delete session ${sID}? This is your last chance to back out...`);
                 if (final) {
@@ -146,20 +151,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const nOb = {gameID: sID, name: namer};
         if (namer) {
 //            console.log(nOb)
-            socket.emit('sessionNameChange', nOb);
+            socket.emit('sessionNameChange', nOb, (gID) => {
+                updateView(gID);
+//                console.log(`rename callback ${gID}`)
+            });
         } else {
             alert(`No name entered.`);
         }
     };
 
-    const updateView = () => {
+    const updateView = (gID) => {
         if ($('#panel_sessions').length > 0) {
             socket.emit('getSessionsSock', (s) => {
-                panel('sessions', s);
+                panel('sessions', s, () => {
+                    if (gID) {
+                        getSession(gID);
+                        highlightSessionLink(gID);
+                    }
+                });
             });
         }
     };
-    const panel = (id, data) => {
+    const panel = (id, data, cb) => {
         window.renderTemplate('panel', 'panel', {id: id, content: 'sessionPanel'}, () => {
             const p = $(`#panel_${id}`);
             p.show();
@@ -184,7 +197,12 @@ document.addEventListener('DOMContentLoaded', function() {
             data.forEach(s => {
                 s.hasName = s.hasOwnProperty('name');
             });
-            window.renderTemplate('sessionList', 'sessionList', {sessions: data}, readySessionLinks);
+            window.renderTemplate('sessionList', 'sessionList', {sessions: data}, () => {
+                readySessionLinks();
+                if (cb) {
+                    cb();
+                }
+            });
         });
 //
 
@@ -258,13 +276,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             });
     };
+    const highlightSessionLink = (id) => {
+        const gs = $('.getSession');
+        const hgs = $(`#s-link${id}`);
+        gs.removeClass('highlight');
+        hgs.addClass('highlight');
+    };
     const readySessionLinks = () => {
         const gs = $('.getSession');
         gs.off('click');
         gs.on('click', function() {
-            gs.removeClass('highlight');
             var sessionId = $(this).data('session-id');
-            $(this).addClass('highlight');
+            highlightSessionLink(sessionId);
             getSession(sessionId);
         });
     };
@@ -307,7 +330,11 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('databaseChange', (ch) => {
         console.log('times they are a changing');
         console.log(ch);
-    })
+    });
+    socket.on('gameChange', g => {
+        console.log(`gameChange`);
+        console.log(g);
+    });
     $(document).ready(function() {
         readySessionLinks();
         readyDevLinks();
