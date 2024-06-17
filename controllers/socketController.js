@@ -173,7 +173,7 @@ function initSocket(server) {
                 roomID = `${session.address}-fac`;
             }
 //            roomID = '/trouot';
-            log(`facilitator joins room ${roomID}`);
+            console.log(`facilitator joins room ${roomID}`);
             socket.join(roomID);
 //            showRoomSize(roomID);
 
@@ -210,23 +210,23 @@ function initSocket(server) {
                 gameController.endGame(game, cb);
             });
             socket.on('sessionNameChange', async (ob, cb) => {
-//                console.log(ob);
-//                console.log(`${ob.gameID}`, {name: ob.name});
+                console.log(ob);
+                console.log(`${ob.gameID}`, {name: ob.name});
                 gameController.changeName(ob);
-                return;
-                const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
-                if (sesh) {
-                    console.log(sesh);
-                    if (cb) {
-                        console.log('yes cb')
-                        cb(sesh);
-                        io.to(ob.gameID)
-                    } else {
-                        console.log('no cb')
-                    }
-                } else {
-                    console.log('not a sesh')
-                }
+//                return;
+//                const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
+//                if (sesh) {
+//                    console.log(sesh);
+//                    if (cb) {
+//                        console.log('yes cb')
+//                        cb(sesh);
+//                        io.to(ob.gameID)
+//                    } else {
+//                        console.log('no cb')
+//                    }
+//                } else {
+//                    console.log('not a sesh')
+//                }
 //                sessionController.updateSession(ob.game, {name: ob.name});
             });
             socket.on('assignTeams', (ob, cb) => {
@@ -252,10 +252,10 @@ function initSocket(server) {
 //                console.log(clOb);
                 io.to(clOb.socketID).emit('forceRefresh');
             });
-            socket.on('removePlayer', (plOb) => {
+            socket.on('removePlayer', (plOb, cb) => {
 //                gameController.makeLead(obj);
 //                console.log(clOb);
-                gameController.removePlayer(plOb);
+                gameController.removePlayer(plOb, cb);
 //                io.to(clOb.socketID).emit('forceRefresh');
             });
             socket.on('testPassword', async (ob, cb) => {
@@ -458,6 +458,9 @@ function initSocket(server) {
 //            } else {
 //                console.log(`can't get sessions without a password`)
 //            }
+        });
+        socket.on('sessionNameChange', async (ob, cb) => {
+            gameController.changeName(ob);
         });
 
         // Handle other socket events specific to the admin dashboard...

@@ -1,4 +1,6 @@
-
+button, input, span, p {
+    font-size: 1.5rem;
+}
 .panel .button {
     width: 30px;
     height: 30px;
@@ -28,6 +30,8 @@
     display: flex; /* Use flexbox layout */
     flex-direction: column; /* Arrange children vertically */
     height: auto;
+    top: 20px;
+    left: 20px;
 }
 .panel td {
     padding: 3px 20px;
@@ -49,4 +53,8 @@
 
 #sessionDetail {
     margin-left: 30px; /* Add margin for spacing */
+}
+input#type {
+    width: 60px;
+    text-align: center;
 }

@@ -101,13 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function facilitate () {
         console.log('facilitate - cookie?');
-//        console.log(document.cookie);
-//        document.cookie = `sessionID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         try {
             const session = $('#val_uniqueID').html();
             const password = $('#val_password').html();
-//            console.log(session, password);
-//            debugger;
             const response = await fetch('/facilitatorlogin', {
                 method: 'POST',
                 headers: {
@@ -119,12 +115,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to login');
             }
             const ret = response.url;
-//            console.log(ret)
-//            const data = await response.json();
             // Redirect to facilitator dashboard with the token
             document.cookie = `sessionID=${session}`;
-//            console.log(document.cookie);
-//            debugger;
             window.open(`/facilitatordashboard`, 'facdash');
         } catch (err) {
             console.log('error');
@@ -148,6 +140,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     };
+    async function rename () {
+        const sID = justNumber($('#val_uniqueID').html());
+        const namer = prompt(`Enter the new name for ${sID}.`);
+        const nOb = {gameID: sID, name: namer};
+        if (namer) {
+//            console.log(nOb)
+            socket.emit('sessionNameChange', nOb);
+        } else {
+            alert(`No name entered.`);
+        }
+    };
 
     const updateView = () => {
         if ($('#panel_sessions').length > 0) {
@@ -160,7 +163,18 @@ document.addEventListener('DOMContentLoaded', function() {
         window.renderTemplate('panel', 'panel', {id: id, content: 'sessionPanel'}, () => {
             const p = $(`#panel_${id}`);
             p.show();
-            p.draggable();
+            if (localStorage.getItem('sessionCardPos')) {
+                const pos = JSON.parse(localStorage.getItem('sessionCardPos'));
+                const left = pos.left > 20 ? pos.left : 20;
+                const top = pos.top > 20 ? pos.top : 20;
+                p.css({left: `${left}px`, top: `${top}px`})
+            }
+            p.draggable({
+                stop: function(event, ui) {
+                  const position = ui.position;
+                  localStorage.setItem('sessionCardPos', JSON.stringify(position));
+                }
+            });
             p.find('.close').off('click');
             p.find('.close').on('click', function () {
                 p.find('#sessionList').html('');
@@ -170,7 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
             data.forEach(s => {
                 s.hasName = s.hasOwnProperty('name');
             });
-            console.log(data)
             window.renderTemplate('sessionList', 'sessionList', {sessions: data}, readySessionLinks);
         });
 //
@@ -217,8 +230,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Process the data received from the server
                 $('#sessionDetail').fadeOut(300, function () {
                     const rOb = data;
-//                    const rOb = {password: 'socks'};
-                    window.renderTemplate('sessionDetail', 'sessionCardSystem', rOb, readySessionSpecificLinks);
+//                    console.log(rOb);
+                    if (rOb.players.length > 10) {
+                        rOb.players = `${rOb.players.join(',').substr(0, 20)}..`;
+                    }
+                    if (rOb.teams.length > 0) {
+                        rOb.teams = rOb.teams.map(t => `(${t.length})`);
+                    }
+                    if (rOb.scores.length > 0) {
+                        rOb.scores = `(${rOb.scores.length} scores recorded)`
+                    }
+                    if (rOb.values.length > 0) {
+                        rOb.values = `(${rOb.values.length} values recorded)`
+                    }
+                    window.renderTemplate('sessionDetail', 'system.card.session', rOb, readySessionSpecificLinks);
                     $('#sessionDetail').fadeIn(300, () => {
                         let vp = $('#val_password').add($(`#val_uniqueID`));
                         vp.addClass('link');
@@ -245,19 +270,21 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const readyDevLinks = () => {
         let us = $('#updateSession');
-        us.off('click');
-        us.on('click', () => {
+        us.off('click').on('click', () => {
             socket.emit('updateSession', $('#sessionID').val(), {teams: getTeams(), scores: getScores()})
         });
         us = $('#resetSession');
-        us.off('click');
-        us.on('click', () => {
+        us.off('click').on('click', () => {
             resetTimeout();
         });
     };
     const readySessionSpecificLinks = () => {
+        const r = $('#rename');
         const l = $('#launch');
         const d = $('#delete');
+        r.off('click').on('click', () => {
+            rename();
+        });
         l.off('click').on('click', () => {
             facilitate();
         });

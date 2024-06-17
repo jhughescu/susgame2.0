@@ -61,9 +61,11 @@ body, html {
     background-color: white;
     z-index: -1;
 }
+/*
 .container.fullscreen1 {
     background-image: url(../assets/forest.jpg);
 }
+*/
 #top {
     z-index: 9999;
 }

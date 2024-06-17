@@ -1016,13 +1016,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $(`.remove`).off('click').on('click', function () {
             const id = $(this).attr('id').split('_')[2];
             const plOb = {game: game.uniqueID, player: id};
-//            console.log(plOb);
-//            console.log(plOb.player);
-//            console.log(typeof(plOb.player));
-//            console.log(game.playersFull[`${id}`]);
             if (game.playersFull.hasOwnProperty(`${id}`)) {
                 const player = game.playersFull[`${id}`];
-//                console.log(player);
                 if (player.isLead) {
                     alert('cannot remove a team lead, assign a new lead before trying again');
                     return;
@@ -1039,11 +1034,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
             if (warn) {
-                socket.emit('removePlayer', plOb);
+                socket.emit('removePlayer', plOb, (r) => {
+                    console.log(r);
+                    if (r.hasOwnProperty('err')) {
+                        alert(`Cannot remove ${id}: ${r.err}`);
+                    }
+                });
             }
         });
         const rollovers = $('.rollover');
-//        console.log(rollovers.length);
         rollovers.on('hover', function () {
             alert(0)
         })

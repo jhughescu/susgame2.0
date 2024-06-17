@@ -20,6 +20,9 @@ body {
 	margin: 50px auto;
 	transition: 0.5s;
 }
+.container.fullscreen1 {
+    background-image: url(../assets/forest.jpg);
+}
 a {
     color: white;
     text-decoration: none;
