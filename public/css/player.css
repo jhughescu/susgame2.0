@@ -106,3 +106,11 @@ input[type=submit] {
 .team-link {
     cursor: pointer;
 }
+.playerIdentifier {
+    font-size: 1.2rem;
+}
+
+.playerIdentifier td {
+    background-color: rgba(0, 0, 0, 0.54);
+}
+

@@ -15,7 +15,7 @@
         {"id": "video", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "video", "type": "video", "srcRef": "v10", "title": "Recalculation"},
         {"id": "video", "type": "video", "srcRef": "v11", "title": "Collaboration"},
-        {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration *", "viewtype": "frame1", "header": "Collaboration", "type": "slide", "slide": "slide_3010_2030_total", "action": "renderTotals"},
+        {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration (displays 2030 results)", "viewtype": "frame1", "header": "Collaboration", "type": "slide", "slide": "slide_3010_2030_total", "action": "renderTotals"},
         {"id": "slide_230_stakeholderscollab", "title": "Public Voices 2 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R4"},
         {"id": "slide_010_outro", "title": "Exit Screen", "viewtype": "fullscreen1", "header": "Sustainability Game"}
     ],

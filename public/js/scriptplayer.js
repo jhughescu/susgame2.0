@@ -30,9 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const stId = getStorageID(id);
         return JSON.parse(localStorage.getItem(stId));
     };
+    const showPlayer = () => {
+        return player;
+    };
     const showGame = () => {
         return game;
     };
+
     const updateGame = (ob) => {
         if ($.isEmptyObject(game)) {
             game = ob;
@@ -46,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
-//            console.log('regPlayer callback:', ob);
+            console.log('regPlayer callback:', ob);
             if (ob) {
                 let res = ob.id;
                 if (ob.game) {
@@ -172,11 +176,14 @@ document.addEventListener('DOMContentLoaded', function() {
             $('.overlay').remove();
         }
         window.getTemplate('overlay', {}, (temp) => {
-//            console.log('getTemplate returns:')
-//            console.log(temp)
+            console.log('getTemplate returns:')
+            console.log(temp)
             $('body').append(temp);
             window.renderTemplate('overlay', id, ob, () => {
-                $('.overlay').fadeIn(300).delay(2000).fadeOut(1000);
+//                $('.overlay').fadeIn(300).delay(2000).fadeOut(1000);
+                console.log(id)
+                console.log(ob)
+                $('.overlay').fadeIn(300);
             });
         })
 //        $('body').append(window.getTemplate('overlay', {}, (temp) => {
@@ -187,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const identifyPlayer = () => {
 //        console.log(`id player ${getPlayerID()}`);
-        const idOb = {id: getPlayerID(), sock: socket.id, stored: 'null'};
+        const idOb = {id: getPlayerID(), sock: socket.id, stored: 'null', teamID: player.teamObj.id, team: player.teamObj.title};
         if (player) {
             idOb.stored = player.socketID;
         }
@@ -704,6 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.showHomeState = showHomeState;
     window.showGame = showGame;
+    window.showPlayer = showPlayer;
     window.activateYourmove = activateYourmove;
 //    window.renderTeam = renderTeam;
     /*

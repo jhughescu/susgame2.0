@@ -380,13 +380,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         const myPlayer = player === null ? pl : player;
+//        console.log(`judged player`, myPlayer);
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
                     if (myPlayer.teamObj) {
-                        const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
+//                        const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
+                        const specificID = myPlayer.teamObj.type === 1 ? myPlayer.teamObj.id : justNumber(myPlayer.id);
                         const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
-    //                    console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
+                        console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
     //                    console.log(filterScorePackets(sps, specificProp, specificID));
                         const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
                         const myScores = filterScorePackets(roundScores, specificProp, specificID);
@@ -438,10 +440,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
-//        console.log('set it up');
+        console.log(`setupAllocationControl`);
 //        console.log(player);
         const myPlayer = player === null ? inOb : player;
-//        console.log('myPlayer', myPlayer);
+        console.log('myPlayer', myPlayer);
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
@@ -453,14 +455,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
         if (hasS) {
-//            console.log('see if the round has been scored already:');
-//            console.log(hasS);
+            console.log('see if the round has been scored already:');
+            console.log(hasS);
             if (hasS.hasScore) {
-//                console.log('has score');
+                console.log('has score');
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
-    //                console.log('test the values')
-    //                console.log(v)
+                    console.log('test the values')
+                    console.log(v)
                     ints.prop('disabled', true);
                     ints.addClass('disabled');
                     val.html(hasS.scorePacket.val);
