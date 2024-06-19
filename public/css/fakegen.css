@@ -1,0 +1,10 @@
+body {
+
+}
+p, span {
+    font-size: 1.3rem;
+
+}
+p {
+    max-width: 60%;
+}

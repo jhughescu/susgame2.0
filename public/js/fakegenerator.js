@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //            session: session
         }
     });
+    const fakeNum = $('#num');
+    const fakeRange = {min: 1, max: 40};
     function rsort () {
         return Math.floor(Math.random() * 3) - 1;
     }
@@ -92,7 +94,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
     const checkInputType = () => {
-
+//        console.log(fakeNum);
+//        console.log(parseInt(fakeNum.val()));
+        if (fakeNum.val() < fakeRange.min) {
+            fakeNum.val(fakeRange.min)
+        }
+        if (fakeNum.val() > fakeRange.max) {
+            fakeNum.val(fakeRange.max)
+        }
     }
 
     socket.on('checkOnConnection', () => {

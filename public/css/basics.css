@@ -21,7 +21,13 @@ body {
 	transition: 0.5s;
 }
 .container.fullscreen1 {
+    background-color: #545a54;
     background-image: url(../assets/forest.jpg);
+    text-shadow: 2px 2px 2px rgb(23, 28, 19, 0.8);
+}
+/* Add any classes which should never have text-shadow below */
+.fa {
+    text-shadow: none;
 }
 a {
     color: white;

@@ -15,6 +15,7 @@
     <link rel='stylesheet' href='../css/home.css' type='text/css'>
     <link rel='stylesheet' href='../css/fog.css' type='text/css'>
     <link rel='stylesheet' href='../css/system.css' type='text/css'>
+    <link rel='stylesheet' href='../css/fakegen.css' type='text/css'>
 
     <script src='https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.8/handlebars.min.js'></script>
     <script src='../js/common.js'></script>
@@ -45,8 +46,10 @@
     <div class='wrapper introno'>
         <div class="big container introNO fullscreen1">
             <h1>Fake Player Generator</h1>
+            <p>Before launching any fake player windows please ensure that popups are enabled in your browser.</p>
+            <p>You may find it helpful to drag this browser tab to a separate window before launching fake players. Each fake player will open as a new browser tab, keeping these in a single window will help to maintain a manageable workspace.</p>
             <form id='fakeForm' onsubmit='launchFakes(event)'>
-                number required: <input type='number' name='num' id='num' value='1' style='width: 50px' onchange='checkInputType()'>
+                <span>number required:</span> <input type='number' name='num' id='num' value='1' min='1' max='40' style='width: 56px' onchange='checkInputType()'>
                 <button type='submit'>Launch fakes</button>
             </form>
             <br>

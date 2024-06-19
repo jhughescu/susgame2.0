@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
     const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
-    const gameState = {disconnected: [], timeout: -1}
+    const gameState = {disconnected: [], timeout: -1};
+    const outputTexts = {
+        noStart: {
+            started: `The game has already started.`,
+            ended: `Cannot start game, this session has already concluded.`
+        }
+    }
 
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on, game:');
@@ -95,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 openTab('game');
             });
         } else {
-            alert(`cannot start game (session ${session.state})`)
+            alert(outputTexts.noStart[session.state]);
         }
     };
     const emitRestoreGame = () => {
