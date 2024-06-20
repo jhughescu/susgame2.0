@@ -9,14 +9,14 @@
         {"id": "video", "type": "video", "srcRef": "v5", "title": "Instruction"},
         {"id": "video", "type": "video", "srcRef": "v7", "title": "2023 - 2030 Countup"},
         {"id": "video", "type": "video", "srcRef": "v8", "title": "2030"},
-        {"id": "slide_210_checkdevice", "type": "slide", "slide": "slide_210_checkdevice", "title": "First allocation round", "action": "startRound1"},
+        {"id": "slide_210_checkdevice", "type": "slide", "slide": "slide_210_checkdevice", "title": "First allocation round (updates devices)", "action": "startRound:1"},
         {"id": "slide_110_stakeholders", "type": "slide", "slide": "slide_110_stakeholders", "title": "Teams Allocation (displays allocation results)", "action": "showRound1", "viewtype": "frame1"},
-        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 1 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R2"},
+        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 1 (updates devices)", "viewtype": "frame1", "header": "", "action": "startRound:2"},
         {"id": "video", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "video", "type": "video", "srcRef": "v10", "title": "Recalculation"},
         {"id": "video", "type": "video", "srcRef": "v11", "title": "Collaboration"},
         {"id": "slide_230_stakeholderscollab", "title": "stakeholder Collaboration (displays 2030 results)", "viewtype": "frame1", "header": "Collaboration", "type": "slide", "slide": "slide_3010_2030_total", "action": "renderTotals"},
-        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 2 *", "viewtype": "frame1", "header": "", "action": "startRoundE1R4"},
+        {"id": "slide_230_stakeholderscollab", "title": "Public Voices 2", "viewtype": "frame1", "header": "", "action": "startRoundE1R4"},
         {"id": "slide_010_outro", "title": "Exit Screen", "viewtype": "fullscreen1", "header": "Sustainability Game"}
     ],
     "videoLinks": {

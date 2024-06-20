@@ -421,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const updateSlide = () => {
-//        showSlide(currentSlideObject);
         const slOb = currentSlideObject;
         if (slOb) {
             if (slOb.action) {

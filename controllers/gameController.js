@@ -48,10 +48,18 @@ async function startGame (o, cb) {
             presentation.currentSlide = session.slide;
             newGame.presentation = presentation;
             games[game] = newGame;
+//            console.log(`start it up ${newGame.presentation.currentSlide}`);
         } else {
             console.log('cannot start game, session has no "type" property');
         }
+    } else {
+//        console.log('#foo bar');
     }
+    games[game].presentation.currentSlide = session.slide;
+//    console.log(`the game`);
+//    console.log(games[game]);
+//    console.log('session.slide', session.slide);
+//    console.log('game.presentation.currentSlide', games[game].presentation.currentSlide);
     // Only set state to 'started' if it is currently pending
 //    console.log(`session.state: ${session.state}`);
     if (session.state ===  'pending') {
@@ -137,7 +145,7 @@ async function resetGame(id, cb) {
             }
         });
         for (let i in game) {
-            console.log(`reset ${i}? ${exclusions.indexOf(i, 0) === -1}`)
+//            console.log(`reset ${i}? ${exclusions.indexOf(i, 0) === -1}`)
 //            if (typeof(game[i]) === 'object' && i !== 'persistentData' && i !== 'presentation') {
             if (typeof(game[i]) === 'object' && exclusions.indexOf(i, 0) === -1) {
                 if (game[i].hasOwnProperty('length')) {
@@ -1060,10 +1068,21 @@ const presentationAction = (ob) => {
     // An action triggered from a presentation frame
 //    console.log(`presentationAction:`);
 //    console.log(ob);
+
+
+    // NOTE: this functionality is being given to the facilitator dashboard
+
+
     const game = getGameWithAddress(ob.address);
     if (game) {
         game.slide = ob.ref;
     }
+
+
+    return;
+
+
+
     if (ob.hasOwnProperty('action')) {
         if (ob.action.toLowerCase().indexOf('startround', 0) > -1) {
             const rOb = {gameID: getGameWithAddress(ob.address).uniqueID, round: ob.action.replace(/\D/g, '')};

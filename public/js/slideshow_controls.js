@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const showCurrentSlide = () => {
         const ob = {currentSlide: game.presentation.currentSlide};
+//        console.log(ob);
+        //     \/  communicate with the facilitator dashboard, which can carry out game actions
+        window.facilitatorSlideChange(ob);
         window.renderTemplate('slide_detail_previous', 'facilitator.slideshow.detail', {title: 'previous', info: slides[ob.currentSlide - 1], valid: ob.currentSlide > 0});
         window.renderTemplate('slide_detail_current', 'facilitator.slideshow.detail', {title: 'current', info: slides[ob.currentSlide], valid: true});
         window.renderTemplate('slide_detail_next', 'facilitator.slideshow.detail', {title: 'next', info: slides[ob.currentSlide + 1], valid: ob.currentSlide < slides.length - 1});

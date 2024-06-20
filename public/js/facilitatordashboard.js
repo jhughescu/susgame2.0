@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             started: `The game has already started.`,
             ended: `Cannot start game, this session has already concluded.`
         }
-    }
+    };
 
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on, game:');
@@ -52,10 +52,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const sp = `facilitator-${game.uniqueID}sid-`;
         return sp;
     };
-    const addToLogFeed = (msg) => {
+    const showImportantLog = (log) => {
+        const mw = $('#facilitateMessage');
+        if (mw) {
+            mw.html(log.msg)
+        }
+    };
+    const clearMessage = () => {
+        const mw = $('#facilitateMessage');
+        if (mw) {
+            mw.html('')
+        }
+    };
+    const addToLogFeed = (msg, important) => {
+        const log = {id: logFeed.length, msg: msg, important: important === undefined ? false : true};
         logFeed.push(`${logFeed.length + 1}: ${msg}`);
         logFeedArchive.push(`${logFeed.length + 1}: ${msg}`);
         renderLogFeed();
+        if (important) {
+            showImportantLog(log);
+        }
     };
     const renderLogFeed = () => {
         const lf = $('#logFeed');
@@ -70,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logFeed.splice(0, logFeed.length);
         renderLogFeed();
     };
+
     const resetSession = () => {
         const w = confirm('Are you sure you want to reset the session?');
         if (w) {
@@ -229,6 +246,22 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('no game');
         }
     };
+    const renderFacilitate = () => {
+        // Screen which can be used to run the whole game
+        if (game) {
+            renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
+                const sl = game.presentation.slideData.slideList.slice(0);
+                sl.forEach(s => {
+//                    console.log(s);
+                    s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+                });
+                renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
+                    $('#tabFacilitate').css({height: '700px'});
+                    slideContolsInit(game);
+                });
+            });
+        }
+    }
     const sortListConnected = (a, b) => {
         if (a.connected && !b.connected) {
             return playerSortOrder.dir ? -1 : 1;
@@ -442,20 +475,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (force) {
             assOb.force = true;
         }
-        socket.emit('assignTeams', assOb, (rgame) => {
-            if (typeof(rgame) === 'string') {
-                const force = confirm(`${rgame} Click OK to assign teams regardless, or click cancel and try reducing the minimum team size.`);
-                if (force) {
-                    assignTeams(true);
+        if (game.teams.length === 0) {
+            socket.emit('assignTeams', assOb, (rgame) => {
+                if (typeof(rgame) === 'string') {
+                    const force = confirm(`${rgame} Click OK to assign teams regardless, or click cancel and try reducing the minimum team size.`);
+                    if (force) {
+                        assignTeams(true);
+                    }
+                } else {
+                    addToLogFeed('teams successfully assigned', true);
+    //                game = rgame;
+                    updateGame(rgame);
+    //                renderControls();
+                    highlightTab('teams');
                 }
-            } else {
-                addToLogFeed('teams assigned');
-//                game = rgame;
-                updateGame(rgame);
-//                renderControls();
-                highlightTab('teams');
-            }
-        });
+            });
+        } else {
+            addToLogFeed(`teams already assigned`, true);
+        }
     };
     const resetTeams = () => {
         socket.emit('resetTeams', {address: game.address}, (rgame) => {
@@ -475,17 +512,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
-//        console.log(`setupTab: ${arg}`);
-//        console.log(`setupTab: ${window.toCamelCase(arg)}`);
-//        console.log($(`#content${window.toCamelCase(arg)}`));
-//        console.log($(`#content${window.toCamelCase(arg)}`).children().length);
-//        console.log(`currentTab: ${getCurrentTab().title}`);
-//        console.log(getCurrentTab());
         const alwaysUpdate = ['players', 'scores', 'game', 'session'];
         const neverStatic = alwaysUpdate.indexOf(arg, 0) > -1;
         // Try running only if the tab has changed:
         if ($(`#content${window.toCamelCase(arg)}`).children().length === 0 || neverStatic) {
-//            console.log(`yes, setupTab: ${window.toCamelCase(arg)}`);
             switch (arg) {
             case 'session':
                 renderSession();
@@ -497,6 +527,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'controls':
                 renderControls();
+                break;
+            case 'facilitate':
+                renderFacilitate();
                 break;
             case 'players':
                 renderPlayers();
@@ -815,78 +848,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }
     };
-    const renderScoresV1 = () => {
-        if (game) {
-            const ob = {scores: game.scores};
-            // run on a timeout to avoid multiple interations in dev
-            clearTimeout(renderTimeout);
-            renderTimeout = setTimeout(() => {
-                socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
-                    ob.scorePackets = sp;
-                    const scoresR1 = buildScoreDetail(sp.filter(p => p.round === 1));
-                    const scoresR2 = buildScoreDetail(sp.filter(p => p.round === 2));
-                    const scoresR3 = buildScoreDetail(sp.filter(p => p.round === 3));
-                    const scores = {};
-                    game.persistentData.rounds.forEach(r => {
-                        scores[`scoresR${r.n}`] = buildScoreDetail(sp.filter(p => p.round === r.n));
-                    });
-                    window.sortBy(scoresR2, 'dest');
-                    const dests = Array.from(new Set(scores.scoresR2.map(item => item.dest)));
-                    const srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
-                    const plrs = Array.from(new Set(scores.scoresR2.map(item => item.client)));
-//                    console.log(plrs);
-                    ob.scoresR1 = scores.scoresR1;
-                    ob.scoresR2 = scores.scoresR2;
-                    ob.scoresR3 = scores.scoresR3;
-                    ob.aggregates = [];
-                    ob.expenditure = [];
-                    ob.perPlayer = [];
-                    srcs.forEach(s => {
-                        const srcScores = scoresR2.filter(p => p.src === s);
-                        const tOb = {team: game.persistentData.teamsArray[s].title, total: 0, count: 0, average: 0};
-                        srcScores.forEach(sc => {
-                            tOb.total += Math.abs(sc.val);
-                            tOb.count += (sc.val === 0 ? 0 : 1);
-                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
-                        });
-                        ob.expenditure.push(tOb)
-                    });
-                    dests.forEach(d => {
-                        const destScores = scores.scoresR2.filter(p => p.dest === d);
-                        const tOb = {total: 0, average: 0, count: 0, team: game.persistentData.teamsArray[d].title};
-                        destScores.forEach(s => {
-                            tOb.count += (s.val === 0 ? 0 : 1);
-                            tOb.total += s.val;
-                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
-                        });
-                        ob[`aggregate${d}`] = Object.assign({}, tOb);
-                        ob.aggregates.push(tOb);
-                    });
-                    plrs.forEach(s => {
-                        const plScores = scores.scoresR2.filter(p => p.client === s);
-                        const tOb = {total: 0, count: 0, average: 0, player: game.players[s]};
-                        plScores.forEach(sc => {
-                            tOb.count += sc.val === 0 ? 0 : 1;
-                            tOb.total += Math.abs(sc.val);
-                        });
-                        ob.perPlayer.push(tOb);
-                    });
-                    game.scoreBreakdown = Object.assign({}, ob);
-                    ob.gameInfo = {
-                        roundComplete: game.round.toString().indexOf('*', 0) > -1
-                    };
-                    game.persistentData.rounds.forEach(r => {
-                        ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
-                    });
-                    console.log(`render scores with`, ob);
-                    renderTemplate('contentScores', 'facilitator.scores', ob, () => {
-                        setupScoreControls();
-                    })
-                })
-            }, 1000);
-
-        }
-    };
     const openScoreTab = (l) => {
         const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`;
         localStorage.setItem(`${getStoragePrefix()}scoretab`, id);
@@ -1068,9 +1029,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const tryStartRound = (r) => {
         const t = game.teams;
+        const p = game.players;
 //        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
 //        console.log(`tryStartRound: ${r}`);
 //        console.log(game);
+        r = window.justNumber(r);
         const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
         const oneUp = (r - gr) === 1;
@@ -1080,7 +1043,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let ok = idm;
 //        ok = false;
         let msg = `Cannot start round ${r}:\n`;
-        if (t.length === 0) {
+        if (p.length === 0 && r > 0) {
+            // Teams not yet assigned, must wait for allocation
+            msg += `no players connected, cannot start round`;
+            ok = false;
+            // Note - NEVER allow scoring prior to team assignment
+        } else if (t.length === 0 && r > 0) {
             // Teams not yet assigned, must wait for allocation
             msg += `teams not yet assigned, must wait for allocation`;
             ok = false;
@@ -1088,43 +1056,30 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (r === gr) {
                    // This is the round already in progress
             msg += `this is the round already in progress`;
+            ok = false;
         } else if (!ric) {
             // Current round incomplete, must wait for completion
             msg += `current round incomplete, must wait for completion`;
+            ok = false;
         } else if (!oneUp) {
             // Gap between rounds is not exactly 1, cannot continue
             msg += `gap between rounds is not exactly 1, cannot continue`;
         } else {
             ok = true;
         }
+        console.log(`tryStartRound, current: ${gr}, requested: ${r}, ok? ${ok}`);
 
         if (ok) {
-            alert(`OK to start round ${r}`);
+            addToLogFeed(`round ${r} started successfully`, true);
+            console.log(`emitting startRound`)
             socket.emit('startRound', {gameID: game.uniqueID, round: r});
         } else {
-            alert(msg);
+            addToLogFeed(msg, true);
         }
 //        console.log(`the teams: ${t}, ${t.length}`);
 //        console.log(game);
 //        console.log(`tryStartRound: ${r} (${typeof(r)}) - current: ${gr} (${typeof(gr)}), is next? ${r === gr + 1}`);
         return;
-        if (t.length > 0) {
-            if (r != gr) {
-                if (r === (gr + 1) || r < 0) {
-                    if (game.round.toString().indexOf('*', 0) === -1 || (gr === 0 && r === 1)) {
-                        socket.emit('startRound', {gameID: game.uniqueID, round: r});
-                    } else {
-                        alert(`Current round (${gr}) not yet completed, cannot start round ${r}`);
-                    }
-                } else {
-                    alert(`Cannot start round ${r} - rounds must be completed sequentially (current round is ${gr}).`)
-                }
-            } else {
-                alert(`round ${r} is already in progress.`)
-            }
-        } else {
-            alert(`cannot start round ${r} before teams have been allocated.`);
-        }
     };
     const showScoreSummary = (summ, teams) => {
         let str = 'Team submitted score:\n\n';
@@ -1454,6 +1409,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // slideshow event handling
+    const slideActions = {
+        rAssignTeams: assignTeams
+    };
+    const facilitatorSlideChange = (ob) => {
+//        console.log(`slide change`, ob);
+        clearMessage();
+        const sl = game.presentation.slideData.slideList[ob.currentSlide];
+        if (sl.action) {
+//            console.log(`i am action: ${sl.action}`);
+            if (sl.action.includes(`startRound`)) {
+//                console.log(sl.action.split(':'));
+                tryStartRound(justNumber(sl.action.split(':')[1]));
+            }
+            if (slideActions.hasOwnProperty(sl.action)) {
+//                console.log(slideActions[sl.action]);
+                slideActions[sl.action]();
+            }
+        }
+    };
 
     function handleChange(prop) {
 //        console.log(`change detected for property ${prop}`);
@@ -1549,6 +1524,7 @@ document.addEventListener('DOMContentLoaded', function() {
     procVal = window.procVal;
     //
     window.showGame = showGame;
+    window.facilitatorSlideChange = facilitatorSlideChange;
     const closeModal = () => {
         $('#modal').modal('close');
         console.log('closed');

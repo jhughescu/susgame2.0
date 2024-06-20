@@ -10,6 +10,8 @@
     <link rel='stylesheet' href='../css/facilitator.widget.css' type='text/css'>
     <link rel='stylesheet' href='../css/playergraph.css' type='text/css'>
     <link rel='stylesheet' href='../css/facilitator.slideshow.controls.css' type='text/css'>
+    <link rel='stylesheet' href='../css/facilitate.all.css' type='text/css'>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src='https://code.jquery.com/jquery-3.7.0.js' integrity='sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=' crossorigin='anonymous'></script>
@@ -34,6 +36,7 @@
         <button class='tablinks' id='linkGame'>Game</button>
         <button class='tablinks' id='linkFeed'>Log Feed</button>
         <button class='tablinks' id='linkControls'>Controls</button>
+        <button class='tablinks' id='linkFacilitate'>Facilitate</button>
         <button class='tablinks' id='linkPlayers'>Players</button>
         <button class='tablinks' id='linkTeams'>Teams</button>
         <button class='tablinks' id='linkScores'>Scores</button>
@@ -50,11 +53,15 @@
         <h3>Log Feed</h3>
         <div id='contentFeed'></div>
         <div class='link' id='clearLog'>clear log</div>
-    <div id='logFeed' style='display: none;'></div>
+        <div id='logFeed' style='display: none;'></div>
     </div>
     <div id='tabControls' class='tabcontent'>
         <h3>Controls</h3>
         <div id='contentControls'></div>
+    </div>
+    <div id='tabFacilitate' class='tabcontent'>
+        <h3>Facilitate</h3>
+        <div id='contentFacilitate'></div>
     </div>
     <div id='tabPlayers' class='tabcontent'>
         <h3>Players</h3>
@@ -68,7 +75,11 @@
         <h3>Scores</h3>
         <div id='contentScores'></div>
     </div>
-
+    <script>
+        setTimeout(() => {
+//            window.location.reload();
+        }, 4000);
+    </script>
 
 </body>
 

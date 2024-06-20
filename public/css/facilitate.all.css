@@ -1,0 +1,26 @@
+/*
+The panel which wil contain all required facilitate controls
+*/
+.panel {
+    border: 1px solid white;
+    position: absolute;
+
+}
+#facilitateSlideshow {
+    width: 600px;
+    height: 600px;
+}
+
+#facilitateMessage {
+    width: 300px;
+    height: 80px;
+    left: 630px;
+}
+
+.slidelist {
+    top: 40px;
+}
+.slidelist .hint {
+    color: #10bcd3;
+    font-style: italic;
+}
