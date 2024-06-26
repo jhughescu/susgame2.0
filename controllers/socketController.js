@@ -543,6 +543,16 @@ function initSocket(server) {
         showRoomSize(roomName);
         io.to(roomName).emit('gameUpdate', eGame);
     });
+    eventEmitter.on('gameRestored', (gOb) => {
+        let roomName = `${gOb.game}-fac`;
+        console.log('noo event');
+        showRoomSize(roomName);
+        io.to(roomName).emit('onGameRestored', gOb);
+        roomName = `${gOb.game}-pres`;
+        console.log('noo event');
+        showRoomSize(roomName);
+        io.to(roomName).emit('onGameRestored', gOb);
+    });
     eventEmitter.on('scoresUpdated', (game) => {
 
         // NOTE scoresUpdated is being used by the presentation but should really be replaced by the more general & useful gameUpdate event
@@ -566,7 +576,10 @@ function initSocket(server) {
     eventEmitter.on('singlePlayerGameUpdate', (ob) => {
         // requires an object: {player: <playerObject>, game}
         if (ob.hasOwnProperty('player') && ob.hasOwnProperty('game')) {
-            io.to(ob.player.socketID).emit('gameUpdate', ob.game);
+            const rOb = {game: ob.game, emitType: 'singlePlayer'};
+            io.to(ob.player.socketID).emit('gameUpdate', rOb);
+            io.to(ob.player.socketID).emit('playerUpdate', rOb);
+//            console.log(`emit to ${ob.player.socketID}`)
         } else {
             console.log(`singlePlayerGameUpdate requires an object: {player: <playerObject>, game}`)
         }
@@ -578,7 +591,7 @@ function initSocket(server) {
     });
     eventEmitter.on('teamsAssigned', (game) => {
 //        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
-        const room = io.sockets.adapter.rooms.get(game.address);
+        let room = io.sockets.adapter.rooms.get(game.address);
         if (room) {
             const numSockets = room.size;
             log(`Number of sockets in room ${game.address}: ${numSockets}`);
@@ -586,6 +599,16 @@ function initSocket(server) {
             log(`Room ${game.address} does not exist or has no sockets.`);
         }
         io.to(game.address).emit('teamsAssigned', game);
+        let roomName = `${game.address}-fac`;
+        room = io.sockets.adapter.rooms.get(roomName);
+//        console.log('teamsAssigned');
+        if (room) {
+            const numSockets = room.size;
+            log(`Number of sockets in room ${game.address}: ${numSockets}`);
+        } else {
+            log(`Room ${game.address} does not exist or has no sockets.`);
+        }
+        io.to(roomName).emit('teamsAssigned', game);
     });
     eventEmitter.on('updatePlayers', (ob) => {
 //        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);

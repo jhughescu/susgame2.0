@@ -107,6 +107,7 @@ async function restoreGame (o, cb) {
         // RETAIN LINE BELOW:
         console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`);
         restoreClients(game.address);
+        eventEmitter.emit('gameRestored', {game: game.address});
     }
     if (cb) {
         cb(game);
@@ -885,14 +886,14 @@ const playerConnectEvent = (gameID, playerID, boo) => {
 };
 
 const startRound = async (ob) => {
-    console.log(`startRound:`);
-    console.log(ob);
+//    console.log(`startRound:`);
+//    console.log(ob);
     const gameID = ob.gameID;
     const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
     if (game) {
-        console.log(`yes, game`);
+//        console.log(`yes, game`);
         const rounds = game.persistentData.rounds;
         const rIndex = ob.round - 1;
         if (ob.round > rounds.length) {
@@ -900,7 +901,7 @@ const startRound = async (ob) => {
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
         } else {
             game.round = ob.round;
-            console.log(`change round to ${ob.round}`);
+//            console.log(`change round to ${ob.round}`);
             const session = await sessionController.updateSession(gameID, { round });
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             eventEmitter.emit('gameUpdate', game);

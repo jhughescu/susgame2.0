@@ -1,0 +1,103 @@
+
+
+/* ############################################## start stakeholder card ################################################ */
+.stakeholder_card {
+/*    background-color: red;*/
+    width: 400px;
+    height: 339px;
+    font-family: Arial-BoldMT, Arial;
+}
+.stakeholder_card .textarea {
+    position: relative;
+    top: 0px;
+    height: 339px;
+    width: 100%;
+/*    background-color: green;*/
+    z-index: 10;
+}
+.stakeholder_card .textarea {
+/*    background-color: blue;*/
+}
+.stakeholder_card .scorebox {
+    text-align: left;
+    font-size: 1.0em;
+    width: 100%;
+    color: #cccccc;
+    background-color: black;
+}
+.stakeholder_card .subtotal{
+    padding-top: 6px;
+    font-size: 1.3em;
+}
+.stakeholder_card .scorebox .scoreboxval{
+    color: cyan;
+}
+.stakeholder_card .total {
+    padding-top: 10px;
+    color: white;
+    font-size: 1.6em;
+}
+.stakeholder_card .background {
+    position: relative;
+    top: -339px;
+    height: 339px;
+    width: 100%;
+/*    background-color: yellow;*/
+    z-index: 5;
+}
+.stakeholder_card .card_bg {
+    position: relative;
+    top: 0px;
+}
+.stakeholder_card .text {
+    position: relative;
+    color: white;
+    z-index: 10;
+    text-align: center;
+/*            background-color: rgba(255, 0, 0, 0.42);*/
+/*    border: 5px solid white;*/
+}
+.stakeholder_card .vertical-center {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+/*    height: 200px;*/
+    top: 8px;
+    left: 100px;
+    width: 220px;
+    height: 80px;
+}
+.stakeholder_card .header {
+    text-align: center;
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+}
+.stakeholder_card .action_name {
+/*    top: 98px;*/
+    top: 36px;
+/*    left: 100px;*/
+/*    width: 200px;*/
+    left: 50px;
+    width: 300px;
+/*    background-color: green;*/
+    font-size: 1.5rem;
+}
+.stakeholder_card .action_desc {
+    top: 95px;
+    top: 46px;
+    left: 50px;
+    width: 310px;
+    height: 110px;
+    font-size: 1.1rem;
+    word-break: break-all;
+}
+.stakeholder_card .value {
+    top: 92px;
+    top: 36px;
+    left: 216px;
+    width: 30px;
+    font-size: 1.9rem;
+}
+/* ############################################## end stakeholder card ################################################ */
+

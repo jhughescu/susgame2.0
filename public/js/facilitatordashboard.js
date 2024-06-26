@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const startGame = () => {
         addToLogFeed('start new game');
+        console.log('start new game');
         if (session.state === 'pending') {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
@@ -142,6 +143,11 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(gameSeekTimeout);
             gameSeekTimeout = setTimeout(restoreGame, 200);
         }
+    };
+    const onGameRestored = (gOb) => {
+//        console.log(`game restored!`);
+//        console.log(game);
+//        console.log(gOb);
     };
     const endGame = () => {
         socket.emit('endGame', game, (rgame) => {
@@ -197,6 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const launchPresentation = () => {
+
+//         console.log(`/presentation#${game.address.replace('/', '')}`, '_blank');
          window.open(`/presentation#${game.address.replace('/', '')}`, '_blank');
     };
     const launchFakeGenerator = () => {
@@ -212,56 +220,6 @@ document.addEventListener('DOMContentLoaded', function() {
             socket.emit('identifyPlayer', {game: game, player: $(this).attr('id').split('_')[2]})
         });
     };
-    const renderTeams = () => {
-        let rendO = {};
-        if (game) {
-            const T = game.persistentData.teams;
-            const t = game.teams;
-            Object.values(T).forEach((el, id) => {
-                if (el.hasOwnProperty('id') && t[id]) {
-                    rendO[el.id] = {name: el.title, team: t[id].toString(), players: t[id]}
-                }
-            });
-//            console.log(rendO);
-//            window.renderTemplate('controlsInfo', 'teamsCard', rendO);
-            window.renderTemplate('contentTeams', 'teamsCard', rendO, () => {
-                setupTeamsLinks();
-            });
-        }
-    };
-    const renderControls = () => {
-        if (game) {
-            const hasTeams = game.teams.length > 0;
-            const rendO = {disableAssignTeams: hasTeams, game: game};
-            window.renderTemplate('contentControls', 'facilitator.controls', rendO, () => {
-                setupControlLinks();
-                if (hasTeams) {
-                    renderTeams();
-                }
-                if (localStorage.getItem(SLIDESHOW_CONTROL)) {
-                    launchSlideshowControls();
-                }
-            });
-        } else {
-            console.log('no game');
-        }
-    };
-    const renderFacilitate = () => {
-        // Screen which can be used to run the whole game
-        if (game) {
-            renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
-                const sl = game.presentation.slideData.slideList.slice(0);
-                sl.forEach(s => {
-//                    console.log(s);
-                    s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
-                });
-                renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
-                    $('#tabFacilitate').css({height: '700px'});
-                    slideContolsInit(game);
-                });
-            });
-        }
-    }
     const sortListConnected = (a, b) => {
         if (a.connected && !b.connected) {
             return playerSortOrder.dir ? -1 : 1;
@@ -327,63 +285,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     };
-    const processPlayers = (list) => {
-        // add any special conditions prior to rendering the player list
-        // Note add nothing here that should persist, this is a display-only method.
-        list.forEach((pl, i) => {
-            if (!pl.connected && pl.isLead) {
-                list[i].warning = true;
-                list[i].warningMessage = 'Team lead is disconnected, consider assigning new lead if they do not reconnect shortly.'
-            }
-        });
-        return list;
-    };
-    const renderPlayers = (l) => {
-        if (game || l) {
-            let basicList = game.players.slice(0);
-            const pf = Object.assign({}, game.playersFull);
-//            console.log(`I think this is the culprit, basicList is ${basicList.hasOwnProperty('length') ? 'array' : 'object'}, full list is ${pf.hasOwnProperty('length') ? 'array' : 'object'}`)
-            basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
-            let list = l ? l : basicList;
-            list.forEach((p, i) => {
-                if (pf.hasOwnProperty(p.id)) {
-                    list[i] = pf[p.id];
-                } else if (p.id.hasOwnProperty('id')) {
-                    if (pf.hasOwnProperty(p.id.id)) {
-                        list[i] = pf[p.id.id];
-                    } else {
-                        // Seems to be a disconnected player
-                        list[i] = p.id;
-                    }
-                }
-            });
-            const pso = playerSortOrder;
-            switch (pso.prop) {
-                case 'index':
-                    list.sort(sortListIndex);
-                    break;
-                case 'ID':
-                    list.sort(sortListID);
-                    break;
-                case 'connected':
-                    list.sort(sortListConnected);
-                    break;
-                case 'team':
-                    list.sort(sortListTeam);
-                    break;
-                case 'isLead':
-                    list.sort(sortListisLead);
-                    break;
-                default:
-            }
-            list = processPlayers(list);
-            clearTimeout(pso.timeout);
-            renderTemplate('contentPlayers', 'playerlist', list, () => {
-                setupPlayerControls();
-
-            })
-        }
-    };
     let renderTimeout = null;
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
@@ -429,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const playergraph = () => {
 //        console.log(`playergraph`);
-//        return;
+        return;
         // graphically display the number of connected players
         // Add the widget if it doesn't exist:
         addWidget(`playergraph`, {x: 400, y: 200, w: 150, h: 300});
@@ -478,10 +379,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (game.teams.length === 0) {
             socket.emit('assignTeams', assOb, (rgame) => {
                 if (typeof(rgame) === 'string') {
-                    const force = confirm(`${rgame} Click OK to assign teams regardless, or click cancel and try reducing the minimum team size.`);
-                    if (force) {
-                        assignTeams(true);
-                    }
+//                    const force = confirm(`${rgame} Click OK to assign teams regardless, or click cancel and try reducing the minimum team size.`);
+                    addToLogFeed(rgame, true);
+//                    if (force) {
+//                        assignTeams(true);
+//                    }
                 } else {
                     addToLogFeed('teams successfully assigned', true);
     //                game = rgame;
@@ -532,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderFacilitate();
                 break;
             case 'players':
-                renderPlayers();
+                renderPlayers('contentPlayers');
                 break;
             case 'teams':
                 renderTeams();
@@ -736,118 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     };
-    const renderScores = async () => {
-        if (game) {
-            const ob = {scores: game.scores};
-            const gp = game.persistentData;
-            // run on a timeout to avoid multiple interations in dev
-            clearTimeout(renderTimeout);
-            renderTimeout = setTimeout(async () => {
 
-                let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
-                if (t1) {
-                    t1 = JSON.parse(t1);
-                    t1 = roundAll(t1);
-                }
-
-//                console.log(`i also got t1`, t1);
-                socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
-                    ob.scorePackets = sp;
-                    const scores = {};
-                    gp.rounds.forEach(r => {
-                        scores[`scoresR${r.n}`] = buildScoreDetail(sp.filter(p => p.round === r.n));
-                        ob[`scoresR${r.n}`] = scores[`scoresR${r.n}`];
-                    });
-                    window.sortBy(scores.scoresR2, 'dest');
-                    const dests = Array.from(new Set(scores.scoresR2.map(item => item.dest)));
-                    let srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
-//                    console.log(srcs)
-                    const plrs = Array.from(new Set(scores.scoresR2.map(item => item.client)));
-                    ob.aggregates = [];
-                    ob.expenditure = [];
-                    ob.perPlayer = [];
-                    ob.teamAlloc = [];
-                    // R2
-                    // Calculate R2 expendature per PV team
-                    srcs.forEach(s => {
-                        const srcScores = scores.scoresR2.filter(p => p.src === s);
-                        const tOb = {team: gp.teamsArray[s].title, total: 0, count: 0, average: 0};
-                        srcScores.forEach(sc => {
-                            tOb.total += Math.abs(sc.val);
-                            tOb.count += (sc.val === 0 ? 0 : 1);
-                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
-                        });
-                        ob.expenditure.push(tOb)
-                    });
-                    // Aggregated scores received by each stakeholder
-                    dests.forEach(d => {
-                        const destScores = scores.scoresR2.filter(p => p.dest === d);
-                        const tOb = {total: 0, average: 0, count: 0, team: gp.teamsArray[d].title};
-                        destScores.forEach(s => {
-                            tOb.count += (s.val === 0 ? 0 : 1);
-                            tOb.total += s.val;
-                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
-                        });
-                        ob[`aggregate${d}`] = Object.assign({}, tOb);
-                        ob.aggregates.push(tOb);
-                    });
-                    // R2 expenditure by player
-                    plrs.forEach(s => {
-                        const plScores = scores.scoresR2.filter(p => p.client === s);
-                        const tOb = {total: 0, count: 0, average: 0, player: game.players[s]};
-                        plScores.forEach(sc => {
-                            tOb.count += sc.val === 0 ? 0 : 1;
-                            tOb.total += Math.abs(sc.val);
-                        });
-                        ob.perPlayer.push(tOb);
-                    });
-                    // R3
-                    srcs = Array.from(new Set(scores.scoresR3.map(item => item.src)));
-                    srcs.forEach(s => {
-                        const plScores = scores.scoresR3.filter(p => p.src === s);
-                        const tOb = {teamSrc: gp.teamsArray[s].title, scores: []};
-                        plScores.forEach(sc => {
-                            tOb.scores.push({dest: gp.teamsArray[sc.dest].title, val: sc.val});
-                        });
-                        ob.teamAlloc.push(tOb);
-                    });
-                    // Totals
-                    // 2030
-                    ob.totals2030Simple = t1;
-                    const mapT1 = {
-                        t: 'team',
-                        gt: 'grandTotal',
-                        s: 'self',
-                        s1: 'pv1',
-                        s2: 'pv2',
-                        st: 'pvTotal'
-                    };
-                    ob.totals2030Simple.forEach(t => {
-                        t.t = gp.teamsArray[t.t].title;
-                        for (let i in mapT1) {
-                            if (t.hasOwnProperty(i)) {
-                                t[mapT1[i]] = t[i];
-                                delete t[i];
-                            }
-                        }
-                    });
-                    sortBy(ob.totals2030Simple, 'grandTotal', true);
-                    game.scoreBreakdown = Object.assign({}, ob);
-                    ob.gameInfo = {
-                        roundComplete: game.round.toString().indexOf('*', 0) > -1
-                    };
-                    game.persistentData.rounds.forEach(r => {
-                        ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
-                    });
-//                    console.log(`render scores with`, ob);
-                    renderTemplate('contentScores', 'facilitator.scores', ob, () => {
-                        setupScoreControls();
-                    })
-                })
-            }, 1000);
-
-        }
-    };
     const openScoreTab = (l) => {
         const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`;
         localStorage.setItem(`${getStoragePrefix()}scoretab`, id);
@@ -914,7 +705,113 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
     };
-    const setupPlayerControls = () => {
+    const setupPlayerControls = (baseID) => {
+        const pso = playerSortOrder;
+        const theBaseID = baseID ? baseID : `contentPlayers`;
+        const base = $(`#${theBaseID}`);
+        const listSort = base.find('.listSort');
+        const makeLead = base.find('.makeLead');
+        const reassign = base.find('.reassign');
+        const refresh = base.find('.refresh');
+        const remove = base.find('.remove');
+        const rollovers = base.find('.rollover');
+        const warning = base.find('.warning');
+        listSort.off('click').on('click', function () {
+            pso.dir = pso.prop === this.textContent ? !pso.dir : true;
+            pso.prop = this.textContent;
+            renderPlayers(baseID);
+            const index = listSort.filter(function() {
+                return $(this).text().trim() === pso.prop;
+            }).index();
+            $(listSort[index]).addClass('highlight');
+        });
+        makeLead.off('click').on('click', function () {
+            const leader = $(this).attr('id').split('_').splice(1);
+            const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
+            socket.emit('makeLead', leadObj);
+        });
+        reassign.off('click').on('click', function () {
+            const leader = $(this).attr('id').split('_').splice(1);
+            const tID = parseInt(leader[0]);
+            const leadObj = {game: game.uniqueID, team: tID, player: leader[1]};
+            const ts = game.persistentData.teamsArray;
+            if (game.teams[tID].indexOf(leader[1]) === 0 && ts[tID].type !== 2) {
+//                console.log();
+                alert('Cannot reassign a team lead');
+                return;
+            }
+            let str = '';
+            let poss = [];
+//                    console.log(t)
+            ts.forEach(t => {
+                if (t.id != tID) {
+                    poss.push(t.id)
+                    str += `\n${t.id} ${t.title}`;
+                }
+            });
+            let newT = prompt(`Type the NUMBER of the team you would like to reassign ${leader[1]} to:${str}`);
+            if (newT) {
+                if (!isNaN(parseInt(newT))) {
+                    newT = parseInt(newT);
+                    if (poss.indexOf(newT) > -1) {
+                        const go = confirm(`You are about to move ${leader[1]} to the ${ts[newT].title} team, is this OK?`);
+                        leadObj.newTeam = newT;
+                        if (go) {
+                            socket.emit('reassignTeam', leadObj);
+                        }
+                    } else {
+                        alert(`Not possible, the allowed set of options is ${poss}.`);
+                    }
+                } else {
+                    alert('You need to enter the number for the team you would like to rassign to, please try again.');
+                }
+            } else {
+
+            }
+        });
+        refresh.off('click').on('click', function () {
+            const id = $(this).attr('id').split('_').splice(2);
+            const pl = game.playersFull[`${id}`];
+            const sock = pl.socketID;
+            const clOb = {game: game.uniqueID, player: pl, socketID: sock};
+            socket.emit(`refreshClient`, clOb);
+        });
+        remove.off('click').on('click', function () {
+            const id = $(this).attr('id').split('_')[2];
+            const plOb = {game: game.uniqueID, player: id};
+            if (game.playersFull.hasOwnProperty(`${id}`)) {
+                const player = game.playersFull[`${id}`];
+                if (player.isLead) {
+                    alert('cannot remove a team lead, assign a new lead before trying again');
+                    return;
+                }
+                if (player.connected) {
+                    alert('Note: removing a currently connected player may cause unexpected results');
+//                    return;
+                }
+                if (player.teamObj) {
+                    alert('Note: removing a player already assigned to a team may cause unexpected results');
+//                    return;
+                }
+
+            }
+            const warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
+            if (warn) {
+                socket.emit('removePlayer', plOb, (r) => {
+                    console.log(r);
+                    if (r.hasOwnProperty('err')) {
+                        alert(`Cannot remove ${id}: ${r.err}`);
+                    }
+                });
+            }
+        });
+        warning.off('click').on('click', function () {
+            // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
+            const rowIndex = $(this).closest('tr').index() - 1;
+            alert(list[rowIndex].warningMessage)
+        });
+    };
+    const setupPlayerControlsV1 = () => {
         const pso = playerSortOrder;
         $('.listSort').off('click');
         $('.listSort').on('click', function () {
@@ -1030,9 +927,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const tryStartRound = (r) => {
         const t = game.teams;
         const p = game.players;
-//        const gr = parseInt(game.round.toString().replace(/\D/g, ''));
-//        console.log(`tryStartRound: ${r}`);
-//        console.log(game);
         r = window.justNumber(r);
         const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
@@ -1268,6 +1162,88 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(`No round currently active.`);
         }
     };
+    const updatePlayerMeter = () => {
+
+        const p = game.playersFull;
+        const t = new Array((game.mainTeamSize * game.persistentData.mainTeams.length) + game.persistentData.secondaryTeams.length).fill('no');
+        let c = 0;
+        Object.values(p).forEach(pl => {
+            if (pl.connected) {
+                if (c < t.length) {
+                    t[c] = 'yes';
+                }
+                c++;
+            }
+        });
+//        console.log(`updatePlayerMeter`, m);
+//        console.log(t);
+        t.reverse()
+//        console.log(p);
+//        console.log(t);
+        renderTemplate('playermeter', 'facilitator.playermeter', {total: t, required: t.length, connected: c}, () => {
+
+        });
+    };
+
+
+    const processPlayers = (list) => {
+        // add any special conditions prior to rendering the player list
+        // Note add nothing here that should persist, this is a display-only method.
+        list.forEach((pl, i) => {
+            if (!pl.connected && pl.isLead) {
+                list[i].warning = true;
+                list[i].warningMessage = 'Team lead is disconnected, consider assigning new lead if they do not reconnect shortly.'
+            }
+        });
+        return list;
+    };
+    const renderPlayers = (targ) => {
+        if (game) {
+            let basicList = game.players.slice(0);
+            const pf = Object.assign({}, game.playersFull);
+            basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
+            let list = basicList;
+            list.forEach((p, i) => {
+                if (pf.hasOwnProperty(p.id)) {
+                    list[i] = pf[p.id];
+                } else if (p.id.hasOwnProperty('id')) {
+                    if (pf.hasOwnProperty(p.id.id)) {
+                        list[i] = pf[p.id.id];
+                    } else {
+                        // Seems to be a disconnected player
+                        list[i] = p.id;
+                    }
+                }
+                if (list[i].teamObj) {
+                    list[i].teamObj.titleClip = `${list[i].teamObj.title.substr(0, 20)}${list[i].teamObj.title.length > 20 ? '.. ' : ''}`;
+                }
+            });
+            const pso = playerSortOrder;
+            switch (pso.prop) {
+                case 'index':
+                    list.sort(sortListIndex);
+                    break;
+                case 'ID':
+                    list.sort(sortListID);
+                    break;
+                case 'connected':
+                    list.sort(sortListConnected);
+                    break;
+                case 'team':
+                    list.sort(sortListTeam);
+                    break;
+                case 'isLead':
+                    list.sort(sortListisLead);
+                    break;
+                default:
+            }
+            list = processPlayers(list);
+            clearTimeout(pso.timeout);
+            renderTemplate(targ, 'playerlist', list, () => {
+                setupPlayerControls(targ);
+            })
+        }
+    };
     const renderSession = () => {
 //        addToLogFeed(`renderSession (see console)`);
 //        console.log(`renderSession`);
@@ -1282,6 +1258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         window.renderTemplate(targ, 'sessionCardFacilitator', session, () => {
 //            console.log('the renderTemplate callback');
+            setupSessionLinks()
         });
     };
     const renderGame = (clear) => {
@@ -1303,6 +1280,176 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const renderScores = async () => {
+        if (game) {
+            const ob = {scores: game.scores};
+            const gp = game.persistentData;
+            // run on a timeout to avoid multiple interations in dev
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(async () => {
+
+                let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+                if (t1) {
+                    t1 = JSON.parse(t1);
+                    t1 = roundAll(t1);
+                }
+
+//                console.log(`i also got t1`, t1);
+                socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+                    ob.scorePackets = sp;
+                    const scores = {};
+                    gp.rounds.forEach(r => {
+                        scores[`scoresR${r.n}`] = buildScoreDetail(sp.filter(p => p.round === r.n));
+                        ob[`scoresR${r.n}`] = scores[`scoresR${r.n}`];
+                    });
+                    window.sortBy(scores.scoresR2, 'dest');
+                    const dests = Array.from(new Set(scores.scoresR2.map(item => item.dest)));
+                    let srcs = Array.from(new Set(scores.scoresR2.map(item => item.src)));
+//                    console.log(srcs)
+                    const plrs = Array.from(new Set(scores.scoresR2.map(item => item.client)));
+                    ob.aggregates = [];
+                    ob.expenditure = [];
+                    ob.perPlayer = [];
+                    ob.teamAlloc = [];
+                    // R2
+                    // Calculate R2 expendature per PV team
+                    srcs.forEach(s => {
+                        const srcScores = scores.scoresR2.filter(p => p.src === s);
+                        const tOb = {team: gp.teamsArray[s].title, total: 0, count: 0, average: 0};
+                        srcScores.forEach(sc => {
+                            tOb.total += Math.abs(sc.val);
+                            tOb.count += (sc.val === 0 ? 0 : 1);
+                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
+                        });
+                        ob.expenditure.push(tOb)
+                    });
+                    // Aggregated scores received by each stakeholder
+                    dests.forEach(d => {
+                        const destScores = scores.scoresR2.filter(p => p.dest === d);
+                        const tOb = {total: 0, average: 0, count: 0, team: gp.teamsArray[d].title};
+                        destScores.forEach(s => {
+                            tOb.count += (s.val === 0 ? 0 : 1);
+                            tOb.total += s.val;
+                            tOb.average = (tOb.total === 0 ? 0 : (Math.round((tOb.total / tOb.count) * 1000) / 1000));
+                        });
+                        ob[`aggregate${d}`] = Object.assign({}, tOb);
+                        ob.aggregates.push(tOb);
+                    });
+                    // R2 expenditure by player
+                    plrs.forEach(s => {
+                        const plScores = scores.scoresR2.filter(p => p.client === s);
+                        const tOb = {total: 0, count: 0, average: 0, player: game.players[s]};
+                        plScores.forEach(sc => {
+                            tOb.count += sc.val === 0 ? 0 : 1;
+                            tOb.total += Math.abs(sc.val);
+                        });
+                        ob.perPlayer.push(tOb);
+                    });
+                    // R3
+                    srcs = Array.from(new Set(scores.scoresR3.map(item => item.src)));
+                    srcs.forEach(s => {
+                        const plScores = scores.scoresR3.filter(p => p.src === s);
+                        const tOb = {teamSrc: gp.teamsArray[s].title, scores: []};
+                        plScores.forEach(sc => {
+                            tOb.scores.push({dest: gp.teamsArray[sc.dest].title, val: sc.val});
+                        });
+                        ob.teamAlloc.push(tOb);
+                    });
+                    // Totals
+                    // 2030
+                    ob.totals2030Simple = t1;
+                    const mapT1 = {
+                        t: 'team',
+                        gt: 'grandTotal',
+                        s: 'self',
+                        s1: 'pv1',
+                        s2: 'pv2',
+                        st: 'pvTotal'
+                    };
+                    ob.totals2030Simple.forEach(t => {
+                        t.t = gp.teamsArray[t.t].title;
+                        for (let i in mapT1) {
+                            if (t.hasOwnProperty(i)) {
+                                t[mapT1[i]] = t[i];
+                                delete t[i];
+                            }
+                        }
+                    });
+                    sortBy(ob.totals2030Simple, 'grandTotal', true);
+                    game.scoreBreakdown = Object.assign({}, ob);
+                    ob.gameInfo = {
+                        roundComplete: game.round.toString().indexOf('*', 0) > -1
+                    };
+                    game.persistentData.rounds.forEach(r => {
+                        ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
+                    });
+//                    console.log(`render scores with`, ob);
+                    renderTemplate('contentScores', 'facilitator.scores', ob, () => {
+                        setupScoreControls();
+                    })
+                })
+            }, 1000);
+
+        }
+    };
+    const renderTeams = () => {
+        let rendO = {};
+        if (game) {
+            const T = game.persistentData.teams;
+            const t = game.teams;
+            Object.values(T).forEach((el, id) => {
+                if (el.hasOwnProperty('id') && t[id]) {
+                    rendO[el.id] = {name: el.title, team: t[id].toString(), players: t[id]}
+                }
+            });
+//            console.log(rendO);
+//            window.renderTemplate('controlsInfo', 'teamsCard', rendO);
+            window.renderTemplate('contentTeams', 'teamsCard', rendO, () => {
+                setupTeamsLinks();
+            });
+        }
+    };
+    const renderControls = () => {
+        if (game) {
+            const hasTeams = game.teams.length > 0;
+            const rendO = {disableAssignTeams: hasTeams, game: game};
+            window.renderTemplate('contentControls', 'facilitator.controls', rendO, () => {
+                setupControlLinks();
+                if (hasTeams) {
+                    renderTeams();
+                }
+                if (localStorage.getItem(SLIDESHOW_CONTROL)) {
+                    launchSlideshowControls();
+                }
+            });
+        } else {
+            console.log('no game');
+        }
+    };
+    const renderFacilitate = () => {
+        // Screen which can be used to run the whole game
+        if (game) {
+            renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
+                const sl = game.presentation.slideData.slideList.slice(0);
+                sl.forEach(s => {
+                    s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+                });
+                renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
+                    $('#tabFacilitate').css({height: '700px'});
+                    slideContolsInit(game);
+                });
+                renderPlayers('facilitatePlayersContent');
+                const launchBut = $('#facilitateSlideshow').find('#makePres');
+                launchBut.on('click', () => {
+                    launchPresentation();
+                });
+                updatePlayerMeter();
+//                debugger;
+            });
+        }
+    };
+
+
     const initSession = async () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
         setupBaseLinks();
@@ -1490,6 +1637,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (displayedProperty) {
                     setupTab(getCurrentTab().title);
                 }
+                // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
+                renderPlayers('facilitatePlayersContent');
+                updatePlayerMeter();
                 playergraph();
                 if ($('#roundcompleter').length > 0) {
                     if ($('#roundcompleter').is(':visible')) {
@@ -1502,8 +1652,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
         }
     });
+    socket.on('onGameRestored', (gOb) => {
+//        console.log('game restored!', gOb);
+        onGameRestored(gOb);
+    });
     socket.on('playerUpdate', (ob) => {
 
+    });
+    socket.on('teamsAssigned', (rgame) => {
+//        console.log('teamsAssigned', rgame);
+        game.teams = rgame.teams;
+        game.playersFull = rgame.playersFull;
+        renderPlayers('facilitatePlayersContent');
     });
     socket.on('scoreSubmitted', (ob) => {
         // Nothing here, look for gameUpdate instead

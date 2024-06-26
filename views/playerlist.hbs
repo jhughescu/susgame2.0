@@ -1,11 +1,11 @@
-<div class='playerlist'>
+<div class='playerlist liveupdate'>
 <table><tbody>
 <tr>
-<th class='link listSort'>index</th>
+<th class='link listSort'>no.</th>
 <th class='link listSort'>ID</th>
-<th class='link listSort'>connected</th>
+<th class='link listSort'>online</th>
 <th class='link listSort'>team</th>
-<th class='link listSort'>isLead</th>
+<th class='link listSort'>lead</th>
 <th></th>
 </tr>
 {{#each this}}
@@ -14,16 +14,17 @@
 <td>{{this.index}}</td>
 <td{{#if this.isFake}} class='fake'{{/if}}>{{this.id}}</td>
     <td class='boo {{this.connected}}'><div class='circle'></div></td>
-<td {{#if this.warning}}class='link warning'{{/if}}>{{this.teamObj.title}}</td>
+<td {{#if this.warning}}class='link warning'{{/if}}>{{this.teamObj.titleClip}}</td>
 <td class='boo {{this.isLead}}'>{{this.isLead}}</td>
 
 
 <td>{{#if this.teamObj.hasLead}}
-    <button class='makeLead rollover' id='makeLead_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}} {{#if this.connected}}{{else}} disabled{{/if}}>make lead</button>
+    <button class='makeLead rollover' id='makeLead_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}} {{#if this.connected}}{{else}} disabled{{/if}}>Lead</button>
     {{/if}}</td>
-    <td><button class='reassign rollover' id='reassign_{{this.teamObj.id}}_{{this.id}}'}>Reassign</button></td>
-    <td><button class='refresh rollover' id='refreah_{{this.teamObj.id}}_{{this.id}}'}>Refresh</button></td>
-    <td><button class='remove rollover' id='remove_{{this.teamObj.id}}_{{this.id}}'}>Remove</button></td>
+    <td><button class='reassign rollover' id='reassign_{{this.teamObj.id}}_{{this.id}}'{{#if this.isLead}} disabled{{/if}}>Reassign</button></td>
+<!--    <td><button class='refresh rollover' id='refreah_{{this.teamObj.id}}_{{this.id}}'>Refresh</button></td>-->
+    <td><button class="material-icons refresh" id='refreah_{{this.teamObj.id}}_{{this.id}}' style='font-size: 16px;'>replay</button></td>
+    <td><button class='remove rollover' id='remove_{{this.teamObj.id}}_{{this.id}}'>x</button></td>
 
 
 </tr>

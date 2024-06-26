@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
             game = rGame;
         });
         socket.on('gameUpdate', (rGame) => {
+//            console.log('a game update', rGame);
             onGameUpdate(rGame);
         });
         socket.on('scoresUpdated', (scores) => {
@@ -61,13 +62,17 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.on('refreshWindow', () => {
             window.location.reload();
         });
+        socket.on('onGameRestored', (gOb) => {
+//        console.log('game restored!', gOb);
+            onGameRestored(gOb);
+        });
     };
     const setCurrentSlideObject = (slOb) => {
         currentSlideObject = Object.assign({}, slOb);
     };
     const onGameUpdate = (rGame) => {
-//        console.log('a game update:');
-//        console.log(`watching for ${watchFor}`);
+        console.log('a game update:');
+        console.log(`watching for ${watchFor}`);
         if (watchFor) {
 //            console.log(game[watchFor] === rGame[watchFor]);
 //            console.log(game[watchFor]);
@@ -143,14 +148,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Returns an array of objects
         // NOTE "values" are always set prior to "scores", so "values" can be assumed here
         const t = game.persistentData.teamsArray;
+//        console.log(`prepScoresR1`);
+
         let rArr = [];
         let v = game.values;
         let s = sc ? sc : game.scores;
+        s = filterScorePackets(s, 'round', 1);
+//        console.log(s)
         let sStatic = s.slice(0);
         if (v && s) {
-//            console.log(game);
-//            console.log(s);
-//            console.log(v);
             v = sortByProperty(v, 'team');
             s = sortByProperty(s, 'src');
             v.forEach((vu, i) => {
@@ -163,16 +169,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     teamObj: t[vu.team]
                 }
                 rArr[i] = ob;
-//                console.log(ob)
             });
         }
-//        console.log(`scoreArray`, rArr);
-//        console.log(`sew`, sStatic);
-//        console.log('values', v);
         let rArrNew = [];
+        // use only r1 scores:
+        sStatic = filterScorePackets(sStatic, 'round', 1);
+//        console.log(sStatic)
         sStatic.forEach(sp => {
 //            console.log(sp);
             const vl = v.find(obj => obj.team === sp.src);
+//            console.log(vl);
             const ob = {
                 team: sp.src,
                 title: t[sp.src].title,
@@ -183,16 +189,49 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             rArrNew.push(ob);
         });
-        console.log(`new array`, rArrNew)
+//        console.log(`new array`, rArrNew);
         return rArrNew;
     };
     const showRound1 = () => {
+        console.log(`showRound1`);
+        setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+//            console.log(game)
+            const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 1);
+            console.log(preScores);
             game = rgame;
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
-                setWatch('scores')
-                console.log(`got r1`, rs);
-                renderTemplate(targ, 'slides/showround1', prepScoresR1(rs));
+                rs = filterScorePackets(rs, 'round', 1);
+//                console.log(rs);
+                const allScores = prepScoresR1(rs);
+                const rOb = {allScores: allScores};
+                const t = game.persistentData.teamsArray;
+                t.forEach((s, i) => {
+                    rOb[`card_${i}`] = {
+                        id: s.id,
+                        title: s.title,
+                        displayColour: s.displayColour,
+                        icon: `card_icon_${s.abbr}`
+                    }
+                })
+                allScores.forEach(s => {
+                    const card = rOb[`card_${s.team}`];
+                    card.action = s.action,
+                    card.description = s.description;
+                    card.value = s.value;
+                })
+                renderTemplate(targ, 'slides/showround1', rOb, () => {
+                    allScores.forEach(s => {
+                        const scoredBefore = filterScorePackets(preScores, 'src', s.team).length > 0;
+//                        console.log(`${s.title} has scored before? ${scoredBefore}`);
+                        const leaf = $(`#stakeholder_card_${s.team}`).find('.leaf');
+                        if (scoredBefore) {
+                            leaf.show();
+                        } else {
+                            leaf.fadeIn();
+                        }
+                    })
+                });
             });
 
         });
@@ -441,6 +480,9 @@ document.addEventListener('DOMContentLoaded', function () {
         game.scores = sc;
 //        console.log(game);
         showRound1();
+    };
+    const onGameRestored = () => {
+        window.location.reload();
     };
     init();
 

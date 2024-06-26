@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         window.renderTemplate('slidelist', 'facilitator.slidelist', sl, () => {
             $('.slide_link').off('click').on('click', function () {
-                console.log($(this).attr('id'));
+//                console.log($(this).attr('id'));
                 const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: parseInt($(this).attr('id').split('_')[2])};
                 socket.emit('presentationEvent', gOb, (ob) => {
                     eventUpdate(ob);
@@ -72,9 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const setupControls = () => {
         const b = base.find('button');
+//        console.log(b);
         b.each((bt, el) => {
             let btn = $(el);
             let id = btn.attr('id').replace('sb_', '');
+//            return;
+//            console.log('rub er out')
             btn.off('click').on('click', function () {
                 pEvent(id);
             })

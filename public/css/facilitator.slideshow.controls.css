@@ -28,8 +28,9 @@
 }
 .slidelist {
     top: 200px;
-    width: 550px;
+    width: 420px;
     height: 350px;
+    overflow-y: scroll;
 }
 #slide_detail_previous {
 /*    display: none;*/

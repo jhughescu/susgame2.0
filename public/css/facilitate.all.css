@@ -7,16 +7,28 @@ The panel which wil contain all required facilitate controls
 
 }
 #facilitateSlideshow {
-    width: 600px;
-    height: 600px;
+    width: 430px;
+    height: 500px;
 }
 
 #facilitateMessage {
-    width: 300px;
-    height: 80px;
-    left: 630px;
+    width: 590px;
+    height: 40px;
+    left: 460px;
 }
-
+#facilitatePlayers {
+    width: 510px;
+    height: 440px;
+    left: 460px;
+    top: 130px;
+    overflow-y: scroll;
+}
+#playermeter {
+    left: 990px;
+    top: 130px;
+    height: 440px;
+    width: 60px;
+}
 .slidelist {
     top: 40px;
 }

@@ -39,6 +39,7 @@ td {
 }
 button {
     font: inherit;
+    margin-bottom: 4px;
 }
 td {
     vertical-align: top;
@@ -226,4 +227,5 @@ position: relative;
 }
 button.remove {
     color: red;
+    font-weight: bold;
 }

@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (document.getElementById(targ)) {
                 document.getElementById(targ).innerHTML = compiledTemplate(ob);
             } else {
-                console.warn(`target HTML not found: ${targ}`);
+//                console.warn(`target HTML not found: ${targ}`);
             }
             if (cb) {
                 cb();
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (document.getElementById(targ)) {
                         document.getElementById(targ).innerHTML = compiledTemplate(ob);
                     } else {
-                        console.warn(`target HTML not found: ${targ}`);
+//                        console.warn(`target HTML not found: ${targ}`);
                     }
                     if (cb) {
                         cb();
@@ -274,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     Handlebars.registerHelper('dynamicPartialNO', getDyno);
     Handlebars.registerHelper('dynamicPartial', function(partialName, options) {
-//        console.log(`register dynamicPartial: ${partialName}`);
         // Check if the partialName is defined and is a valid partial
         if (Handlebars.partials[partialName]) {
             // Include the specified partial
@@ -388,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //                        const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
                         const specificID = myPlayer.teamObj.type === 1 ? myPlayer.teamObj.id : justNumber(myPlayer.id);
                         const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
-                        console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
+//                        console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
     //                    console.log(filterScorePackets(sps, specificProp, specificID));
                         const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
                         const myScores = filterScorePackets(roundScores, specificProp, specificID);
@@ -437,13 +436,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return 0;
         });
-    }
+    };
+    const containsEmail = (s) => {
+        const e = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+        return e.test(s);
+    };
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
-        console.log(`setupAllocationControl`);
+//        console.log(`setupAllocationControl`);
 //        console.log(player);
         const myPlayer = player === null ? inOb : player;
-        console.log('myPlayer', myPlayer);
+//        console.log('myPlayer', myPlayer);
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
@@ -451,18 +454,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const action = $(`#action-choice`);
         const desc = $(`#actionDesc`);
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
+        const descMax = 150;
 //        console.log()
         const hasS = await thisRoundScored(myPlayer);
 //        console.log(`hasS`, hasS);
         if (hasS) {
-            console.log('see if the round has been scored already:');
-            console.log(hasS);
+//            console.log('see if the round has been scored already:');
+//            console.log(hasS);
             if (hasS.hasScore) {
-                console.log('has score');
+//                console.log('has score');
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
-                    console.log('test the values')
-                    console.log(v)
+//                    console.log('test the values')
+//                    console.log(v)
                     ints.prop('disabled', true);
                     ints.addClass('disabled');
                     val.html(hasS.scorePacket.val);
@@ -485,6 +489,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         v -= 1;
                         val.html(v);
                     }
+                });
+                desc.on('input', function () {
+//                    console.log(`${$(this).val().length}/${descMax}`);
+                    const t = $(this).val();
+
+                    if (containsEmail(t)) {
+                        alert('Please do not include email addresses.')
+                    }
+                    if (t.length >= descMax) {
+                        $(this).val(t.substr(0, descMax - 1));
+                    }
+                    const summ = `${t.length}/${descMax}`;
+                    const label = $(this).parent().find('#moveDescLabel');
+                    const base = label.html().replace(/[()/\d-]/g, ' ').replace(/\s+$/, '');
+//                    console.log(base)
+                    label.html(`${base}   (${summ})`);
                 });
                 submit.on('click', () => {
                     let scoreV = parseInt(val.html());

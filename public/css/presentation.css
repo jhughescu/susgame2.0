@@ -78,6 +78,38 @@ td {
 
 /* End intro slide */
 
+/* Grid layout for cards */
+
+
+.grid-container1 {
+    display: grid;
+    grid-template-rows: repeat(1, 1fr);
+    grid-template-columns: 1fr 1fr 1fr; /* Three equal-width columns */
+    gap: 10px;
+}
+.grid-container2 {
+    display: grid;
+    grid-template-rows: repeat(1, 1fr);
+    grid-template-columns: 1fr 1fr; /* Three equal-width columns */
+    gap: 10px;
+}
+
+.cell {
+    border: 1px solid #000; /* Border for visualization */
+    padding: 10px; /* Adjust cell padding as needed */
+    width: 400px;
+    height: 339px;
+    text-align: center; /* Center text in the cells */
+}
+/* Center-align cells in the bottom row */
+.cell:nth-child(4),
+.cell:nth-child(5) {
+    justify-self: center;
+}
+/* End grid layout for cards */
+
+
+
 /* Bar chart slide */
 .barchart {
 /*    background-color: red;*/

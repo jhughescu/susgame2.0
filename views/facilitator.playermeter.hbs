@@ -1,0 +1,9 @@
+<div id='message'><span>{{connected}} out of minimum {{required}} players connected</span></div>
+<div id='meter'>
+    <table><tbody>
+        {{#each total}}
+        <tr><td class='bar_{{this}}'></td></tr>
+        {{/each}}
+    </tbody></table>
+</div>
+<div id='meterlevel'></div>

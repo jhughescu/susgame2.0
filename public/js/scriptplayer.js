@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
-            console.log('regPlayer callback:', ob);
+//            console.log('regPlayer callback:', ob);
             if (ob) {
                 let res = ob.id;
                 if (ob.game) {
@@ -160,7 +160,23 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`setPlayer ${getPlayerID()}`);
 //        console.log(game)
         const t = getTeam(game);
-        player = game.playersFull[getPlayerID()];
+        const newPlayer = game.playersFull[getPlayerID()];
+
+        if (player) {
+//            console.log('player exists; this could be an update');
+            if (player.teamObj) {
+//                console.log(`old player`, player.teamObj.title);
+//                console.log(`new player`, newPlayer.teamObj.title);
+//                console.log(JSON.stringify(player) === JSON.stringify(newPlayer));
+
+                if (player.teamObj.id !== newPlayer.teamObj.id || player.isLead !== newPlayer.isLead) {
+
+//                    console.log('reload')
+                    window.location.reload();
+                }
+            }
+        }
+        player = newPlayer;
         window.playerShare(player);
 //        console.log(player);
     };
@@ -265,49 +281,53 @@ document.addEventListener('DOMContentLoaded', function() {
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
-        if (renderState.temp) {
-            const home = renderState.temp.indexOf('main', 0) > -1;
-            const interaction = renderState.tempType === 'interaction';
-            const hasScored = false;
-            const round = game.persistentData.rounds[procVal(game.round)];
-            const inThisRound = round.type === player.teamObj.type;
-            const rs = await thisRoundScored();
+        if (renderState.temp && player) {
+            if (player.teamObj) {
+//                console.log(`activateYourmove`);
+//                console.log(player)
+                const home = renderState.temp.indexOf('main', 0) > -1;
+                const interaction = renderState.tempType === 'interaction';
+                const hasScored = false;
+                const round = game.persistentData.rounds[procVal(game.round)];
+                const inThisRound = round.type === player.teamObj.type;
+                const rs = await thisRoundScored();
 
-//            console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
-    //        console.log(`round`, round);
-    //        console.log(`game.round`, game.round);
-    //        console.log(`NEW - have I scored?`, iHaveScored(rs));
-    //        console.log(`thisRoundScored`, rs);
-//            console.log(`inThisRound`, inThisRound);
-//            console.log(`renderState`, renderState);
-    //        console.log(`game`, game);
-    //        console.log(`player`, player);
-            if (round.n > 0) {
-    //            console.log('there is a round in progress');
-                // need further conditionals here - is this player invloved in the current round? Is the round already complete?
-                if (game.round.toString().indexOf('*', 0) === -1) {
-    //                console.log(`round not complete`)
-                    if (inThisRound) {
-                        if (!iHaveScored(rs)) {
-        //                    console.log(`I've not scored`);
-                            if (!home && !interaction) {
-                                gotoHomeState();
-                                render(activateYourmoveButton);
+    //            console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
+        //        console.log(`round`, round);
+        //        console.log(`game.round`, game.round);
+        //        console.log(`NEW - have I scored?`, iHaveScored(rs));
+        //        console.log(`thisRoundScored`, rs);
+    //            console.log(`inThisRound`, inThisRound);
+    //            console.log(`renderState`, renderState);
+        //        console.log(`game`, game);
+        //        console.log(`player`, player);
+                if (round.n > 0) {
+        //            console.log('there is a round in progress');
+                    // need further conditionals here - is this player invloved in the current round? Is the round already complete?
+                    if (game.round.toString().indexOf('*', 0) === -1) {
+        //                console.log(`round not complete`)
+                        if (inThisRound) {
+                            if (!iHaveScored(rs)) {
+            //                    console.log(`I've not scored`);
+                                if (!home && !interaction) {
+                                    gotoHomeState();
+                                    render(activateYourmoveButton);
+                                } else {
+        //                            if (interaction) {
+                                        activateYourmoveButton();
+        //                            }
+                                }
                             } else {
-    //                            if (interaction) {
-                                    activateYourmoveButton();
-    //                            }
+//                                console.log(`I've already scored, apparently`)
                             }
-                        } else {
-                            console.log(`I've already scored, apparently`)
                         }
+                    } else {
+                        // '*' in the round - round is complete
+//                        console.log('the current round is complete');
                     }
                 } else {
-                    // '*' in the round - round is complete
-                    console.log('the current round is complete');
+//                    console.log('no round right now')
                 }
-            } else {
-                console.log('no round right now')
             }
         }
     };
@@ -352,33 +372,35 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`onStartRound, ob:`, ob);
 //        console.log(`game`, game);
 //        console.log(`player`, player);
-        const trs = await thisRoundScored(player);
-//        console.log(`thisRoundScored?`, trs);
-//        console.log(`thisRoundScored?`, trs.scorePackets);
-//        console.log(`iHaveScored?`, iHaveScored(trs));
-        if (ob.game) {
-            updateGame(ob.game);
-        }
-        //    \/ two different possible arg types - not ideal, but a quick type check fixes it.
-        const r = justNumber(typeof(ob) === 'object' ? ob.val : ob);
-        round = game.persistentData.rounds[r];
-//        console.log(`round`, round);
-//        console.log(`r`, r);
-        if (r === -1) {
-            updateRenderState({temp: 'game.main', partialName: 'game-links'});
-            render();
-        }
-        if (round) {
-//            console.log(`round.type`, round.type);
-//            console.log(`player.teamObj.type`, player.teamObj.type);
-            if (round.type === player.teamObj.type) {
-//                console.log('make it happen, bass player');
-                activateYourmove();
-            } else {
-//                console.log(`conditions not met`);
+        if (player) {
+            const trs = await thisRoundScored(player);
+    //        console.log(`thisRoundScored?`, trs);
+    //        console.log(`thisRoundScored?`, trs.scorePackets);
+    //        console.log(`iHaveScored?`, iHaveScored(trs));
+            if (ob.game) {
+                updateGame(ob.game);
             }
-        } else {
-//            console.log('no round at all')
+            //    \/ two different possible arg types - not ideal, but a quick type check fixes it.
+            const r = justNumber(typeof(ob) === 'object' ? ob.val : ob);
+            round = game.persistentData.rounds[r];
+    //        console.log(`round`, round);
+    //        console.log(`r`, r);
+            if (r === -1) {
+                updateRenderState({temp: 'game.main', partialName: 'game-links'});
+                render();
+            }
+            if (round) {
+    //            console.log(`round.type`, round.type);
+    //            console.log(`player.teamObj.type`, player.teamObj.type);
+                if (round.type === player.teamObj.type) {
+    //                console.log('make it happen, bass player');
+                    activateYourmove();
+                } else {
+    //                console.log(`conditions not met`);
+                }
+            } else {
+    //            console.log('no round at all')
+            }
         }
     };
 
@@ -646,7 +668,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start observing the target div for changes
     observer.observe(targetDiv, config);
 
-    socket.on('gameUpdate', (rgame) => {
+    socket.on('gameUpdate', (rOb) => {
+        const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
+        if (rOb.hasOwnProperty('emitType')) {
+//            console.log(`emitType: ${rOb.emitType}`);
+        }
 //        console.log(`game updated: ${getPlayerID()}`)
 //        console.log(rgame);
         updateGame(rgame);
@@ -654,6 +680,12 @@ document.addEventListener('DOMContentLoaded', function() {
 //        updateRenderState({source: 'gameUpdate event', temp: 'game.main', ob: player});
         render();
         activateYourmove();
+    });
+    socket.on('playerUpdate', (rOb) => {
+        const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
+        if (rOb.hasOwnProperty('emitType')) {
+//            console.log(`emitType: ${rOb.emitType}`);
+        }
     });
     socket.on('test', () => {
         console.log('testing')
@@ -702,7 +734,8 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('waitForGame', () => {
 //        console.log('waitForGame - connected but no game, try again in a minute');
 //        window.location.reload();
-    })
+    });
+
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
     //

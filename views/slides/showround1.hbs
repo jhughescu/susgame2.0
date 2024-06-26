@@ -1,7 +1,22 @@
-
-<table><tbody>
-{{#each this}}
-<tr style='background-color: {{teamObj.displayColour}}'><td>{{team}}</td><td>{{title}}</td><td>{{action}}</td><td>{{description}}</td><td>{{value}}</td></tr>
-
-{{/each}}
-</tbody></table>
+{{> frame1full}}
+<div class='container'>
+    <div class="grid-container1">
+        <div class="cell">
+            {{> presentation_stakeholder_card card_0}}
+        </div>
+        <div class="cell">
+            {{> presentation_stakeholder_card card_1}}
+        </div>
+        <div class="cell">
+            {{> presentation_stakeholder_card card_2}}
+        </div>
+    </div>
+    <div class="grid-container2">
+        <div class="cell">
+            {{> presentation_stakeholder_card card_3}}
+        </div>
+        <div class="cell">
+            {{> presentation_stakeholder_card card_4}}
+        </div>
+    </div>
+</div>

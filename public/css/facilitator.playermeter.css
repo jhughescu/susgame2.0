@@ -1,0 +1,56 @@
+#message {
+    position: absolute;
+    top: 0px;
+    left: 60px;
+/*    background-color: red;*/
+    padding: 18px;
+    width: 404px;
+    height: 24px;
+    text-align: right;
+    transform: rotate(90deg);
+    transform-origin: left top;
+/*    display: none;*/
+    z-index: 15;
+    text-shadow: 1px 0px 2px #000;
+}
+#message span {
+    padding-right: 20px;
+}
+#meter {
+    height: 100%;
+    width: 100%;
+/*    background-color: aquamarine;*/
+}
+#meter table {
+    position: absolute;
+    border-collapse: collapse;
+    top: 10px;
+    left: 10px;
+    height: calc(100% - 20px);
+    width: calc(100% - 20px);
+    z-index: 10;
+
+}
+#meter table td, #meter table tr {
+    border: 1px solid #6a799a;
+    border: 1px solid #6580a5;
+/*    width: 10px;*/
+    padding: 0px;
+}
+#meterlevel {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    height: calc(100% - 20px);
+    width: calc(100% - 20px);
+    height: 200px;
+    background-color: #2f4c74;
+    z-index: 5;
+    display: none;
+}
+#meter .bar_no {
+    background-color: transparent;
+}
+#meter .bar_yes {
+    background-color: #2f4c74;
+}

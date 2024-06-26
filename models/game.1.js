@@ -70,7 +70,7 @@ class Game {
             // assume two sub teams - method should be modified if this number is ever in doubt.
             t.push(pl.splice(0, Math.ceil(pl.length / 2)));
             t.push(pl.splice(0));
-            console.log(t);
+//            console.log(t);
             return assignError ? 'error assigning teams' : t;
         }
     }
@@ -114,13 +114,15 @@ class Game {
         if (this.persistentData) {
             let pt = this.persistentData.teams;
     //        let id = 'fake';
-    //        console.log(`set teamObj for player ${player.id}`);
+//            console.log(`set teamObj for player ${player.id}`);
             this.teams.forEach((t, i) => {
                 if (t.includes(player.id)) {
-                    console.log(`allocate team ${pt[`t${i}`].title}`);
-                    console.log(t);
+//                    console.log(`allocate team ${pt[`t${i}`].title}`);
+//                    console.log(t);
                     player.teamObj = pt[`t${i}`];
-                    player.isLead = t[0] === player.id;
+//                    console.log(player.teamObj);
+                    // Only players of team type 1 have leads
+                    player.isLead = t[0] === player.id && player.teamObj.type === 1;
                 }
             })
         }
