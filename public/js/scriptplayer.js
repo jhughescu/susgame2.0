@@ -16,14 +16,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const fake = qu.fake === 'true';
     //
     const getStorageID = (id) => {
+        const sid = `ls-${player.id}-${id}`;
+//        console.log(`getStorageID`, id, sid);
         if (player) {
-            return `ls-${player.id}-${id}`;
+            return sid;
         } else {
 //            console.warn(`cannot get storage ID - player not defined`);
         }
     };
+    const clearMyStorage = () => {
+//        console.log(`clearMyStorage`, lID);
+//        console.log(localStorage.getItem(lID));
+        localStorage.removeItem(lID);
+    }
     const addToStorage = (id, ob) => {
         const stId = getStorageID(id);
+//        console.log(`addToStorage`, stId, JSON.stringify(ob));
         localStorage.setItem(stId, JSON.stringify(ob));
     };
     const getFromStorage = (id) => {
@@ -66,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     lID = lID + res;
 //                    console.log(`registerwithGame, lID set to ${lID}`);
                 }
+//                console.log(`storing`, lID, res);
                 localStorage.setItem(lID, res);
                 if (ob.renderState) {
                     ob.renderState.source = `registerPlayer event`;
@@ -136,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        lID = lid;
         lID = `${lid}${getPlayerID()}`;
 //        console.log(window.location.search);
-//        console.log(`playerConnect, lID set to ${lID}`);
+        console.log(`playerConnect, lID set to ${lID}`);
 //        console.log(`heidee`, getPlayerID());
         onConnect();
     };
@@ -564,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const show = Object.assign({}, renderState);
             delete renderState.note;
-//            console.log(`updateRenderState`, ob)
+            console.log(`updateRenderState`, ob);
         }
     };
     const gotoHomeState = () => {
@@ -645,6 +654,20 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRenderState({temp: 'game.gameover', ob: {}});
         render();
     };
+    const onRemoval = (ob) => {
+        // This is serious, better do some serious checking:
+        const isGame = ob.game === game.address;
+        const isSocket = ob.sock === player.socketID;
+        const isPlayer = ob.player === player.id;
+        const isDef = isGame && isSocket && isPlayer;
+        console.log(isGame, isSocket, isPlayer, isDef);
+        if (isDef) {
+
+            clearMyStorage();
+            updateRenderState({temp: ob.temp});
+            render();
+        }
+    };
 
     // Select the target div element
     const targetDiv = document.getElementById('insertion');
@@ -683,6 +706,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('playerUpdate', (rOb) => {
         const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
+//        console.log('playerUpdate:', rgame);
         if (rOb.hasOwnProperty('emitType')) {
 //            console.log(`emitType: ${rOb.emitType}`);
         }
@@ -734,6 +758,9 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('waitForGame', () => {
 //        console.log('waitForGame - connected but no game, try again in a minute');
 //        window.location.reload();
+    });
+    socket.on('playerRemoved', (ob) => {
+        onRemoval(ob);
     });
 
     renderTemplate = window.renderTemplate;

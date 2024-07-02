@@ -61,7 +61,7 @@ const showRoomSize = (id) => {
         log(`Number of sockets in room ${roomName}: ${numSockets}`);
         return room.size;
     } else {
-        log(`Room ${roomName} does not exist or has no sockets.`);
+        console.log(`Room ${roomName} does not exist or has no sockets.`);
         return null;
     }
 };
@@ -152,7 +152,7 @@ function initSocket(server) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
 //            showRoomSize(src);
-//            log(`player joins room ${src}`);
+            console.log(`player joins room ${src} ${socket.id}`);
             const queries = getQueries(ref);
             const isReal = queries['isAdmin'] !== true;
             if (isReal) {
@@ -579,10 +579,18 @@ function initSocket(server) {
             const rOb = {game: ob.game, emitType: 'singlePlayer'};
             io.to(ob.player.socketID).emit('gameUpdate', rOb);
             io.to(ob.player.socketID).emit('playerUpdate', rOb);
-//            console.log(`emit to ${ob.player.socketID}`)
+//            console.log(`emit to ${ob.player.socketID} (${typeof(ob.player.socketID)})`);
         } else {
             console.log(`singlePlayerGameUpdate requires an object: {player: <playerObject>, game}`)
         }
+    });
+    eventEmitter.on('playerRemoved', (ob) => {
+//        console.log(`removed player`);
+//        console.log(ob);
+//        console.log(`emit to ${ob.sock} (${typeof(ob.sock)})`);
+//        showRoomSize(ob.player.sock)
+//        io.to(ob.game).emit('playerRemoved', Object.assign({src: 'all game'}, ob));
+        io.to(ob.sock).emit('playerRemoved', Object.assign({src: 'just socket'}, ob));
     });
     eventEmitter.on('gameWarning', (ob) => {
         let room = `${ob.gameID}-fac`;

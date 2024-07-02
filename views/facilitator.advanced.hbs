@@ -1,0 +1,20 @@
+advanced controls
+<div class='vertstack' id='contentControls'>
+    {{#if teamsAssigned}}{{else}}
+    {{#if roundActive}}{{else}}
+    <div>
+        <button id='resize'>Set Team Size</button><input type="text" class="valInput" id="teamInput" value="{{game.mainTeamSize}}" readonly>
+        <span class='buttonSet'>
+            <button >-</button><button >+</button>
+        </span>
+    </div>
+    {{/if}}
+    {{/if}}
+    {{#if teamsAssigned}}
+    <div><button id='reset'>Reset Teams</button></div>
+    {{/if}}
+    {{#if roundActive}}
+    <div><button id='completeRound'>Complete Round</button>(opens new panel)</div>
+    {{/if}}
+    <div><button id='identify' >Identify Players</button>(shows info on players' devices)</div>
+</div>

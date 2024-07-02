@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let session = null;
     let game = null;
     let gameSeekTimeout = null;
+    let renderDelay = 0;
+    let renderTimeout = null;
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
     const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
@@ -55,7 +57,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const showImportantLog = (log) => {
         const mw = $('#facilitateMessage');
         if (mw) {
-            mw.html(log.msg)
+            mw.html(`<span>${log.msg}</span>`);
+            setTimeout(() => {
+                mw.find('span').fadeOut(1000, () => {
+                    mw.html('')
+                });
+            }, 5000);
         }
     };
     const clearMessage = () => {
@@ -104,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const startGame = () => {
         addToLogFeed('start new game');
-        console.log('start new game');
+//        console.log('start new game');
         if (session.state === 'pending') {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
@@ -202,6 +209,43 @@ document.addEventListener('DOMContentLoaded', function() {
 //            setupWatch(game, handleChange);
         }
     };
+    const onGameUpdate = (g) => {
+//        console.log(`###############################################`);
+//        console.log(`gameUpdate:`, g);
+        const pv = procVal;
+        let comp = 'playersFull';
+        // cg will be an array of updated values, precluding any changes to props containing 'warning'
+        const cg = compareGames(g, comp);
+        if (cg) {
+            const cgf = cg.filter(str => !str.includes('warning'));
+            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
+            if (pv(g.uniqueID) === pv(getSessionID())) {
+                addToLogFeed('gameUpdate');
+                updateGame(g);
+                if (displayedProperty) {
+                    setupTab(getCurrentTab().title);
+                }
+                // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
+                // 20240701 added a delay to avoid multiple renders on app restart. Consider removing this in production.
+                clearTimeout(renderDelay);
+                renderDelay = setTimeout(() => {
+                    renderPlayers('facilitatePlayersContent');
+                    updatePlayerMeter();
+                    renderAdvanced();
+//                    console.log('the render')
+                }, 300);
+//                refreshAllWidgets();
+                if ($('#roundcompleter').length > 0) {
+                    if ($('#roundcompleter').is(':visible')) {
+                        closeModal();
+                        showRoundCompleter();
+                    }
+                }
+            }
+        } else {
+            console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
+        }
+    };
     const launchPresentation = () => {
 
 //         console.log(`/presentation#${game.address.replace('/', '')}`, '_blank');
@@ -285,7 +329,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     };
-    let renderTimeout = null;
+    const removeWidget = (w) => {
+        w.remove();
+    };
+    const removeThisWidget = (w) => {
+//        console.log(w);
+        const wid = w.closest('.widget').attr('id');
+//        console.log(wid);
+        removeWidget($(`#${wid}`));
+    };
+    const removeAllWidgets = () => {
+        const w = $('#overlay').find('.widget');
+        w.each((i, wd) => {
+            $(wd).remove();
+        });
+    };
+    const refreshAllWidgets = () => {
+        const w = $('#overlay').find('.widget');
+        w.each((i, wd) => {
+            console.log($(wd).attr('id'));
+//            $(wd).remove();
+//            add
+        });
+    };
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
         const wd = $(wid);
@@ -294,13 +360,8 @@ document.addEventListener('DOMContentLoaded', function() {
             x: ob.x ? ob.x : 0,
             y: ob.y ? ob.y : 0,
             w: ob.w ? ob.w : 0,
-            h: ob.h ? ob.h : 0,
-            ob: ob.ob ? ob.ob: {}
+            h: ob.h ? ob.h : 0
         };
-//        console.log(JSON.parse(JSON.stringify(ob)));
-//        console.log(JSON.parse(JSON.stringify(rOb)));
-//        console.log(rOb);
-//        console.log(`add widget: ${id}, ${wd.length}`)
         if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
             $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
@@ -308,41 +369,35 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stOb) {
                 Object.assign(rOb, JSON.parse(stOb));
             }
-            $(wid).draggable({
-                stop: function () {
-                    const pOb = {x: $(this).position().left, y: $(this).position().top};
-                    const stOb = JSON.parse(localStorage.getItem(widID));
-                    if (pOb && stOb) {
-                        localStorage.setItem(widID, JSON.stringify(Object.assign(stOb, pOb)));
-                    }
-                }
-            });
-            const tOb = {id: id, partialName: id};
-//            console.log(tOb);
-            renderTemplate(id, 'facilitator.widget', tOb, () => {
+            let tOb = {id: id, partialName: id};
+            if (ob.hasOwnProperty('data')) {
+                tOb = Object.assign(tOb, ob.data);
+            }
+            console.log(tOb);
+            const temp = ob.data.preventTemplate ? 'facilitator.widget.nopartial' : 'facilitator.widget';
+            renderTemplate(id, temp, tOb, () => {
                 $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
-                localStorage.setItem(widID, JSON.stringify(rOb));
+                const strOb = {x: rOb.x, y: rOb.y};
+                const widbody = $(wid).find('#widgetouter');
+                const widbar = $(wid).find('#widgethandle');
+                const widclose = $(wid).find('#widgethandle').find('.widgetclose');
+                widbody.css({width: `100%`, height: '100%'});
+                widclose.off('click').on('click', function () {
+                    removeWidget($(wid));
+                })
+                $(wid).draggable({
+                    handle: widbar,
+                    containment: 'window',
+                    stop: function () {
+                        const pOb = {x: $(this).position().left, y: $(this).position().top};
+                        localStorage.setItem(widID, JSON.stringify(pOb));
+                    }
+                });
                 if (cb) {
-                    cb();
+                    cb($(wid));
                 }
             });
         }
-    };
-    const playergraph = () => {
-//        console.log(`playergraph`);
-        return;
-        // graphically display the number of connected players
-        // Add the widget if it doesn't exist:
-        addWidget(`playergraph`, {x: 400, y: 200, w: 150, h: 300});
-        const plc = Object.values(game.playersFull).filter(p => p.connected);
-        const plReq = game.mainTeamSize * game.persistentData.mainTeams.length;
-        let perc = (plc.length / plReq) * 100;
-        perc = perc > 100 ? 100 : perc;
-//        console.log(game);
-//        console.log(plc.length, plReq, perc);
-        $('#graph-inner').css({height: `${perc}%`});
-        $('#graph-n-count').html(plc.length);
-        $('#graph-n-total').html(plReq);
     };
     const previewTeams = () => {
         const assOb = {address: game.address, type: 'order', preview: true};
@@ -366,9 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const gameID = `game-${game.uniqueID}`;
         const n = parseInt($('#teamInput').val());
         socket.emit('setTeamSize', { gameID, n }, (rgame) => {
-            updateGame(rgame);
-//            renderControls();
-            playergraph();
+            onGameUpdate(rgame);
         })
     };
     const assignTeams = (force) => {
@@ -387,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     addToLogFeed('teams successfully assigned', true);
     //                game = rgame;
-                    updateGame(rgame);
+                    onGameUpdate(rgame);
     //                renderControls();
                     highlightTab('teams');
                 }
@@ -399,11 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const resetTeams = () => {
         socket.emit('resetTeams', {address: game.address}, (rgame) => {
             addToLogFeed('teams reset');
-            console.log(`resetTeams:`);
-            console.log(rgame);
+//            console.log(`resetTeams:`);
+//            console.log(rgame);
 //            game.teams = rgame.teams;
 //            game = rgame;
-            updateGame(rgame);
+            onGameUpdate(rgame);
 //            renderControls();
 //            renderTeams();
         });
@@ -497,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearLogFeed();
             });
             tl.on('click', function () {
+                removeAllWidgets();
                 openTab($(this).attr('id').replace('link', ''));
             });
             const t = window.location.hash ? window.location.hash.replace('#', '') : 'session';
@@ -553,6 +607,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const setupControlLinks = () => {
         const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
+//        console.log(rSel)
+//        rSel.add();
         const rVal = $('#roundInput');
 //        console.log(`setupControlLinks`);
 //        console.log(rSel);
@@ -605,11 +661,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         rSel.off('click').on('click', function () {
-            const iv = $(this).closest('td').prev('td').find('.valInput');
+            const iv = $(this).parent().parent().find('.valInput');
             const rNow = parseInt(iv.val());
             iv.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
         })
+    };
+    const setupAdvancedLinks = () => {
+        // amends links already setup in the setupControlLinks method
+        const al = $('#facilitator-advanced');
+//        const bt = al.find('button');
+        const bt = al.find('#reset');
+        bt.add('#completeRound');
+        bt.each((i, b) => {
+            if ($(b).attr('id')) {
+                // the buttons which have an id call method which should refresh the widget
+                $(b).on('click', function () {
+//                    console.log('redo');
+                    removeThisWidget($(this));
+//                    launchAdvanced();
+                });
+            }
+        });
     };
     const buildScoreDetail = (s) => {
         s.forEach(sp => {
@@ -810,6 +883,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const rowIndex = $(this).closest('tr').index() - 1;
             alert(list[rowIndex].warningMessage)
         });
+        const but = base.find('.material-icons');
+        const butd = base.find('.material-icons:disabled');
+//        console.log(butd)
+        butd.removeAttr('title');
+
     };
     const setupPlayerControlsV1 = () => {
         const pso = playerSortOrder;
@@ -922,6 +1000,28 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game.presentation.slideData);
         addWidget(SLIDESHOW_CONTROL, {x: 400, y: 200, w: 600, h: 600}, () => {
             window.slideContolsInit(game);
+        });
+    };
+    const launchAdvanced = () => {
+        const rOb = {x: 100, y: 100, w: 600, h: 200, data: {preventTemplate: true}};
+//        rOb.data.teamsAssigned = game.teams.length > 0;
+//        rOb.data.roundActive = game.round > 0;
+//        rOb.data.preventTemplate = true;
+        const id = 'facilitator-advanced';
+        addWidget(id, rOb, (w) => {
+            renderAdvanced();
+        });
+
+    };
+    const renderAdvanced = () => {
+        const id = 'facilitator-advanced';
+        const rOb = {game: game};
+        rOb.teamsAssigned = game.teams.length > 0;
+        rOb.roundActive = game.round > 0;
+        rOb.preventTemplate = true;
+        renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
+//            console.log('dunne');
+            setupControlLinks();
         });
     };
     const tryStartRound = (r) => {
@@ -1046,6 +1146,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
 //                        const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
+//                        console.log(tOb.teamObj.id);
+//                        console.log(game.teams[tOb.teamObj.id]);
                         const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
 //                        console.log('pl', pl);
                         tOb.game = game;
@@ -1294,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     t1 = roundAll(t1);
                 }
 
-//                console.log(`i also got t1`, t1);
+                console.log(`i also got t1`, t1);
                 socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
                     ob.scorePackets = sp;
                     const scores = {};
@@ -1392,6 +1494,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }
     };
+    const showScores = async () => {
+        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+//        console.log(t1);
+        if (t1) {
+            console.log(JSON.parse(t1));
+            return t1;
+        } else {
+            return 'nothing to show'
+        }
+    };
     const renderTeams = () => {
         let rendO = {};
         if (game) {
@@ -1440,10 +1552,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 renderPlayers('facilitatePlayersContent');
                 const launchBut = $('#facilitateSlideshow').find('#makePres');
-                launchBut.on('click', () => {
+                launchBut.off('click').on('click', () => {
                     launchPresentation();
                 });
                 updatePlayerMeter();
+                const openAdvanced = $('#openAdvanced');
+                openAdvanced.off('click').on('click', () => {
+                    launchAdvanced();
+                });
 //                debugger;
             });
         }
@@ -1570,6 +1686,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(sl.action.split(':'));
                 tryStartRound(justNumber(sl.action.split(':')[1]));
             }
+            if (sl.action.includes(`showRound`)) {
+                console.log(`showRound`);
+                console.log(sl.action.split(':'));
+//                tryStartRound(justNumber(sl.action.split(':')[1]));
+            }
             if (slideActions.hasOwnProperty(sl.action)) {
 //                console.log(slideActions[sl.action]);
                 slideActions[sl.action]();
@@ -1622,8 +1743,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let renderInt = null;
     socket.on('test', () => {console.log('test')});
     socket.on('gameUpdate', (g) => {
-//        console.log(`###############################################`);
-//        console.log(`gameUpdate:`, g);
+        onGameUpdate(g);
+    });
+    socket.on('gameUpdateOLD', (g) => {
+        console.log(`###############################################`);
+        console.log(`gameUpdate:`, g);
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
@@ -1640,7 +1764,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
                 renderPlayers('facilitatePlayersContent');
                 updatePlayerMeter();
-                playergraph();
                 if ($('#roundcompleter').length > 0) {
                     if ($('#roundcompleter').is(':visible')) {
                         closeModal();
@@ -1684,6 +1807,7 @@ document.addEventListener('DOMContentLoaded', function() {
     procVal = window.procVal;
     //
     window.showGame = showGame;
+    window.showScores = showScores;
     window.facilitatorSlideChange = facilitatorSlideChange;
     const closeModal = () => {
         $('#modal').modal('close');

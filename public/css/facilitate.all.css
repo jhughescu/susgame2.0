@@ -12,12 +12,14 @@ The panel which wil contain all required facilitate controls
 }
 
 #facilitateMessage {
-    width: 590px;
+    width: 400px;
+    width: 360px;
     height: 40px;
     left: 460px;
 }
 #facilitatePlayers {
     width: 510px;
+    width: 470px;
     height: 440px;
     left: 460px;
     top: 130px;
@@ -25,6 +27,7 @@ The panel which wil contain all required facilitate controls
 }
 #playermeter {
     left: 990px;
+    left: 950px;
     top: 130px;
     height: 440px;
     width: 60px;
@@ -35,4 +38,10 @@ The panel which wil contain all required facilitate controls
 .slidelist .hint {
     color: #10bcd3;
     font-style: italic;
+}
+#openAdvanced {
+    position: absolute;
+    left: 873px;
+    left: 833px;
+    height: 43px;
 }

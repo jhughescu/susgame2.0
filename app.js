@@ -9,10 +9,12 @@ const jwt = require('jsonwebtoken');
 const gfxController = require('./controllers/gfxController');
 const app = express();
 const server = http.createServer(app);
+require('dotenv').config();
 
 module.exports = { app };
 const { initSocket } = require('./controllers/socketController');
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || 'localhost';
 
 const databaseController = require('./controllers/databaseController');
 
@@ -44,6 +46,7 @@ app.get('/views/:templateName', (req, res) => {
 });
 databaseController.dbConnect();
 initSocket(server);
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} ${getTimeStamp()}`);
+server.listen(PORT, HOST, () => {
+//    console.log(`Server running on port ${PORT} ${getTimeStamp()}`);
+    console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
 });

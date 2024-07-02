@@ -221,16 +221,19 @@ async function reassignTeam (ob) {
 };
 async function removePlayer (ob, cb) {
     const pl = ob.player;
+//    console.log(`removal starts, player:`);
+//    console.log(pl)
     if (!cb) {
-        console.log(`no cb, make one up`);
+//        console.log(`no cb, make one up`);
         cb = () => {};
     } else {
-        console.log(`a cb`);
+//        console.log(`a cb`);
     }
 //    console.log(`remove player ${pl}`);
 //    console.log(ob)
     const game = games[`game-${ob.game}`];
     if (game) {
+//        console.log(game.playersFull[pl])
         try {
             // remove player from any teams they belong to
             const t = game.teams.filter(tm => tm.indexOf(pl, 0) > -1);
@@ -245,8 +248,16 @@ async function removePlayer (ob, cb) {
             });
             const newP = game.players.splice(game.players.indexOf(pl, 0), 1);
             const session = await sessionController.updateSession(ob.game, {players: game.players});
+            const fullPlayer = game.playersFull[pl];
+            const removeObj = {
+                game: game.address,
+                sock: fullPlayer.socketID,
+                player: pl,
+                temp: 'game.removed'
+            };
             eventEmitter.emit('gameUpdate', game);
-            console.log('completion');
+            eventEmitter.emit('playerRemoved', removeObj)
+//            console.log('completion');
         } catch (error) {
             cb({data: null, err: error.message});
         }
@@ -1106,7 +1117,7 @@ const get = (id, prop) => {
         }
     }
     return p;
-}
+};
 
 module.exports = {
     getGame,

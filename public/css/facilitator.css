@@ -11,6 +11,10 @@ body {
     z-index: 999;
     pointer-events: none;
 }
+.blocker {
+    /* the jquery modal div - needs to be on top */
+    z-index: 99999999;
+}
 td {
     padding: 3px 20px;
 }
@@ -40,6 +44,10 @@ td {
 button {
     font: inherit;
     margin-bottom: 4px;
+}
+.playerlist button {
+    margin-bottom: 0px;
+    font-size: 16px;
 }
 td {
     vertical-align: top;

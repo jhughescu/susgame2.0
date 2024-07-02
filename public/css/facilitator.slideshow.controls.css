@@ -75,3 +75,6 @@
 .auto_false {
     background-color: red;
 }
+#slideshow_controls .material-icons {
+    font-size: 20px;
+}
