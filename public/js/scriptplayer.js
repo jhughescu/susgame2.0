@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const onGameEnd = () => {
-        console.log(`onGameEnd`);
+//        console.log(`onGameEnd`);
         localStorage.clear();
 //        renderState = {temp: 'game.gameover', ob: {}};
         updateRenderState({temp: 'game.gameover', ob: {}});
