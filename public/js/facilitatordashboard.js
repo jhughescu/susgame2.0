@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // logFeed is an array of messages to be revealed to the client
     const logFeed = [];
     const logFeedArchive = [];
-
+    console.log(`null the session`)
     let session = null;
     let game = null;
     let gameSeekTimeout = null;
@@ -101,8 +101,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (typeof(rtn) === 'string') {
                     alert(rtn);
                 } else {
-                    console.log(`session reset`);
-                    session = rtn;
+//                    console.log(`session reset`);
+//                    console.log(rtn);
+                    const rgame = rtn.game;
+                    updateGame(rgame);
+                    session = rtn.session;
+//                    console.log(`resetSession, session:`, session);
                     localStorage.clear();
                     renderSession();
                 }
@@ -190,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addToLogFeed(`resetting game ${id}`);
             socket.emit('resetGame', id, (rs) => {
                 session = rs;
+//                console.log(`resetGame, session:`, session);
 
                 openTab('session');
                 renderSession();
@@ -200,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const updateGame = (ngame) => {
         // Method to use any time the game is updated (i.e never use "game = ...")
+//        console.log(`let's update the game:`);
+//        console.log(`old`, JSON.parse(JSON.stringify(game)));
+//        console.log(`new`, JSON.parse(JSON.stringify(ngame)));
         if (game) {
             Object.assign(game, ngame);
         } else {
@@ -208,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // \/ optional method; listens for change to game object (use in dev only)
 //            setupWatch(game, handleChange);
         }
+//        console.log(`finale`, JSON.parse(JSON.stringify(game)));
     };
     const onGameUpdate = (g) => {
 //        console.log(`###############################################`);
@@ -450,16 +459,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const resetTeams = () => {
-        socket.emit('resetTeams', {address: game.address}, (rgame) => {
-            addToLogFeed('teams reset');
-//            console.log(`resetTeams:`);
-//            console.log(rgame);
-//            game.teams = rgame.teams;
-//            game = rgame;
-            onGameUpdate(rgame);
-//            renderControls();
-//            renderTeams();
-        });
+        if (game.scores.length > 0) {
+            socket.emit('resetTeams', {address: game.address}, (rgame) => {
+                addToLogFeed('teams reset');
+                onGameUpdate(rgame);
+            });
+        } else {
+            alert('Cannot reset teams once scores have been submitted');
+        }
     };
     const identifyPlayers = () => {
 //        console.log('identifyPlayers');
@@ -1013,17 +1020,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
     };
-    const renderAdvanced = () => {
-        const id = 'facilitator-advanced';
-        const rOb = {game: game};
-        rOb.teamsAssigned = game.teams.length > 0;
-        rOb.roundActive = game.round > 0;
-        rOb.preventTemplate = true;
-        renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
-//            console.log('dunne');
-            setupControlLinks();
-        });
-    };
     const tryStartRound = (r) => {
         const t = game.teams;
         const p = game.players;
@@ -1287,7 +1283,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-
     const processPlayers = (list) => {
         // add any special conditions prior to rendering the player list
         // Note add nothing here that should persist, this is a display-only method.
@@ -1299,6 +1294,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return list;
     };
+
     const renderPlayers = (targ) => {
         if (game) {
             let basicList = game.players.slice(0);
@@ -1563,6 +1559,18 @@ document.addEventListener('DOMContentLoaded', function() {
 //                debugger;
             });
         }
+    };
+    const renderAdvanced = () => {
+        const id = 'facilitator-advanced';
+        const rOb = {game: game};
+        rOb.teamsAssigned = game.teams.length > 0;
+        rOb.roundActive = game.round > 0;
+        rOb.scoresSubmitted = game.scores.length > 0;
+        rOb.preventTemplate = true;
+        renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
+//            console.log('dunne');
+            setupControlLinks();
+        });
     };
 
 

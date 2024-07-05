@@ -205,6 +205,10 @@ function initSocket(server) {
                     gameController.createAggregate(ob, cb);
 
                 });
+                socket.on('ping', () => {
+//                    console.log('pinged')
+                    socket.emit('pong');
+                });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
                 if (!Boolean(gameController.getGameWithAddress(src))) {
@@ -261,7 +265,8 @@ function initSocket(server) {
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {
-                sessionController.resetSession(id, cb);
+//                sessionController.resetSession(id, cb);
+                gameController.resetSession(id, cb);
             });
             socket.on('resetGame', (id, cb) => {
                 gameController.resetGame(id, cb);
@@ -545,11 +550,11 @@ function initSocket(server) {
     });
     eventEmitter.on('gameRestored', (gOb) => {
         let roomName = `${gOb.game}-fac`;
-        console.log('noo event');
+//        console.log('noo event');
         showRoomSize(roomName);
         io.to(roomName).emit('onGameRestored', gOb);
         roomName = `${gOb.game}-pres`;
-        console.log('noo event');
+//        console.log('noo event');
         showRoomSize(roomName);
         io.to(roomName).emit('onGameRestored', gOb);
     });
@@ -617,6 +622,17 @@ function initSocket(server) {
             log(`Room ${game.address} does not exist or has no sockets.`);
         }
         io.to(roomName).emit('teamsAssigned', game);
+    });
+    eventEmitter.on('teamsReset', (game) => {
+//        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
+        let room = io.sockets.adapter.rooms.get(game.address);
+        if (room) {
+            const numSockets = room.size;
+//            log(`Number of sockets in room ${game.address}: ${numSockets}`);
+        } else {
+//            log(`Room ${game.address} does not exist or has no sockets.`);
+        }
+        io.to(game.address).emit('teamsReset', game);
     });
     eventEmitter.on('updatePlayers', (ob) => {
 //        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);

@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $(`#${targ}`).css({opacity: 1});
     };
     const renderTemplate = (targ, temp, ob, cb) => {
+//        console.log(`renderTemplate`, targ, temp);
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;

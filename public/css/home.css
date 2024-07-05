@@ -14,6 +14,11 @@ body, html {
     color: white;
     font-size: 2.5rem;
 }
+@media (max-width: 767px) {
+    .intro {
+        font-size: 1.5rem;
+    }
+}
 .intro a {
     font-size: 1.8rem;
 }

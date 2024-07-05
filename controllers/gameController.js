@@ -36,6 +36,7 @@ async function startGame (o, cb) {
     log(`startGame: ${game}`);
     let rg = null;
     if (!games.hasOwnProperty(game)) {
+        console.log('no game exists, create it');
         if (session.hasOwnProperty('type')) {
             Game = require(`./../models/game.${session.type}`);
             Player = require(`./../models/player.${session.type}`);
@@ -53,7 +54,7 @@ async function startGame (o, cb) {
             console.log('cannot start game, session has no "type" property');
         }
     } else {
-//        console.log('#foo bar');
+        console.log('game already exists, do nothing');
     }
     games[game].presentation.currentSlide = session.slide;
 //    console.log(`the game`);
@@ -83,7 +84,6 @@ async function startGame (o, cb) {
     } catch (error) {
         console.error('Error loading persistent data:', error);
     }
-
     const smts = session.mainTeamSize;
     const pdts = rg.persistentData.teamSize;
     if (!smts) {
@@ -101,6 +101,8 @@ async function restoreGame (o, cb) {
     // Restore by creating a new instance of Game and then loading any stored info from the database.
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
+//    console.log(`restoreGame:`)
+//    console.log(JSON.parse(o))
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
@@ -287,6 +289,18 @@ async function changeName (ob, cb) {
         error(`gameController: can't change name, game or session undefined`)
     }
 };
+const resetSession = async (id, cb) => {
+    // dev only method for now
+    const sesh = await sessionController.resetSession(id);
+    const gID = `game-${id}`;
+    if (sesh) {
+        delete games[gID];
+        startGame(JSON.stringify(sesh), (rgame) => {
+            cb({game: rgame, session: sesh});
+//            console.log('THE CALLBACK CALLBACK')
+        });
+    }
+}
 
 const restoreClients = (address) => {
     // refresh connected clients on game restore
@@ -546,6 +560,7 @@ const resetTeams = (ob, cb) => {
     sessionController.updateSession(game.uniqueID, uo);
     game.unsetTeams();
     game.teams = t;
+    eventEmitter.emit('teamsReset', game);
 //    log(game);
     if (cb) {
         cb(game);
@@ -710,6 +725,9 @@ const newGetTheRenderState = (game, id) => {
     }
 //    console.log(rs);
     rs.theGame = Object.assign({}, game);
+    if (rs.temp === undefined) {
+        rs.temp = 'game.problem';
+    }
     return rs;
 }
 const getTheRenderState = (game, id) => {
@@ -819,6 +837,7 @@ const registerPlayer = (ob, cb) => {
         let index = -1;
         if (ob.player) {
             ID = ob.player;
+            console.log(`existing player, ID: ${ID}`);
             const pl = game.players.reduce((acc, plID) => {
                 acc[plID] = true;
                 return acc;
@@ -840,6 +859,7 @@ const registerPlayer = (ob, cb) => {
                 game.playersFull[ID].socketID = ob.socketID;
             }
         } else {
+            console.log(`new player, ID: ${ID}`);
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
             game.players.push(ID);
             newP = true;
@@ -847,7 +867,7 @@ const registerPlayer = (ob, cb) => {
         if (newP && game.teams.length > 0) {
             console.log(`looks like a new player (${ID}) joining after teams are assigned`);
             game.addLatecomer(player);
-            console.log(game.teams);
+//            console.log(game.teams);
             sessionController.updateSession(game.uniqueID, {teams: game.teams});
 //            eventEmitter.emit('gameUpdate', game);
         }
@@ -862,7 +882,10 @@ const registerPlayer = (ob, cb) => {
             }, 5000);
         }
         if (cb) {
-            cb({id: ID, renderState: getTheRenderState(game, ID), game: JSON.stringify(game)});
+            const renDo = getTheRenderState(game, ID);
+            console.log(`ID: ${ID}`);
+            console.log(`renDo:`, renDo.temp);
+            cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
         } else {
             log('reg P, no CB');
         }
@@ -1127,6 +1150,7 @@ module.exports = {
     endGame,
     restoreGame,
     resetGame,
+    resetSession,
     changeName,
     deleteGame,
     registerPlayer,

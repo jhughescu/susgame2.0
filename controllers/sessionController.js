@@ -263,6 +263,7 @@ async function resetSession(id, cb) {
             state: 'pending',
             players: []
         });
+        return session;
         if (session) {
             cb(session);
         }

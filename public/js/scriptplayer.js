@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const socket = io();
     let gID = null;
+    let lIDStub = null;
     let lID = null;
     let fID = 'fid';
     let now = null;
@@ -10,22 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let renderStateLocal = {};
     let renderStateServer = {};
     let returnRenderState = {};
+    let pingCheck = 0;
+    let pingState = true;
     const homeStateObj = {note: 'homeState setting', temp: 'game.main', partialName: 'game-links', ob: player, tempType: 'homeState', sub: null};
     const homeState = JSON.stringify(homeStateObj);
     const qu = window.getQueries(window.location.href);
     const fake = qu.fake === 'true';
     //
     const getStorageID = (id) => {
-        const sid = `ls-${player.id}-${id}`;
-//        console.log(`getStorageID`, id, sid);
+        let sid = ``;
         if (player) {
+            sid = `ls-${player.id}-${id}`;
             return sid;
         } else {
 //            console.warn(`cannot get storage ID - player not defined`);
         }
     };
     const clearMyStorage = () => {
-//        console.log(`clearMyStorage`, lID);
+        console.log(`clearMyStorage`, lID);
 //        console.log(localStorage.getItem(lID));
         localStorage.removeItem(lID);
     }
@@ -44,6 +47,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const showGame = () => {
         return game;
     };
+    const checkWebSocketConnection = () => {
+        if (pingState) {
+            pingState = false;
+        } else {
+            console.log('got disconnected');
+        }
+        socket.emit('ping');
+    };
 
     const updateGame = (ob) => {
         if ($.isEmptyObject(game)) {
@@ -53,8 +64,23 @@ document.addEventListener('DOMContentLoaded', function() {
             Object.assign(game, ob);
         }
     };
+    const getFakeID = () => {
+        let fid = false;
+        let q = getQueries(window.location.href);
+        if (q.fake) {
+            console.log('FAKE')
+        } else {
+            console.log('REAL')
+        }
+    };
     const registerwithGame = () => {
+//        getFakeID();
+//        lID = `${lIDStub}${qu.fake ? qu[fID] : ''}`;
+        lID = lIDStub + (qu.fake ? `-${qu[fID]}` : ``);
+//        console.log(qu);
+//        console.log(lID);
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
+        console.log(`ID: ${ID}`);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
@@ -70,9 +96,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     setPlayer(game);
                 }
                 // amend for fake players
-                if (res.indexOf('f', 0) > -1 && lID.indexOf(res, 0) === -1) {
-                    lID = lID + res;
+//                if (res.indexOf('f', 0) > -1 && lID.indexOf(res, 0) === -1) {
+                if (res.indexOf('f', 0) > -1) {
+//                    lID = lID + res;
+                    lID = `${lIDStub}-${res}`;
 //                    console.log(`registerwithGame, lID set to ${lID}`);
+                } else {
+                    lID = lIDStub;
                 }
 //                console.log(`storing`, lID, res);
                 localStorage.setItem(lID, res);
@@ -103,12 +133,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         onStartRound(game.round);
                     }
                 });
-
+                clearInterval(pingCheck);
+                pingCheck = setInterval(() => {
+                    checkWebSocketConnection();
+                }, 2000);
             }
         });
     };
     const getPlayerID = () => {
         let id = null;
+//        console.log(`getPlayerID`);
+//        console.log(`lID: ${lID}`);
+//        console.log(`get: ${localStorage.getItem(lID)}`);
         if (localStorage.getItem(lID)) {
             id = localStorage.getItem(lID);
         }
@@ -117,7 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const resetPlayer = () => {
-        localStorage.clear();
+//        console.log(`resetPlayer`);
+//        localStorage.clear();
         updateRenderState({temp: 'game.pending'});
         render();
     };
@@ -131,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('giving up looking for games');
                 }
             } else {
+                console.log(`getGames initiates registerwithGame`)
                 registerwithGame();
             }
         });
@@ -140,12 +178,16 @@ document.addEventListener('DOMContentLoaded', function() {
         now = Date.now();
         getGames();
     };
+    const getAddress = () => {
+        return window.location.pathname;
+    };
     const playerConnect = (lid) => {
         gID = window.location.pathname;
+        lIDStub = `${lid}-${getAddress()}`;
 //        lID = lid;
-        lID = `${lid}${getPlayerID()}`;
+//        lID = `${lid}${getPlayerID()}`;
 //        console.log(window.location.search);
-        console.log(`playerConnect, lID set to ${lID}`);
+        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
 //        console.log(`heidee`, getPlayerID());
         onConnect();
     };
@@ -173,7 +215,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (player) {
 //            console.log('player exists; this could be an update');
-            if (player.teamObj) {
+//            console.log(player.teamObj);
+//            console.log(Boolean(player.teamObj));
+            if (Boolean(player.teamObj)) {
 //                console.log(`old player`, player.teamObj.title);
 //                console.log(`new player`, newPlayer.teamObj.title);
 //                console.log(JSON.stringify(player) === JSON.stringify(newPlayer));
@@ -196,18 +240,29 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
         render();
     };
+    const teamsReset = (game) => {
+        console.log(game)
+        updateGame(game);
+//        setPlayer(game);
+        updateRenderState({temp: 'game.intro', ob: player});
+        render();
+    };
     const showOverlay = (id, ob) => {
+//        console.log(`showOverlay`);
         if ($('.overlay')) {
+//            console.log(`removed`)
             $('.overlay').remove();
         }
+//        console.log($('overlay'));
         window.getTemplate('overlay', {}, (temp) => {
-            console.log('getTemplate returns:')
-            console.log(temp)
+//            console.log(' NEW getTemplate returns:')
+//            console.log(temp)
             $('body').append(temp);
+//            $('.overlay').remove();
             window.renderTemplate('overlay', id, ob, () => {
 //                $('.overlay').fadeIn(300).delay(2000).fadeOut(1000);
-                console.log(id)
-                console.log(ob)
+//                console.log(id);
+//                console.log(ob);
                 $('.overlay').fadeIn(300);
             });
         })
@@ -216,12 +271,19 @@ document.addEventListener('DOMContentLoaded', function() {
 ////
 ////            });
 //        }));
-    }
+    };
     const identifyPlayer = () => {
 //        console.log(`id player ${getPlayerID()}`);
-        const idOb = {id: getPlayerID(), sock: socket.id, stored: 'null', teamID: player.teamObj.id, team: player.teamObj.title};
+        const idOb = {id: getPlayerID(), sock: 'null', stored: 'null', teamID: 'null', team: 'null'};
+        if (socket) {
+            idOb.sock = socket.id;
+        };
         if (player) {
             idOb.stored = player.socketID;
+            if (Boolean(player.teamObj)) {
+                idOb.teamID= player.teamObj.id;
+                idOb.team = player.teamObj.title;
+            }
         }
         showOverlay('playerID', idOb);
     };
@@ -361,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sc = filterScorePackets(sOb.scorePackets, criteria, metric);
 //        console.log(`sc`, sc);
         return sc.length > 0;
-    }
+    };
     const iHaveScoredV1 = (sOb) => {
         // method takes a score object returned from the server, calculates whether player has scored based on type
 //        console.log(`so, have I scored?`);
@@ -376,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sc = filterScorePackets(sOb.scorePackets, criteria, metric);
 //        console.log(`sc`, sc);
         return sc.length > 0;
-    }
+    };
     const onStartRound = async (ob) => {
 //        console.log(`onStartRound, ob:`, ob);
 //        console.log(`game`, game);
@@ -573,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const show = Object.assign({}, renderState);
             delete renderState.note;
-            console.log(`updateRenderState`, ob);
+//            console.log(`updateRenderState`, ob);
         }
     };
     const gotoHomeState = () => {
@@ -631,6 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
+//                identifyPlayer();
                 if (cb) {
 //                    console.log(`i do have a callback`)
                     cb();
@@ -648,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const onGameEnd = () => {
-//        console.log(`onGameEnd`);
+        console.log(`onGameEnd`);
         localStorage.clear();
 //        renderState = {temp: 'game.gameover', ob: {}};
         updateRenderState({temp: 'game.gameover', ob: {}});
@@ -722,6 +785,10 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('the event')
         teamsAssigned(game);
     });
+    socket.on('teamsReset', (game) => {
+//        console.log('the event')
+        teamsReset(game);
+    });
     socket.on('identifyPlayer', () => {
         identifyPlayer();
     });
@@ -761,6 +828,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('playerRemoved', (ob) => {
         onRemoval(ob);
+    });
+    socket.on('pong', () => {
+//        console.log('ponged');
+        pingState = true;
     });
 
     renderTemplate = window.renderTemplate;
