@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const addToLogFeed = (msg, important) => {
         const log = {id: logFeed.length, msg: msg, important: important === undefined ? false : true};
+
         logFeed.push(`${logFeed.length + 1}: ${msg}`);
         logFeedArchive.push(`${logFeed.length + 1}: ${msg}`);
         renderLogFeed();
