@@ -16,24 +16,21 @@ The panel which wil contain all required facilitate controls
     width: 360px;
     height: 40px;
     left: 460px;
-    font-size: 0.8rem;
-/*    padding: 2px;*/
-}
-#facilitateMessage p {
-    margin: 4px;
 }
 #facilitatePlayers {
+    width: 510px;
     width: 470px;
-    height: 400px;
+    height: 440px;
     left: 460px;
-    top: 170px;
+    top: 130px;
     overflow-y: scroll;
 }
 #playermeter {
-    left: 460px;
-    top: 120px;
-    height: 40px;
-    width: 470px;
+    left: 990px;
+    left: 950px;
+    top: 130px;
+    height: 440px;
+    width: 60px;
 }
 .slidelist {
     top: 40px;
@@ -47,9 +44,4 @@ The panel which wil contain all required facilitate controls
     left: 873px;
     left: 833px;
     height: 43px;
-    width: 100px;
-    line-height: 0.9rem;
-}
-button {
-    font-size: 16px;
 }

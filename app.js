@@ -46,7 +46,7 @@ app.get('/views/:templateName', (req, res) => {
 });
 databaseController.dbConnect();
 initSocket(server);
-//server.listen(PORT, HOST, () => {
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
+//server.listen(PORT, () => {
     console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
 });

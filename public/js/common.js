@@ -205,6 +205,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             $(`#${targ}`).css({opacity: 1});
     };
+    const removeTemplate = (targ, cb) => {
+        $(targ).html('');
+        if (cb) {
+            cb();
+        } else {
+            console.warn('no callback provided for removeTemplate method');
+        }
+    };
     const renderTemplate = (targ, temp, ob, cb) => {
 //        console.log(`renderTemplate`, targ, temp);
         if (ob === undefined) {
@@ -641,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.roundAll = roundAll;
     window.emitWithPromise = emitWithPromise;
     window.toCamelCase = toCamelCase;
+    window.removeTemplate = removeTemplate;
     window.renderTemplate = renderTemplate;
     window.renderPartial = renderPartial;
     window.getTemplate = getTemplate;

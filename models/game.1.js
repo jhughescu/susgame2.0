@@ -42,13 +42,16 @@ class Game {
             let t = [];
             const pd = this.persistentData;
             const mt = pd.mainTeams;
+            const st = pd.secondaryTeams;
 //            const ts = pd.hasOwnProperty('teamSize') ? pd.teamSize : 5;
             const ts = this.mainTeamSize === undefined ? 5 : this.mainTeamSize;
             let pl = this.players.slice();
-            let mc = mt.length * ts;
+            let mc = (mt.length * ts) + st.length;
             let sc = pl.length - mc;
+//            console.log(`${pl.length} players, team size: ${ts}, required: ${mc}`);
+//            console.log(`sc: ${sc}`);
             if (sc < 0 && !force) {
-                return `You don't have enough players`;
+                return `More players required, please try again when more have joined or reduce team size.`;
             }
             let assignError = false;
             mt.forEach((el, id) => {

@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
-//            console.log('regPlayer callback:', ob);
+            console.log('regPlayer callback:', ob);
             if (ob) {
                 let res = ob.id;
                 if (ob.game) {
@@ -635,7 +635,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const show = Object.assign({}, renderState);
             delete renderState.note;
+        setRenderStateLocal(renderState);
 //            console.log(`updateRenderState`, ob);
+//            console.log(`renderState`, renderState);
         }
     };
     const gotoHomeState = () => {

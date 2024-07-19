@@ -45,8 +45,13 @@ document.addEventListener('DOMContentLoaded', function () {
             onGameUpdate(rGame);
         });
         socket.on('scoresUpdated', (scores) => {
-            console.log('a score update', scores);
+//            console.log('a score update', scores);
             onScoresUpdated(scores);
+        });
+        socket.on('scoreUpdate', (sp) => {
+            // single score update
+//            console.log(`new score`, sp);
+            onScoreUpdate(sp);
         });
         socket.on('showSlide', (slOb) => {
             console.log(`socket event`, slOb)
@@ -70,16 +75,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const setCurrentSlideObject = (slOb) => {
         currentSlideObject = Object.assign({}, slOb);
     };
+    const getCurrentSlideObject = () => {
+        return currentSlideObject ? currentSlideObject : '';
+    };
     const onGameUpdate = (rGame) => {
-        console.log('a game update:');
-        console.log(`watching for ${watchFor}`);
+//        console.log(`a game update: new round? ${game.round !== rGame.round}`);
+//        console.log(`watching for ${watchFor}`);
         if (watchFor) {
 //            console.log(game[watchFor] === rGame[watchFor]);
 //            console.log(game[watchFor]);
 //            console.log(rGame[watchFor]);
             if (game[watchFor] !== rGame[watchFor]) {
+//                console.log(`watch diff (${watchFor}): ${rGame[watchFor]}`);
+                if (watchFor === 'scores') {
+
+                }
                 updateSlide()
             }
+        }
+        if (game.round !== rGame.round) {
+            setWatch('scores');
         }
         game = rGame;
 //        console.log(game);
@@ -130,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const showValues = () => {
         socket.emit('getAllValues', `game-${game.uniqueID}`, (v) => {
-            console.log(`getAllValues callback`);
+//            console.log(`getAllValues callback`);
             const vals = Object.assign({}, v);
             console.log(game)
             for (let i in vals) {
@@ -237,28 +252,54 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const getVidID = () => {
+        // used in the panopto video player html to access current vid details
         let vid = null;
-        if (getCurrentSlide().hasOwnProperty(`srcRef`)) {
-            vid = getCurrentSlide().srcRef;
+        if (getCurrentSlideObject().hasOwnProperty(`srcRef`)) {
+            vid = getCurrentSlideObject().srcRef;
         }
         return vid;
     };
     const onVideoEnd = () => {
-        console.log('a video has ended');
         const ap = game.presentation.autoplay;
-        if (ap) {
-            socket.emit('gotoNextSlide', {gameID: game.uniqueID, address: game.address});
-        }
+        console.log('yes, a video has ended, ap:', ap);
+        const cs = getCurrentSlide();
+        const slideBehaviour = cs.behaviour;
+//        console.log(slideBehaviour);
+//        if (slideBehaviour !== 'default') {
+            // slide behaviour set at data level will take precedence
+            switch (slideBehaviour) {
+                case 'loop':
+                    showSlide(cs);
+                    break;
+                default:
+                    if (ap) {
+                        socket.emit('gotoNextSlide', {gameID: game.uniqueID, address: game.address});
+                    }
+                    break;
+            }
+//        }
     };
     const showVideo = (slOb) => {
-        renderTemplate(targ, 'slides/video_player', slOb, () => {
-            goVideo(slOb.srcRef);
-            videoPlayer = $('#videoPlayer');
-            setTimeout(() => {
-//                unmute();
-            }, 500);
+        removeTemplate(targ, () => {
+            console.log(`render with`, slOb)
+            renderTemplate(targ, 'slides/video_player', slOb, () => {
+                goVideo(slOb.srcRef);
+                videoPlayer = $('#videoPlayer');
+                setTimeout(() => {
+    //                unmute();
+                }, 500);
+            });
         });
     };
+    const videoPosition = (o) => {
+        // called from videoplayer (html), sending a comparison object (total/now)
+//        console.log(currentSlideObject);
+        o.perc = 100 * (o.now / o.total);
+        o.address = game.address;
+        o.slideID = currentSlideObject.ref;
+        socket.emit('videoPositionUpdate', o);
+//        console.log(perc);
+    }
 
     // Specific actions
     const showGameQR = (rOb) => {
@@ -439,21 +480,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const showSlide = (slOb) => {
-        console.log(`showSlide`, slOb);
+//        console.log(`showSlide`, slOb);
         devInfo(slOb);
+         setCurrentSlideObject(slOb);
+        console.log(`currentSlideObject set to `, slOb);
+        console.log(`getCurrentSlide returns:`, getCurrentSlide());
+        slOb.gameAddress = game.address;
+
         if (slOb.type === 'video') {
             showVideo(slOb)
         } else if (slOb.type === 'slide') {
             const slideID = `slides/${slOb.slide}`;
-            console.log(`slideID`, slideID);
-//            console.log(`slOb`, slOb);
-//            console.log(`renderOb`, renderOb);
-//            console.log(`game`, game);
             renderTemplate(targ, slideID, game, () => {
                 const rOb = {gameID: game.uniqueID};
                 slideAction(slOb);
                 Object.assign(rOb, renderOb);
-                setCurrentSlideObject(slOb);
+//                setCurrentSlideObject(slOb);
+                socket.emit('slideUpdated', slOb);
             });
         } else {
             renderTemplate(targ, `slides/notready`, slOb, () => {});
@@ -481,6 +524,9 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(game);
         showRound1();
     };
+    const onScoreUpdate = (sp) => {
+        // functionality moved to FDB
+    };
     const onGameRestored = () => {
         window.location.reload();
     };
@@ -500,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.getVidID = getVidID;
     window.onVideoEnd = onVideoEnd;
     window.getCurrentSlide = getCurrentSlide;
+    window.videoPosition = videoPosition;
 //    window.pauseVideo = pauseVideo;
 //    window.playVideo = playVideo;
 //    window.videoCheck = videoCheck;

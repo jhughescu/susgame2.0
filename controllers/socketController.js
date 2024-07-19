@@ -152,7 +152,7 @@ function initSocket(server) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
 //            showRoomSize(src);
-            console.log(`player joins room ${src} ${socket.id}`);
+//            console.log(`player joins room ${src} ${socket.id}`);
             const queries = getQueries(ref);
             const isReal = queries['isAdmin'] !== true;
             if (isReal) {
@@ -237,7 +237,7 @@ function initSocket(server) {
                 roomID = `${session.address}-fac`;
             }
 //            roomID = '/trouot';
-            console.log(`facilitator joins room ${roomID}`);
+//            console.log(`facilitator joins room ${roomID}`);
             socket.join(roomID);
 //            showRoomSize(roomID);
 
@@ -405,11 +405,28 @@ function initSocket(server) {
                     console.log('requestCSV: no data returned');
                 }
             });
+            //socket.emit('scoreUpdate', sc);
+            socket.on('scoreUpdate', (ob) => {
+//                console.log('new score update:');
+//                console.log(sp);
+                const rooms = ['-pres', '-pres-control', '']; /* empty value for the player clients */
+                rooms.forEach(r => {
+                    const room = `${ob.address}${r}`;
+                    console.log(`emit scoreUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+        //            console.log(getRoomSockets(room));
+                    io.to(room).emit('scoreUpdate', ob.sp);
+                });
+            });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // presentation (or slideshow) controller ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation-control') {
+//            const roomID = `/${Q.id}-pres-control`;
+            const session = await sessionController.getSessionWithID(Q.id);
+            roomID = `${session.address}-pres-control`;
+            socket.join(roomID);
+//            console.log(`the pres control registers as ${roomID}`);
             socket.on('presentationEvent', (ob, cb) => {
                 presentationController.pEvent(ob, cb);
             });
@@ -450,6 +467,18 @@ function initSocket(server) {
             socket.on('getTotals1', (gameID, cb) => {
 //                console.log('have the sock')
                 gameController.getTotals1(gameID, cb);
+            });
+            socket.on('slideUpdated', (ob) => {
+                const targs = ['fac', 'pres-control'];
+                targs.forEach(t => {
+                    const r = `${ob.gameAddress}-${t}`;
+                    io.to(r).emit('presentationSlideUpdated', ob);
+                });
+            });
+            socket.on('videoPositionUpdate', (ob) => {
+                const roomID = `${ob.address}-pres-control`;
+//                showRoomSize(roomID)
+                io.to(roomID).emit('videoPositionUpdate', ob);
             });
         }
         // End presentation clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -538,15 +567,24 @@ function initSocket(server) {
 
 
     eventEmitter.on('gameUpdate', (game) => {
+        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
+        /*
         let roomName = `${game.address}-fac`;
 //        console.log(`gameUpdate emmitted to room ${roomName} (facilitators)`);
         showRoomSize(roomName);
-        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
         io.to(roomName).emit('gameUpdate', eGame);
         roomName = `${game.address}`;
 //        console.log(`gameUpdate emmitted to room ${roomName} (players)`);
         showRoomSize(roomName);
         io.to(roomName).emit('gameUpdate', eGame);
+        */
+
+        const rooms = ['-pres', '-fac', '']; /* empty value for the player clients */
+        rooms.forEach(r => {
+            const room = `${game.address}${r}`;
+//            console.log(`emit gameUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+            io.to(room).emit('gameUpdate', eGame);
+        });
     });
     eventEmitter.on('gameRestored', (gOb) => {
         let roomName = `${gOb.game}-fac`;

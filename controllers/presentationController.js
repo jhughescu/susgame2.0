@@ -27,12 +27,20 @@ const previousSlide = (cb) => {
     showSlide();
 };
 const gotoSlide = (sl, cb) => {
+//    console.log(`gotoSlide, presentation:`);
+    console.log(`gotoSlide, slide:`);
+    console.log(sl);
+//    console.log(presentation);
     if (presentation) {
         if (presentation.gotoSlide) {
+//            console.log(`presentation has gotoSlide`);
+//            console.log(presentation.gotoSlide);
             const rOb = presentation.gotoSlide(sl, cb);
             Object.assign(game.presentation, rOb);
             sessionController.updateSession(game.uniqueID, {slide: presentation.currentSlide});
             showSlide();
+        } else {
+//            console.log(`no presentation gotoSlide - method runs dry here`);
         }
     }
 };

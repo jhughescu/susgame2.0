@@ -1,7 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const getSessionID = () => {
+        const cookies = document.cookie.split(';');
+//        console.log(`getSessionID`);
+        for (let cookie of cookies) {
+//            console.log(cookie);
+            const [cookieName, cookieValue] = cookie.trim().split('=');
+            if (cookieName === 'sessionID') {
+                return decodeURIComponent(cookieValue);
+            }
+        }
+        return null;
+    };
     const socket = io('', {
         query: {
-            role: 'presentation-control'
+            role: 'presentation-control',
+            id: getSessionID()
         }
     });
     let game = null;
@@ -35,14 +48,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         window.renderTemplate('slidelist', 'facilitator.slidelist', sl, () => {
             $('.slide_link').off('click').on('click', function () {
-//                console.log($(this).attr('id'));
-                const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: parseInt($(this).attr('id').split('_')[2])};
-                socket.emit('presentationEvent', gOb, (ob) => {
-                    eventUpdate(ob);
-                });
+                const sID = parseInt($(this).attr('id').split('_')[2]);
+                gotoSlide(sID);
             })
         });
     };
+    const gotoSlide = async (v) => {
+//        const
+        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await window.slideTest(v)};
+        console.log(`slideClick`, gOb.test);
+//        console.log(window.slideTest(v));
+        socket.emit('presentationEvent', gOb, (ob) => {
+            eventUpdate(ob);
+        });
+};
     const updateAutoplay = () => {
         const ap = presentation.autoplay;
 //        console.log(`updateAutoplay: ${ap}`)
@@ -71,17 +90,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const setupControls = () => {
-        const b = base.find('button');
+        const b = base.find('.buttons').find('button');
 //        console.log(b);
         b.each((bt, el) => {
             let btn = $(el);
             let id = btn.attr('id').replace('sb_', '');
-//            return;
-//            console.log('rub er out')
             btn.off('click').on('click', function () {
                 pEvent(id);
             })
         });
+    };
+    const findRoundTrigger = (r) => {
+        // looks for a slide which is to be triggered by scoring for a given round
+//        console.log(`look for a trigger for round ${r}`);
+        const sl = presentation.slideData.slideList;
+        const trig = sl.filter(o => o.trigger && o.trigger.includes(`scoreRound:${r}`));
+        if (trig.length > 1) {
+            console.warn(`multiple slides contain same trigger action.`);
+        } else {
+            const trigSlideRef = trig[0].ref;
+//            console.log(trigSlideRef);
+//            console.log(presentation);
+            if (trigSlideRef !== presentation.currentSlide) {
+                gotoSlide(trigSlideRef);
+            }
+        }
     };
     const init = (game) => {
 //        console.log('init controls');
@@ -93,7 +126,17 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSlidelist();
         updateAutoplay();
     };
+    socket.on('presentationSlideUpdated', (ob) => {
+//        console.log('slideshowControl presentationSlideUpdated', ob)
+    });
+    socket.on('videoPositionUpdate', (ob) => {
+//        console.log('slideshowControl videoPositionUpdate', ob);
+        const prog = $(`#slide_info_${ob.slideID}`).find('.progress');
+//        console.log(prog);
+        prog.css({width: `${ob.perc}%`})
+    });
     // expose methods to the parent page (make available to scriptpresentation.js)
     window.slideContolsInit = init;
     window.pEvent = pEvent;
+    window.findRoundTrigger = findRoundTrigger;
 });

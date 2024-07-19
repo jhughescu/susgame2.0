@@ -188,12 +188,7 @@ position: relative;
     width: 30px;
     cursor: pointer;
 }
-#slidelist span {
-    pointer-events: auto;
-}
-#slidelist span:hover {
-    background-color: #8beffc;
-}
+
 .modal {
     color: black;
 }

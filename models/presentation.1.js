@@ -17,6 +17,7 @@ class Presentation {
                     sli.srcRef = d.videoLinks[sli.srcRef];
                 }
             }
+            sli.behaviour = sli.hasOwnProperty('behaviour') ? sli.behaviour : 'default';
         });
         return d;
     };

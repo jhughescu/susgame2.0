@@ -57,8 +57,9 @@ const deleteQRImg = (id) => {
     });
 }
 const generateSessionQR = (session) => {
+//    console.log(`generateSessionQR`, session);
     generateQR(`${session.base}${session.address}`, session.uniqueID);
-    generateQR(`${session.base}/presentation#${session.address.replace('/', '')}`, `${session.uniqueID}-presentation`);
+//    generateQR(`${session.base}/presentation#${session.address.replace('/', '')}`, `${session.uniqueID}-presentation`);
 };
 const ensureDirectoryExists = async (directory) => {
     try {

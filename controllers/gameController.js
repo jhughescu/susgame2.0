@@ -837,7 +837,7 @@ const registerPlayer = (ob, cb) => {
         let index = -1;
         if (ob.player) {
             ID = ob.player;
-            console.log(`existing player, ID: ${ID}`);
+//            console.log(`existing player, ID: ${ID}`);
             const pl = game.players.reduce((acc, plID) => {
                 acc[plID] = true;
                 return acc;
@@ -859,7 +859,7 @@ const registerPlayer = (ob, cb) => {
                 game.playersFull[ID].socketID = ob.socketID;
             }
         } else {
-            console.log(`new player, ID: ${ID}`);
+//            console.log(`new player, ID: ${ID}`);
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
             game.players.push(ID);
             newP = true;
@@ -883,8 +883,8 @@ const registerPlayer = (ob, cb) => {
         }
         if (cb) {
             const renDo = getTheRenderState(game, ID);
-            console.log(`ID: ${ID}`);
-            console.log(`renDo:`, renDo.temp);
+//            console.log(`ID: ${ID}`);
+//            console.log(`renDo:`, renDo.temp);
             cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
         } else {
             log('reg P, no CB');
@@ -922,6 +922,11 @@ const playerConnectEvent = (gameID, playerID, boo) => {
 const startRound = async (ob) => {
 //    console.log(`startRound:`);
 //    console.log(ob);
+    if (ob.hasOwnProperty('ok')) {
+//        console.log(typeof(ob.ok));
+}
+    const okToUpdate = ob.hasOwnProperty('ok') ? ob.ok : true;
+//    console.log(`okToUpdate: ${okToUpdate}`)
     const gameID = ob.gameID;
     const round = ob.round;
     const game_id = `game-${gameID}`;
@@ -938,7 +943,10 @@ const startRound = async (ob) => {
 //            console.log(`change round to ${ob.round}`);
             const session = await sessionController.updateSession(gameID, { round });
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
-            eventEmitter.emit('gameUpdate', game);
+            if (okToUpdate) {
+                eventEmitter.emit('gameUpdate', game);
+                console.log('startRound will not emit gameUpdate (ob.ok set to false)');
+            }
         }
     } else {
         log(`game not found: ${game_id}`);

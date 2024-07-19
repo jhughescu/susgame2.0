@@ -2,7 +2,7 @@
     position: relative;
     width: 100%;
     height: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 .info_panel {
     position: absolute;
@@ -27,10 +27,15 @@
     height: 150px;
 }
 .slidelist {
+    pointer-events: auto;
     top: 200px;
     width: 420px;
-    height: 350px;
+    height: 390px;
     overflow-y: scroll;
+}
+.slidelist table, tr {
+    width: 100%;
+/*    background-color: red;*/
 }
 #slide_detail_previous {
 /*    display: none;*/
@@ -77,4 +82,22 @@
 }
 #slideshow_controls .material-icons {
     font-size: 20px;
+}
+.slidelist {
+    font-family: 'arial', sans-serif;
+}
+.slidelist button {
+/*    width: 20px;*/
+/*    height: 20px;*/
+/*    background-color: red;*/
+    font-size: 20px;
+}
+#slideshow_controls {
+    pointer-events: all;
+}
+#slidelist span {
+    pointer-events: auto;
+}
+#slidelist span:hover {
+    background-color: #8beffc;
 }

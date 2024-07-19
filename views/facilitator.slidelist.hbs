@@ -1,5 +1,20 @@
+<!--
 <table><tbody>
     {{#each this}}
-    <tr><td><span class='slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span></td></tr>
+    <tr><td><span class='slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span></td><td><button class='material-icons'>replay</button></td></tr>
+    <tr><td class=''><div class='overlay'>{{this.title}}</div><div class='slide_progress_bar'></div></td></tr>
     {{/each}}
 </tbody></table>
+-->
+
+
+<div class='vertstack'>
+    {{#each this}}
+    <div class='slide_info' id='slide_info_{{this.ref}}'>
+        <div class='progress'></div>
+        <div>
+            <span class='link slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span>
+        </div>
+    </div>
+    {{/each}}
+</div>

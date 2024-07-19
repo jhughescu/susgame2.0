@@ -1,0 +1,36 @@
+.slide_progress_bar {
+    width: 100%;
+    height: 20px;
+    background-color: red;
+    position: relative;
+    top: 0px;
+    z-index: 5;
+}
+.slidelist .overlay {
+    z-index: 10;
+    position: relative;
+    top: 0px;
+}
+.slidelist table {
+    border-collapse: separate;
+}
+.slidelist .slide_info {
+/*    display: none;*/
+    position: relative;
+    width: 100%;
+    margin: 10px 0px;
+/*    padding: 10px 10px;*/
+}
+.slide_info .progress {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 0px;
+    background-color: #01cdfd;
+    padding: 2px 0px;
+}
+.slide_info .slide_link {
+    position: relative;
+/*    padding: 20px;*/
+}
