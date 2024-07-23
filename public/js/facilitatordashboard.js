@@ -1589,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 //                window.createCopylinks();
                 window.createCopyLinks();
-                console.log(`look for the pres: ${game.address}`)
+//                console.log(`look for the pres: ${game.address}`);
 //                let uc = $('.copylink');
 //                uc.off('click').on('click', function() {
 //                    copyToClipboard($(this).attr('id'));

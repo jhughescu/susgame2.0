@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-07-23T14:19:38+01:00",
-  "commitHash": "786694ac7d53639f4941fa6dd2812fdcf88ae067",
-  "commitMessage": "Presentation update - copyable link on FDB, online status displayed.",
+  "timestamp": "2024-07-23T15:07:19+01:00",
+  "commitHash": "c859f51eaa23dc933fdd69369768fa0461fe2492",
+  "commitMessage": "build-info.json file implemented - written at build & including git info. Exposed via the admin dashboard.",
   "branch": "main"
 }
