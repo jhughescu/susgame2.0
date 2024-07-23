@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-07-23T15:40:03+01:00",
-  "commitHash": "c99cf163b0b7d82f905e54a6c83f3c7166ffdc8e",
-  "commitMessage": "Minor change to FDB.",
+  "timestamp": "2024-07-23T17:14:30+01:00",
+  "commitHash": "c1a06108e4208775425a9d1933b4063d018b547b",
+  "commitMessage": "package.json altered to provide dev/deployment distinction",
   "branch": "main"
 }

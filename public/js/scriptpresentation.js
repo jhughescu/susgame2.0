@@ -9,7 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let watchFor = null;
     let currentSlideObject = null;
     const getSessionID = () => {
-        const ID = window.location.hash.replace('#', '');
+        const ID = window.location.hash.split('?')[0].replace('#', '');
+//        console.log(window.location.hash);
+//        console.log(ID);
         gameID = ID;
         return ID;
     };
@@ -455,14 +457,26 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     // End Panopto
     const devInfo = (slOb) => {
-        const p = $('#devoverlay');
-        if (p.length > 0) {
-            if (p.is(':visible')) {
-                p.html('');
-                renderTemplate('devoverlay', 'presentation.devinfo', slOb, () => {
-                    p.fadeIn();
-                });
+        let isDev = false;
+        let q = window.location.hash.split('?')[1];
+        if (q) {
+            q = Object.fromEntries(new URLSearchParams(q));
+            if (q.hasOwnProperty('dev')) {
+                isDev = procVal(q.dev);
             }
+        }
+        const p = $('#devoverlay');
+        if (isDev) {
+            if (p.length > 0) {
+                if (p.is(':visible')) {
+                    p.html('');
+                    renderTemplate('devoverlay', 'presentation.devinfo', slOb, () => {
+                        p.fadeIn();
+                    });
+                }
+            }
+        } else {
+            p.hide();
         }
     };
     const slideAction = (slOb) => {

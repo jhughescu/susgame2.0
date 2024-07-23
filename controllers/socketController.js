@@ -451,7 +451,7 @@ function initSocket(server) {
 
         // Presentation client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation') {
-            console.log('############################################## presentation connected:');
+//            console.log('############################################## presentation connected:');
 //            console.log(src);
 //            console.log(Q);
 //            console.log(`seek game with address /${Q.id}: `);
