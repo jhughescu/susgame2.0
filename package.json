@@ -1,7 +1,7 @@
 {
     "name": "dbdev",
     "version": "1.0.0",
-    "description": "testing mongodb integration",
+    "description": "Sustainability game",
     "keywords": [],
     "author": "",
     "license": "ISC",
@@ -28,7 +28,8 @@
     },
     "scripts": {
         "generate-build-info": "node generate_build_info.js",
-        "start": "nodemon --exec \"npm run generate-build-info && node\" app.js"
+        "dev": "nodemon --exec \"npm run generate-build-info && node\" app.js",
+        "start": "node app.js"
     },
     "main": "app.js",
     "repository": {

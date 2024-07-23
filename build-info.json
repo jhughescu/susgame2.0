@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-07-23T15:07:19+01:00",
-  "commitHash": "c859f51eaa23dc933fdd69369768fa0461fe2492",
-  "commitMessage": "build-info.json file implemented - written at build & including git info. Exposed via the admin dashboard.",
+  "timestamp": "2024-07-23T15:40:03+01:00",
+  "commitHash": "c99cf163b0b7d82f905e54a6c83f3c7166ffdc8e",
+  "commitMessage": "Minor change to FDB.",
   "branch": "main"
 }
