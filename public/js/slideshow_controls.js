@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
         span.html(status);
         span.removeClass('online offline');
         span.addClass(status);
-//        console.log(`presentation ${status}`);
+        console.log(`presentation ${status}`);
     };
     const updatePresentation = (ob) => {
 //        console.log('in', ob);

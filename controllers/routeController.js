@@ -1,6 +1,7 @@
 // Import necessary modules
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const handlebars = require('handlebars');
@@ -11,19 +12,30 @@ const templateController = require('./../controllers/templateController');
 
 const basePath = path.join(__dirname, '..', 'public');
 const routeAccessTimes = {};
+
+let buildInfo;
+const buildInfoPath = path.join(__dirname, '..', 'build-info.json');
+if (fs.existsSync(buildInfoPath)) {
+    buildInfo = JSON.parse(fs.readFileSync(buildInfoPath, 'utf-8'));
+} else {
+    buildInfo = { error: 'Build info not found' };
+}
+app.get('/build-info', (req, res) => {
+    res.json(buildInfo);
+//    res.send('buildInfo');
+});
+
 app.use(express.static(basePath));
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use((req, res, next) => {
+    /// middleware to store access times for routes
     const currentTime = new Date().toISOString();
     routeAccessTimes[req.path] = currentTime;
 //    console.log(`Route ${req.path} accessed at ${currentTime}`);
 //    console.log(req.client)
     next();
 });
-
-
 //app.use(bodyParser.json());
 app.use(bodyParser.json({ limit: '0.5mb' }));
 //app.use(express.static(path.join(__dirname, 'public')));
