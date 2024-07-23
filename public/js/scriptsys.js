@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
 
     };
-    const copyToClipboard = (elementId) => {
+    const copyToClipboardMOVED = (elementId) => {
         // Select the text inside the element
         const element = document.getElementById(elementId);
         const range = document.createRange();
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Deselect the text
         window.getSelection().removeAllRanges();
-    }
+    };
     const getSession = (sessionID) => {
         // Prompt the user to enter a password
         let password = prompt('Session password will be omitted from return unless admin password is provided here:', 'canary');

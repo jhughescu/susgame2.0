@@ -61,7 +61,7 @@ const showRoomSize = (id) => {
         log(`Number of sockets in room ${roomName}: ${numSockets}`);
         return room.size;
     } else {
-        console.log(`Room ${roomName} does not exist or has no sockets.`);
+        log(`Room ${roomName} does not exist or has no sockets.`);
         return null;
     }
 };
@@ -85,6 +85,23 @@ function initSocket(server) {
         src = src.split('/').reverse()[0];
         src = `/${src}`;
         const Q = socket.handshake.query;
+
+        socket.on('checkSocket', (o, cb) => {
+//            console.log(`request for sock: ${o.sock}, ${o.address}`);
+            const sock = `${o.address}-${o.sock}`;
+            const ro = {total: showRoomSize(sock)};
+//            console.log(`request for sock: ${sock}`);
+//            const total = getRoomSockets(sock);
+//            console.log(sock);
+//            console.log(total);
+//            console.log(getRoomSockets(sock));
+            if (cb) {
+                cb(ro);
+//                console.log(`there is one`);
+            } else {
+                console.log(`no callback provided`);
+            }
+        });
 
         // System admin client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'systemadmin') {
@@ -434,16 +451,19 @@ function initSocket(server) {
 
         // Presentation client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation') {
-//            console.log('############################################## presentation connected:');
+            console.log('############################################## presentation connected:');
 //            console.log(src);
 //            console.log(Q);
 //            console.log(`seek game with address /${Q.id}: `);
             const roomID = `/${Q.id}-pres`;
+            const controlID = `/${Q.id}-pres-control`;
+//            console.log(facID);
+//            showRoomSize(facID);
 //            const session = await sessionController.getSessionWithAddress(`/${Q.id}`);
 //            console.log(session)
 //            const roomID = `${session.uniqueID}-pres`;
             socket.join(roomID);
-            log(`presentation joined ${roomID}`);
+//            log(`presentation joined ${roomID}`);
             socket.emit('setGame', gameController.getGameWithAddress(`/${Q.id}`));
             socket.on('getScores', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
@@ -479,6 +499,10 @@ function initSocket(server) {
                 const roomID = `${ob.address}-pres-control`;
 //                showRoomSize(roomID)
                 io.to(roomID).emit('videoPositionUpdate', ob);
+            });
+            io.to(controlID).emit('presentationConnect', {room: `/${Q.id}-fac`, connected: true});
+            socket.on('disconnect', () => {
+                io.to(controlID).emit('presentationConnect', {room: `/${Q.id}-fac`, connected: false});
             });
         }
         // End presentation clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

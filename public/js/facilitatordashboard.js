@@ -1567,6 +1567,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderFacilitate = () => {
         // Screen which can be used to run the whole game
         if (game) {
+            game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
             renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
                 const sl = game.presentation.slideData.slideList.slice(0);
                 sl.forEach(s => {
@@ -1586,6 +1587,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 openAdvanced.off('click').on('click', () => {
                     launchAdvanced();
                 });
+//                window.createCopylinks();
+                window.createCopyLinks();
+                console.log(`look for the pres: ${game.address}`)
+//                let uc = $('.copylink');
+//                uc.off('click').on('click', function() {
+//                    copyToClipboard($(this).attr('id'));
+//                });
 //                debugger;
             });
         }

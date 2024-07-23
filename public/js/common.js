@@ -315,7 +315,27 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         return newObj;
-    }
+    };
+    const createCopyLinks = () => {
+        let uc = $('.copylink');
+        uc.off('click').on('click', function() {
+            copyToClipboard($(this).attr('id'));
+        });
+    };
+    const copyToClipboard = (elementId) => {
+        // Select the text inside the element
+        const element = document.getElementById(elementId);
+        const range = document.createRange();
+        range.selectNode(element);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+
+        // Copy the selected text to the clipboard
+        document.execCommand('copy');
+
+        // Deselect the text
+        window.getSelection().removeAllRanges();
+    };
     const setupPanel = () => {
         console.log('setupPanel')
     };
@@ -656,6 +676,8 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
     window.copyObjectWithExclusions = copyObjectWithExclusions;
+    window.copyToClipboard = copyToClipboard;
+    window.createCopyLinks = createCopyLinks;
     window.getQueries = getQueries;
     window.getPartials = getPartials;
     window.socketShare = socketShare;

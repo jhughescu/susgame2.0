@@ -7,6 +7,7 @@ const sessionController = require('./../controllers/sessionController');
 const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
 const gfxController = require('./../controllers/gfxController');
+
 const tools = require('./../controllers/tools');
 
 const eventEmitter = getEventEmitter();

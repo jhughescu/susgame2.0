@@ -27,6 +27,15 @@ document.addEventListener('DOMContentLoaded', function() {
         slides = game.presentation.slideData.slideList;
         presentation = game.presentation;
     };
+    const updatePresentationStatus = (boo) => {
+        // update to the online status of the game's presentation client
+        const status = `o${boo ? 'n' : 'ff'}line`;
+        const span = $('#status');
+        span.html(status);
+        span.removeClass('online offline');
+        span.addClass(status);
+//        console.log(`presentation ${status}`);
+    };
     const updatePresentation = (ob) => {
 //        console.log('in', ob);
 //        console.log('pre', JSON.parse(JSON.stringify(presentation)));
@@ -99,6 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 pEvent(id);
             })
         });
+        socket.emit('checkSocket', {sock: 'pres', address: game.address}, (o) => {
+//            console.log(`checkSocket callback`, o);
+            updatePresentationStatus(Boolean(o.total));
+        });
     };
     const findRoundTrigger = (r) => {
         // looks for a slide which is to be triggered by scoring for a given round
@@ -134,6 +147,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const prog = $(`#slide_info_${ob.slideID}`).find('.progress');
 //        console.log(prog);
         prog.css({width: `${ob.perc}%`})
+    });
+    socket.on('presentationConnect', (boo) => {
+//        console.log(`pres connect: ${boo}`, boo);
+        updatePresentationStatus(boo.connected);
     });
     // expose methods to the parent page (make available to scriptpresentation.js)
     window.slideContolsInit = init;

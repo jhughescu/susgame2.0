@@ -10,10 +10,18 @@ const sessionController = require('./../controllers/sessionController');
 const templateController = require('./../controllers/templateController');
 
 const basePath = path.join(__dirname, '..', 'public');
+const routeAccessTimes = {};
 app.use(express.static(basePath));
 // Use body-parser middleware to parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    const currentTime = new Date().toISOString();
+    routeAccessTimes[req.path] = currentTime;
+//    console.log(`Route ${req.path} accessed at ${currentTime}`);
+//    console.log(req.client)
+    next();
+});
 
 
 //app.use(bodyParser.json());
@@ -119,6 +127,9 @@ app.get('/facilitatordashboard', adminController.verifyTokenExpiration, (req, re
     const token = req.cookies.token;
 //    console.log('token?');
 //    console.log(token);
+//    console.log('FDB route');
+//    console.log(req);
+//    console.log(res);
     res.sendFile(path.join(basePath, 'facilitatordashboard.html'));
 });
 app.post('/facilitatorlogin', adminController.facAuth, (req, res) => {

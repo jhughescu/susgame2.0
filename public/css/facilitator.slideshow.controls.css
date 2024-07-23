@@ -21,6 +21,22 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.url_pres {
+    font-size: 0.8rem;
+    padding: 10px 0px;
+}
+.url_pres #status {
+    font-weight: bold;
+}
+.url_pres #status.offline {
+    color: red;
+}
+.url_pres #status.online {
+    color: #01ad01;
+}
+#url_pres_address {
+    color: #42a1ff;
+}
 .slide_detail {
     top: 30px;
     width: 240px;
