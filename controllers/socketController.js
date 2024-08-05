@@ -244,7 +244,7 @@ function initSocket(server) {
                     socket.emit('pong');
                 });
                 socket.on('recordthegame', (g) => {
-
+                    console.log('herd')
                     logController.writeBeautifiedJson(`logs`, `game`, g);
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);

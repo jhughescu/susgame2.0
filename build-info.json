@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-08-05T11:32:53+01:00",
-  "commitHash": "97f9050969526aa1ba39a6dd105c7958f4d7aa5f",
-  "commitMessage": "Test commit, reading the isDev property in app.js (server test - returns true when run locally)",
+  "timestamp": "2024-08-05T16:29:55+01:00",
+  "commitHash": "c4f0f6efcf32aad23ffb9da4cbbe8ff770c48573",
+  "commitMessage": "Update to FDB, localIP used only for local deployments, web URL to be used everywhere else (to be tested)",
   "branch": "main"
 }

@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             game = Object.assign(game, ob);
         }
-        return;
+//        return;
 
         isItHere(justGame(game, 'updated game'));
         isItHere(game.playersFull);
