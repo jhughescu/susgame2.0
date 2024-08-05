@@ -1655,6 +1655,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 session = data;
                 session.base = window.location.origin;
+                if (session.localIP) {
+                    session.base = session.base.replace('localhost', session.localIP);
+                }
+//                console.log(`session.base: ${session.base}`);
+//                console.log(`session.localIP: ${session.localIP}`);
                 session.playerURL = `${session.base}${session.address}`
                 addToLogFeed('session data found:');
 //            console.log(data)

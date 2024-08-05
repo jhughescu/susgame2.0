@@ -48,14 +48,18 @@ app.get('/views/:templateName', (req, res) => {
 });
 databaseController.dbConnect();
 initSocket(server);
-server.listen(PORT, HOST, () => {
-//server.listen(PORT, () => {
-    if (HOST) {
-        console.log(chalk.green(`local wifi connection available`), chalk.cyan(`use [cmd ipconfig IPv4 Address]:${PORT}`));
-        const ip = tools.getIPv4Address();
-        let isDev = Boolean(process.env.isDev);
-        console.log(chalk.yellowBright(ip), Boolean(ip), tools.procVal(process.env.isDev), isDev);
-    }
-    console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
-    console.log('test');
-});
+if (Boolean(process.env.isDev)) {
+    server.listen(PORT, HOST, () => {
+//        console.log(chalk.green(`local wifi connection available`), chalk.cyan(`use [cmd ipconfig IPv4 Address]:${PORT}`));
+//        const ip = tools.getIPv4Address();
+//        let isDev = Boolean(process.env.isDev);
+//        console.log(chalk.yellowBright(ip), Boolean(ip), tools.procVal(process.env.isDev), isDev);
+        console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
+//        console.log('test');
+    });
+} else {
+    server.listen(PORT, () => {
+        console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
+    });
+}
+

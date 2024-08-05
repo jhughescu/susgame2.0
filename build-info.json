@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-08-05T10:27:05+01:00",
-  "commitHash": "36ba01e34163f4c854d3029c506ddb74faad32c2",
-  "commitMessage": "Minor commit - test IP retrieval (should work in local but not on server)",
+  "timestamp": "2024-08-05T11:24:52+01:00",
+  "commitHash": "97f9050969526aa1ba39a6dd105c7958f4d7aa5f",
+  "commitMessage": "Test commit, reading the isDev property in app.js (server test - returns true when run locally)",
   "branch": "main"
 }

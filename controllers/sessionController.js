@@ -2,6 +2,7 @@
 const securePassword = require('secure-random-password');
 const randomColour = require(`randomcolor`);
 const Session = require('../models/session');
+const tools = require('./tools');
 
 let select = '-_id -__v';
 
@@ -182,7 +183,14 @@ async function getSession(req, res) {
             // If session is not found, return an error
             throw new Error('Session not found');
         }
-        // Send the session back to the client as a response
+        session.localIP = false;
+        if (Boolean(process.env.isDev)) {
+            const ip = tools.getIPv4Address();
+            if (Boolean(ip)) {
+                session.localIP = ip;
+            }
+        }
+//         Send the session back to the client as a response
         res.json(session);
     } catch (error) {
         console.error('Error retrieving session:', error.message);
