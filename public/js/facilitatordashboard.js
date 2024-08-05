@@ -1656,7 +1656,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 session = data;
                 session.base = window.location.origin;
                 if (session.localIP) {
-                    session.base = session.base.replace('localhost', session.localIP);
+                    session.localIP = window.procVal(session.localIP);
+                    if (session.localIP) {
+                        session.base = session.base.replace('localhost', session.localIP);
+                    }
                 }
 //                console.log(`session.base: ${session.base}`);
 //                console.log(`session.localIP: ${session.localIP}`);
