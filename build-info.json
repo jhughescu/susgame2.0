@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-07-23T17:14:30+01:00",
-  "commitHash": "c1a06108e4208775425a9d1933b4063d018b547b",
-  "commitMessage": "package.json altered to provide dev/deployment distinction",
+  "timestamp": "2024-08-05T09:39:18+01:00",
+  "commitHash": "e771404816b1ad80de0523fe333790836ce88ec8",
+  "commitMessage": "Presentation dev overlay is now optional (use ?dev=true in url to show)",
   "branch": "main"
 }

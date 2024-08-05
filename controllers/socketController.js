@@ -6,6 +6,7 @@ const sessionController = require('./../controllers/sessionController');
 const adminController = require('./../controllers/adminController');
 const presentationController = require('./../controllers/presentationController');
 const downloadController = require('./../controllers/downloadController');
+const logController = require('./../controllers/logController');
 
 const eventEmitter = getEventEmitter();
 
@@ -78,6 +79,7 @@ const getRoomSockets = (id) => {
 // Function to initialize socket.io
 function initSocket(server) {
     io = socketIo(server);
+    logController.emptyFolder('logs');
     // Handle client events
     io.on('connection', async (socket) => {
         let ref = socket.request.headers.referer;
@@ -175,7 +177,13 @@ function initSocket(server) {
             if (isReal) {
                 const gameID = src.replace('/', '');
                 const facilitator = `${src}-fac`;
-                gameController.playerConnectEvent(gameID, socket.id, true);
+                const pceo = {
+                    gameID: gameID,
+                    socketID: socket.id,
+                    connect: true
+                };
+//                gameController.playerConnectEvent(gameID, socket.id, true);
+                gameController.playerConnectEvent(pceo);
 //                io.to(facilitator).emit('playerUpdate', {event: 'connection', val: true, ref: ref});
                 const session = await sessionController.getSessionWithAddress(`/${gameID}`);
                 if (session) {
@@ -184,9 +192,14 @@ function initSocket(server) {
                 const hasID = queries.hasOwnProperty('fid');
                 const idStr = hasID ? `with ID ${queries.fid}` : '';
                 socket.on('registerPlayer', (data, cb) => {
-//                    log(`emit registerPlayer, game: ${data.game}, player: ${data.player}`);
+                    const pceo = {
+                        gameID: gameID,
+                        socketID: socket.id,
+                        connect: true
+                    };
                     gameController.registerPlayer(data, cb);
-                    gameController.playerConnectEvent(gameID, socket.id, true);
+//                    gameController.playerConnectEvent(gameID, socket.id, true);
+                    gameController.playerConnectEvent(pceo);
                 });
                 socket.on('getRenderState', (ob, cb) => {
 //                    console.log(`getRenderState heard`)
@@ -196,9 +209,13 @@ function initSocket(server) {
                     gameController.getGameCount(cb);
                 });
                 socket.on('disconnect', () => {
-//                    log(`${queries['fake'] ? 'fake' : 'real'} player disconnected from game ${src} ${idStr}`);
-                    gameController.playerConnectEvent(gameID, socket.id, false);
-//                    io.to(facilitator).emit('playerUpdate', {event: 'connection', val: false, ref: ref});
+                    const pceo = {
+                        gameID: gameID,
+                        socketID: socket.id,
+                        connect: false
+                    };
+//                    gameController.playerConnectEvent(gameID, socket.id, false);
+                    gameController.playerConnectEvent(pceo);
                 });
                 socket.on('submitScore', (ob, cb) => {
                     const sp = gameController.scoreSubmitted(ob, cb);
@@ -225,6 +242,10 @@ function initSocket(server) {
                 socket.on('ping', () => {
 //                    console.log('pinged')
                     socket.emit('pong');
+                });
+                socket.on('recordthegame', (g) => {
+
+                    logController.writeBeautifiedJson(`logs`, `game`, g);
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
@@ -422,7 +443,6 @@ function initSocket(server) {
                     console.log('requestCSV: no data returned');
                 }
             });
-            //socket.emit('scoreUpdate', sc);
             socket.on('scoreUpdate', (ob) => {
 //                console.log('new score update:');
 //                console.log(sp);
@@ -433,6 +453,11 @@ function initSocket(server) {
         //            console.log(getRoomSockets(room));
                     io.to(room).emit('scoreUpdate', ob.sp);
                 });
+            });
+            socket.on('presentationOverlay', (ob) => {
+                const rid = `${ob.game}-pres`;
+//                console.log(`pre rooms: ${rid} ${showRoomSize(rid)}`);
+                io.to(rid).emit('toggleOverlay', ob.type);
             });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -517,6 +542,18 @@ function initSocket(server) {
         // End videoPlayer clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+        if (Q.role === 'displaygame') {
+            const roomID = `/${Q.id}-displaygame`;
+            socket.join(roomID);
+//            console.log(`roomID: ${roomID}`);
+            showRoomSize(roomID);
+            socket.on('getGame', (id, cb) => {
+                const g = gameController.getGameWithAddress(id);
+                if (cb) {
+                    cb(id, g);
+                }
+            });
+        }
 
 
         // Handle other socket events
@@ -591,19 +628,12 @@ function initSocket(server) {
 
 
     eventEmitter.on('gameUpdate', (game) => {
-        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
-        /*
-        let roomName = `${game.address}-fac`;
-//        console.log(`gameUpdate emmitted to room ${roomName} (facilitators)`);
-        showRoomSize(roomName);
-        io.to(roomName).emit('gameUpdate', eGame);
-        roomName = `${game.address}`;
-//        console.log(`gameUpdate emmitted to room ${roomName} (players)`);
-        showRoomSize(roomName);
-        io.to(roomName).emit('gameUpdate', eGame);
-        */
-
-        const rooms = ['-pres', '-fac', '']; /* empty value for the player clients */
+//        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
+        const eGame = Object.assign({}, game);
+        eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
+//        eGame.updateSource = Object.assign({'updateSource': 'eventEmitter'}, game);
+        const rooms = ['-pres', '-fac', '', '-displaygame']; /* empty value for the player clients */
+//        console.log('hup date');
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
 //            console.log(`emit gameUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
@@ -631,8 +661,11 @@ function initSocket(server) {
 //            console.log(`emit to room ${room} which has some socket(s)`);
 //            showRoomSize(room)
             console.log(`emit to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//            const eGame = Object.assign({_updateSource: {event: ''}}, game);
 //            console.log(getRoomSockets(room));
-            io.to(room).emit('gameUpdate', game);
+            const eGame = Object.assign({}, game);
+            eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
+            io.to(room).emit('gameUpdate', eGame);
         });
 //        const rp = `${game.address}-pres`;
 //        io.to(rp).emit('scoresUpdated', game.scores);
@@ -698,7 +731,7 @@ function initSocket(server) {
     });
     eventEmitter.on('updatePlayers', (ob) => {
 //        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
-        log(`we will emit ${ob.update}`);
+        console.log(`we will emit ${ob.update}`);
         log(ob);
         const add = ob.game.address;
         const room = io.sockets.adapter.rooms.get(add);

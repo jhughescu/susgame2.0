@@ -166,6 +166,10 @@ app.get('/presentation', (req, res) => {
     res.sendFile(path.join(basePath, 'presentation.html'));
 });
 
+app.get('/displaygame', (req, res) => {
+    res.sendFile(path.join(basePath, 'displaygame.html'));
+});
+
 
 // session stuff
 app.post('/admin/createSession', async (req, res) => {

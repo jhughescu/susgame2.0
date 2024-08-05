@@ -690,6 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         break;
                 }
+
             });
         });
         rSel.off('click').on('click', function () {
@@ -697,24 +698,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const rNow = parseInt(iv.val());
             iv.val($(this).html() === '+' ? rNow + 1 : rNow - 1);
             iv.val(parseInt(iv.val()) < -1 ? -1 : iv.val())
-        })
+        });
+            setupAdvancedLinks();
     };
     const setupAdvancedLinks = () => {
         // amends links already setup in the setupControlLinks method
         const al = $('#facilitator-advanced');
-//        const bt = al.find('button');
         const bt = al.find('#reset');
+        const qr = al.find('#showqr');
+        console.log(qr)
         bt.add('#completeRound');
         bt.each((i, b) => {
             if ($(b).attr('id')) {
                 // the buttons which have an id call method which should refresh the widget
                 $(b).on('click', function () {
-//                    console.log('redo');
                     removeThisWidget($(this));
-//                    launchAdvanced();
                 });
             }
         });
+        qr.off('click').on('click', () => {
+            socket.emit('presentationOverlay', {type: 'qr', game: game.address});
+        })
     };
     const buildScoreDetail = (s) => {
         s.forEach(sp => {
@@ -1052,6 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
         r = window.justNumber(r);
         const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
+//        const ric = game.round.toString().indexOf('*', 0) > -1;
 //        console.log(`ric: ${ric}`);
 //        console.log(game)
         const oneUp = (r - gr) === 1;
@@ -1071,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
             msg += `teams not yet assigned, must wait for allocation`;
             ok = false;
             // Note - NEVER allow scoring prior to team assignment
-        } else if (ric) {
+        } else if (ric && gr > 0 && gr === r) {
             msg += `round is already completed`
             ok = false;
         } else if (r === gr) {
@@ -1098,11 +1103,13 @@ document.addEventListener('DOMContentLoaded', function() {
             addToLogFeed(msg, true);
         }
         if (emitting) {
+            console.log('emit the startRound event');
             socket.emit('startRound', {gameID: game.uniqueID, round: r, ok: ok});
         }
 //        console.log(`the teams: ${t}, ${t.length}`);
 //        console.log(game);
 //        console.log(`tryStartRound: ${r} (${typeof(r)}) - current: ${gr} (${typeof(gr)}), is next? ${r === gr + 1}`);
+        console.log(`tryStartRound, r: ${r}, gr: ${gr}, ric: ${ric}, msg: ${msg} r === gr ? ${r === gr}, game.round: ${game.round}`);
         return ok;
     };
     const showScoreSummary = (summ, teams) => {
@@ -1747,12 +1754,17 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`i am action: ${sl.action}`);
             if (sl.action.includes(`startRound`)) {
 //                console.log(sl.action.split(':'));
-                tryStartRound(justNumber(sl.action.split(':')[1]));
+                console.log(`fac slide change`);
+
+
+                //////////////////////////////////////////////////////////////////////////////////////////// one use of the tryStartRound - which one to keep??
+
+
+//                tryStartRound(justNumber(sl.action.split(':')[1]));
             }
             if (sl.action.includes(`showRound`)) {
                 console.log(`showRound`);
                 console.log(sl.action.split(':'));
-//                tryStartRound(justNumber(sl.action.split(':')[1]));
             }
             if (slideActions.hasOwnProperty(sl.action)) {
 //                console.log(slideActions[sl.action]);
@@ -1773,6 +1785,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (ac.includes('startRound')) {
                         const r = parseInt(ac.split(':')[1]);
                         tested = true;
+
+
+                        //////////////////////////////////////////////////////////////////////////////////////////// another use of the tryStartRound - which one to keep??
+
+
                         test = tryStartRound(r);
                     }
 //                    console.log(ac);

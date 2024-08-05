@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     const targ = 'insertion';
-//    const renderOb = {qrlight: '#d1e5d133', qrdark: '#0d140d'};
-    const renderOb = {qrdark: '#ffffff88', qrlight: '#0d140d44'};
+//    const qrRenderMain = {qrlight: '#d1e5d133', qrdark: '#0d140d'};
+    const qrRenderMain = {qrdark: '#ffffff88', qrlight: '#0d140d44'};
+    const qrRenderTemp = {qrdark: '#ffffff99', qrlight: '#0d140d99'};
     let gameID = null;
     let game = null;
     let videoPlayer = null;
@@ -72,6 +73,32 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.on('onGameRestored', (gOb) => {
 //        console.log('game restored!', gOb);
             onGameRestored(gOb);
+        });
+        socket.on('toggleOverlay', (type) => {
+            let oType = null;
+            switch (type) {
+                case 'qr':
+                    oType = type;
+                    break;
+                default:
+                    console.log(`no overlay of type ${type} specified`)
+            }
+            if (oType) {
+                const ol = $('#facilitatoroverlay');
+                const oid = `overlay_${oType}`;
+                const tol = ol.find(`#${oid}`);
+                if (tol.is(':visible')) {
+                    ol.fadeOut();
+                } else {
+                    ol.show();
+                    ol.css({display: 'block'});
+                    const oc = ol.find('.ocontent');
+                    oc.attr('id', oid);
+                    oc.addClass('qr');
+//                    renderTemplate(oid, 'qr.presentation.overlay', {gameID: game.uniqueID});
+                    renderTemplate(oid, `qr/qrcode-${game.uniqueID}`, qrRenderTemp);
+                }
+            }
         });
     };
     const setCurrentSlideObject = (slOb) => {
@@ -306,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Specific actions
     const showGameQR = (rOb) => {
         console.log(`showGameQR`, rOb);
-        rOb = Object.assign(rOb, renderOb);
+        rOb = Object.assign(rOb, qrRenderMain);
         renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
             console.log('rendered');
         })
@@ -508,7 +535,7 @@ document.addEventListener('DOMContentLoaded', function () {
             renderTemplate(targ, slideID, game, () => {
                 const rOb = {gameID: game.uniqueID};
                 slideAction(slOb);
-                Object.assign(rOb, renderOb);
+                Object.assign(rOb, qrRenderMain);
 //                setCurrentSlideObject(slOb);
                 socket.emit('slideUpdated', slOb);
             });

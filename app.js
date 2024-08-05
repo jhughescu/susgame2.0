@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const gfxController = require('./controllers/gfxController');
 const app = express();
 const server = http.createServer(app);
+const chalk = require('chalk');
 require('dotenv').config();
 
 module.exports = { app };
@@ -48,6 +49,9 @@ databaseController.dbConnect();
 initSocket(server);
 server.listen(PORT, HOST, () => {
 //server.listen(PORT, () => {
+    if (HOST) {
+        console.log(chalk.green(`local wifi connection available`), chalk.cyan(`use [cmd ipconfig IPv4 Address]:${PORT}`));
+    }
     console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
-    console.log('test')
+    console.log('test');
 });

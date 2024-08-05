@@ -37,7 +37,7 @@ async function startGame (o, cb) {
     log(`startGame: ${game}`);
     let rg = null;
     if (!games.hasOwnProperty(game)) {
-        console.log('no game exists, create it');
+//        console.log('no game exists, create it');
         if (session.hasOwnProperty('type')) {
             Game = require(`./../models/game.${session.type}`);
             Player = require(`./../models/player.${session.type}`);
@@ -135,10 +135,6 @@ async function resetGame(id, cb) {
 
 
         eventEmitter.emit('resetAll', game.address);
-//        Object.entries(game).forEach(([p, v]) => {
-//            console.log(p);
-//            console.log(v);
-//        });
         Object.entries(game).forEach(value => {
             if (typeof(value) === 'object') {
                 if (value.hasOwnProperty.length) {
@@ -149,8 +145,6 @@ async function resetGame(id, cb) {
             }
         });
         for (let i in game) {
-//            console.log(`reset ${i}? ${exclusions.indexOf(i, 0) === -1}`)
-//            if (typeof(game[i]) === 'object' && i !== 'persistentData' && i !== 'presentation') {
             if (typeof(game[i]) === 'object' && exclusions.indexOf(i, 0) === -1) {
                 if (game[i].hasOwnProperty('length')) {
                     game[i] = [];
@@ -160,7 +154,9 @@ async function resetGame(id, cb) {
             }
         }
         game.state = 'pending';
-        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: 0, round: 0});
+        game.round = 0;
+        game.slide = 0;
+        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: game.slide, round: game.round});
         if (session) {
 //            log('return updated session here');
 //            log(session);
@@ -168,6 +164,8 @@ async function resetGame(id, cb) {
                 cb(session);
             }
         }
+        const eGame = Object.assign({'_updateSource': {event: 'gameController resetGame'}}, game);
+        eventEmitter.emit('gameUpdate', eGame);
     }
 };
 async function makeLead (ob) {
@@ -184,7 +182,9 @@ async function makeLead (ob) {
         //  \/ changes the existing lead (which has now been shunted to index 2)
         game.setTeam(leadOld);
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
-        eventEmitter.emit('gameUpdate', game);
+//        const eGame = Object.assign({'_updateEvent': 'makeLead'}, game);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController makeLead', playerID: ob.player.id}}, game);
+        eventEmitter.emit('gameUpdate', eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadNew, game});
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadOld, game});
     } else {
@@ -215,7 +215,9 @@ async function reassignTeam (ob) {
         //  \/ changes the existing lead (which has now been shunted to index 2)
 //        game.setTeam(leadOld);
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
-        eventEmitter.emit('gameUpdate', game);
+//        const eGame = Object.assign({'_updateEvent': 'reassignTeam'}, game);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController reassignTeam', playerID: player.id}}, game);
+        eventEmitter.emit('gameUpdate', eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: player, game});
     } else {
         console.log(`cannot reassign player; no game with ID game-${ob.game}`)
@@ -224,19 +226,11 @@ async function reassignTeam (ob) {
 };
 async function removePlayer (ob, cb) {
     const pl = ob.player;
-//    console.log(`removal starts, player:`);
-//    console.log(pl)
     if (!cb) {
-//        console.log(`no cb, make one up`);
         cb = () => {};
-    } else {
-//        console.log(`a cb`);
     }
-//    console.log(`remove player ${pl}`);
-//    console.log(ob)
     const game = games[`game-${ob.game}`];
     if (game) {
-//        console.log(game.playersFull[pl])
         try {
             // remove player from any teams they belong to
             const t = game.teams.filter(tm => tm.indexOf(pl, 0) > -1);
@@ -258,9 +252,10 @@ async function removePlayer (ob, cb) {
                 player: pl,
                 temp: 'game.removed'
             };
-            eventEmitter.emit('gameUpdate', game);
-            eventEmitter.emit('playerRemoved', removeObj)
-//            console.log('completion');
+//            const eGame = Object.assign({'_updateEvent': 'removePlayer'}, game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController removePlayer', playerID: pl.id}}, game);
+            eventEmitter.emit('gameUpdate', eGame);
+            eventEmitter.emit('playerRemoved', removeObj);
         } catch (error) {
             cb({data: null, err: error.message});
         }
@@ -280,8 +275,9 @@ async function changeName (ob, cb) {
     if (sesh) {
         if (game) {
             game.name = sesh.name;
-            eventEmitter.emit('gameUpdate', game);
-
+//            const eGame = Object.assign({'_updateEvent': 'changeName'}, game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController changeName'}}, game);
+            eventEmitter.emit('gameUpdate', eGame);
         }
         if (cb) {
             cb(sesh.uniqueID);
@@ -369,16 +365,6 @@ const getGameWithAddress = (add) => {
         }
     }
     return null;
-};
-const changeNameNOMORE = async (ob) => {
-    const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
-    const game = games[`game-${ob.gameID}`];
-    if (sesh && game) {
-        game.name = sesh.name;
-        eventEmitter.emit('gameUpdate', game);
-    } else {
-        error(`gameController: can't change name, game or session undefined`)
-    }
 };
 const getScores = (gameID, cb) => {
     console.log(`getScores`);
@@ -631,102 +617,95 @@ const deleteGame = (gameID) => {
 };
 const newGetTheRenderState = (game, id) => {
     let rs = {};
+//    console.log(`####################### newGetTheRenderState: ${game.uniqueID}`);
     game = games[`game-${game.uniqueID}`];
     if (game) {
+//        console.log('game exists');
         if (game.persistentData) {
-//            if (game.teams.length > 0) {
-//            console.log('first hurdle')
-                const player = game.playersFull[id];
-                let scoreCompletionMetric = false;
-                let canInteract = false;
-                let inThisRound = false;
-                if (player) {
-                    rs.ob = player;
-                    const team = player.teamObj;
-                    if (team) {
-    //                    console.log('second hurdle');
-
-                        let roundComplete = false;
-                        let roundNum = null;
-                        let roundInfo = {}
-                        inThisRound = false;
-                        if (game.round) {
-                            roundComplete = game.round.toString().indexOf('*', 0) > -1;
-                            roundNum = tools.justNumber(game.round);
-                            roundInfo = game.persistentData.rounds[roundNum];
-                            inThisRound = team.type === roundInfo.type;
-                        }
-                        const scores = game.scores;
-                        const scorePackets = [];
-                        scores.forEach(s => {scorePackets.push(new ScorePacket(s))});
-    //                    rs.snow = {scores: scores, playerScores:  filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets)};
-    //                    const playerIdentifier = roundInfo.hasOwnProperty('type') ?
-    //                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.index), scorePackets).length > 0;
-                        const roundScores = filterScorePackets(game.uniqueID, 'round', roundNum, scorePackets);
-    //                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), scorePackets).length > 0;
-                        const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), roundScores).length > 0;
-                        canInteract = player.isLead || !team.hasLead;
-    //                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
-    //                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, scorePackets).length > 0;
-                        const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, roundScores).length > 0;
-                        scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
-    //                    console.log(`scoreCompletionMetric:`, scoreCompletionMetric);
-                        if (scoreCompletionMetric === undefined) {
-                            // crappy conditional designed to avoid server crash
-                            scoreCompletionMetric = false;
-                        }
-    //                    console.log(`newGetTheRenderState, gameState:`, game.state);
-                        const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
-    //                    console.log(msg);
-                        rs.msg = msg;
-                        rs.temp = 'game.main';
-                        rs.partialName = 'game-links';
-                        rs.summary = {
-                            canInteract: canInteract,
-                            intThisRound: inThisRound,
-                            playerHasScored: playerHasScored,
-                            teamHasScored: teamHasScored,
-                            scoreCompletionMetric: scoreCompletionMetric,
-                            gameRound: roundNum,
-                            teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
-                            roundScoresChecked: roundScores
-                        };
-                        if (!scoreCompletionMetric && canInteract && inThisRound) {
-                            rs.temp =  `game.${roundInfo.template}`;
-                            rs.tempType = 'interaction';
-    //                        console.log(rs);
-                        }
+//            console.log('game.persistentData exists');
+            const player = game.playersFull[id];
+            let scoreCompletionMetric = false;
+            let canInteract = false;
+            let inThisRound = false;
+            if (player) {
+//                console.log('player exists')
+                rs.ob = player;
+                const team = player.teamObj;
+                if (team) {
+//                    console.log('has teamObj');
+                    let roundComplete = false;
+                    let roundNum = null;
+                    let roundInfo = {}
+                    inThisRound = false;
+                    if (game.round) {
+                        roundComplete = game.round.toString().indexOf('*', 0) > -1;
+                        roundNum = tools.justNumber(game.round);
+                        roundInfo = game.persistentData.rounds[roundNum];
+                        inThisRound = team.type === roundInfo.type;
+                    }
+                    const scores = game.scores;
+                    const scorePackets = [];
+                    scores.forEach(s => {scorePackets.push(new ScorePacket(s))});
+                    const roundScores = filterScorePackets(game.uniqueID, 'round', roundNum, scorePackets);
+                    const playerHasScored = filterScorePackets(game.uniqueID, 'client', tools.justNumber(player.id), roundScores).length > 0;
+                    canInteract = player.isLead || !team.hasLead;
+                    const teamHasScored = filterScorePackets(game.uniqueID, 'src', team.id, roundScores).length > 0;
+                    scoreCompletionMetric = team.type === 1 ? teamHasScored : playerHasScored;
+                    if (scoreCompletionMetric === undefined) {
+                        // crappy conditional designed to avoid server crash
+                        scoreCompletionMetric = false;
+                    }
+                    const msg = `I am player ${player.id} of team ${team.title} have I already scored? ${scoreCompletionMetric} - can I interact in round ${roundNum}? ${!scoreCompletionMetric && canInteract && inThisRound}`;
+                    rs.msg = msg;
+                    rs.temp = 'game.main';
+                    rs.partialName = 'game-links';
+                    rs.summary = {
+                        canInteract: canInteract,
+                        intThisRound: inThisRound,
+                        playerHasScored: playerHasScored,
+                        teamHasScored: teamHasScored,
+                        scoreCompletionMetric: scoreCompletionMetric,
+                        gameRound: roundNum,
+                        teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
+                        roundScoresChecked: roundScores
+                    };
+                    if (!scoreCompletionMetric && canInteract && inThisRound) {
+                        rs.temp =  `game.${roundInfo.template}`;
+                        rs.tempType = 'interaction';
+                    }
+                } else {
+                    if (game.state === 'ended') {
+                        rs.temp = 'game.gameover';
+                    } else if (game.state === 'pending') {
+                        rs.temp = 'game.pending';
                     } else {
-                        if (game.state === 'ended') {
-                            rs.temp = 'game.gameover';
-                        } else if (game.state === 'pending') {
-                            rs.temp = 'game.pending';
-                        } else {
-                            if (game.teams.length > 0) {
-                                // only remaining state is 'started'
-                                // default state is always main page with links
-                                rs.temp = 'game.main';
-                                rs.partialName = 'game-links';
-    //                            console.log('the test:');
-                                if (!scoreCompletionMetric && canInteract && inThisRound) {
-                                    rs.temp =  `game.${roundInfo.template}`;
-                                    rs.tempType = 'interaction';
-                                    console.log(rs);
-                                } else {
-                                    console.log(`conditions not met`)
-                                }
+                        if (game.teams.length > 0) {
+                            // only remaining state is 'started'
+                            // default state is always main page with links
+                            rs.temp = 'game.main';
+                            rs.partialName = 'game-links';
+                            if (!scoreCompletionMetric && canInteract && inThisRound) {
+                                rs.temp =  `game.${roundInfo.template}`;
+                                rs.tempType = 'interaction';
                             } else {
-                                rs.temp = 'game.intro';
+//                                    console.log(`conditions not met`)''
                             }
+                        } else {
+                            rs.temp = 'game.intro';
                         }
                     }
                 }
-//            }
+            } else {
+//                console.log('no player, no temp will be created');
+//                console.log('no player, use the pending template');
+                rs.temp = 'game.pending';
+            }
         }
     }
 //    console.log(rs);
     rs.theGame = Object.assign({}, game);
     if (rs.temp === undefined) {
+//        console.log('set temp to problem')
         rs.temp = 'game.problem';
     }
     return rs;
@@ -823,7 +802,7 @@ const getRenderState = (ob, cb) => {
     cb(getTheRenderState(ob.game, ob.playerID));
 }
 const registerPlayer = (ob, cb) => {
-//    log(`registerPlayer to game ${ob.game}`);
+//    console.log(`registerPlayer to game ${ob.game}`);
 //    log(ob)
     const game = getGameWithAddress(ob.game);
     let ID = null;
@@ -832,6 +811,7 @@ const registerPlayer = (ob, cb) => {
     let player = null;
     if (game) {
 //        log(game);
+//        console.log('we have a game, go!');
         // store a copy of the list of players for later comparison
         const plOrig = JSON.stringify(game.players);
         // index will be the joining order (i.e first connected player index = 1 etc)
@@ -868,12 +848,14 @@ const registerPlayer = (ob, cb) => {
         if (newP && game.teams.length > 0) {
             console.log(`looks like a new player (${ID}) joining after teams are assigned`);
             game.addLatecomer(player);
-//            console.log(game.teams);
             sessionController.updateSession(game.uniqueID, {teams: game.teams});
-//            eventEmitter.emit('gameUpdate', game);
         }
-
-        eventEmitter.emit('gameUpdate', game);
+//        const eGame = Object.assign({'_updateEvent': 'registerPlayer'}, game);
+//        console.log('#####################################################################');
+//        console.log(ob.player);
+//        console.log(player);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
+        eventEmitter.emit('gameUpdate', eGame);
         // Compare the list of players with the stored list & update database if they differ
         if (JSON.stringify(game.players) !== plOrig) {
             clearTimeout(updateDelay);
@@ -895,57 +877,53 @@ const registerPlayer = (ob, cb) => {
     } else {
         // safeguard against registration prior to completion of game setup
         const idStr = ob.player === undefined ? '' : `(${ob.player})`;
-        log(`no game exists with address ${ob.game}, try again after delay ${idStr}`);
+        console.log(`no game exists with address ${ob.game}, try again after delay ${idStr}`);
         setTimeout(() => {
             registerPlayer(ob, cb);
         }, 500);
     }
 };
-const playerConnectEvent = (gameID, playerID, boo) => {
+const playerConnectEvent = (ob) => {
+    const gameID = ob.gameID;
+    const playerID = ob.socketID;
+    const boo = ob.connect;
     const game = getGameWithAddress(`/${gameID}`);
     if (game) {
-//        console.log(`playerConnectEvent`);
-//        console.log(game.players[0]);
         const playerArray = Object.values(game.playersFull);
-//        const playerArray = Object.values(game.players);
         const socketIDs = playerArray.map(player => player.socketID);
         const player = playerArray[socketIDs.indexOf(playerID)];
         if (player) {
-//            log(gameID, playerID, boo, (game ? 'yep' : 'nope'));
             player.connected = boo;
-            const eGame = Object.assign({'updateSource': 'gameController playerConnectEvent'}, game)
+            const eGame = Object.assign({'_updateSource': {event: 'gameController playerConnectEvent', var: boo, playerID: playerID}}, game);
             eventEmitter.emit('gameUpdate', eGame);
-//            console.log(eGame.players[0]);
         }
     }
 };
 
 const startRound = async (ob) => {
-//    console.log(`startRound:`);
-//    console.log(ob);
-    if (ob.hasOwnProperty('ok')) {
-//        console.log(typeof(ob.ok));
-}
     const okToUpdate = ob.hasOwnProperty('ok') ? ob.ok : true;
-//    console.log(`okToUpdate: ${okToUpdate}`)
     const gameID = ob.gameID;
     const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
     if (game) {
-//        console.log(`yes, game`);
         const rounds = game.persistentData.rounds;
         const rIndex = ob.round - 1;
         if (ob.round > rounds.length) {
             const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
         } else {
-            game.round = ob.round;
+            if (okToUpdate) {
+                game.round = ob.round;
+            }
 //            console.log(`change round to ${ob.round}`);
             const session = await sessionController.updateSession(gameID, { round });
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             if (okToUpdate) {
-                eventEmitter.emit('gameUpdate', game);
+                const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
+                eventEmitter.emit('gameUpdate', eGame);
+                console.log('startRound WILL emit gameUpdate (ob.ok set to true)');
+            } else {
                 console.log('startRound will not emit gameUpdate (ob.ok set to false)');
             }
         }
@@ -1010,7 +988,8 @@ const endRound = async (ob, cb) => {
         const session = await sessionController.updateSession(ob.game, {round: `${game.round}*`});
         if (session) {
             game.round = session.round;
-            eventEmitter.emit('gameUpdate', game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController endRound'}}, game);
+            eventEmitter.emit('gameUpdate', eGame);
         }
     } else {
         console.log(`endGame cannot complete, no game exists with ID ${game_id}`);
@@ -1044,7 +1023,8 @@ const scoreSubmitted = async (ob, cb) => {
 //                        console.log(`scoreSubmitted callback`);
                         cb(game.scores);
                     }
-                    eventEmitter.emit('scoresUpdated', game);
+                    const eGame = Object.assign({_updateSource: {event: 'gameController scoreSubmitted', src: ob}}, game);
+                    eventEmitter.emit('scoresUpdated', eGame);
                     if (roundComplete) {
                         endRound(ob);
                     }
@@ -1080,7 +1060,8 @@ const scoreForAverageSubmitted = async (ob, cb) => {
             game.scores = session.scores;
             console.log(`checkRound:`, checkRound(ob.game));
             const roundComplete = checkRound(ob.game).indexOf(false) === -1;
-            eventEmitter.emit('scoresUpdated', game);
+            const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob}}, game);
+            eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 endRound(ob);
             }
@@ -1121,6 +1102,8 @@ const presentationAction = (ob) => {
     if (game) {
         game.slide = ob.ref;
     }
+    const eGame = Object.assign({'_updateSource': {event: 'gameController presentationAction'}}, game);
+    eventEmitter.emit('gameUpdate', eGame);
 
 
     return;
