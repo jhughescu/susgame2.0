@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-08-05T09:39:18+01:00",
-  "commitHash": "e771404816b1ad80de0523fe333790836ce88ec8",
-  "commitMessage": "Presentation dev overlay is now optional (use ?dev=true in url to show)",
+  "timestamp": "2024-08-05T10:14:36+01:00",
+  "commitHash": "15e1d5968d5fc89deafccc89f4ff85a02bb533ea",
+  "commitMessage": "Added chalk functionality for improved debugging (only in app.js at this stage)",
   "branch": "main"
 }
