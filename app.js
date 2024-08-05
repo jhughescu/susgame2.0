@@ -53,7 +53,8 @@ server.listen(PORT, HOST, () => {
     if (HOST) {
         console.log(chalk.green(`local wifi connection available`), chalk.cyan(`use [cmd ipconfig IPv4 Address]:${PORT}`));
         const ip = tools.getIPv4Address();
-        console.log(chalk.yellowBright(ip), Boolean(ip), tools.procVal(process.env.isDev))
+        let isDev = Boolean(process.env.isDev);
+        console.log(chalk.yellowBright(ip), Boolean(ip), tools.procVal(process.env.isDev), isDev);
     }
     console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
     console.log('test');
