@@ -67,9 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(ob.logs);
         const haveLogs = Boolean(Object.keys(ob.logs).length);
         if (!haveLogs) {
-            ob.message = `no logs found for game "${game}"`;
+            ob.message = game === null ? `game must be specified as URL hash, e.g. ..updatelog#game-6tsu` : `no logs found for game "${game}"`;
         }
-        window.renderTemplate('logs', haveLogs ? 'update.log.display' : 'error', ob, setupLogs)
+        window.renderTemplate('logs', haveLogs ? 'update.log.display' : 'error', ob, setupLogs);
     };
     const loadLogs = () => {
         socket.emit('getUpdateLog', log => {
