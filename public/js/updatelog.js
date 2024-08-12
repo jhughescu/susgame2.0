@@ -8,10 +8,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const logDiv = $('#logs');
     let detail = $('#logDetail');
+    let game = null;
     console.log(detail)
     let logs = null;
     let delay = null;
-    const processLogs = (l) => {
+    const processLogs = (lin) => {
+//        console.log(`process: ${game}`);
+//        console.log(lin);
+        const l = {};
+        Object.entries(lin).forEach(([k, v]) => {
+            if (v.game === game) {
+                l[k] = v;
+            }
+        });
         for (var i in l) {
             const log = l[i];
             const ev = log.event.split(' ');
@@ -55,14 +64,24 @@ document.addEventListener('DOMContentLoaded', function () {
         const ob = {
             logs: processLogs(JSON.parse(logs))
         };
-        //        console.log(logs);
-        window.renderTemplate('logs', 'update.log.display', ob, setupLogs)
+        console.log(ob.logs);
+        const haveLogs = Boolean(Object.keys(ob.logs).length);
+        if (!haveLogs) {
+            ob.message = `no logs found for game "${game}"`;
+        }
+        window.renderTemplate('logs', haveLogs ? 'update.log.display' : 'error', ob, setupLogs)
     };
     const loadLogs = () => {
         socket.emit('getUpdateLog', log => {
             showLogs(log);
         });
     };
+    const init = () => {
+        if (Boolean(window.location.hash)) {
+            game = window.location.hash.replace('#', '/');
+        }
+    };
+
     $(document).on('mousemove', function(event) {
         const y = event.clientY - detail.height() - 30;
         const ya = y > 0 ? y : 0;
@@ -71,9 +90,14 @@ document.addEventListener('DOMContentLoaded', function () {
             'left': `${event.clientX + 20}px`
         });
     });
+    window.addEventListener('hashchange', function() {
+        init();
+        loadLogs();
+    }, false);
     socket.on('logsUpdated', (log) => {
         showLogs(log);
     });
+    init();
     loadLogs();
 
 });
