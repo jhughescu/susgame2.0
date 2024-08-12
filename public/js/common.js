@@ -73,7 +73,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const procVal = (v) => {
         // process values into numbers, booleans etc
-        if (!isNaN(parseInt(v))) {
+        const ipMatch = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        if (ipMatch.test(v)) {
+            // do nothing if IP addresses
+//            console.log('we have matched an IP', v);
+        } else if (!isNaN(parseInt(v))) {
             v = parseInt(v);
         } else if (v === 'true') {
             v = true;
@@ -332,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Copy the selected text to the clipboard
         document.execCommand('copy');
+        alert('copied to clipboard');
 
         // Deselect the text
         window.getSelection().removeAllRanges();

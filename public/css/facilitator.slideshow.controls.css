@@ -117,3 +117,21 @@
 #slidelist span:hover {
     background-color: #8beffc;
 }
+.link-container {
+    position: relative;
+    display: inline-block;
+}
+
+.copy-icon {
+    position: absolute;
+    top: 50%;
+    right: -25px;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    cursor: pointer;
+}
+
+.link-container:hover .copy-icon {
+    opacity: 1;
+}

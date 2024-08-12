@@ -190,6 +190,7 @@ async function getSession(req, res) {
                 session.localIP = ip;
             }
         }
+//        console.log(session)
 //         Send the session back to the client as a response
         res.json(session);
     } catch (error) {

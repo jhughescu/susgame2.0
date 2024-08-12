@@ -7,6 +7,7 @@ const sessionController = require('./../controllers/sessionController');
 const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
 const gfxController = require('./../controllers/gfxController');
+const logController = require('./../controllers/logController');
 
 const tools = require('./../controllers/tools');
 
@@ -165,7 +166,8 @@ async function resetGame(id, cb) {
             }
         }
         const eGame = Object.assign({'_updateSource': {event: 'gameController resetGame'}}, game);
-        eventEmitter.emit('gameUpdate', eGame);
+        // eventEmitter.emit('gameUpdate', eGame);
+        emitUpdate(eGame);
     }
 };
 async function makeLead (ob) {
@@ -184,7 +186,8 @@ async function makeLead (ob) {
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
 //        const eGame = Object.assign({'_updateEvent': 'makeLead'}, game);
         const eGame = Object.assign({'_updateSource': {event: 'gameController makeLead', playerID: ob.player.id}}, game);
-        eventEmitter.emit('gameUpdate', eGame);
+        // eventEmitter.emit('gameUpdate', eGame);
+        emitUpdate(eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadNew, game});
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadOld, game});
     } else {
@@ -217,7 +220,8 @@ async function reassignTeam (ob) {
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
 //        const eGame = Object.assign({'_updateEvent': 'reassignTeam'}, game);
         const eGame = Object.assign({'_updateSource': {event: 'gameController reassignTeam', playerID: player.id}}, game);
-        eventEmitter.emit('gameUpdate', eGame);
+        // eventEmitter.emit('gameUpdate', eGame);
+        emitUpdate(eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: player, game});
     } else {
         console.log(`cannot reassign player; no game with ID game-${ob.game}`)
@@ -254,7 +258,8 @@ async function removePlayer (ob, cb) {
             };
 //            const eGame = Object.assign({'_updateEvent': 'removePlayer'}, game);
             const eGame = Object.assign({'_updateSource': {event: 'gameController removePlayer', playerID: pl.id}}, game);
-            eventEmitter.emit('gameUpdate', eGame);
+            // eventEmitter.emit('gameUpdate', eGame);
+            emitUpdate(eGame);
             eventEmitter.emit('playerRemoved', removeObj);
         } catch (error) {
             cb({data: null, err: error.message});
@@ -277,7 +282,8 @@ async function changeName (ob, cb) {
             game.name = sesh.name;
 //            const eGame = Object.assign({'_updateEvent': 'changeName'}, game);
             const eGame = Object.assign({'_updateSource': {event: 'gameController changeName'}}, game);
-            eventEmitter.emit('gameUpdate', eGame);
+            // eventEmitter.emit('gameUpdate', eGame);
+            emitUpdate(eGame);
         }
         if (cb) {
             cb(sesh.uniqueID);
@@ -299,6 +305,18 @@ const resetSession = async (id, cb) => {
     }
 }
 
+const emitUpdate = (eGame) => {
+    if (eGame.hasOwnProperty('_updateSource')) {
+        const us = JSON.stringify(eGame._updateSource);
+        if (tools.isValidJSON(us)) {
+//            console.log(eGame.address);
+            logController.addUpdate({game: eGame.address, update: us});
+        } else {
+            console.log('JSON error')
+        }
+    }
+    eventEmitter.emit('gameUpdate', eGame);
+};
 const restoreClients = (address) => {
     // refresh connected clients on game restore
     setTimeout(() => {
@@ -855,7 +873,8 @@ const registerPlayer = (ob, cb) => {
 //        console.log(ob.player);
 //        console.log(player);
         const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
-        eventEmitter.emit('gameUpdate', eGame);
+        // eventEmitter.emit('gameUpdate', eGame);
+        emitUpdate(eGame);
         // Compare the list of players with the stored list & update database if they differ
         if (JSON.stringify(game.players) !== plOrig) {
             clearTimeout(updateDelay);
@@ -895,7 +914,8 @@ const playerConnectEvent = (ob) => {
         if (player) {
             player.connected = boo;
             const eGame = Object.assign({'_updateSource': {event: 'gameController playerConnectEvent', var: boo, playerID: playerID}}, game);
-            eventEmitter.emit('gameUpdate', eGame);
+            // eventEmitter.emit('gameUpdate', eGame);
+            emitUpdate(eGame);
         }
     }
 };
@@ -921,7 +941,8 @@ const startRound = async (ob) => {
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             if (okToUpdate) {
                 const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
-                eventEmitter.emit('gameUpdate', eGame);
+                // eventEmitter.emit('gameUpdate', eGame);
+                emitUpdate(eGame);
                 console.log('startRound WILL emit gameUpdate (ob.ok set to true)');
             } else {
                 console.log('startRound will not emit gameUpdate (ob.ok set to false)');
@@ -989,7 +1010,8 @@ const endRound = async (ob, cb) => {
         if (session) {
             game.round = session.round;
             const eGame = Object.assign({'_updateSource': {event: 'gameController endRound'}}, game);
-            eventEmitter.emit('gameUpdate', eGame);
+            // eventEmitter.emit('gameUpdate', eGame);
+            emitUpdate(eGame);
         }
     } else {
         console.log(`endGame cannot complete, no game exists with ID ${game_id}`);
@@ -1103,7 +1125,8 @@ const presentationAction = (ob) => {
         game.slide = ob.ref;
     }
     const eGame = Object.assign({'_updateSource': {event: 'gameController presentationAction'}}, game);
-    eventEmitter.emit('gameUpdate', eGame);
+    // eventEmitter.emit('gameUpdate', eGame);
+    emitUpdate(eGame);
 
 
     return;

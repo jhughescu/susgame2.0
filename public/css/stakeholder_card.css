@@ -67,6 +67,8 @@
     left: 100px;
     width: 220px;
     height: 80px;
+
+/*        background-color: blue;*/
 }
 .stakeholder_card .header {
     text-align: center;
@@ -99,5 +101,7 @@
     width: 30px;
     font-size: 1.9rem;
 }
+
+
 /* ############################################## end stakeholder card ################################################ */
 

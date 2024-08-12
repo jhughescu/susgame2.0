@@ -1,0 +1,23 @@
+<style>
+    td {
+        padding-right: 20px;
+    }
+    td:nth-child(even) {
+        color: cyan;
+    }
+    #logDetail {
+        position: absolute;
+        width: 400px;
+        height: 170px;
+        top: 0px;
+        background-color: black;
+        display: none;
+        padding: 10px;
+    }
+</style>
+<table id='logtable'><tbody>
+{{#each logs}}
+<tr><td>{{timestampDisplay}}</td><td><a href="#" class='showLogDetail' id='{{id}}'>{{eventName}}</a></td><td>{{playerID}}</td></tr>
+{{/each}}
+</tbody></table>
+<div id='logDetail'></div>

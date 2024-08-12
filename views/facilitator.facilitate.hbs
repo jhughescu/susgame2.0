@@ -2,7 +2,10 @@
 <!--<div class='title'>presentation controls</div>-->
 <!--<button id='makePres'>Launch Presentation</button>-->
 <div class='url_pres'>Presentation <span id='status'></span></div>
-<div class='url_pres'>URL: <span class='link copylink' id='url_pres_address' title='copy to clipboard'>{{urlPresentation}}</span></div>
+<div class='url_pres link-container'>
+    URL: <span class='link copylink' id='url_pres_address'>{{urlPresentation}}</span>
+    <span class="material-icons copy-icon" id="copyIcon">content_copy</span>
+</div>
 {{> facilitator-slideshow-controls}}
 
 </div>

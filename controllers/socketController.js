@@ -244,7 +244,7 @@ function initSocket(server) {
                     socket.emit('pong');
                 });
                 socket.on('recordthegame', (g) => {
-                    console.log('herd')
+//                    console.log('herd');
                     logController.writeBeautifiedJson(`logs`, `game`, g);
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
@@ -471,6 +471,15 @@ function initSocket(server) {
 //            console.log(`the pres control registers as ${roomID}`);
             socket.on('presentationEvent', (ob, cb) => {
                 presentationController.pEvent(ob, cb);
+            });
+        }
+        // log update display ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (Q.role === 'updatelog') {
+            console.log(`'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' go logger`);
+            roomID = `updateLog`;
+            socket.join(roomID);
+            socket.on('getUpdateLog', cb => {
+                logController.getUpdateLog(cb);
             });
         }
 
@@ -809,6 +818,11 @@ function initSocket(server) {
         const r = `${gOb.address}-pres`;
         io.to(r).emit('refreshWindow');
     });
+    eventEmitter.on('updateLogUpdated', ob => {
+        console.log(`update log updated: ${JSON.parse(ob).update_0.event}`);
+        const roomID = `updateLog`;
+        io.to(roomID).emit('logsUpdated', ob);
+    })
 
 };
 

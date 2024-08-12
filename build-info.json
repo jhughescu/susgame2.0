@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-08-05T16:29:55+01:00",
-  "commitHash": "c4f0f6efcf32aad23ffb9da4cbbe8ff770c48573",
-  "commitMessage": "Update to FDB, localIP used only for local deployments, web URL to be used everywhere else (to be tested)",
+  "timestamp": "2024-08-12T10:32:59+01:00",
+  "commitHash": "07a906164f1e5e26dbbea7bfd5de7a0d892a4712",
+  "commitMessage": "Minor (important) commit - testing prevention of log writing in deployment",
   "branch": "main"
 }

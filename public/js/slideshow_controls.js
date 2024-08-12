@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
         span.html(status);
         span.removeClass('online offline');
         span.addClass(status);
-        console.log(`presentation ${status}`);
+//        console.log(`presentation ${status}`);
     };
     const updatePresentation = (ob) => {
 //        console.log('in', ob);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const gotoSlide = async (v) => {
 //        const
         const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await window.slideTest(v)};
-        console.log(`slideClick`, gOb.test);
+//        console.log(`slideClick`, gOb.test);
 //        console.log(window.slideTest(v));
         socket.emit('presentationEvent', gOb, (ob) => {
             eventUpdate(ob);

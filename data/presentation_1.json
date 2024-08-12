@@ -3,7 +3,7 @@
         {"id": "slide_010_intro", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "viewtype": "fullscreen1", "header": "Sustainability Game", "action": "showGameQR"},
         {"id": "video", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape", "behaviour": "loop"},
         {"id": "video", "type": "video", "srcRef": "v2", "title": "Welcome"},
-        {"id": "slide_050_assignment", "type": "slide", "title": "Assign Teams", "slide": "slide_050_assignment", "action": "rAssignTeams"},
+        {"id": "slide_210_checkdevice", "type": "slide", "title": "Assign Teams", "slide": "slide_210_checkdevice", "action": "rAssignTeams"},
         {"id": "video", "type": "video", "srcRef": "v3", "title": "Resources"},
         {"id": "video", "type": "video", "srcRef": "v4", "title": "PVPlayers"},
         {"id": "video", "type": "video", "srcRef": "v5", "title": "Instruction"},

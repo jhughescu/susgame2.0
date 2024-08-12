@@ -230,7 +230,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const onGameUpdate = (g) => {
 //        console.log(`###############################################`);
-//        console.log(`gameUpdate:`, g);
+        console.log(`gameUpdate:`, g);
+        console.log(g._updateSource);
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
@@ -403,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (ob.hasOwnProperty('data')) {
                 tOb = Object.assign(tOb, ob.data);
             }
-            console.log(tOb);
+//            console.log(tOb);
             const temp = ob.data.preventTemplate ? 'facilitator.widget.nopartial' : 'facilitator.widget';
             renderTemplate(id, temp, tOb, () => {
                 $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
@@ -706,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const al = $('#facilitator-advanced');
         const bt = al.find('#reset');
         const qr = al.find('#showqr');
-        console.log(qr)
+//        console.log(qr);
         bt.add('#completeRound');
         bt.each((i, b) => {
             if ($(b).attr('id')) {
@@ -1574,6 +1575,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderFacilitate = () => {
         // Screen which can be used to run the whole game
         if (game) {
+//            console.log(game.base);
+//            console.log(game.address);
             game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
             renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
                 const sl = game.presentation.slideData.slideList.slice(0);
@@ -1656,6 +1659,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 session = data;
                 session.base = window.location.origin;
                 if (session.localIP) {
+//                    console.log(`session.localIP: ${session.localIP}`);
                     session.localIP = window.procVal(session.localIP);
                     if (session.localIP) {
                         session.base = session.base.replace('localhost', session.localIP);
@@ -1762,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`i am action: ${sl.action}`);
             if (sl.action.includes(`startRound`)) {
 //                console.log(sl.action.split(':'));
-                console.log(`fac slide change`);
+//                console.log(`fac slide change`);
 
 
                 //////////////////////////////////////////////////////////////////////////////////////////// one use of the tryStartRound - which one to keep??
@@ -1771,8 +1775,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //                tryStartRound(justNumber(sl.action.split(':')[1]));
             }
             if (sl.action.includes(`showRound`)) {
-                console.log(`showRound`);
-                console.log(sl.action.split(':'));
+//                console.log(`showRound`);
+//                console.log(sl.action.split(':'));
             }
             if (slideActions.hasOwnProperty(sl.action)) {
 //                console.log(slideActions[sl.action]);
@@ -1924,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     });
     socket.on('presentationSlideUpdated', (ob) => {
-        console.log('presentationSlideUpdated', ob);
+//        console.log('presentationSlideUpdated', ob);
     });
     socket.on('gameWarning', (ob) => {
         alert(ob.warning)
@@ -1943,7 +1947,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //
     window.showGame = showGame;
     window.getSessionID = getSessionID;
-    console.log(`getSessionID defined on window scope`)
+//    console.log(`getSessionID defined on window scope`);
     window.showScores = showScores;
     window.facilitatorSlideChange = facilitatorSlideChange;
     window.slideTest = slideTest;

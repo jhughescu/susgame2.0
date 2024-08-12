@@ -2,9 +2,17 @@ const fs = require('fs').promises;
 const path = require('path');
 const beautify = require('json-beautify');
 const tools = require('./tools.js');
+const { getEventEmitter } = require('./../controllers/eventController');
+
+const eventEmitter = getEventEmitter();
+
+const LOG_UPDATE = 'logs/updates.json';
+let updateTime = null;
+const updateList = [];
 
 
 const isDev = () => {
+    return true;
     return Boolean(tools.procVal(process.env.isDev));
 };
 /**
@@ -24,10 +32,13 @@ async function emptyFolder(directoryPath) {
                         recursive: true
                     });
                 } else {
-                    await fs.unlink(filePath);
+                    if (filePath.replace(/[\/\\]/g, '') !== LOG_UPDATE.replace(/[\/\\]/g, '')) {
+                        await fs.unlink(filePath);
+                    }
                 }
             }
             console.log(`All contents deleted from ${directoryPath}`);
+//            fs.writeFile('logs/updates.json', JSON.stringify({piss: 'boil'}));
         } catch (err) {
             console.error(`Error clearing directory: ${err.message}`);
         }
@@ -72,28 +83,105 @@ function getFormattedTimestamp() {
  * @param {object} data - The JSON data to write into the new file.
  */
 async function writeBeautifiedJson(directoryPath, fileName, data) {
-    console.log(`tried to write a log, isDev? ${isDev()}`)
     try {
         const timestamp = getFormattedTimestamp();
         const newFileName = `${fileName}_${timestamp}.json`;
         const newFilePath = path.join(directoryPath, newFileName);
-
         // Beautify JSON
         const beautifiedJson = beautify(data, null, 2, 100);
-
-        // Write file
-
-//        console.log(isDev, typeof(isDev));
         if (isDev()) {
             await fs.writeFile(newFilePath, beautifiedJson);
         }
-//        console.log(`Beautified JSON file created at ${newFilePath}`);
     } catch (err) {
         console.error(`Error creating file: ${err.message}`);
     }
-}
+};
 
+const updateUpdates = async () => {
+    let uf = await fs.readFile(LOG_UPDATE);
+    uf = JSON.parse(uf);
+    let index = Object.keys(uf).length;
+    while (updateList.length > 0) {
+        const uo = updateList.shift();
+        const u = JSON.parse(uo.update);
+        u.game = uo.game;
+        u.timestamp = uo.timestamp;
+        const newI = `update_${index}`;
+        uf[newI] = u;
+        index++;
+    }
+    const writer = beautify(uf, null, 2, 100);
+    await fs.writeFile(LOG_UPDATE, writer);
+    eventEmitter.emit('updateLogUpdated', writer);
+}
+const getUpdateLog = async (cb) => {
+    const ul = await fs.readFile(LOG_UPDATE, 'utf-8');
+    if (cb) {
+        cb(ul);
+    }
+};
+async function addUpdate(ob) {
+    ob.timestamp = getFormattedTimestamp();
+//    console.log(typeof(ob))
+//    console.log(ob);
+    updateList.push(ob);
+    clearTimeout(updateTime);
+    updateTime = setTimeout(updateUpdates, 500);
+}
+async function addUpdateV1(ob) {
+    return;
+    console.log(`OK, let's add an update ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`)
+    console.log(ob)
+    console.log(tools.isValidJSON(ob), isDev()  )
+//    console.log(`##########################################`)
+    let msg = '';
+    try {
+        const ts = getFormattedTimestamp();
+        const fn ='logs/updates.json';
+//        const fn = path.join(__dirname, 'logs/updates.json');
+        let l = {};
+        if (isDev()) {
+            try {
+                const fileContent = await fs.readFile(fn, 'utf-8');
+                console.log(fileContent);
+                console.log(`END END END END END END END END END END END END END END END END END END END END END END END END END `);
+                l = JSON.parse(fileContent);
+                if (l) {
+
+                } else {
+                    console.log('ERROR')
+                }
+                msg = 'read the file';
+            } catch (readError) {
+                console.log(`ERROR ERROR ERROR ERROR ERROR ERROR ERROR `)
+                if (readError.code === 'ENOENT') {
+                    // File does not exist, initialize a new log object
+                    msg = 'file not found, initializing new log';
+                } else {
+                    // Some other error occurred
+                    console.log('###############################', readError.message)
+
+                    throw readError;
+                }
+            }
+
+            const index = Object.entries(l).length;
+            l[`update-${index}`] = Object.assign({ timestamp: ts }, JSON.parse(ob));
+//            console.log(ob._updateSource);
+            await fs.writeFile(fn, beautify(l, null, 2, 100));
+            console.log('WRITE COMPLETE')
+        }
+    } catch (err) {
+        console.error(`failure to add update log, error: ${err.message}`);
+    }
+}
+const init = () => {
+    fs.writeFile(LOG_UPDATE, '{}');
+}
+init();
 module.exports = {
     emptyFolder,
-    writeBeautifiedJson
+    writeBeautifiedJson,
+    addUpdate,
+    getUpdateLog
 };

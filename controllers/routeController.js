@@ -210,6 +210,9 @@ app.get('/partialsV1', (req, res) => {
     console.log(serialised);
     res.json({ partials: serialised });
 });
+app.get(`/updatelog`, (req, res) => {
+    res.sendFile(path.join(basePath, 'updatelog.html'));
+});
 
 
 // Declare the 404 response
