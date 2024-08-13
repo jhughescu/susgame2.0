@@ -657,18 +657,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     };
     const render = (cb) => {
-        console.log('RENDER');
+//        console.log('RENDER');
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
         renderState = srs ? srs : renderState;
-//        console.log(renderState);
-//        console.log(renderState.toString());
         if (typeof(renderState) === 'object' && !$.isEmptyObject(renderState)) {
             const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') && renderState.ob !== undefined ? renderState.ob : {};
             rOb.game = game;
+            rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
+//            console.log(player.teamObj.hasLead, Boolean(player.isLead), rOb.renderButton);
+//            console.log(player);
             if (renderState.hasOwnProperty('partialName')) {
                 rOb.partialName = renderState.partialName;
             }

@@ -218,7 +218,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const renderTemplate = (targ, temp, ob, cb) => {
-//        console.log(`renderTemplate`, targ, temp);
+        console.log(`renderTemplate`, targ, temp);
+        console.log(ob);
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
