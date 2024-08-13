@@ -2,7 +2,7 @@
     td {
         padding-right: 20px;
     }
-    td:nth-child(even) {
+    #logDetail td:nth-child(even) {
         color: cyan;
     }
     #logDetail {
@@ -14,10 +14,21 @@
         display: none;
         padding: 10px;
     }
+    td.val_true, #logDetail td.val_true {
+        color: green;
+        font-weight: bold;
+    }
+    td.val_false, #logDetail td.val_false {
+        color: red;
+        font-weight: bold;
+    }
+    td.player {
+        color: cyan;
+    }
 </style>
 <table id='logtable'><tbody>
 {{#each logs}}
-<tr><td>{{timestampDisplay}}</td><td><a class='showLogDetail' id='{{id}}'>{{eventName}}</a></td><td>{{playerID}}</td></tr>
+<tr><td>{{timestampDisplay}}</td><td class='player'>{{player}}</td><td><a class='showLogDetail' id='{{id}}'>{{eventName}}</a></td><td>{{playerID}}</td><td class='val_{{var}}'>{{var}}</td></tr>
 {{/each}}
 </tbody></table>
 <div id='logDetail'></div>

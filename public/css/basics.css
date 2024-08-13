@@ -75,3 +75,9 @@ table, td, tr {
     font-style: italic;
     text-align: center;
 }
+.val_true {
+    color: green;
+}
+.val_false {
+    color: red;
+}

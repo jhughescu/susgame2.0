@@ -475,7 +475,7 @@ function initSocket(server) {
         }
         // log update display ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'updatelog') {
-            console.log(`'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' go logger`);
+//            console.log(`'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' go logger`);
             roomID = `updateLog`;
             socket.join(roomID);
             socket.on('getUpdateLog', cb => {

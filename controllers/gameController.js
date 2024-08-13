@@ -903,6 +903,8 @@ const registerPlayer = (ob, cb) => {
     }
 };
 const playerConnectEvent = (ob) => {
+//    console.log(`playerConnectEvent`);
+//    console.log(ob);
     const gameID = ob.gameID;
     const playerID = ob.socketID;
     const boo = ob.connect;
@@ -911,9 +913,10 @@ const playerConnectEvent = (ob) => {
         const playerArray = Object.values(game.playersFull);
         const socketIDs = playerArray.map(player => player.socketID);
         const player = playerArray[socketIDs.indexOf(playerID)];
+//        console.log(player);
         if (player) {
             player.connected = boo;
-            const eGame = Object.assign({'_updateSource': {event: 'gameController playerConnectEvent', var: boo, playerID: playerID}}, game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController playerConnectEvent', var: boo, playerID: playerID, pid: player.id}}, game);
             // eventEmitter.emit('gameUpdate', eGame);
             emitUpdate(eGame);
         }
@@ -962,29 +965,21 @@ const checkRound = (ob, cb) => {
             const rScores = game.scores.filter(item => item.startsWith(round));
             const gRound = game.persistentData.rounds[round];
             const teams = game.persistentData[gRound.teams];
-            const players = Object.values(game.playersFull).filter(p => p.teamObj.type === 2);
-//            console.log(`rScores`, rScores);
-//            console.log(`gRound`, gRound);
-//            console.log(`teams`, teams);
+            console.log(`gRound`, gRound);
+//            const players = Object.values(game.playersFull).filter(p => p.teamObj.type === 2);
+            const players = Object.values(game.playersFull).filter(p => p.teamObj.type === gRound.type);
             const pa = [];
             players.forEach(p => {
-//                console.log(p.index, p.teamObj.title)
-//                console.log(rScores);
-                rScores.forEach(s => {
-//                    console.log(s, s.split('_')[4], p.index.toString(), s.split('_')[4] === p.index.toString());
-                });
                 const sub = rScores.filter(item => item.split('_')[4] === p.index.toString());
-//                console.log(sub)
                 pa.push(Boolean(sub.length));
             });
-//            console.log(pa);
             const ta = [];
             teams.forEach(t => {
                 ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
             });
             const ra = gRound.type === 1 ? ta : pa;
-//            console.log(`ra`, ra);
-
+//            console.log(ra);
+            logController.addLog('round', {game: game.address, roundType: gRound.type, submissions: ra, playerSubs: pa, teamSubs: ta});
             if (cb) {
                 cb(ra);
             }
@@ -999,8 +994,6 @@ const checkRound = (ob, cb) => {
     }
 };
 const endRound = async (ob, cb) => {
-//    console.log(`endRound:`);
-//    console.log(ob);
     const gameID = ob.game;
     const round = ob.round;
     const game_id = `game-${gameID}`;
@@ -1010,7 +1003,6 @@ const endRound = async (ob, cb) => {
         if (session) {
             game.round = session.round;
             const eGame = Object.assign({'_updateSource': {event: 'gameController endRound'}}, game);
-            // eventEmitter.emit('gameUpdate', eGame);
             emitUpdate(eGame);
         }
     } else {

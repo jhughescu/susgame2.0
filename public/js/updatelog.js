@@ -9,12 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const logDiv = $('#logs');
     let detail = $('#logDetail');
     let game = null;
-    console.log(detail)
     let logs = null;
     let delay = null;
     const processLogs = (lin) => {
-//        console.log(`process: ${game}`);
-//        console.log(lin);
         const l = {};
         Object.entries(lin).forEach(([k, v]) => {
             if (v.game === game) {
@@ -29,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
             log.eventName = ev[1];
             log.timestampDisplay = `${ts.substr(0, 2)}:${ts.substr(2, 2)}:${ts.substr(4, 2)}`;
             log.id = `${i}`;
+            log.player = log.pid ? log.pid : log.playerID;
             delete log.event;
             const sk = Object.keys(log).sort();
             const lo = {};
@@ -38,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         }
         logs = l;
-//        console.log(logs);
         return l;
     };
     const setupLogs = () => {
@@ -48,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const el = $(this);
             clearTimeout(delay);
             delay = setTimeout(() => {
-//                detail.show();
                 window.renderTemplate('logDetail', 'object.table', logs[el.attr('id')]);
                 detail.fadeIn()
             }, 200);
@@ -58,13 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
             detail.hide();
             clearTimeout(delay);
         });
+//        window.scrollTo(0, document.body.scrollHeight);
+        $('html, body').animate({ scrollTop: $(document).height() }, 1000);
     };
 
     const showLogs = (logs) => {
         const ob = {
             logs: processLogs(JSON.parse(logs))
         };
-        console.log(ob.logs);
+//        console.log(ob.logs);
         const haveLogs = Boolean(Object.keys(ob.logs).length);
         if (!haveLogs) {
             ob.message = game === null ? `game must be specified as URL hash, e.g. ..updatelog#game-6tsu` : `no logs found for game "${game}"`;
@@ -83,11 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     $(document).on('mousemove', function(event) {
-        const y = event.clientY - detail.height() - 30;
+        const y = event.pageY - detail.height() - 30;
         const ya = y > 0 ? y : 0;
         detail.css({
             'top': `${ya}px`,
-            'left': `${event.clientX + 20}px`
+            'left': `${event.pageX + 20}px`
         });
     });
     window.addEventListener('hashchange', function() {
