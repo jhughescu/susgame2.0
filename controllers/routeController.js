@@ -132,7 +132,8 @@ app.get('/facilitatorloggedout', (req, res) => {
     res.sendFile(path.join(basePath, 'facilitatorloggedout.html'));
 });
 
-app.get('/facilitatordashboard', adminController.verifyTokenExpiration, (req, res) => {
+//app.get('/facilitatordashboard', adminController.verifyTokenExpiration, (req, res) => {
+app.get('/facilitatordashboard', (req, res) => {
 //    const token = req.headers.authorization;
 //    const token = req.query.token;
 //    const token = localStorage.getItem('token');

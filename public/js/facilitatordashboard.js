@@ -230,8 +230,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const onGameUpdate = (g) => {
 //        console.log(`###############################################`);
-        console.log(`gameUpdate:`, g);
-        console.log(g._updateSource);
+//        console.log(`gameUpdate:`, g);
+//        console.log(g._updateSource);
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
