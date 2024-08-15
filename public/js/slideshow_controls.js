@@ -89,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sb_next').attr({disabled: !presentation.hasNext});
     };
     const pEvent = (ev) => {
+        console.log(`pEvent`)
+        console.log(ev)
         if (ev) {
             const eOb = {gameID: game.uniqueID, event: ev};
             socket.emit(`presentationEvent`, eOb, (ob) => {
@@ -121,11 +123,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (trig.length > 1) {
             console.warn(`multiple slides contain same trigger action.`);
         } else {
-            const trigSlideRef = trig[0].ref;
-//            console.log(trigSlideRef);
-//            console.log(presentation);
-            if (trigSlideRef !== presentation.currentSlide) {
-                gotoSlide(trigSlideRef);
+            if (trig.length) {
+                const trigSlideRef = trig[0].ref;
+                if (trigSlideRef !== presentation.currentSlide) {
+                    gotoSlide(trigSlideRef);
+                }
             }
         }
     };

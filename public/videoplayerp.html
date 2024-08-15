@@ -102,12 +102,20 @@
             console.log('test success');
         }
         const videoAction = (ac) => {
+
             switch (ac) {
                 case 'play':
                     embedApi.playVideo();
                     break;
                 case 'pause':
                     embedApi.pauseVideo();
+                    break;
+                case 'playpause':
+                    if (embedApi.isPaused) {
+                        embedApi.playVideo();
+                    } else {
+                        embedApi.pauseVideo();
+                    }
                     break;
                 case 'unmute':
                     embedApi.unmuteVideo();

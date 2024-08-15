@@ -28,8 +28,8 @@ const previousSlide = (cb) => {
 };
 const gotoSlide = (sl, cb) => {
 //    console.log(`gotoSlide, presentation:`);
-    console.log(`gotoSlide, slide:`);
-    console.log(sl);
+//    console.log(`gotoSlide, slide:`);
+//    console.log(sl);
 //    console.log(presentation);
     if (presentation) {
         if (presentation.gotoSlide) {
@@ -55,6 +55,12 @@ const refreshWindow = () => {
 const play = (cb) => {
     const rOb = {address: game.address, action: 'play'};
     presentation.play(cb);
+    eventEmitter.emit('videoAction', rOb);
+    rOb.action = 'playpause';
+    eventEmitter.emit('videoAction', rOb);
+};
+const playpause = (cb) => {
+    const rOb = {address: game.address, action: 'playpause'};
     eventEmitter.emit('videoAction', rOb);
 };
 const pause = (cb) => {
@@ -84,7 +90,7 @@ const pEvent = (ob, cb) => {
                     previousSlide(cb);
                     break;
                 case 'play':
-                    play(cb);
+                    playpause(cb);
                     break;
                 case 'pause':
                     pause(cb);

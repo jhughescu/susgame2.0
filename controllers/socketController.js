@@ -406,7 +406,7 @@ function initSocket(server) {
                 gameController.getTotals1(gameID, cb);
             });
             socket.on('submitScore', (ob, cb) => {
-//                    console.log(`submitScore`)
+                console.log(`############################ submitScore`);
                 const sp = gameController.scoreSubmitted(ob, cb);
 //                io.to(facilitator).emit('scoreSubmitted', sp);
                 socket.emit('scoreSubmitted', sp);
@@ -662,7 +662,7 @@ function initSocket(server) {
     eventEmitter.on('scoresUpdated', (game) => {
 
         // NOTE scoresUpdated is being used by the presentation but should really be replaced by the more general & useful gameUpdate event
-        console.log(`on scoresUpdated:`);
+//        console.log(`on scoresUpdated:`);
 
         const rooms = ['-pres', '-fac', '']; /* empty value for the player clients */
         rooms.forEach(r => {
@@ -801,7 +801,7 @@ function initSocket(server) {
         io.to(`${slOb.address}-pres`).emit('updateProperty', slOb);
     });
     eventEmitter.on('videoAction', aOb => {
-        console.log('an action for the presentation', aOb);
+//        console.log('an action for the presentation', aOb);
         const vidRoom = `${aOb.address}-videoPlayer`;
         showRoomSize(vidRoom);
         io.to(vidRoom).emit('videoAction', aOb);
@@ -822,7 +822,17 @@ function initSocket(server) {
         console.log(`update log updated: ${JSON.parse(ob).update_0.event}`);
         const roomID = `updateLog`;
         io.to(roomID).emit('logsUpdated', ob);
-    })
+    });
+    eventEmitter.on('roundComplete', game => {
+        const rooms = ['-pres', '-fac', ''];
+        rooms.forEach(r => {
+            const room = `${game.address}${r}`;
+            console.log(`emit roundComplete to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+            const eGame = Object.assign({}, game);
+            eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
+            io.to(room).emit('roundComplete', eGame);
+        });
+    });
 
 };
 

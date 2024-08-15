@@ -65,6 +65,11 @@
 }
 #slideshow_controls td {
     padding: 0px 10px 0px 0px;
+    border-collapse: collapse;
+}
+#slideshow_controls td span {
+    background-color: #030c3e;
+    padding: 3px;
 }
 .detailwrapper {
     width: 100%;

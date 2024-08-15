@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const emitRestoreGame = () => {
         socket.emit('restoreGame', JSON.stringify(session), (rgame) => {
             // Extra check to ensure game is not updated unnecessarily
-            if (game == null) {
-//                console.log('I SHOULD ONLY HAPPEN ONCE')
+            if (game === null) {
+                console.log('I SHOULD ONLY HAPPEN ONCE')
                 clearTimeout(gameSeekTimeout);
                 addToLogFeed('game restore complete - game can recommence');
                 updateGame(rgame);
@@ -219,13 +219,14 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`finale`, JSON.parse(JSON.stringify(game)));
     };
     const onScoreChange = (diff) => {
-//        console.log(`score change detected:`);
+        console.log(`score change detected:`);
 
         if (diff.length > 1) {
             console.warn(`multiple score changes detected - should not be possible, check code`);
         }
         const sc = diff.map(unpackScore)[0];
         window.findRoundTrigger(sc.round);
+        renderScoreboard();
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
     const onGameUpdate = (g) => {
@@ -1121,8 +1122,6 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(str);
     };
     const showRoundCompleter = () => {
-//        const r = parseInt(game.round.toString().replace(/\D/g, ''));
-//        console.log(`showRoundCompleter`)
         const r = window.justNumber(game.round);
         const pf = game.playersFull;
         if ($.isEmptyObject(pf)) {
@@ -1149,15 +1148,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             }
-//            console.log(`scorers`, scorers);
-//            console.log(`scorePackets`, scorePackets);
             scorers.forEach(t => {
-//                console.log(t);
                 const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
                 if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
                     rOb.scorers.push(Object.assign({flag: round.type === 1 ? t.title : `${t.teamObj.title} ${t.id}`}, t));
-                } else {
-//                    console.log(`scorer HAS scored`);
                 }
             });
             $('#modal').modal({
@@ -1172,22 +1166,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     tl.on('click', function () {
                         const tOb = {isLead: true, currentRoundComplete: false};
                         const id = $(this).attr('id').replace('link_', '');
-//                        console.log(`id: ${id}, round type: ${round.type}`);
                         if (round.type === 1) {
                             tOb.teamObj = game.persistentData.teams[`t${id}`];
                         } else {
                             game.teams.forEach((t, i) => {
-//                                console.log(t)
                                 if (t.indexOf(id, 0) > -1) {
                                     tOb.teamObj = game.persistentData.teams[`t${i}`];
                                 }
                             });
                         }
-//                        const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
-//                        console.log(tOb.teamObj.id);
-//                        console.log(game.teams[tOb.teamObj.id]);
                         const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
-//                        console.log('pl', pl);
                         tOb.game = game;
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
@@ -1416,8 +1404,89 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const developScores = async (cb) => {
+        // prep scores for display
+        if (game) {
+            const ob = {scores: game.scores};
+            const gp = game.persistentData;
+            const ts = gp.mainTeams;
+//            const ro = {};
+            const ro = [];
+            const mapT1 = {
+                t: 'team',
+                gt: 'grandTotal',
+                s: 'self',
+                s1: 'pv1',
+                s2: 'pv2',
+                st: 'pvTotal'
+            };
+            let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+            if (t1) {
+                t1 = JSON.parse(t1);
+                t1 = roundAll(t1);
+            }
+            socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+                ts.forEach(t => {
+                    const mine = sp.filter(p => p.dest === t.id);
+                    const tOb = {
+                        team: `${t.title.substr(0, 10)}${t.title.length > 10 ? '..' : ''}`,
+                        id: t.id,
+                        r1: mine.filter(p => p.round === 1),
+                        r2s5: mine.filter(p => p.round === 2).filter(p => p.src === 5),
+                        r2s6: mine.filter(p => p.round === 2).filter(p => p.src === 6),
+                        r2s5Summary: {total: 0, average: 0, scores: []},
+                        r2s6Summary: {total: 0, average: 0, scores: []}
+                    };
+                    tOb.r1Summary = {total: tOb.r1.length === 0 ? 0 : tOb.r1[0].val};
+                    tOb.r2s5.forEach(p => {tOb.r2s5Summary.total += p.val, tOb.r2s5Summary.scores.push(p.val)});
+                    tOb.r2s6.forEach(p => {tOb.r2s6Summary.total += p.val, tOb.r2s6Summary.scores.push(p.val)});
+                    tOb.r2s5Summary.average = tOb.r2s5.length === 0 ? 0 : (tOb.r2s5Summary.total / tOb.r2s5.length);
+                    tOb.r2s6Summary.average = tOb.r2s6.length === 0 ? 0 : (tOb.r2s6Summary.total / tOb.r2s6.length);
+                    tOb.r1Total = tOb.r1Summary.total;
+                    tOb.r2s5All = tOb.r2s5Summary.scores.length === 0 ? 'n/a' : tOb.r2s5Summary.scores.join(',');
+//                    tOb.r2s5Summary.scoresStr =
+                    tOb.r2s5Av = tOb.r2s5Summary.average;
+                    tOb.r2s6All = tOb.r2s6Summary.scores.length === 0 ? 'n/a' : tOb.r2s6Summary.scores.join(',');
+                    tOb.r2s6Av = tOb.r2s6Summary.average;
+//                    tOb.r2Total = tOb.r2s5Summary.total + tOb.r2s5Summary.total;
+                    tOb.r2Total = tOb.r2s5Summary.average + tOb.r2s6Summary.average;
+                    tOb.grandTotal = tOb.r2Total * tOb.r1Total;
+//                    ro[`t${tOb.id}`] = tOb;
+                    ro.push(tOb);
+                });
+                sortBy(ro, 'grandTotal', true);
+                if (cb) {
+                    cb(ro);
+                }
+            });
+        }
+    };
+    const renderScoreboard = async () => {
+        developScores(o => {
+//            console.log(o);
+            const newOb = {totalsObject: o};
+            renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
+                console.log('run it');
+                document.querySelectorAll('.aligndecimal').forEach(function(el) {
+                    let number = el.textContent.trim();
+                    let [integer, decimal] = number.split('.');
+
+                    if (!decimal) {
+                        decimal = ''; // Make sure decimal is defined
+                    }
+
+                    let paddedNumber = `${integer.padStart(3, '\u00A0')}${parseInt(number) === parseFloat(number) ? '\u00A0': '.'}${decimal.padEnd(1, '\u00A0')}`;
+                    $(el).html(paddedNumber);
+                    console.log(number, parseInt(number) === parseFloat(number))
+//                    el.setAttribute('data-padded', paddedNumber);
+                });
+
+            });
+        });
+    };
     const renderScores = async () => {
         if (game) {
+            console.log('renderScores')
             const ob = {scores: game.scores};
             const gp = game.persistentData;
             // run on a timeout to avoid multiple interations in dev
@@ -1522,7 +1591,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //                    console.log(`render scores with`, ob);
                     renderTemplate('contentScores', 'facilitator.scores', ob, () => {
                         setupScoreControls();
-                    })
+                    });
+
                 })
             }, 1000);
 
@@ -1599,6 +1669,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 //                window.createCopylinks();
                 window.createCopyLinks();
+                renderScoreboard();
 //                console.log(`look for the pres: ${game.address}`);
 //                let uc = $('.copylink');
 //                uc.off('click').on('click', function() {
@@ -1626,18 +1697,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const initSession = async () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
         setupBaseLinks();
-//        console.log(`initSession, session:`, session);
-//        console.log(session);
-//        const dm = await window.checkDevMode();
-//        console.log('powwwwwwwwwwwwww');
-//        console.log(`devMode: ${dm}`);
-//        console.log(`session.state: ${session.state}`);
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
-//            console.log('session already started, restore');
             restoreGame();
-        } else {
-//            console.log('session not started, no action');
         }
     };
     const getSession = (sessionId) => {
@@ -1786,6 +1848,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const slideTest = async (n) => {
         // tests whether a slide can be loaded, returns Boolean. By default return true unless a test is defined by the action property
+        if (!game) {
+            return;
+        }
         const sl = game.presentation.slideData.slideList[n];
         let test = true;
         let tested = false;
@@ -1831,7 +1896,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`${error}`);
         }
         return {tested: tested, test: test, ac: ac};
-    }
+    };
 
     function handleChange(prop) {
 //        console.log(`change detected for property ${prop}`);
@@ -1839,8 +1904,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`Game has changed, players updated with non-string values: ${prop}`);
 //            console.log(game.players);
         }
-    }
-
+    };
     // Define a function to set up the watch
     function setupWatch(obj, callback) {
         // Iterate over each property of the object
@@ -1859,7 +1923,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-    }
+    };
 
 
     const sockInit = () => {
@@ -1925,7 +1989,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('scoreSubmitted', (ob) => {
         // Nothing here, look for gameUpdate instead
-
+//        console.log('score hup');
     });
     socket.on('presentationSlideUpdated', (ob) => {
 //        console.log('presentationSlideUpdated', ob);
@@ -1936,6 +2000,14 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('gotoNext', () => {
 //        console.log(`facilitatorDashboard hears gotoNext`);
         window.pEvent('next');
+    });
+    socket.on('roundComplete', (game) => {
+        addToLogFeed(`yes, round ${game.round} complete`, true);
+//        console.log(`game.rounds[game.round].completionMsg`)
+//        console.log(game.persistentData.rounds[game.round].completionMsg);
+        if (game.round > 0 && game.persistentData.rounds[game.round].hasOwnProperty('completionMsg')) {
+            alert(game.persistentData.rounds[game.round].completionMsg);
+        }
     });
 
 
@@ -1957,6 +2029,21 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log($('#modal'));
     }
     window.closeModal = closeModal;
+    window.devCompleteR1 = () => {
+        const t = game.persistentData.mainTeams;
+        t.forEach((tm, i) => {
+            console.log(i, Math.round(Math.random() * 5))
+            const sob = {scoreCode: {src: i, dest: i, val: Math.round(Math.random() * 5)}, game: game.uniqueID, client: i};
+            socket.emit('submitScore', sob, (scores) => {
+                window.setupAllocationControl();
+            });
+        });
+//        const sob = {scoreCode: {src: 4, dest: 4, val: 12}, game: game.uniqueID, client: 4};
+//        socket.emit('submitScore', sob, (scores) => {
+//            window.setupAllocationControl();
+//        });
+    };
+    window.rScores = renderScoreboard;
     //
     domInit();
 });

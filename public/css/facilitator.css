@@ -202,7 +202,7 @@ position: relative;
     font-size: 0.8rem;
 }
 #scoresummaries td:nth-child(even), #scoresummaries .dynamic {
-    color: cyan;
+/*    color: cyan;*/
 }
 #scoresummaries .nostripe td:nth-child(even) {
 /*    color: inherit;*/
@@ -218,8 +218,19 @@ position: relative;
     color: cyan;
 }
 #scoresummaries .totals td.grand {
+    font-family: "Courier New", Courier, monospace;
     background-color: rgba(0, 0, 0, 0.53);
     color: yellow;
+    text-align: right;
+}
+td.grand:before {
+    content: attr(data-padded);
+    visibility: hidden;
+/*    display: none;*/
+    color: red;
+}
+.grand[data-padded]:before {
+    visibility: visible;
 }
 #scoresummaries .totals tr:nth-child(2) td:first-child {
     color: #01f401;

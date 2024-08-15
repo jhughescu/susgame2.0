@@ -218,8 +218,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const renderTemplate = (targ, temp, ob, cb) => {
-        console.log(`renderTemplate`, targ, temp);
-        console.log(ob);
+//        console.log(`renderTemplate`, targ, temp);
+//        console.log(ob);
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         const myPlayer = player === null ? pl : player;
-//        console.log(`judged player`, myPlayer);
+        console.log(`judged player`, myPlayer);
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
@@ -478,10 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
-//        console.log(`setupAllocationControl`);
-//        console.log(player);
         const myPlayer = player === null ? inOb : player;
-//        console.log('myPlayer', myPlayer);
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
@@ -490,18 +487,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const desc = $(`#actionDesc`);
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const descMax = 150;
-//        console.log()
         const hasS = await thisRoundScored(myPlayer);
-//        console.log(`hasS`, hasS);
         if (hasS) {
-//            console.log('see if the round has been scored already:');
-//            console.log(hasS);
             if (hasS.hasScore) {
-//                console.log('has score');
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
-//                    console.log('test the values')
-//                    console.log(v)
                     ints.prop('disabled', true);
                     ints.addClass('disabled');
                     val.html(hasS.scorePacket.val);
@@ -509,7 +499,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     action.val(v.action);
                 });
             } else {
-//                console.log('no score, OK to go')
                 ints.off('click');
                 butPlus.on('click', () => {
                     let v = parseInt(val.html());
@@ -526,9 +515,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
                 desc.on('input', function () {
-//                    console.log(`${$(this).val().length}/${descMax}`);
                     const t = $(this).val();
-
                     if (containsEmail(t)) {
                         alert('Please do not include email addresses.')
                     }
@@ -538,7 +525,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     const summ = `${t.length}/${descMax}`;
                     const label = $(this).parent().find('#moveDescLabel');
                     const base = label.html().replace(/[()/\d-]/g, ' ').replace(/\s+$/, '');
-//                    console.log(base)
                     label.html(`${base}   (${summ})`);
                 });
                 submit.on('click', () => {
@@ -551,17 +537,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         const tID = myPlayer.teamObj.id;
                         let t = myPlayer.teamObj.id;
                         const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
-//                        console.log(`the submission:`);
-//                        console.log(socket);
                         socket.emit('submitValues', vob);
-//                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: player.index};
                         const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: justNumber(myPlayer.id)};
                         socket.emit('submitScore', sob, (scores) => {
                             setupAllocationControl();
-//                            window.location.reload();
                         });
-
-    //                    setupAllocation(false);
                     }
                 });
             }

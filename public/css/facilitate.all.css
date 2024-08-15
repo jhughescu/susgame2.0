@@ -4,7 +4,12 @@ The panel which wil contain all required facilitate controls
 .panel {
     border: 1px solid white;
     position: absolute;
-
+}
+.panel div {
+    font-size: 0.8rem;
+}
+.panel .title {
+    font-size: 1.3rem;
 }
 #facilitateSlideshow {
     width: 430px;
@@ -34,6 +39,12 @@ The panel which wil contain all required facilitate controls
     top: 120px;
     height: 40px;
     width: 470px;
+}
+#scoreboard {
+    left: 950px;
+    width: 500px;
+/*    top: 0px;*/
+    height: 500px;
 }
 .slidelist {
     top: 40px;

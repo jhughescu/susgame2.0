@@ -1,0 +1,6 @@
+<table class='nostripe totals'><tbody>
+    <tr><th>team</th><th>self</th><th>PV 1</th><th>PV 1 av.</th><th>PV 2</th><th>PV 2 av.</th><th>PV total</th><th>total</th></tr>
+    {{#each totalsObject}}
+    <tr><td>{{this.team}}</td><td class='emphasis'>{{self}}</td><td>{{set5}}</td><td>{{pv1}}</td><td>{{set6}}</td><td>{{pv2}}</td><td class='emphasis'>{{pvTotal}}</td><td class='grand'>{{grandTotal}}</td></tr>
+    {{/each}}
+</tbody></table>

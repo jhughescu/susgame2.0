@@ -956,6 +956,7 @@ const startRound = async (ob) => {
     }
 };
 const checkRound = (ob, cb) => {
+    console.log(`checkRound`);
     // Check submitted scores against current round
     const gameID = typeof(ob) === 'string' || typeof(ob) === 'number' ? ob : ob.gameID;
     const game = games[`game-${gameID}`];
@@ -965,21 +966,22 @@ const checkRound = (ob, cb) => {
             const rScores = game.scores.filter(item => item.startsWith(round));
             const gRound = game.persistentData.rounds[round];
             const teams = game.persistentData[gRound.teams];
-            console.log(`gRound`, gRound);
 //            const players = Object.values(game.playersFull).filter(p => p.teamObj.type === 2);
             const players = Object.values(game.playersFull).filter(p => p.teamObj.type === gRound.type);
             const pa = [];
             players.forEach(p => {
-                const sub = rScores.filter(item => item.split('_')[4] === p.index.toString());
+                const comp = gRound.type === 1 ? p.index.toString() : tools.justNumber(p.id).toString();
+                const sub1 = rScores.filter(item => item.split('_')[4] === p.index.toString());
+                const sub2 = rScores.filter(item => item.split('_')[4].toString() === tools.justNumber(p.id).toString());
+                const sub = rScores.filter(item => item.split('_')[4].toString() === comp);
                 pa.push(Boolean(sub.length));
             });
             const ta = [];
             teams.forEach(t => {
                 ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
             });
-            const ra = gRound.type === 1 ? ta : pa;
-//            console.log(ra);
-            logController.addLog('round', {game: game.address, roundType: gRound.type, submissions: ra, playerSubs: pa, teamSubs: ta});
+            const ra = gRound.type === 1 || gRound.type === 2 ? ta : pa;
+            logController.addLog('roundAll', {game: game.address, roundType: gRound.type, submissions: ra, playerSubs: pa, teamSubs: ta, rScores: rScores});
             if (cb) {
                 cb(ra);
             }
@@ -1040,6 +1042,9 @@ const scoreSubmitted = async (ob, cb) => {
                     const eGame = Object.assign({_updateSource: {event: 'gameController scoreSubmitted', src: ob}}, game);
                     eventEmitter.emit('scoresUpdated', eGame);
                     if (roundComplete) {
+                        eventEmitter.emit('roundComplete', eGame);
+                    };
+                    if (roundComplete) {
                         endRound(ob);
                     }
                 } else {
@@ -1065,6 +1070,7 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     if (game) {
         sc.forEach(s => {
             let sp = new ScorePacket(game.round, s.src, s.dest, s.val, s.client);
+//            console.log(sp);
             let p = sp.getPacket();
             let d = sp.getDetail();
             scOut.push(p);
@@ -1072,9 +1078,19 @@ const scoreForAverageSubmitted = async (ob, cb) => {
         const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
         if (session) {
             game.scores = session.scores;
-            console.log(`checkRound:`, checkRound(ob.game));
-            const roundComplete = checkRound(ob.game).indexOf(false) === -1;
+//            console.log(session.scores)
+//            console.log(`checkRound:`, checkRound(ob.game));
+            const roundDetail = checkRound(ob.game);
+            logController.addLog('round', {game: game.address, roundType: game.round.type, submissions: roundDetail});
+//            console.log(`roundDetail`);
+            console.log(roundDetail);
+            const roundComplete = roundDetail.indexOf(false) === -1;
+//            console.log(`roundComplete: ${roundComplete}`);
             const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob}}, game);
+            eventEmitter.emit('scoresUpdated', eGame);
+            if (roundComplete) {
+                eventEmitter.emit('roundComplete', eGame);
+            }
             eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 endRound(ob);
