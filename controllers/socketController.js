@@ -740,8 +740,8 @@ function initSocket(server) {
     });
     eventEmitter.on('updatePlayers', (ob) => {
 //        log(`teamsAssigned: ${game.uniqueID}, address: ${game.address}`);
-        console.log(`we will emit ${ob.update}`);
-        log(ob);
+//        console.log(`we will emit ${ob.update}`);
+//        log(ob);
         const add = ob.game.address;
         const room = io.sockets.adapter.rooms.get(add);
         if (room) {
@@ -793,6 +793,7 @@ function initSocket(server) {
 //        if (slOb.hasOwnProperty('action')) {
             gameController.presentationAction(slOb);
 //        }
+        io.to(`${slOb.address}-fac`).emit('onShowSlide', slOb);
         io.to(`${slOb.address}-pres`).emit('showSlide', slOb);
     });
     eventEmitter.on('updatePresentationProperty', (slOb) => {
@@ -814,12 +815,12 @@ function initSocket(server) {
         io.to(ID).emit('gameReady', game);
     });
     eventEmitter.on('refreshPresentationWindow', gOb => {
-        console.log(`refresh pres window with address ${gOb.address}`);
+//        console.log(`refresh pres window with address ${gOb.address}`);
         const r = `${gOb.address}-pres`;
         io.to(r).emit('refreshWindow');
     });
     eventEmitter.on('updateLogUpdated', ob => {
-        console.log(`update log updated: ${JSON.parse(ob).update_0.event}`);
+//        console.log(`update log updated: ${JSON.parse(ob).update_0.event}`);
         const roomID = `updateLog`;
         io.to(roomID).emit('logsUpdated', ob);
     });
@@ -827,7 +828,7 @@ function initSocket(server) {
         const rooms = ['-pres', '-fac', ''];
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
-            console.log(`emit roundComplete to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//            console.log(`emit roundComplete to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
             const eGame = Object.assign({}, game);
             eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
             io.to(room).emit('roundComplete', eGame);

@@ -1338,8 +1338,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         list[i] = p.id;
                     }
                 }
+                const l = 10;
                 if (list[i].teamObj) {
-                    list[i].teamObj.titleClip = `${list[i].teamObj.title.substr(0, 20)}${list[i].teamObj.title.length > 20 ? '.. ' : ''}`;
+                    list[i].teamObj.titleClip = `${list[i].teamObj.title.substr(0, l)}${list[i].teamObj.title.length > l ? '.. ' : ''}`;
                 }
             });
             const pso = playerSortOrder;
@@ -1466,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(o);
             const newOb = {totalsObject: o};
             renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
-                console.log('run it');
+//                console.log('run it');
                 document.querySelectorAll('.aligndecimal').forEach(function(el) {
                     let number = el.textContent.trim();
                     let [integer, decimal] = number.split('.');
@@ -1477,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     let paddedNumber = `${integer.padStart(3, '\u00A0')}${parseInt(number) === parseFloat(number) ? '\u00A0': '.'}${decimal.padEnd(1, '\u00A0')}`;
                     $(el).html(paddedNumber);
-                    console.log(number, parseInt(number) === parseFloat(number))
+//                    console.log(number, parseInt(number) === parseFloat(number))
 //                    el.setAttribute('data-padded', paddedNumber);
                 });
 
@@ -1846,6 +1847,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
+    const onShowSlide = async (slOb) => {
+        // To be used to trigger actions on slide auto-advance
+
+        // Not working yet - doesn't fire until another action is aclled, so can't be used to trigger pres actions.
+        // Either find a way to trigger this earlier in the event stack OR add a flag to the object so that the socket emit only occurs when activated via autoplay.
+//        console.log(`onShowSlide`);
+//        console.log(slOb);
+        const v = slOb.ref;
+        const test = await slideTest(v);
+        return;
+
+
+        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await slideTest(v)};
+        console.log(`slideClick`, gOb);
+//        console.log(window.slideTest(v));
+        socket.emit('presentationEvent', gOb, (ob) => {
+            eventUpdate(ob);
+        });
+    };
     const slideTest = async (n) => {
         // tests whether a slide can be loaded, returns Boolean. By default return true unless a test is defined by the action property
         if (!game) {
@@ -1866,7 +1886,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         //////////////////////////////////////////////////////////////////////////////////////////// another use of the tryStartRound - which one to keep??
 
-
+                        console.log('slide test calls tryStartRound')
                         test = tryStartRound(r);
                     }
 //                    console.log(ac);
@@ -1994,11 +2014,14 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('presentationSlideUpdated', (ob) => {
 //        console.log('presentationSlideUpdated', ob);
     });
+    socket.on('onShowSlide', slOb => {
+        onShowSlide(slOb);
+    });
     socket.on('gameWarning', (ob) => {
         alert(ob.warning)
     });
     socket.on('gotoNext', () => {
-//        console.log(`facilitatorDashboard hears gotoNext`);
+        console.log(`facilitatorDashboard hears gotoNext`);
         window.pEvent('next');
     });
     socket.on('roundComplete', (game) => {

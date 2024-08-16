@@ -667,7 +667,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') && renderState.ob !== undefined ? renderState.ob : {};
             rOb.game = game;
-            rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
+            if (Boolean(player.teamObj)) {
+                rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
+            }
 //            console.log(player.teamObj.hasLead, Boolean(player.isLead), rOb.renderButton);
 //            console.log(player);
             if (renderState.hasOwnProperty('partialName')) {

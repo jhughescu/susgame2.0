@@ -1104,7 +1104,7 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     }
 };
 const valuesSubmitted = async (ob) => {
-    console.log(`#################################### give ####### me ####### a ####### break #####################`);
+//    console.log(`#################################### give ####### me ####### a ####### break #####################`);
     if (ob.hasOwnProperty('values')) {
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
         if (session) {
@@ -1116,7 +1116,7 @@ const valuesSubmitted = async (ob) => {
             }
         }
     } else {
-        console.log('no values sent')
+        console.log('no values sent');
     }
 };
 const presentationAction = (ob) => {

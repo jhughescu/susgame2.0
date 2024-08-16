@@ -152,7 +152,9 @@
         "teams": "stakeholders"
     },
     "rounds": [
-        {"n": 1, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1, "submissions": ["scores", "values"]},
+        {"n": 1, "flag": "e1r1", "action": "startRoundE1R1", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1, "submissions": ["scores", "values"],
+            "completionMsg": "All teams have submitted scores, the round is complete."
+        },
         {"n": 2, "flag": "e1r2", "action": "startRoundE1R2", "id": "publicvoices 1", "template": "vote", "teams": "secondaryTeams", "type": 2, "submissions": ["scores"],
             "completionMsg": "At least one member of each team has submitted a score, marking the round as complete. However some players may not yet have submitted a score."
         },

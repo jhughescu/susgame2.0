@@ -110,12 +110,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const onGameUpdate = (rGame) => {
 //        console.log(`a game update: new round? ${game.round !== rGame.round}`);
 //        console.log(`watching for ${watchFor}`);
+//        console.log(rGame);
+//        console.log(rGame._updateSource);
         if (watchFor) {
 //            console.log(game[watchFor] === rGame[watchFor]);
 //            console.log(game[watchFor]);
 //            console.log(rGame[watchFor]);
-            if (game[watchFor] !== rGame[watchFor]) {
+            if (game[watchFor].toString() !== rGame[watchFor].toString()) {
 //                console.log(`watch diff (${watchFor}): ${rGame[watchFor]}`);
+//                console.log(game[watchFor].toString());
+//                console.log(rGame[watchFor].toString());
+//                console.log(rGame[watchFor].toString() === game[watchFor].toString());
                 if (watchFor === 'scores') {
 
                 }
@@ -544,6 +549,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const updateSlide = () => {
+        console.log(`updateSlide`);
         const slOb = currentSlideObject;
         if (slOb) {
             if (slOb.action) {

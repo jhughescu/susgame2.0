@@ -185,7 +185,7 @@ app.post('/admin/getSessions', async (req, res) => {
     sessionController.getSessions(req, res);
 });
 app.post('/admin/getSession', async (req, res) => {
-    console.log('request to admin/getSession');
+//    console.log('request to admin/getSession');
     sessionController.getSession(req, res);
 });
 

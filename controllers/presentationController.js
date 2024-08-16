@@ -89,8 +89,11 @@ const pEvent = (ob, cb) => {
                 case 'previous':
                     previousSlide(cb);
                     break;
-                case 'play':
+                case 'playpause':
                     playpause(cb);
+                    break;
+                case 'play':
+                    play(cb);
                     break;
                 case 'pause':
                     pause(cb);

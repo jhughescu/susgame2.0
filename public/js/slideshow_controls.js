@@ -57,15 +57,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         window.renderTemplate('slidelist', 'facilitator.slidelist', sl, () => {
             $('.slide_link').off('click').on('click', function () {
-                const sID = parseInt($(this).attr('id').split('_')[2]);
+//                const sID = parseInt($(this).attr('id').split('_')[2]);
+                const sID = parseInt($(this).closest('.slide_info').attr('id').split('_')[2]);
+                console.log(`click the slide link, call gotoSlide`);
                 gotoSlide(sID);
-            })
+            });
+            $('.replay').off('click').on('click', function () {
+                const sID = parseInt($(this).closest('.slide_info').attr('id').split('_')[2]);
+//                console.log(`clicked ${sID}`);
+                const eOb = {gameID: game.uniqueID, event: 'reload'};
+                socket.emit(`presentationEvent`, eOb, (ob) => {
+                    eventUpdate(ob);
+                });
+//                const sID = parseInt($(this).attr('id').split('_')[2]);
+//                gotoSlide(sID);
+            });
         });
     };
     const gotoSlide = async (v) => {
 //        const
-        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await window.slideTest(v)};
-//        console.log(`slideClick`, gOb.test);
+//        return;
+        console.log(`gotoSlide will call slideTest`);
+        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v};
+//        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await window.slideTest(v)};
+        console.log(`slideClick`, gOb);
 //        console.log(window.slideTest(v));
         socket.emit('presentationEvent', gOb, (ob) => {
             eventUpdate(ob);
@@ -89,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sb_next').attr({disabled: !presentation.hasNext});
     };
     const pEvent = (ev) => {
-        console.log(`pEvent`)
-        console.log(ev)
+//        console.log(`pEvent`);
+//        console.log(ev);
         if (ev) {
             const eOb = {gameID: game.uniqueID, event: ev};
             socket.emit(`presentationEvent`, eOb, (ob) => {
@@ -101,7 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const setupControls = () => {
-        const b = base.find('.buttons').find('button');
+        let b = base.find('.buttons').find('button');
+        b = b.add($('.slideshow_control'));
 //        console.log(b);
         b.each((bt, el) => {
             let btn = $(el);
@@ -117,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const findRoundTrigger = (r) => {
         // looks for a slide which is to be triggered by scoring for a given round
-//        console.log(`look for a trigger for round ${r}`);
+        console.log(`look for a trigger for round ${r}`);
         const sl = presentation.slideData.slideList;
         const trig = sl.filter(o => o.trigger && o.trigger.includes(`scoreRound:${r}`));
         if (trig.length > 1) {
@@ -126,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (trig.length) {
                 const trigSlideRef = trig[0].ref;
                 if (trigSlideRef !== presentation.currentSlide) {
+                    console.log(`findRoundTrigger will call gotoSlide`);
                     gotoSlide(trigSlideRef);
                 }
             }
