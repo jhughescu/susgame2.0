@@ -362,11 +362,10 @@ function initSocket(server) {
 //                io.to(clOb.socketID).emit('forceRefresh');
             });
             socket.on('testPassword', async (ob, cb) => {
-    //            console.log(`testPassword`);
-                let s = await sessionController.getSessionPassword(ob.session);
+                let s = ob.adminOnly ? true : await sessionController.getSessionPassword(ob.session);
                 if (s) {
                     if (cb) {
-                        cb(s.password === ob.pw);
+                        cb(ob.pw === s.password || ob.pw === process.env.ADMIN_PASSWORD);
                     }
                 } else {
                     console.log(`no session found with id ${ob.session}`)
@@ -458,6 +457,23 @@ function initSocket(server) {
                 const rid = `${ob.game}-pres`;
 //                console.log(`pre rooms: ${rid} ${showRoomSize(rid)}`);
                 io.to(rid).emit('toggleOverlay', ob.type);
+            });
+            socket.on('resetEndedGame', (ob, cb) => {
+//                console.log(`resetEndedGame`);
+                const ok = ob.pw === process.env.ADMIN_PASSWORD;
+                if (ok) {
+                    sessionController.resetSession(ob.session, cb);
+                } else {
+                    if (cb) {
+                        cb(ok);
+                    }
+                }
+//                cb(ok);
+            });
+            socket.on('test', (cb) => {
+                if (cb) {
+                    cb();
+                }
             });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -554,7 +570,7 @@ function initSocket(server) {
         if (Q.role === 'displaygame') {
             const roomID = `/${Q.id}-displaygame`;
             socket.join(roomID);
-//            console.log(`roomID: ${roomID}`);
+
             showRoomSize(roomID);
             socket.on('getGame', (id, cb) => {
                 const g = gameController.getGameWithAddress(id);
@@ -564,6 +580,28 @@ function initSocket(server) {
             });
         }
 
+
+        // session display client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (Q.role === 'adminsessiondisplay') {
+            const roomID = `/${Q.id}-displaysession`;
+            socket.join(roomID);
+            console.log(`displaygame client connected, roomID: ${roomID}`);
+            socket.on('getSession', (id, cb) => {
+                const sessions = sessionController.getSessionsSock((all) => {
+                    const seshes = all.filter(s => s.address === id);
+                    if (cb) {
+                        cb(seshes.length > 0 ? seshes[0] : false);
+                    }
+                });
+            });
+            socket.on('getGame', (id, cb) => {
+                const g = gameController.getGameWithAddress(id);
+                if (cb) {
+                    cb(g);
+                }
+            });
+        }
+         // end session display client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
@@ -834,7 +872,13 @@ function initSocket(server) {
             io.to(room).emit('roundComplete', eGame);
         });
     });
-
+    eventEmitter.on('sessionUpdated', (s) => {
+        console.log('I have a session update:');
+//        console.log(s);
+        const roomID = `${s.address}-displaysession`;
+        console.log(`emit onSessionUpdated to room ${roomID} which has ${getRoomSockets(roomID).size} socket(s)`);
+        io.to(roomID).emit('onSessionUpdated', s);
+    });
 };
 
 const emitAll = (ev, o) => {

@@ -1,6 +1,8 @@
-advanced controls
+
 <div class='vertstack' id='contentControls'>
-    <button id='showqr'>Show/hide QR code</button>
+<!--    <div><button id='gameStart'>Start Game</button></div>-->
+    <div><button id='gameReset' {{#if teamsAssigned}}{{else}}disabled{{/if}}>Reset Game</button></div>
+    <div><button id='showqr'>Show/hide QR code</button></div>
     {{#if teamsAssigned}}{{else}}
     {{#if roundActive}}{{else}}
     <div>
@@ -20,4 +22,6 @@ advanced controls
     <div><button id='completeRound'>Complete Round</button>(opens new panel)</div>
     {{/if}}
     <div><button id='identify' >Identify Players</button>(shows info on players' devices)</div>
+    <div><button id='sessionReset'>Reset Session</button></div>
+    <div><button id='gameEnding'>End Game</button></div>
 </div>

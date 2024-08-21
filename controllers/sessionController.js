@@ -3,6 +3,8 @@ const securePassword = require('secure-random-password');
 const randomColour = require(`randomcolor`);
 const Session = require('../models/session');
 const tools = require('./tools');
+const { getEventEmitter } = require('./../controllers/eventController');
+const eventEmitter = getEventEmitter();
 
 let select = '-_id -__v';
 
@@ -201,7 +203,8 @@ async function getSession(req, res) {
     }
 };
 async function updateSession(uniqueID, updateOb) {
-//    console.log(`updateSession ${uniqueID}`)
+    console.log(`updateSession ${uniqueID}`);
+    console.log(updateOb)
     try {
         const updatedSession = await Session.findOneAndUpdate({
                 uniqueID
@@ -211,6 +214,7 @@ async function updateSession(uniqueID, updateOb) {
             }
         ).select(select + ' -password');
 //        console.log('updatedSession', updatedSession);
+        eventEmitter.emit('sessionUpdated', updatedSession);
         return updatedSession;
     } catch (error) {
         console.log('Error updating document:');
@@ -267,18 +271,21 @@ async function newSession(req, res) {
 };
 async function resetSession(id, cb) {
     // dev only method, return warning if not dev
-    if (process.env.ISDEV) {
+    console.log('sessionController resetSession');
+//    if (process.env.ISDEV) {
         const session = await updateSession(id, {
             state: 'pending',
             players: []
         });
-        return session;
+//        console.log(`NEW SESSION`);
+//        console.log(session);
         if (session) {
             cb(session);
         }
-    } else {
-        cb('Not allowed');
-    }
+        return session;
+//    } else {
+//        cb('Not allowed');
+//    }
 };
 async function deleteSessionV1(ob, cb) {
     // admin password has already been provided, no further auth required

@@ -170,6 +170,9 @@ app.get('/presentation', (req, res) => {
 app.get('/displaygame', (req, res) => {
     res.sendFile(path.join(basePath, 'displaygame.html'));
 });
+app.get('/admin/sessionview', (req, res) => {
+    res.sendFile(path.join(basePath, 'admin.session.view.html'));
+});
 
 
 // session stuff

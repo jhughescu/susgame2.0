@@ -1,0 +1,11 @@
+<p>Welcome to session {{uniqueID}} of the Sustainability Game{{#if hasName}} (named "{{name}}"){{/if}}.</p>
+{{#if playersConnected}}
+<p>There are currently {{playerCount}} players connected to this game. You can remove players and reset the session by <a id='sessionReset'>clicking here</a>.</p>
+{{/if}}
+<p>
+    The game status is currently set as "{{state}}". <a id='starter'>Click here</a> to start the game.
+</p>
+<p>
+    <a id='showDetail'>show/hide detail (remove later)</a>
+</p>
+<div id='theDetail' style='display: none;'>{{>object-table this}}</div>

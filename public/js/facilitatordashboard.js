@@ -35,7 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
     const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
     const gameState = {disconnected: [], timeout: -1};
-    const outputTexts = {
+    const DEFAULT_TAB = `facilitate`;
+    const messages = {
+        RESET_WARN: 'Are you sure? This will reset all game progress, and any connected players will need to rejoin.',
+        RESET_DONE: `The game has been reset. Any connected players will need to refresh their browser to rejoin.`,
+        END_WARN: `Ending the game cannot be undone, please enter your password to continue.`,
+        SESSION_WARN: `Continuing will reset the session, remove all players and mark this game as 'pending'. Are you sure you want to do this?`,
+        SESSION_DONE: `The session has been reset.`,
         noStart: {
             started: `The game has already started.`,
             ended: `Cannot start game, this session has already concluded.`
@@ -96,43 +102,51 @@ document.addEventListener('DOMContentLoaded', function() {
         renderLogFeed();
     };
 
-    const resetSession = () => {
-        const w = confirm('Are you sure you want to reset the session?');
+    const resetSession = (cb) => {
+//        const w = confirm('Are you sure you want to reset the session?');
+        const w = true;
         if (w) {
             socket.emit('resetSession', session.uniqueID, (rtn) => {
+//                console.log(`resetSession`, rtn);
                 if (typeof(rtn) === 'string') {
                     alert(rtn);
                 } else {
-//                    console.log(`session reset`);
-//                    console.log(rtn);
                     const rgame = rtn.game;
+                    debugger;
                     updateGame(rgame);
+                    debugger;
                     session = rtn.session;
-//                    console.log(`resetSession, session:`, session);
+                    debugger;
                     localStorage.clear();
-                    renderSession();
+                    debugger;
+//                    renderSession();
+                    openTab(DEFAULT_TAB);
+                    if (cb) {
+                        cb();
+                    }
                 }
             });
         }
     };
     const startGame = () => {
         addToLogFeed('start new game');
-//        console.log('start new game');
+//        console.log(`start new game: ${session.state}`);
         if (session.state === 'pending') {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
 //                game = rgame;
-                console.log(`startGame callback, rgame:`, rgame);
+//                console.log(`startGame callback, rgame:`, rgame);
                 updateGame(rgame);
                 addToLogFeed('game ready');
                 getSession(game.uniqueID, () => {
     //                console.log('game cb');
                 });
                 renderGame();
-                openTab('game');
+//                openTab('game');
+                openTab('facilitate');
             });
         } else {
-            alert(outputTexts.noStart[session.state]);
+            alert(messages.noStart[session.state]);
         }
     };
     const emitRestoreGame = () => {
@@ -162,7 +176,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game);
 //        console.log(gOb);
     };
-    const endGame = () => {
+    const endGame = (cb) => {
+        /*
         socket.emit('endGame', game, (rgame) => {
             //returns modified game, render this
 //            game = rgame;
@@ -170,17 +185,22 @@ document.addEventListener('DOMContentLoaded', function() {
             renderGame();
         });
         return;
+        */
         // NOTE Use below in deployment
-        let sure = window.prompt('Warning: this action cannot be undone. Enter your password to continue.');
+        let sure = window.prompt(messages.END_WARN);
         if (sure) {
             socket.emit('testPassword', {session: session.uniqueID, pw: sure}, (boo) => {
                 if (boo) {
-//                    console.log(`OK to end`)
+                    console.log(`OK to end`);
                     socket.emit('endGame', game, (rgame) => {
                         //returns modified game, render this
 //                        game = rgame;
                         updateGame(rgame);
                         renderGame();
+                        openTab(DEFAULT_TAB);
+                        if (cb) {
+                            cb();
+                        }
                     });
                 } else {
                     alert('Incorrect password')
@@ -189,17 +209,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     };
-    const resetGame = () => {
-        let go = window.confirm('Are you sure? This will reset all game progress and return you to the Session tab.');
+    const resetGame = (cb) => {
+        let go = window.confirm(messages.RESET_WARN);
         if (go) {
             const id = game.uniqueID;
             addToLogFeed(`resetting game ${id}`);
             socket.emit('resetGame', id, (rs) => {
                 session = rs;
-                openTab('session');
+                openTab(DEFAULT_TAB);
                 renderSession();
                 renderGame(true);
-
+                if (cb) {
+                    cb();
+                }
             });
         }
     };
@@ -497,6 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
+        console.log(`setupTab`);
         const alwaysUpdate = ['players', 'scores', 'game', 'session'];
         const neverStatic = alwaysUpdate.indexOf(arg, 0) > -1;
         // Try running only if the tab has changed:
@@ -540,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sTab = $('#linkScores');
         gTab.prop('disabled', !gameOn);
         cTab.prop('disabled', !gameOn);
-        fTab.prop('disabled', !gameOn);
+//        fTab.prop('disabled', !gameOn);
         sTab.prop('disabled', !gameOn);
     };
     const highlightTab = (t) => {
@@ -587,7 +610,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeAllWidgets();
                 openTab($(this).attr('id').replace('link', ''));
             });
-            const t = window.location.hash ? window.location.hash.replace('#', '') : 'session';
+//            const t = window.location.hash ? window.location.hash.replace('#', '') : DEFAULT_TAB;
+            const t = DEFAULT_TAB;
             setupTabLinks();
             openTab(t);
         }, 500);
@@ -641,15 +665,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const setupControlLinks = () => {
         const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
-//        console.log(rSel)
-//        rSel.add();
         const rVal = $('#roundInput');
-//        console.log(`setupControlLinks`);
-//        console.log(rSel);
         ids.forEach(id => {
             const element = $(id);
             element.off('click').on('click', () => {
-//                console.log(`click ${id}`)
                 const r = parseInt($('#roundInput').val());
                 switch (id) {
                     case '#setName':
@@ -708,6 +727,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const al = $('#facilitator-advanced');
         const bt = al.find('#reset');
         const qr = al.find('#showqr');
+        const ge = al.find('#gameEnding');
+        const gr = al.find('#gameReset');
+        const sr = al.find('#sessionReset');
 //        console.log(qr);
         bt.add('#completeRound');
         bt.each((i, b) => {
@@ -720,7 +742,43 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         qr.off('click').on('click', () => {
             socket.emit('presentationOverlay', {type: 'qr', game: game.address});
-        })
+        });
+        ge.off('click').on('click', () => {
+            endGame(() => {
+                removeThisWidget(ge);
+            });
+//            const go = confirm(messages.END_WARN);
+//            if (go) {
+//
+//            }
+        });
+        sr.off('click').on('click', () => {
+            const go = confirm(messages.SESSION_WARN);
+            if (go) {
+                resetSession(() => {
+                    removeThisWidget(sr);
+                    alert(messages.SESSION_DONE);
+                });
+            }
+        });
+        /*
+        ge.off('click').on('click', () => {
+            alert(messages.END_WARN);
+            resetSession(() => {
+                removeThisWidget(gr);
+//                console.log('dunne');
+//                console.log(session);
+//                console.log(game);
+                openTab(DEFAULT_TAB);
+            });
+        });
+        */
+        gr.off('click').on('click', () => {
+            resetGame(() => {
+                removeThisWidget(gr);
+                alert(messages.RESET_DONE);
+            });
+        });
     };
     const buildScoreDetail = (s) => {
         s.forEach(sp => {
@@ -1041,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const launchAdvanced = () => {
-        const rOb = {x: 100, y: 100, w: 600, h: 200, data: {preventTemplate: true}};
+        const rOb = {x: 100, y: 100, w: 500, h: 230, data: {preventTemplate: true}};
 //        rOb.data.teamsAssigned = game.teams.length > 0;
 //        rOb.data.roundActive = game.round > 0;
 //        rOb.data.preventTemplate = true;
@@ -1176,96 +1234,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
                         const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
-                        tOb.game = game;
-                        pl.teamObj = Object.assign({}, tOb.teamObj);
-                        $('#formname').html(tOb.teamObj.title);
-                        renderPartial('formzone', `game-${round.template}`, tOb, () => {
-                            $('.resources-btn').css({
-                                width: '30px',
-                                height: '30px',
-                                'background-color': 'green'
-                            });
-                            if (round.type === 1) {
-                                window.setupAllocationControl(pl);
-                            } else {
-                                window.setupVoteControl(pl);
-                            }
-                        });
-                    });
-                });
-            } else {
-                $(`#modaltheatre`).html(`Round ${r} is complete, no further input needed.`);
-            }
-        } else {
-            alert(`No round currently active.`);
-        }
-    };
-    const showRoundCompleterV1 = () => {
-//        const r = parseInt(game.round.toString().replace(/\D/g, ''));
-        console.log(`showRoundCompleter`)
-        const r = window.justNumber(game.round);
-        if (r > 0) {
-            const round = game.persistentData.rounds[r];
-            const subs = round.submissions;
-            const teams = game.persistentData[round.teams];
-            // scores assumed to be always required:
-            const scores = game.scores.filter(sc => sc.startsWith(r));
-            const scorePackets = game.scores.map(unpackScore);
-            console.log(`game.scores`, game.scores);
-            console.log(`scorePackets`, scorePackets);
-            console.log(filterScorePackets(scorePackets, 'round', round.n));
-//            console.log(filterScorePackets(scorePackets, 'src', 0));
-//            console.log(filterScorePackets(scorePackets, 'val', 1));
-            let scorers = [];
-            console.log(`round`, round);
-            console.log(`teams`, teams);
-            const rOb = {teams: [], players: []};
-            if (round.type === 1) {
-                // teams score
-                scorers = teams;
-            } else {
-                // players score
-                teams.forEach(t => {
-//                    console.log(t)
-                    const tm = game.teams[t.id];
-                    tm.forEach(p => {
-//                        console.log(game.playersFull[p]);
-                        scorers.push(game.playersFull[p]);
-                    });
-                });
-            }
-            console.log(`scorers`, scorers);
-            console.log(`scores`, scores);
-
-            teams.forEach(t => {
-                if (scores.filter(sc => (parseInt(sc.split('_')[1])) === t.id).length === 0) {
-                    rOb.teams.push(Object.assign({}, t));
-                }
-//                console.log(game.teams[t.id]);
-                if (round.type === 2) {
-                    // all players must score
-                    const tm = game.teams[t.id];
-                    tm.forEach(p => {
-//                        console.log(game.playersFull[p]);
-                    });
-                } else {
-
-                }
-            });
-            $('#modal').modal({
-                closeExisting: true
-            });
-            rOb.isLead = true;
-            rOb.currentRoundComplete = false;
-            if (rOb.teams.length > 0) {
-                renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
-                    let tl = $('.modtablinks');
-                    tl.off('click');
-                    tl.on('click', function () {
-                        const tOb = {isLead: true, currentRoundComplete: false};
-                        const id = $(this).attr('id').replace('link_', '');
-                        tOb.teamObj = game.persistentData.teams[`t${id}`];
-                        const pl = game.playersFull[game.teams[tOb.teamObj.id][0]];
                         tOb.game = game;
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
@@ -1460,6 +1428,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     cb(ro);
                 }
             });
+        } else {
+            if (cb) {
+                cb('nuffink');
+            }
         }
     };
     const renderScoreboard = async () => {
@@ -1643,44 +1615,96 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('no game');
         }
     };
+    const renderIntro = () => {
+         const ob = Object.assign({
+            hasName: session.name !== undefined,
+            playersConnected: session.players.length > 0,
+            playerCount: session.players.length
+        }, session);
+        renderTemplate('contentFacilitate', 'facilitator.start', ob, () => {
+            window.loadCSS(`facilitator.intro`);
+            window.facIntroInit(ob);
+        });
+    };
+    const renderOutro = async () => {
+        const sc = await developScores((o) => {
+            console.log('scores?');
+            console.log(o);
+        });
+        console.log(`renderOutro`);
+        console.log(game);
+        console.log(session);
+//        console.log(sc);
+        renderTemplate('contentFacilitate', 'facilitator.end', session, () => {
+            const reset = $('#adminGameReset');
+            reset.off('click').on('click', () => {
+                let sure = window.prompt('Enter admin password');
+                if (sure) {
+                    socket.emit('testPassword', {adminOnly: true, session: session.uniqueID, pw: sure}, (boo) => {
+                        socket.emit('resetEndedGame', {pw: sure, session: session.uniqueID}, (ob) => {
+                            if (typeof(ob) === 'object') {
+                                session = Object.assign(session, ob);
+                                const nGame = window.mapSessionToGame(ob, game);
+                                updateGame(nGame);
+                                renderFacilitate();
+                            } else {
+                                alert(boo ? 'OK to reset, but a session object has not been returned.' : 'Cannot reset, password incorrect.')
+                            }
+                        });
+                    });
+                }
+            });
+        });
+    };
     const renderFacilitate = () => {
         // Screen which can be used to run the whole game
+//        console.log(`renderFacilitate`);
         if (game) {
-//            console.log(game.base);
-//            console.log(game.address);
-            game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
-            renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
-                const sl = game.presentation.slideData.slideList.slice(0);
-                sl.forEach(s => {
-                    s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+            if (game.state === 'ended') {
+//                console.log('game pending');
+                renderOutro();
+            } else if (game.state === 'pending') {
+                renderIntro();
+            } else {
+//                console.log(`game NOT pending: ${game.state}`);
+                game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
+                renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
+                    const sl = game.presentation.slideData.slideList.slice(0);
+                    sl.forEach(s => {
+                        s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+                    });
+                    renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
+                        $('#tabFacilitate').css({height: '700px'});
+                        slideContolsInit(game);
+                    });
+                    renderPlayers('facilitatePlayersContent');
+                    const launchBut = $('#facilitateSlideshow').find('#makePres');
+                    launchBut.off('click').on('click', () => {
+                        launchPresentation();
+                    });
+                    updatePlayerMeter();
+                    const openAdvanced = $('#openAdvanced');
+                    openAdvanced.off('click').on('click', () => {
+                        launchAdvanced();
+                    });
+                    window.createCopyLinks();
+                    renderScoreboard();
                 });
-                renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
-                    $('#tabFacilitate').css({height: '700px'});
-                    slideContolsInit(game);
-                });
-                renderPlayers('facilitatePlayersContent');
-                const launchBut = $('#facilitateSlideshow').find('#makePres');
-                launchBut.off('click').on('click', () => {
-                    launchPresentation();
-                });
-                updatePlayerMeter();
-                const openAdvanced = $('#openAdvanced');
-                openAdvanced.off('click').on('click', () => {
-                    launchAdvanced();
-                });
-//                window.createCopylinks();
-                window.createCopyLinks();
-                renderScoreboard();
-//                console.log(`look for the pres: ${game.address}`);
-//                let uc = $('.copylink');
-//                uc.off('click').on('click', function() {
-//                    copyToClipboard($(this).attr('id'));
-//                });
-//                debugger;
-            });
+            }
+        } else {
+//            console.log('no game yet')
+//            renderIntro();
+            switch (session.state) {
+                case 'pending':
+                    renderIntro();
+                    break;
+                case 'ended':
+                    renderOutro();
+                    break
+            }
+
         }
     };
-    window.rf = renderFacilitate;
     const renderAdvanced = () => {
         const id = 'facilitator-advanced';
         const rOb = {game: game};
@@ -1691,6 +1715,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
 //            console.log('dunne');
             setupControlLinks();
+            // (see also setupAdvancedLinks)
         });
     };
 
@@ -1742,10 +1767,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const openTab = (l) => {
         const ct = getCurrentTab();
+//        console.log(`openTab`, l, ct)
         if (l !== ct.title && ct.hasOwnProperty('el')) {
             $(`#content${window.toCamelCase(ct.title)}`).html('');
         }
-        window.location.hash = l.toLocaleLowerCase();
+        $(`#content${window.toCamelCase(ct.title)}`).html('');
+//        window.location.hash = l.toLocaleLowerCase();
         const id = `${l.substr(0, 1).toUpperCase()}${l.substr(1).toLowerCase()}`
         const tabcontent = $('.tabcontent');
         const tablinks = $('.tablinks');
@@ -1947,9 +1974,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     const sockInit = () => {
-//        console.log(`sockInit`);
         const sessionID = getSessionID();
-        window.socketShare(socket);
+        console.log(`sockInit, sessionID: ${sessionID}`);
+        window.socketShare(socket, 'fdb_socket');
         addToLogFeed(`sessionID: ${sessionID}`);
         if (sessionID) {
             getSession(sessionID);
@@ -2038,13 +2065,16 @@ document.addEventListener('DOMContentLoaded', function() {
 //    window.showGame = showGame;
     renderTemplate = window.renderTemplate;
     renderPartial = window.renderPartial;
+
     procVal = window.procVal;
     //
     window.showGame = showGame;
+    window.startGame = startGame;
     window.getSessionID = getSessionID;
 //    console.log(`getSessionID defined on window scope`);
     window.showScores = showScores;
     window.facilitatorSlideChange = facilitatorSlideChange;
+    window.renderFacilitate = renderFacilitate;
     window.slideTest = slideTest;
     const closeModal = () => {
         $('#modal').modal('close');
@@ -2067,6 +2097,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        });
     };
     window.rScores = renderScoreboard;
+    window.rf = renderFacilitate;
     //
     domInit();
 });

@@ -155,9 +155,20 @@ async function resetGame(id, cb) {
             }
         }
         game.state = 'pending';
+        game.state = 'started';
         game.round = 0;
         game.slide = 0;
-        const session = await sessionController.updateSession(id, {state: 'pending', players: game.players, teams: game.teams, scores: [], values: [], slide: game.slide, round: game.round});
+        const sOb = {
+            state: 'pending',
+            state: 'started',
+            players: game.players,
+            teams: game.teams,
+            scores: [],
+            values: [],
+            slide: game.slide,
+            round: game.round
+        };
+        const session = await sessionController.updateSession(id, sOb);
         if (session) {
 //            log('return updated session here');
 //            log(session);
@@ -292,19 +303,33 @@ async function changeName (ob, cb) {
         error(`gameController: can't change name, game or session undefined`)
     }
 };
+
+const temp = () => {
+    console.log('hiaisoj')
+}
 const resetSession = async (id, cb) => {
     // dev only method for now
+    console.log(`resetSession, id: ${id}`);
     const sesh = await sessionController.resetSession(id);
     const gID = `game-${id}`;
     if (sesh) {
-        delete games[gID];
+//        delete games[gID];
+        return;
         startGame(JSON.stringify(sesh), (rgame) => {
-            cb({game: rgame, session: sesh});
+            cb({game: tools.mapSessionToGame(sesh, rgame), session: sesh});
 //            console.log('THE CALLBACK CALLBACK')
         });
     }
 }
-
+const mapSessionToGameGONETOTOOLS = (s, g) => {
+    const rg = Object.assign({}, g);
+    for (let i in g) {
+        if (g.hasOwnProperty(i)) {
+            rg[i] = s[i];
+        }
+    }
+    return rg;
+};
 const emitUpdate = (eGame) => {
     if (eGame.hasOwnProperty('_updateSource')) {
         const us = JSON.stringify(eGame._updateSource);

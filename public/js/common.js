@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     let socket = null;
+    let socketIdentifier = null;
     let player = null;
     let game = null;
     // templateStore maintains copies of each fetched template so they can be retrieved without querying the server
@@ -127,6 +128,19 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     };
+    const loadCSS = (fileName) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = `css/${fileName}.css`; // Path to the CSS file
+        document.head.appendChild(link);
+    };
+    const loadJS = (fileName) => {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = `js/${fileName}.js`;
+        document.head.appendChild(script);
+    }
 
     const getTemplate = (temp, ob, cb) => {
         // returns a compiled template, but does not render it
@@ -476,6 +490,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const e = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
         return e.test(s);
     };
+    const mapSessionToGame = (s, g) => {
+        const rg = Object.assign({}, g);
+        for (let i in g) {
+            if (g.hasOwnProperty(i)) {
+                rg[i] = s[i];
+//                console.log(`mapping ${i}: ${s[i]}`)
+            }
+        }
+        return rg;
+    };
     // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
     const setupAllocationControl = async (inOb) => {
         const myPlayer = player === null ? inOb : player;
@@ -631,10 +655,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     // the 'share' methods are for sharing objects defined in other code files
-    const socketShare = (sock) => {
+    const socketShare = (sock, id) => {
         socket = sock;
-//        console.log('share it out; socket');
+        socketIdentifier = id;
+//        console.log('share it out socket');
 
+    };
+    const getSocket = (id) => {
+        if (id === socketIdentifier) {
+            return socket;
+        } else {
+            return null;
+        }
     };
     const playerShare = (pl) => {
         player = pl;
@@ -654,6 +686,8 @@ document.addEventListener('DOMContentLoaded', function () {
     window.roundNumber = roundNumber;
     window.roundAll = roundAll;
     window.emitWithPromise = emitWithPromise;
+    window.loadCSS = loadCSS;
+    window.loadJS = loadJS;
     window.toCamelCase = toCamelCase;
     window.removeTemplate = removeTemplate;
     window.renderTemplate = renderTemplate;
@@ -667,6 +701,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.getQueries = getQueries;
     window.getPartials = getPartials;
     window.socketShare = socketShare;
+    window.getSocket = getSocket;
     window.playerShare = playerShare;
     window.gameShare = gameShare;
     window.thisRoundScored = thisRoundScored;
@@ -677,4 +712,5 @@ document.addEventListener('DOMContentLoaded', function () {
     window.sortBy = sortBy;
     window.sortNumber = sortNumber;
     window.filterScorePackets = filterScorePackets;
+    window.mapSessionToGame = mapSessionToGame;
 });

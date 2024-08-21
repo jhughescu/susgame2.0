@@ -57,11 +57,21 @@ const getIPv4Address = () => {
 //    console.log(`ipv4Address: ${ipv4Address}`)
     return ipv4Address || false;
 };
+const mapSessionToGame = (s, g) => {
+    const rg = Object.assign({}, g);
+    for (let i in g) {
+        if (g.hasOwnProperty(i)) {
+            rg[i] = s[i];
+        }
+    }
+    return rg;
+};
 module.exports = {
     procVal,
     toCamelCase,
     justNumber,
     roundNumber,
     isValidJSON,
-    getIPv4Address
+    getIPv4Address,
+    mapSessionToGame
 }
