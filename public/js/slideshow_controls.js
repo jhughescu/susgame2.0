@@ -104,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sb_next').attr({disabled: !presentation.hasNext});
     };
     const pEvent = (ev) => {
-//        console.log(`pEvent`);
-//        console.log(ev);
+        console.log(`pEvent`);
+        console.log(ev);
         if (ev) {
             const eOb = {gameID: game.uniqueID, event: ev};
             socket.emit(`presentationEvent`, eOb, (ob) => {

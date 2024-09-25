@@ -103,13 +103,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const resetSession = (cb) => {
-//        const w = confirm('Are you sure you want to reset the session?');
+        const w1 = confirm('Are you sure you want to reset the session?');
         const w = true;
         if (w) {
             socket.emit('resetSession', session.uniqueID, (rtn) => {
 //                console.log(`resetSession`, rtn);
                 if (typeof(rtn) === 'string') {
-                    alert(rtn);
+//                    alert(rtn);
+//                    console.log('resetter')
                 } else {
                     const rgame = rtn.game;
                     debugger;
@@ -125,6 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         cb();
                     }
                 }
+                localStorage.clear();
+                window.location.reload();
             });
         }
     };
@@ -519,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setupTab = (arg) => {
-        console.log(`setupTab`);
+//        console.log(`setupTab`);
         const alwaysUpdate = ['players', 'scores', 'game', 'session'];
         const neverStatic = alwaysUpdate.indexOf(arg, 0) > -1;
         // Try running only if the tab has changed:
@@ -730,6 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ge = al.find('#gameEnding');
         const gr = al.find('#gameReset');
         const sr = al.find('#sessionReset');
+        const fg = al.find('#fakeGen');
 //        console.log(qr);
         bt.add('#completeRound');
         bt.each((i, b) => {
@@ -778,6 +782,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeThisWidget(gr);
                 alert(messages.RESET_DONE);
             });
+        });
+        fg.off('click').on('click', () => {
+            launchFakeGenerator();
         });
     };
     const buildScoreDetail = (s) => {
@@ -1246,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (round.type === 1) {
                                 window.setupAllocationControl(pl);
                             } else {
+//                                console.log('sheep')
                                 window.setupVoteControl(pl);
                             }
                         });
@@ -1467,12 +1475,22 @@ document.addEventListener('DOMContentLoaded', function() {
             renderTimeout = setTimeout(async () => {
 
                 let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+                console.log('fish and chips');
+                console.log(t1);
                 if (t1) {
                     t1 = JSON.parse(t1);
                     t1 = roundAll(t1);
                 }
-
                 console.log(`i also got t1`, t1);
+                let t2 = await emitWithPromise(socket, 'getTotals2', game.uniqueID);
+                console.log('fish and chips');
+                console.log(t2);
+                let t3 = await emitWithPromise(socket, 'getTotals3', game.uniqueID);
+                console.log('hats and forks');
+                console.log(t3);
+//                let t4 = await emitWithPromise(socket, 'getTotals4', game.uniqueID);
+//                console.log('beef and peas');
+//                console.log(t4);
                 socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
                     ob.scorePackets = sp;
                     const scores = {};
@@ -1705,15 +1723,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }
     };
-    const renderAdvanced = () => {
+    const renderAdvanced = async () => {
         const id = 'facilitator-advanced';
         const rOb = {game: game};
+        const isDev = await window.checkDevMode();
+//        console.log(isDev)
         rOb.teamsAssigned = game.teams.length > 0;
         rOb.roundActive = game.round > 0;
         rOb.scoresSubmitted = game.scores.length > 0;
         rOb.preventTemplate = true;
+        rOb.isDev = isDev;
         renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
 //            console.log('dunne');
+            const inner = $(`#widgetinner${id}`);
+            const outer = $(`#widgetinner${id}`).parent();
+            const controls = inner.find('div');
+//            controls.css({padding: '10px'});
+//            console.log(inner.height());
+//            console.log(outer.height());
+            outer.css({height: `${controls.height() + 50}px`});
+//            outer.css({height: `330px`});
             setupControlLinks();
             // (see also setupAdvancedLinks)
         });
@@ -1913,7 +1942,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         //////////////////////////////////////////////////////////////////////////////////////////// another use of the tryStartRound - which one to keep??
 
-                        console.log('slide test calls tryStartRound')
+                        console.log(`slide test calls tryStartRound: ${r}, action: ${sl.action}`);
                         test = tryStartRound(r);
                     }
 //                    console.log(ac);

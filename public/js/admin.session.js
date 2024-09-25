@@ -70,16 +70,19 @@ document.addEventListener('DOMContentLoaded', function () {
 //        obj.session.scorePackets = obj.session.scorePackets.map(i => ({...i, src: teams[i.src].title}));
 //        obj.session.scorePackets = obj.session.scorePackets.map(i => ({...i, client: players[i.client]}));
         let sp = sesh.scores.slice(0).map(s => window.unpackScore(s));
+
         sp = sp.map(i => ({...i, team: teams[i.dest].title}));
         sp = sp.map(i => ({...i, src: teams[i.src].title}));
         sp = sp.map(i => ({...i, client: players[i.client]}));
         sp = sp.map(i => ({...i, value: teams[i.dest].id}));
         obj.session.scorePackets = sp;
-//        console.log(sp);
+        console.log(sp);
 //        obj.session.scorePackets = obj.session.scorePackets.map(p => teams[p.dest].title);
         console.log(obj);
         console.log(obj.session.scorePackets);
-        window.renderTemplate('logs', 'admin.session.display', {session: sesh, game: gameObj});
+        window.renderTemplate('logs', 'admin.session.display', {session: sesh, game: gameObj}, () => {
+            $('html, body').animate({ scrollTop: $(document).height() }, 1000);
+        });
 //        console.log(window.unpackScore(sesh.scores[0]))
     };
     const loadSession = () => {

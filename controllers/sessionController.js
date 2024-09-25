@@ -275,12 +275,19 @@ async function resetSession(id, cb) {
 //    if (process.env.ISDEV) {
         const session = await updateSession(id, {
             state: 'pending',
-            players: []
+            players: [],
+            teams: [],
+            scores: [],
+            values: [],
+            round: 0,
+            slide: 1
         });
 //        console.log(`NEW SESSION`);
 //        console.log(session);
         if (session) {
-            cb(session);
+            if (cb) {
+                cb(session);
+            }
         }
         return session;
 //    } else {

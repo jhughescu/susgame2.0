@@ -79,16 +79,20 @@ class Game {
     }
     setTeams () {
         // set teams (teamObj) for all players in a game (init method)
+        console.log(`setTeams meth`)
         if (this.persistentData) {
+            console.log('yep, PD')
             let pt = this.persistentData.teams;
             if (this.teams.length > 0) {
+                console.log(`yep, teams: ${this.teams.length}`);
                 this.teams.forEach((tl, i) => {
                     const t = pt[`t${i}`];
                     tl.forEach(p => {
                         if (this.playersFull[p]) {
                             this.playersFull[p].teamObj = t;
+                            console.log(`team assigned to player ${p}`);
                         } else {
-                            console.log(`cannot assign team to {p}`);
+                            console.log(`cannot assign team to ${p}`);
                         }
                     });
                 });
@@ -114,13 +118,16 @@ class Game {
     }
     setTeam (player) {
         // set the team (teamObj) for a single player (restore method)
+//        console.log(`setTeam method`);
         if (this.persistentData) {
+//            console.log('yep, data is ready, teams?');
+//            console.log(this.teams)
             let pt = this.persistentData.teams;
     //        let id = 'fake';
 //            console.log(`set teamObj for player ${player.id}`);
             this.teams.forEach((t, i) => {
                 if (t.includes(player.id)) {
-//                    console.log(`allocate team ${pt[`t${i}`].title}`);
+//                    console.log(` - allocate team ${pt[`t${i}`].title}`);
 //                    console.log(t);
                     player.teamObj = pt[`t${i}`];
 //                    console.log(player.teamObj);
@@ -128,6 +135,8 @@ class Game {
                     player.isLead = t[0] === player.id && player.teamObj.type === 1;
                 }
             })
+        } else {
+            console.log('no pres data');
         }
     }
     addLatecomer(player) {
@@ -181,34 +190,20 @@ class Game {
         const out = [];
         gp.mainTeams.forEach(t => {
             const scO = {team: t.id, r1: scores.scoresR1.filter(sc => sc.dest === t.id), r2: scores.scoresR2.filter(sc => sc.dest === t.id), summary2030: {self: 0, supportTotal: 0, grandTotal: 0}, destSets: {}};
-//            console.log(`t: ${t.id}`);
             if (scO.r1.length > 0 && scO.r2.length > 0) {
                 scO.summary2030.self = scO.r1[0].val;
                 srcs.forEach(s => {
-//                    console.log(s);
                     if (!scO.destSets.hasOwnProperty(`set${s}`)) {
                         scO.destSets[`set${s}`] = [];
-//                        console.log(`I need a set for ${s}`)
                     }
                     const ssc = scO.r2.filter(sc => sc.src === s);
-//                    console.log(ssc)
                     if (!scO.summary2030.hasOwnProperty(`src${s}`)) {
                         scO.summary2030[`src${s}`] = {total: 0, average: 0, count: ssc.length};
                     }
                     ssc.forEach(sc => {
-                        scO.destSets[`set${s}`].push(sc.val)
-//                        console.log(s, sc);
-//                        if (!scO.destSets.hasOwnProperty(`set${sc.dest}`)) {
-//                            scO.destSets[`set${sc.dest}`] = {};
-//                            console.log(`I need a set for ${sc.dest}`)
-//                        }
-//                        if (!scO.destSets[`set${sc.dest}`].hasOwnProperty(`src${sc.src}`)) {
-//                            scO.destSets[`set${sc.dest}`][`src${sc.src}`] = [];
-//                        }
-//                        scO.destSets[`set${sc.dest}`][`src${sc.src}`].push(sc.val);
+                        scO.destSets[`set${s}`].push(sc.val);
                         scO.summary2030[`src${s}`].total += sc.val;
                         scO.summary2030[`src${s}`].average = scO.summary2030[`src${s}`].total / ssc.length;
-//                        scO.destSets.push(scO[`set${sc.dest}`]);
                     });
                     scO.summary2030.supportTotal += scO.summary2030[`src${s}`].average;
                     scO.summary2030.grandTotal = scO.summary2030.self * scO.summary2030.supportTotal;
@@ -225,19 +220,86 @@ class Game {
                     gt: scO.summary2030.self * (av5 + av6)
 
                 };
-//                console.log(scO);
                 Object.entries(scO.destSets).forEach(e => {
-//                    console.log(e);
                     outOb[e[0]] = e[1];
                 })
-//                outOb.destSets = scO.destSets;
                 out.push(outOb);
             }
-//            console.log('destSets', scO.destSets)
         });
-//        console.log(out);
         return JSON.stringify(out);
-//        return `here totals be ${this.players.length} ${this.scores.length} ${this.scorePackets.length} ${this.getDetailedScorePackets().length}`;
     }
+    getTotals2() {
+
+//        return JSON.parse(this.getTotals1());
+
+        // collaborative scores submitted: add to allocations
+        const gp = this.persistentData;
+        const sp = this.getDetailedScorePackets();
+        const scores = {};
+        const outOb = {};
+        gp.rounds.forEach(r => {
+            scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
+        });
+//        outOb.scores = scores;
+//        console.log('here?');
+//        console.log(scores.scoresR1.filter(sc => sc.dest === t.id));
+
+        gp.mainTeams.forEach(t => {
+            let r1Scores = scores.scoresR1.filter(sc => sc.dest === t.id);
+            const ob = {
+                team: t.title,
+                t: t.id,
+                self: r1Scores.length > 0 ? r1Scores[0].val : 0,
+                collab: 0
+            };
+            scores.scoresR3.filter(sc => sc.dest === t.id).forEach(sp => {
+//                console.log(sp);
+                ob.collab += sp.val;
+            });
+            ob.total = ob.self + ob.collab;
+            outOb[`t${t.id}`] = ob;
+        });
+        return outOb;
+    }
+    getTotals3() {
+        // collaborative scores submitted: add to allocations
+        const gp = this.persistentData;
+        const sp = this.getDetailedScorePackets();
+        const scores = {};
+        gp.rounds.forEach(r => {
+            scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
+        });
+        const totals2 = this.getTotals2();
+        const outOb = totals2;
+        console.log(outOb)
+        gp.mainTeams.forEach(t => {
+//            console.log(t.title);
+            let pv = scores.scoresR2.filter(sc => sc.dest === t.id);
+            pv = pv.concat(scores.scoresR4.filter(sc => sc.dest === t.id));
+//            console.log(pv);
+            let pvt = 0;
+            pv.forEach(sp => {
+                pvt += sp.val;
+            });
+            const tOb = outOb[`t${t.id}`];
+            if (tOb) {
+                tOb.pv = pvt;
+                tOb.grandTotal = tOb.total * tOb.pv;
+                tOb.gt = tOb.total * tOb.pv;
+            }
+        });
+        const outArr = [];
+        console.log(outOb)
+        Object.entries(outOb).forEach(o => {
+            outArr.push(o[1]);
+        });
+        return outArr;
+//        return outOb;
+    }
+    getTotals4() {
+        const outOb = this.getTotals3();
+        outOb.note = "this probably not used";
+        return outOb;
+    };
 }
 module.exports = Game;

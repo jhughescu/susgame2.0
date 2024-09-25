@@ -211,7 +211,7 @@ td.boo {
 /*    color: inherit;*/
 }
 #scoresummaries td {
-    padding: 2px 16px;
+    padding: 2px 6px;
 }
 #scoresummaries td:nth-child(even) {
     background-color: rgba(0, 0, 0, 0.12);

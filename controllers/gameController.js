@@ -314,13 +314,16 @@ const resetSession = async (id, cb) => {
     const gID = `game-${id}`;
     if (sesh) {
 //        delete games[gID];
+        if (cb) {
+            cb('chips')
+        }
         return;
         startGame(JSON.stringify(sesh), (rgame) => {
             cb({game: tools.mapSessionToGame(sesh, rgame), session: sesh});
 //            console.log('THE CALLBACK CALLBACK')
         });
     }
-}
+};
 const mapSessionToGameGONETOTOOLS = (s, g) => {
     const rg = Object.assign({}, g);
     for (let i in g) {
@@ -448,6 +451,7 @@ const getScorePackets = (gameID, cb) => {
     }
     return sps;
 };
+
 const getTotals1 = (gameID, cb) => {
     if (gameID.toString().indexOf('game', 0) === -1) {
         gameID = `game-${gameID}`
@@ -460,6 +464,43 @@ const getTotals1 = (gameID, cb) => {
 //        console.log('no game no way');
     }
 };
+const getTotals2 = (gameID, cb) => {
+    if (gameID.toString().indexOf('game', 0) === -1) {
+        gameID = `game-${gameID}`
+    }
+    const game = games[gameID];
+    if (game) {
+//        console.log('we have a game');
+        cb(game.getTotals2())
+    } else {
+//        console.log('no game no way');
+    }
+};
+const getTotals3 = (gameID, cb) => {
+    if (gameID.toString().indexOf('game', 0) === -1) {
+        gameID = `game-${gameID}`
+    }
+    const game = games[gameID];
+    if (game) {
+//        console.log('we have a game');
+        cb(game.getTotals3())
+    } else {
+//        console.log('no game no way');
+    }
+};
+const getTotals4 = (gameID, cb) => {
+    if (gameID.toString().indexOf('game', 0) === -1) {
+        gameID = `game-${gameID}`
+    }
+    const game = games[gameID];
+    if (game) {
+//        console.log('we have a game');
+        cb(game.getTotals4())
+    } else {
+//        console.log('no game no way');
+    }
+};
+
 const filterScorePackets = (gameID, prop, val, spIn) => {
     const sp = spIn ? spIn : getScorePackets(gameID);
     const spo = [];
@@ -626,7 +667,7 @@ const getFullTeam = (id, game) => {
 const showGames = () => {
     console.log(`showGames:`)
     Object.keys(games).forEach(g => console.log(g));
-}
+};
 const endGame = (game, cb) => {
     console.log(`end game with address ${game.address}`);
     routeController.destroyRoute(game.address);
@@ -752,7 +793,7 @@ const newGetTheRenderState = (game, id) => {
         rs.temp = 'game.problem';
     }
     return rs;
-}
+};
 const getTheRenderState = (game, id) => {
     const newRs = newGetTheRenderState(game, id);
     // returns an object which tells the player which template to render
@@ -843,8 +884,78 @@ const getRenderState = (ob, cb) => {
 //    console.log(`getRenderState:`);
 //    console.log(ob);
     cb(getTheRenderState(ob.game, ob.playerID));
-}
+};
 const registerPlayer = (ob, cb) => {
+    const game = getGameWithAddress(ob.game);
+//    console.log(`gameController registerPlayer`);
+    let ID = null;
+    let newP = null;
+    let timer = null;
+    let player = null;
+    if (game) {
+//        console.log(`yep, game: ${game.persistentData.defaults.teamAssign}`);
+        // store a copy of the list of players for later comparison
+        const plOrig = JSON.stringify(game.players);
+        // index will be the joining order (i.e first connected player index = 1 etc)
+        let index = -1;
+        if (ob.player) {
+            ID = ob.player;
+            const pl = game.players.reduce((acc, plID) => {
+                acc[plID] = true;
+                return acc;
+            }, {});
+            newP = !pl.hasOwnProperty(ob.player);
+            if (newP) {
+                game.players.push(ob.player);
+                index = game.players.length;
+            }
+            if (!game.playersFull.hasOwnProperty(ID)) {
+                let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
+                player = new Player(ID, plIndex, ob.socketID);
+                player.idNum = tools.justNumber(player.idNum);
+                game.playersFull[ID] = player;
+                game.setTeam(player);
+            } else {
+                // update the existing player object with the new socketID
+                game.playersFull[ID].socketID = ob.socketID;
+            }
+        } else {
+            ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
+            game.players.push(ID);
+            newP = true;
+        }
+        if (newP && game.teams.length > 0) {
+            console.log(`looks like a new player (${ID}) joining after teams are assigned`);
+            game.addLatecomer(player);
+            sessionController.updateSession(game.uniqueID, {teams: game.teams});
+        }
+        const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
+        emitUpdate(eGame);
+        // Compare the list of players with the stored list & update database if they differ
+        if (JSON.stringify(game.players) !== plOrig) {
+            clearTimeout(updateDelay);
+            updateDelay = setTimeout(() => {
+                // save list of players, but do so on a timeout so as not to address the database too frequently
+                sessionController.updateSession(game.uniqueID, {players: game.players});
+            }, 5000);
+        }
+        if (cb) {
+            const renDo = getTheRenderState(game, ID);
+            cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
+        } else {
+            log('reg P, no CB');
+        }
+        return ID;
+    } else {
+        // safeguard against registration prior to completion of game setup
+        const idStr = ob.player === undefined ? '' : `(${ob.player})`;
+        console.log(`no game exists with address ${ob.game}, try again after delay ${idStr}`);
+        setTimeout(() => {
+            registerPlayer(ob, cb);
+        }, 500);
+    }
+};
+const registerPlayerV1 = (ob, cb) => {
 //    console.log(`registerPlayer to game ${ob.game}`);
 //    log(ob)
     const game = getGameWithAddress(ob.game);
@@ -876,6 +987,9 @@ const registerPlayer = (ob, cb) => {
                 let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
 //                log(`create new player with id ${ID} at index ${plIndex}`);
                 player = new Player(ID, plIndex, ob.socketID);
+                player.idNum = tools.justNumber(player.idNum);
+//                console.log('#  HERE WE GO HERE WE GO');
+//                console.log(player)
                 game.playersFull[ID] = player;
                 game.setTeam(player);
             } else {
@@ -957,6 +1071,8 @@ const startRound = async (ob) => {
     if (game) {
         const rounds = game.persistentData.rounds;
         const rIndex = ob.round - 1;
+        console.log(`startRound`);
+        console.log(ob.round);
         if (ob.round > rounds.length) {
             const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
@@ -1218,6 +1334,9 @@ module.exports = {
     presentationAction,
     getScorePackets,
     getTotals1,
+    getTotals2,
+    getTotals3,
+    getTotals4,
     getRenderState,
     getAllValues,
     getValues,

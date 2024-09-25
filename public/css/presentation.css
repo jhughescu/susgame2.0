@@ -168,6 +168,8 @@ td {
 /*    width: 100px;*/
     position: relative;
     height: 0px;
+    width: 50%;
+    margin: 0px auto;
 /*    background-color: aqua;*/
 }
 .barchart .totalNum {

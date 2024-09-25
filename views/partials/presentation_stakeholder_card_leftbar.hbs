@@ -1,0 +1,64 @@
+<div class='stakeholder_card' id='stakeholder_card_{{id}}' style='width: 100%;'>
+   <div class='textarea'>
+        <div class='vertical-center'>
+            <div class='header'>
+                {{title}}
+            </div>
+        </div>
+        <div class='text action_name'>{{action}}</div>
+        <div class='text action_desc'>{{description}}</div>
+        <div class='text value'>{{value}}</div>
+    </div>
+
+    <div class='background'>
+
+        <?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 503.54 395.18">
+  <defs>
+    <style>
+      .leaf {
+        fill: #5b7936;
+        stroke-width: 1.42px;
+
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-miterlimit: 10;
+          display: none;
+      }
+
+    .cls-3-{{id}} {
+        fill: #95c13d;
+            fill: {{displayColour}};
+      }
+
+      .cls-3, .cls-4 {
+        stroke-width: 0px;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke-width: 1.7px;
+      }
+
+      .cls-4 {
+        fill: #80d2e7;
+      }
+    </style>
+  </defs>
+  <g id="lhs_bar" data-name="lhs bar">
+    <rect class="cls-3-{{id}}" x="2" y=".93" width="30" height="391.69"/>
+  </g>
+  <g id="frame">
+    <path class="cls-4" d="m503.34,394.99H214.78l-4.66-6.8h-123.31l-4.66,6.8H.19V.19h484.85l18.31,18.26v40.33l-5.65,4.65v305.12l5.65,4.65v21.79Zm-287.81-1.41h286.4v-19.72l-5.65-4.65V62.77l5.65-4.65V19.04l-17.48-17.43H1.61v391.98h79.8l4.66-6.8h124.8l4.66,6.8Z"/>
+    {{dynamicPartial icon}}
+    <g>
+      <line class="leaf" x1="241.6" y1="358.63" x2="241.6" y2="341.69"/>
+      <path class="leaf" d="m216.7,327.85h16.09c4.67,0,8.47,3.8,8.47,8.47v5.93h-16.09c-4.67,0-8.47-3.8-8.47-8.47v-5.93h0Z" transform="translate(457.96 670.1) rotate(180)"/>
+      <path class="leaf" d="m251.18,327.85h15.04v4.88c0,5.25-4.27,9.52-9.52,9.52h-15.04v-4.88c0-5.25,4.27-9.52,9.52-9.52Z"/>
+    </g>
+  </g>
+</svg>
+
+    </div>
+
+</div>

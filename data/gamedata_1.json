@@ -142,6 +142,7 @@
         "hasLead": true,
         "rounds": "",
         "type": 1,
+        "teamAssign": "manual",
         "scores": {"eras": {"era1": [], "era2" : []}}
     },
     "teamSize": 1,
@@ -158,7 +159,7 @@
         {"n": 2, "flag": "e1r2", "action": "startRoundE1R2", "id": "publicvoices 1", "template": "vote", "teams": "secondaryTeams", "type": 2, "submissions": ["scores"],
             "completionMsg": "At least one member of each team has submitted a score, marking the round as complete. However some players may not yet have submitted a score."
         },
-        {"n": 3, "flag": "e1r3", "action": "resetVotes", "id": "collaboration", "teams": "mainTeams", "type": 1, "template": "vote", "submissions": ["scores"]},
+        {"n": 3, "flag": "e1r3", "action": "resetVotes", "id": "collaboration", "teams": "mainTeams", "type": 1, "template": "collaboration", "submissions": ["scores"]},
         {"n": 4, "flag": "e1r4", "action": "startRoundE1R4", "id": "publicvoices 2", "teams": "secondaryTeams", "type": 2, "template": "vote", "submissions": ["scores"]}
     ],
     "actions": ["action 1", "action 2", "action 3", "action 4", "action 5"],

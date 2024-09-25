@@ -74,6 +74,7 @@
     text-align: center;
     font-size: 1.5rem;
     line-height: 1.5rem;
+
 }
 .stakeholder_card .action_name {
 /*    top: 98px;*/
@@ -92,7 +93,10 @@
     width: 310px;
     height: 110px;
     font-size: 1.1rem;
-    word-break: break-all;
+    word-break: keep-all;
+}
+.stakeholder_card .header, .stakeholder_card .action_name, .stakeholder_card .action_desc {
+    padding-left: 10px;
 }
 .stakeholder_card .value {
     top: 92px;

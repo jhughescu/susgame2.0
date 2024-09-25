@@ -355,15 +355,26 @@ document.addEventListener('DOMContentLoaded', function () {
         setWatch('scores');
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
-        t1 = JSON.parse(t1);
-        t1 = t1.map(s => s.gt);
-        let tAbs = t1.map(s => s = Math.abs(s));
+        const round = window.justNumber(game.round);
+//        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
+        console.log(`totals for r ${round}`);
+        console.log(totals);
+//        debugger;
+        if (typeof(totals) === 'string') {
+            totals = JSON.parse(totals);
+        }
+//        console.log(totals);
+//        console.log(totals.join(''));
+//        console.log(t1);
+//        console.log(t3)
+        totals = totals.map(s => s.gt);
+        let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
         const mult = 100 / max;
         $(`.totalNum`).html('');
         barsPos.each((i, b) => {
-            const perc = t1[i] * mult;
+            const perc = totals[i] * mult;
 
             let newH = perc;
             let neg = Math.abs(newH);
@@ -372,13 +383,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 neg = 0;
             }
-//            console.log($(b).parent().height());
             const positive = (newH / 100) * $(b).parent().height();
             const negative = (neg / 100) * $(b).parent().height();
             $(b).animate({height: `${newH}%`});
             const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-
-            total.html(roundNumber(t1[i]));
+//            console.log('rounding');
+            total.html(roundNumber(totals[i], 1));
             const tPos = neg === 0 ? positive + 50 : positive;
             total.animate({bottom: `${tPos}px`});
 //            total.animate({top: `${negative}px`});

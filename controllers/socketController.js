@@ -304,6 +304,7 @@ function initSocket(server) {
             });
             socket.on('resetSession', (id, cb) => {
 //                sessionController.resetSession(id, cb);
+//                console.log(`####################################################################`);
                 gameController.resetSession(id, cb);
             });
             socket.on('resetGame', (id, cb) => {
@@ -401,8 +402,16 @@ function initSocket(server) {
                 gameController.getScorePackets(gameID, cb);
             });
             socket.on('getTotals1', (gameID, cb) => {
-//                console.log('have the sock')
                 gameController.getTotals1(gameID, cb);
+            });
+            socket.on('getTotals2', (gameID, cb) => {
+                gameController.getTotals2(gameID, cb);
+            });
+            socket.on('getTotals3', (gameID, cb) => {
+                gameController.getTotals3(gameID, cb);
+            });
+            socket.on('getTotals4', (gameID, cb) => {
+                gameController.getTotals4(gameID, cb);
             });
             socket.on('submitScore', (ob, cb) => {
                 console.log(`############################ submitScore`);
@@ -482,12 +491,14 @@ function initSocket(server) {
         if (Q.role === 'presentation-control') {
 //            const roomID = `/${Q.id}-pres-control`;
             const session = await sessionController.getSessionWithID(Q.id);
+            if (session) {
             roomID = `${session.address}-pres-control`;
-            socket.join(roomID);
-//            console.log(`the pres control registers as ${roomID}`);
-            socket.on('presentationEvent', (ob, cb) => {
-                presentationController.pEvent(ob, cb);
-            });
+                socket.join(roomID);
+    //            console.log(`the pres control registers as ${roomID}`);
+                socket.on('presentationEvent', (ob, cb) => {
+                    presentationController.pEvent(ob, cb);
+                });
+            }
         }
         // log update display ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'updatelog') {
@@ -535,8 +546,16 @@ function initSocket(server) {
 //                presentationController.nextSlide();
             });
             socket.on('getTotals1', (gameID, cb) => {
-//                console.log('have the sock')
                 gameController.getTotals1(gameID, cb);
+            });
+            socket.on('getTotals2', (gameID, cb) => {
+                gameController.getTotals2(gameID, cb);
+            });
+            socket.on('getTotals3', (gameID, cb) => {
+                gameController.getTotals3(gameID, cb);
+            });
+            socket.on('getTotals4', (gameID, cb) => {
+                gameController.getTotals4(gameID, cb);
             });
             socket.on('slideUpdated', (ob) => {
                 const targs = ['fac', 'pres-control'];

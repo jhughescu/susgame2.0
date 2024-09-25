@@ -102,8 +102,14 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(`no value passed to justNumber`)
         }
     };
-    const roundNumber = (n) => {
-        return Math.round(n * 1000) / 1000;
+    const roundNumber = (n, r) => {
+        let m = 1;
+        let rr = r === undefined ? 3 : r;
+        for (let i = 0; i < rr; i++) {
+            m *= 10;
+        }
+//        console.log(`m is ${m}`);
+        return Math.round(n * m) / m;
     };
     const roundAll = (o) => {
         for (let i in o) {
@@ -428,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         const myPlayer = player === null ? pl : player;
-        console.log(`judged player`, myPlayer);
+//        console.log(`judged player`, myPlayer);
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
@@ -500,8 +506,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return rg;
     };
-    // allocation/vote controls can be used in facilitator dashboards, hence are defined in common.
+    // allocation/collaboration/vote controls can be used in facilitator dashboards, hence are defined in common.
+    const getRemainingAllocation = (pl) => {
+        const s = game.scores.map(sp => window.unpackScore(sp));
+//        const t = pl.teamObj;
+        const t = game.persistentData.teams[`t${pl.teamObj.id}`];
+//        console.log(game.persistentData.teams);
+//        console.log(pl.teamObj);
+//        return;
+        const ti = t.id;
+        const tt = t.type;
+        const r = window.justNumber(game.round);
+        let ra = null;
+//        console.log(t);
+//        debugger;
+        if (tt === 2) {
+            // Assumption: PV team votes reset for each round
+            ra = t.votes;
+        } else {
+            ra = t.votes;
+            const ts = window.filterScorePackets(s, 'src', ti);
+//            console.log(`getRemainingAllocation, current votes: ${t.votes}`, ts);
+//            ra = 0;
+            for (let i = 1; i < r; i++) {
+                const rs = window.filterScorePackets(ts, 'round', i);
+                if (rs.length > 0) {
+                    ra -= window.filterScorePackets(ts, 'round', i)[0].val;
+                }
+            }
+        }
+//        console.log(`Team ${t.title} has ${ra} vote${ra > 1 ? 's' : ''} remaining`);
+        return ra;
+    };
     const setupAllocationControl = async (inOb) => {
+//        console.log(`setupAllocationControl`);
         const myPlayer = player === null ? inOb : player;
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
@@ -562,7 +600,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         let t = myPlayer.teamObj.id;
                         const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
                         socket.emit('submitValues', vob);
-                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: justNumber(myPlayer.id)};
+                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
+//                        console.log(sob);
                         socket.emit('submitScore', sob, (scores) => {
                             setupAllocationControl();
                         });
@@ -574,15 +613,286 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
-        console.log(`setupVoteControl:`);
+        const storeID = `votes-${game.address}-${player.id}-r${game.round}`;
+        let store = [];
+        let stored = [];
+        if (localStorage.getItem(storeID)) {
+            stored = localStorage.getItem(storeID).split(',');
+        }
+//        console.log(`setupVoteControl:`);
+//        console.log(stored);
         const myPlayer = player === null ? inOb : player;
-        console.log(myPlayer);
         const plIndex = procVal(myPlayer.index) - 1;
         const plID = justNumber(myPlayer.id);
         const hasS = await thisRoundScored(myPlayer);
-//        console.log(`hasS`, hasS);
-//        console.log(`plIndex: ${plIndex}`);
-//        console.log(`plID: ${plID}`);
+        const cards = $('.resources-buttons');
+        const butAdj = $('.resources-btn');
+        const butMinus = $('.vote_btn_minus');
+        const butPlus = $('.vote_btn_plus');
+        const vAvailDisp = $('#vAvail');
+        const vTotalDisp = $('#vTotal');
+        const val = $('.value');
+        const submit = $(`#buttonAllocate`);
+        const ints = $('.vote_btn_minus, .vote_btn_plus, #buttonAllocate');
+        const vTotal = myPlayer.teamObj.votes;
+        const r = parseInt(game.round);
+        const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
+        socket.emit('getAggregates', aOb, (a, sp, report) => {
+//            const myScores = filterScorePackets(sp, 'client', plID);
+            const myScores = filterScorePackets(filterScorePackets(sp, 'client', plID), 'round', game.round);
+            const playerHasScored = Boolean(myScores.length);
+//            console.log(`playerHasScored: ${playerHasScored}`);
+//            const newMS = filterScorePackets(filterScorePackets(sp, 'client', plID), 'round', game.round);
+            if (playerHasScored) {
+//                console.log(myScores);
+//                console.log(newMS);
+            }
+            let t = 0, tni = 0, tai = 0;
+//            store = [];
+            val.each((i, v) => {
+                if (stored.length > 0) {
+//                    $(v).html(stored[i])
+                }
+                const vv = parseInt($(v).html());
+                tai += Math.abs(vv);
+                tni += vv;
+//                store.push(vv);
+
+            });
+            if (stored.length > 0) {
+//                vAvailDisp.html(Math.abs(tai));
+            }
+            localStorage.setItem(storeID, store.join(','));
+            let okAll = justNumber(vAvailDisp.html()) !== justNumber(vTotalDisp.html());
+            if (playerHasScored) {
+                butMinus.addClass('disabled');
+                butPlus.addClass('disabled');
+                submit.addClass('disabled');
+                val.each((i, v) => {
+
+                    $(v).html(myScores[i].val);
+                    t += myScores[i].val;
+                });
+                vAvailDisp.html(Math.abs(t));
+            } else {
+                store = [];
+                t = 0, tni = 0, tai = 0;
+//                console.log('jhdkjkfjkjk');
+                val.each((i, v) => {
+                    if (stored.length > 0) {
+//                        console.log(i, stored[i]);
+                        $(v).html(stored[i])
+                    }
+                    const vv = parseInt($(v).html());
+                    tai += Math.abs(vv);
+                    tni += vv;
+                    store.push(vv);
+
+                });
+                if (stored.length > 0) {
+                    vAvailDisp.html(Math.abs(tai));
+                }
+                localStorage.setItem(storeID, store.join(','));
+                butAdj.off('click').on('click', function () {
+                    val.each((i, v) => {
+                        t += justNumber($(v).html());
+                    });
+                    let ta = 0;
+                    let tn = 0;
+
+                    // player.teamObj.votes must be the same for each player at setup
+                    const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
+                    const avail = justNumber(vTotalDisp.html()) - justNumber(vAvailDisp.html());
+                    t = 0;
+                    val.each((i, v) => {
+                        t += justNumber($(v).html());
+                    });
+                    t += adj;
+                    const OK1 = justNumber(vTotalDisp.html()) > justNumber(vAvailDisp.html());
+                    const OK2 = justNumber(vTotalDisp.html()) > justNumber(vAvailDisp.html()) + Math.abs(adj);
+                    const OK3 = justNumber(vTotalDisp.html()) !== justNumber(vAvailDisp.html()) + Math.abs(adj);
+                    const atMax = avail  === 0;
+                    const h = $(this).parent().parent().parent().find('.value');
+                    let v = parseInt(h.html());
+                    const OK = OK1;
+//                    if (!atMax || (atMax && adj < 0)) {
+                        v += adj;
+                        h.html(v);
+//                    }
+                    store = [];
+                    val.each((i, v) => {
+                        const myVal = parseInt($(v).html());
+                        ta += Math.abs(myVal);
+                        tn += myVal;
+                    });
+                    localStorage.setItem(storeID, store.join(','));
+                    vAvailDisp.html(ta);
+                    setupVoteControl(myPlayer);
+                });
+                let okPlus2 = tai !== justNumber(vTotalDisp.html());
+                let okMinus2 = tni !== 0;
+                okPlus2 = okMinus2 = true;
+
+                if (okAll) {
+                    butAdj.prop('disabled', false);
+                } else {
+                    butMinus.prop('disabled', true);
+                    butPlus.prop('disabled', true);
+                    cards.each((i, v) => {
+                        const c = $(v);
+                        const bPlus = c.find('.vote_btn_plus');
+                        const bMinus = c.find('.vote_btn_minus');
+                        const myVal = parseInt(c.find('.value').html());
+                        if (myVal === 0) {
+                            bMinus.prop('disabled', true);
+                            bPlus.prop('disabled', true);
+                        } else if (myVal < 0) {
+                            bMinus.prop('disabled', true);
+                            bPlus.prop('disabled', false);
+                        } else {
+                            bMinus.prop('disabled', false);
+                            bPlus.prop('disabled', true);
+                        }
+                    });
+
+                }
+                submit.off('click').on('click', () => {
+                    const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
+                    val.each((i, v) => {
+                        sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+
+                    });
+                    socket.emit('submitScoreForAverage', sOb);
+                    localStorage.removeItem(storeID);
+                    setupVoteControl(myPlayer);
+                });
+            }
+        });
+
+    };
+    const setupVoteControlV2 = async (inOb) => {
+        console.log(`setupVoteControl:`);
+        const myPlayer = player === null ? inOb : player;
+        const plIndex = procVal(myPlayer.index) - 1;
+        const plID = justNumber(myPlayer.id);
+        const hasS = await thisRoundScored(myPlayer);
+        const butAdj = $('.resources-btn');
+        const butMinus = $('.vote_btn_minus');
+        const butPlus = $('.vote_btn_plus');
+        const vAvailDisp = $('#vAvail');
+        const vTotalDisp = $('#vTotal');
+        const val = $('.value');
+        const submit = $(`#buttonAllocate`);
+        const ints = $('.vote_btn_minus, .vote_btn_plus, #buttonAllocate');
+        const vTotal = myPlayer.teamObj.votes;
+        const r = parseInt(game.round);
+//        vAvailDisp.html(0);
+//        vTotalDisp.html(vTotal);
+        const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
+        socket.emit('getAggregates', aOb, (a, sp, report) => {
+            const myScores = filterScorePackets(sp, 'client', plID);
+            const playerHasScored = Boolean(myScores.length);
+            let t = 0, tni = 0, tai = 0;
+            val.each((i, v) => {
+                const vv = parseInt($(v).html());
+//                console.log(` * ${vv}`)
+                tai += Math.abs(vv);
+                tni += vv;
+            });
+//            console.log(tai, tni)
+            let okAll = justNumber(vAvailDisp.html()) !== justNumber(vTotalDisp.html());
+                console.log(`okAll: ${okAll}`)
+            if (playerHasScored) {
+                butMinus.addClass('disabled');
+                butPlus.addClass('disabled');
+                submit.addClass('disabled');
+
+//                let t = 0;
+                val.each((i, v) => {
+                    $(v).html(myScores[i].val);
+                    t += myScores[i].val;
+                });
+                vAvailDisp.html(Math.abs(t));
+            } else {
+                butAdj.off('click').on('click', function () {
+                    val.each((i, v) => {
+                        t += justNumber($(v).html());
+                    });
+                    let ta = 0;
+                    let tn = 0;
+
+                    // player.teamObj.votes must be the same for each player at setup
+                    const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
+                    const avail = justNumber(vTotalDisp.html()) - justNumber(vAvailDisp.html());
+                    t = 0;
+                    val.each((i, v) => {
+                        t += justNumber($(v).html());
+                    });
+                    t += adj;
+                    const OK1 = justNumber(vTotalDisp.html()) > justNumber(vAvailDisp.html());
+                    const OK2 = justNumber(vTotalDisp.html()) > justNumber(vAvailDisp.html()) + Math.abs(adj);
+                    const OK3 = justNumber(vTotalDisp.html()) !== justNumber(vAvailDisp.html()) + Math.abs(adj);
+                    const atMax = avail  === 0;
+                    const h = $(this).parent().parent().parent().find('.value');
+                    let v = parseInt(h.html());
+                    const OK = OK1;
+                    if (!atMax || (atMax && adj < 0)) {
+                        v += adj;
+                        h.html(v);
+                    }
+
+                    val.each((i, v) => {
+                            ta += Math.abs(parseInt($(v).html()));
+                            tn += parseInt($(v).html());
+//                        }
+                    });
+                    vAvailDisp.html(`t: ${ta}`);
+                    setupVoteControl(myPlayer);
+                });
+//                const okPlus = justNumber(vAvailDisp.html()) !== justNumber(vTotalDisp.html());
+//                const okMinus = justNumber(vAvailDisp.html()) === 0;
+//                console.log(`okPlus ${okPlus}`);
+//                console.log(`okMinus ${okMinus}`);
+                const okPlus2 = tai !== justNumber(vTotalDisp.html());
+                let okMinus2 = tni !== 0;
+                let okAll = justNumber(vAvailDisp.html()) !== justNumber(vTotalDisp.html());
+                console.log(`okAll: ${okAll}`)
+                okMinus2 = true;
+//                console.log(`okPlus2 ${okPlus2}`);
+//                console.log(`okMinus2 ${okMinus2}`);
+
+                if (okPlus2) {
+                    butPlus.prop('disabled', false);
+                } else {
+                    butPlus.off('click');
+                    butPlus.prop('disabled', true);
+                }
+                if (okMinus2) {
+                    butMinus.prop('disabled', false);
+                } else {
+                    butMinus.off('click');
+                    butMinus.prop('disabled', true);
+                }
+
+                submit.off('click').on('click', () => {
+                    const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
+                    val.each((i, v) => {
+                        sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+
+                    });
+                    socket.emit('submitScoreForAverage', sOb);
+                    setupVoteControl(myPlayer);
+                });
+            }
+        });
+
+    };
+    const setupVoteControlV1 = async (inOb) => {
+        console.log(`setupVoteControl:`);
+        const myPlayer = player === null ? inOb : player;
+        const plIndex = procVal(myPlayer.index) - 1;
+        const plID = justNumber(myPlayer.id);
+        const hasS = await thisRoundScored(myPlayer);
         const butAdj = $('.resources-btn');
         const butMinus = $('.vote_btn_minus');
         const butPlus = $('.vote_btn_plus');
@@ -596,9 +906,7 @@ document.addEventListener('DOMContentLoaded', function () {
         vAvailDisp.html(0);
         vTotalDisp.html(vTotal);
         const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
-        console.log('emit it');
         socket.emit('getAggregates', aOb, (a, sp, report) => {
-            console.log('back')
             const myScores = filterScorePackets(sp, 'client', plID);
             const playerHasScored = Boolean(myScores.length);
             if (playerHasScored) {
@@ -611,18 +919,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     t += Math.abs(myScores[i].val);
                 });
                 vAvailDisp.html(t);
-                console.log(`already scored, not doing nuffin`);
             } else {
-                console.log('player has not scored');
                 butAdj.off('click').on('click', function () {
                     let t = 0;
-                    val.each((i, v) => {
-                        if($(v).closest('tr').attr('id') !== $(this).closest('tr').attr('id')) {
-                            t += Math.abs(parseInt($(v).html()));
-                        }
-                    });
+
                     // player.teamObj.votes must be the same for each player at setup
-                    const avail = vTotal - t;
+//                    const avail = vTotal;
+                    const avail = parseInt(vTotalDisp.html()) - parseInt(vAvailDisp.html());
+                    console.log(`res avail: ${avail}`);
                     const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
                     const h = $(this).parent().parent().parent().find('.value');
                     let v = parseInt(h.html());
@@ -630,28 +934,138 @@ document.addEventListener('DOMContentLoaded', function () {
                         v += adj;
                         h.html(v);
                     }
+                    console.log('chips');
+                    val.each((i, v) => {
+//                        console.log(i);
+//                        console.log($(v).html());
+//                        console.log($(v).attr('id'));
+//                        if($(v).closest('tr').attr('id') !== $(this).closest('tr').attr('id')) {
+                            t += Math.abs(parseInt($(v).html()));
+                            console.log(`t: ${t}`);
+//                        }
+                    });
                     vAvailDisp.html(Math.abs(t) + Math.abs(v));
                 });
                 submit.off('click').on('click', () => {
                     const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
-    //                console.log(`submit clicked`);
                     val.each((i, v) => {
-    //                    sOb.scoreCode.push({src: player.teamObj.id, dest: i, val: parseInt($(v).html()), client: procVal(player.index)});
-    //                    console.log(v);
-    //                    console.log($(v));
-    //                    console.log($(v).attr('id'));
-    //                    console.log(justNumber($(v).attr('id')));
                         sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
 
                     });
-    //                console.log(player);
-                    console.log('submitScoreForAverage', sOb);
                     socket.emit('submitScoreForAverage', sOb);
                     setupVoteControl(myPlayer);
-    //                window.location.reload();
                 });
             }
         });
+
+    };
+    const setupCollaborationControl = async (inob) => {
+        const storeID = `collabs-${game.address}-${player.id}`;
+        const myPlayer = player === null ? inOb : player;
+//        console.log(`setupCollaborationControl`);
+        const ra = getRemainingAllocation(myPlayer);
+        const vAvailDisp = $('#vAvail');
+        const vTotalDisp = $('#vTotal');
+        const butMinus = $('#vote_btn_minus');
+        const butPlus = $('.vote_btn_plus');
+        const butRes = $('.resources-btn');
+        const allV = $('.value');
+        const submit = $(`#buttonAllocate`);
+//        console.log(butMinus);
+//                console.log(butPlus);
+//                console.log(submit);
+//        console.log(butRes);
+        let store = [];
+        let tva = 0;
+        let stored = localStorage.getItem(storeID);
+        let playerHasScored = false;
+//        console.log('try');
+        socket.emit('getScorePackets', game.uniqueID, (s) => {
+            const r = window.filterScorePackets(s, 'round', game.round);
+            const team = window.filterScorePackets(r, 'src', player.teamObj.id);
+            playerHasScored = team.length > 0;
+            if (playerHasScored) {
+//                console.log(`player has scored`);
+                butRes.prop('disabled', true);
+//                butPlus.prop('disabled', true);
+                submit.prop('disabled', true);
+//                console.log(butMinus);
+//                console.log(butPlus);
+//                console.log(submit);
+//                console.log(butRes);
+                return;
+            } else {
+//                console.log(`player has NOT scored`);
+                if (stored) {
+                    stored = stored.split(',');
+                }
+                allV.each((v, e) => {
+                    if (stored) {
+                        $(e).html(stored[v]);
+                    }
+                    const val = Math.abs(parseInt($(e).html()));
+                    tva += val;
+                    store.push(val);
+                });
+                const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
+                const hasS = false;
+                const val = vTotalDisp;
+                myPlayer.teamObj.votes = ra;
+        //        vTotalDisp.html(ra - tva);
+                vTotalDisp.html(ra);
+                vAvailDisp.html(ra - (ra - tva));
+                allV.each((v, e) => {
+                    const myVal = parseInt($(e).html());
+                        const okMinus = myVal === 0;
+                        const okPlus = parseInt(vAvailDisp.html()) === parseInt(vTotalDisp.html());
+                        console.log(okMinus, okPlus)
+        //                console.log(myVal, ok, parseInt(vAvailDisp.html()), parseInt(vTotalDisp.html(), parseInt(vAvailDisp.html()) === parseInt(vTotalDisp.html())));
+                        $(e).closest('.resources-buttons').find('.vote_btn_minus').prop('disabled', okMinus);
+                        $(e).closest('.resources-buttons').find('.vote_btn_plus').prop('disabled', okPlus);
+                });
+                if (hasS) {
+        //            alert('all dunne')
+                } else {
+                    butRes.off('click').on('click', function () {
+
+                        let v = parseInt(vTotalDisp.html());
+                        const id = $(this).attr('id');
+        //                const disp = $(this).closest('tr').find('.value');
+                        const disp = $(this).parent().find('.value');
+                        const adj = $(this).attr('id').toLowerCase().includes('plus') ? 1 : -1;
+        //                console.log(`click ${adj}`);
+                        if ((v - adj > -1) && (parseInt(disp.html()) + adj > -1)) {
+                            disp.html(parseInt(disp.html()) + adj);
+                            store = [];
+                            allV.each((v, e) => {
+                                const val = Math.abs(parseInt($(e).html()));
+                                store.push(val);
+        //                        console.log(val);
+                            });
+                            localStorage.setItem(storeID, store.toString());
+                            setupCollaborationControl();
+                        }
+                    });
+                    submit.off('click').on('click', () => {
+                        const src = player.teamObj.id;
+                        allV.each((i, e) => {
+                            const dest = justNumber($(e).attr('id'));
+                            const v = parseInt($(e).html());
+                            const scOb = {src: src, dest: dest, val: v, round: justNumber(game.round)};
+                            const sob = {scoreCode: scOb, game: game.uniqueID, client: myPlayer.id};
+                            if (v > 0) {
+//                                console.log(sob);
+                                socket.emit('submitScore', sob, (scores) => {
+                                    //
+                                    setupCollaborationControl();
+                                });
+                            }
+                        });
+                    });
+                }
+                localStorage.setItem(storeID, store.toString());
+            }
+        })
 
     };
     // the 'share' methods are for sharing objects defined in other code files
@@ -707,6 +1121,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.thisRoundScored = thisRoundScored;
     window.unpackScore = unpackScore;
     window.setupAllocationControl = setupAllocationControl;
+    window.setupCollaborationControl = setupCollaborationControl;
     window.setupVoteControl = setupVoteControl;
     window.checkDevMode = checkDevMode;
     window.sortBy = sortBy;

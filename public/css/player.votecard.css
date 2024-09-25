@@ -1,0 +1,132 @@
+.voteform .resources-buttons {
+/*    background-color: blue;*/
+    width: 100%;
+    height: 30px;
+}
+.voteform .counter.resources-buttons {
+/*    display: none;*/
+    display: flex;
+    align-items: center; /* Vertically aligns items within the flex container */
+    gap: 10px; /* Optional: add space between elements */
+}
+.voteform .value {
+    display: block;
+/*    background-color: red;*/
+    width: 30px;
+    min-width: 30px;
+    text-align: right;
+    margin-right: 40px;
+}
+.voteform .resources-btn {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.voteform .vote-tile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+/*    gap: 40px;*/
+}
+.voteform .vote-tile {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    background-color: #f2f2f2;
+    color: black;
+    border: 0px solid #ddd;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 20px;
+/*    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
+}
+
+.voteform .icon-container {
+    width: 60px;
+    height: 60px;
+
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    background-color: red;
+}
+
+.voteform .icon {
+    width: 50px;
+    height: 50px;
+/*    width: 40px;*/
+/*    height: 40px;*/
+/*    background-color: blue;*/
+}
+
+.voteform .title-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.voteform .title {
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.voteform .description {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 0.8em;
+}
+
+.voteform .counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.voteform .counter-value {
+    margin: 0 15px;
+    font-size: 1.0em;
+    font-weight: bold;
+}
+
+.voteform .vote_btn_minus, .voteform .vote_btn_plus {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 0px solid #ccc;
+    background-color: #091932;
+    color: white;
+    font-size: 1.2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin: 2px;
+    transition: background-color 0.3s;
+}
+.voteform .vote_btn_minus span {
+    position: relative;
+    top: -2px;
+/*    background-color: red;*/
+/*    display: none;*/
+}
+.voteform .vote_btn_minus:hover, .voteform .vote_btn_plus:hover {
+    background-color: #001b46;
+}
+
+.voteform .resources-btn:disabled, .voteform .buttonSubmit:disabled {
+    background-color: #334157;
+    cursor: default;
+}
+
+@media (max-width: 400px) {
+    .voteform .vote-tile {
+        padding: 10px;
+    }
+}

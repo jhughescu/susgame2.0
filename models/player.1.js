@@ -1,6 +1,7 @@
 class Player {
     constructor(id, index, socketID) {
         this.id = id;
+        this.idNum = id;
         this.index = index;
         this.socketID = socketID;
         this.connected = true;

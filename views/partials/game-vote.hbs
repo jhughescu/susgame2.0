@@ -1,24 +1,37 @@
 <div class='round round2 voteform' id='vote'>
-    <table><tbody>
-        {{#each game.persistentData.mainTeams}}
-        {{#notSameTeam id ../id}}
-        <tr style='background-color: {{this.displayColour}};' id='row-{{this.id}}'>
-            <td style='background-image: url("assets/icons_{{this.abbrCap}}white 1.svg")'>{{this.title}}</td>
-            <td>
-                <div class='resources-buttons' id='resources-buttons-{{this.id}}'>
-                    <button class='resources-btn vote_btn_minus' id='vote_btn_minus-{{this.id}}'><i class='fa fa-minus'></i></button>
-                    <button class='resources-btn vote_btn_plus' id='vote_btn_plus-{{this.id}}'><i class='fa fa-plus'></i></button>
-                </div>
-            </td>
-            <td>
-                <div class='resources-score-team' id='resources-team-{{this.id}}'>
+    {{#each dynamicTeamData}}
+    {{#notSameTeam id ../teamObj.id}}
+    <div class='vote-tile-container'>
+        <div class='vote-tile'>
+            <div class='icon-container' style='background-color: {{this.displayColour}};'>
+<!--            <div class='icon-container'>-->
+                <img src='assets/icon-{{this.abbr}}-fill.svg' alt='{{this.title}} Icon' class='icon'>
+            </div>
+            <div class='title-container'>
+                <div class='title'>{{title}}</div>
+            </div>
+            <div class='description'>
+                {{values.description}}
+            </div>
+            <div class='counter resources-buttons' id='resources-buttons-{{this.id}}'>
+<!--                <div class='resources-score-team' id='resources-team-{{this.id}}'>-->
                     <p><span class='value' id='voteValue{{this.id}}'>0</span></p>
-                </div>
-            </td>
-        </tr>
-        <tr><td></td><td></td><td></td></tr>
-        {{/notSameTeam}}
-        {{/each}}
-    </tbody></table>
+<!--                </div>-->
+                <button class='resources-btn vote_btn_minus' id='vote_btn_minus-{{this.id}}'><span>-</span></button>
+                <button class='resources-btn vote_btn_plus' id='vote_btn_plus-{{this.id}}'>+</button>
+            </div>
+        </div>
+        <!-- Repeat the above 'vote-tile' div as needed -->
+    </div>
+    {{/notSameTeam}}
+    {{/each}}
     <div id='voteformsumm'><span id='vAvail'>0</span>/<span id='vTotal'>10</span><br><br><input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'></div>
 </div>
+<style>
+
+
+
+
+</style>
+
+
