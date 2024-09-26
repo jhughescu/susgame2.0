@@ -351,23 +351,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     };
-    const renderTotals = async () => {
+    const renderTotals = async (o) => {
         setWatch('scores');
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-        const round = window.justNumber(game.round);
+        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
+//        const round = 4;
 //        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
         let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
-        console.log(`totals for r ${round}`);
-        console.log(totals);
 //        debugger;
         if (typeof(totals) === 'string') {
             totals = JSON.parse(totals);
         }
-//        console.log(totals);
-//        console.log(totals.join(''));
-//        console.log(t1);
-//        console.log(t3)
+        console.log(`totals for r ${round}`);
+        console.log(totals);
+        console.log(o);
         totals = totals.map(s => s.gt);
         let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
@@ -375,7 +373,6 @@ document.addEventListener('DOMContentLoaded', function () {
         $(`.totalNum`).html('');
         barsPos.each((i, b) => {
             const perc = totals[i] * mult;
-
             let newH = perc;
             let neg = Math.abs(newH);
             if (newH < 0) {
@@ -387,11 +384,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const negative = (neg / 100) * $(b).parent().height();
             $(b).animate({height: `${newH}%`});
             const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-//            console.log('rounding');
             total.html(roundNumber(totals[i], 1));
             const tPos = neg === 0 ? positive + 50 : positive;
             total.animate({bottom: `${tPos}px`});
-//            total.animate({top: `${negative}px`});
             $(`#b${i}Neg`).animate({height: `${neg}%`});
         });
     };
@@ -524,11 +519,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const slideAction = (slOb) => {
         const rOb = {gameID: game.uniqueID};
 
-        console.log(`slide has action`, slOb.hasOwnProperty('action'));
+//        console.log(`slide has action`, slOb.hasOwnProperty('action'));
         if (slOb.hasOwnProperty('action')) {
-            console.log(`the action is`, slOb.action)
+//            console.log(`the action is`, slOb.action);
+            if (slOb.action.includes(':')) {
+                const s = slOb.action.split(':');
+                slOb.action = s[0];
+                rOb.actionArg = s[1];
+            }
             if (window[slOb.action]) {
-                console.log('action exists in the code');
+//                console.log('action exists in the code');
                 window[slOb.action](rOb);
             } else {
                 console.log('action does not exist in code');

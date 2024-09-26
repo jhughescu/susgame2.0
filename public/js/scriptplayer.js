@@ -723,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     };
     const render = (cb) => {
-//        console.log('RENDER');
+        console.log('RENDER');
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
@@ -736,8 +736,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Boolean(player.teamObj)) {
                 rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
             }
-//            console.log(player.teamObj.hasLead, Boolean(player.isLead), rOb.renderButton);
-//            console.log(player);
             if (renderState.hasOwnProperty('partialName')) {
                 rOb.partialName = renderState.partialName;
             }
@@ -745,9 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (renderState.tempType === 'interaction') {
                     // interactions must be 'activated' for their templates to be rendered, otherwise the home template should be rendered (with trigger button enabled)
                     if (getRoundState()) {
-//                        console.log(`button has been clicked, interactive template allowed`)
                     } else {
-//                        console.log(`button not clicked, return to home`);
                         gotoHomeState();
                     }
                 }
@@ -755,33 +751,29 @@ document.addEventListener('DOMContentLoaded', function() {
             let rType = null;
 
             rOb.dynamicTeamData = [];
+//            console.log(rOb.game.values);
+//            console.log(rOb.game.detailedScorePackets);
             rOb.game.persistentData.mainTeams.forEach((t, i) => {
-                t.fish = 'a fish';
-                t.values = rOb.game.values[i];
+//                t.values = rOb.game.values[i];
+//                console.log(t.id, t.title, rOb.game.values.filter(tm => tm.team === t.id));
+//                t.values = rOb.game.values[t.id];
+                t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
+                t.scores = rOb.game.detailedScorePackets.filter(sp => sp.src === t.id)[0];
                 rOb.dynamicTeamData.push(t)
             });
-
+            rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             if (renderState.temp) {
                 rType = renderState.temp.replace(GAMESTUB, '');
             }
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
-//            console.log(targ);
 //            console.log(renderState);
-//            console.log(renderState.temp);
-//            console.log(rOb);
+            console.log(rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
                 if (cb) {
                     cb();
-                } else {
-//                    console.log(`I have no callback`)
-                }
-                if (renderState.hasOwnProperty('sub')) {
-//                    console.warn('"sub" functionality removed 20240416')
-                } else {
-
                 }
             });
         } else {

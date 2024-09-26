@@ -560,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     desc.html(v.description);
                     action.val(v.action);
                 });
+//                console.log(`here it is`);
             } else {
                 ints.off('click');
                 butPlus.on('click', () => {

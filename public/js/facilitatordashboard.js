@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const resetSession = (cb) => {
-        const w1 = confirm('Are you sure you want to reset the session?');
+//        const w1 = confirm('Are you sure you want to reset the session?');
         const w = true;
         if (w) {
             socket.emit('resetSession', session.uniqueID, (rtn) => {

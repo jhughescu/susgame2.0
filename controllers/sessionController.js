@@ -280,7 +280,7 @@ async function resetSession(id, cb) {
             scores: [],
             values: [],
             round: 0,
-            slide: 1
+            slide: 0
         });
 //        console.log(`NEW SESSION`);
 //        console.log(session);

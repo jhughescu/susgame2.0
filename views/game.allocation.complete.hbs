@@ -1,0 +1,18 @@
+<div class="nav-header-container dark-text" style="background-color: {{teamObj.displayColour}};">
+    <div class="back-btn-title-bar">
+        <a class="back-btn home_btn" title="Previous page"><img alt="Previous page icon" src="assets/backButton-black.svg" /></a>
+        <h1>Your move</h1>
+    </div>
+</div>
+<div class='main-content' id='main-content' style='display: block;'>
+    <div class='allocation-complete'>
+        <p class='title'>Action choice</p>
+        <p>{{myDynamicTeamData.values.action}}</p>
+        <p class='title'>Move description</p>
+        <p>{{myDynamicTeamData.values.description}}</p>
+        <div class='ring' style='border-color: {{teamObj.displayColour}};'>
+            <span class='number'>{{myDynamicTeamData.scores.val}}</span>
+        </div>
+    </div>
+</div>
+<div id='sub'></div>

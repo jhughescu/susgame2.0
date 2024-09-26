@@ -757,6 +757,9 @@ const newGetTheRenderState = (game, id) => {
                         rs.temp =  `game.${roundInfo.template}`;
                         rs.tempType = 'interaction';
                     }
+                    if (scoreCompletionMetric && canInteract && inThisRound) {
+                        rs.temp = `game.${roundInfo.template}.complete`;
+                    }
                 } else {
                     if (game.state === 'ended') {
                         rs.temp = 'game.gameover';
@@ -769,11 +772,12 @@ const newGetTheRenderState = (game, id) => {
                             rs.temp = 'game.main';
                             rs.partialName = 'game-links';
                             if (!scoreCompletionMetric && canInteract && inThisRound) {
-                                rs.temp =  `game.${roundInfo.template}`;
+                                rs.temp = `game.${roundInfo.template}`;
                                 rs.tempType = 'interaction';
                             } else {
 //                                    console.log(`conditions not met`)''
                             }
+
                         } else {
                             rs.temp = 'game.intro';
                         }
@@ -807,15 +811,11 @@ const getTheRenderState = (game, id) => {
             if (game.round) {
                 roundComplete = game.round.toString().indexOf('*', 0) > -1;
             }
-//            log(`~~~~~~~~~~~~~~~~~~~~ getTheRenderState: ${id}, game.round: ${gameRound}`);
             const player = game.playersFull[id];
-//            console.log(player)
             const round = game.persistentData.rounds[gameRound];
-//            console.log(`round`, round);
             let leads = game.teams.map(c => c[0]);
             // trim the 'leads' array so it only uses main teams (sub teams have no lead)
             leads = leads.splice(0, game.persistentData.mainTeams.length);
-    //        console.log(`leads: ${leads}`);
             const isLead = leads.includes(id);
             const team = game.teams.findIndex(t => t.includes(id));
             const teamObj = game.persistentData.teams[`t${team}`];
@@ -823,16 +823,9 @@ const getTheRenderState = (game, id) => {
             if (teamObj) {
                 hasLead = teamObj.hasLead;
             }
-//            console.log(`trying it out: ${game.round}`);
             const scoreRef = gameRound ? `${getRoundNum(gameRound)}_${team}` : null;
             // check this value \/ , the map array should have only one element
-//            console.log(`here is where we check if the round has been scored already; if it has, input forms will not be rendered.`);
             const hasScore = game.scores.map(s => s.substr(0, 3) === scoreRef)[0];
-//            console.log(`scoreRef`, scoreRef);
-//            console.log(`hasScore`, hasScore);
-//            console.log(`roundComplete`, roundComplete);
-//            console.log(`what about round?`, round);
-//            console.log(`what about game.round?`, gameRound);
             if (game.state === 'ended') {
                 rs.temp = 'game.gameover';
             } else if (game.state === 'pending') {
@@ -863,19 +856,11 @@ const getTheRenderState = (game, id) => {
                     rs.temp = 'game.intro';
                 }
             }
-//            rs.stuff = `id: ${id}, hasLead: '${hasLead}, isLead: '${isLead}, team: ${team}, scoreRef: ${scoreRef}, hasScore: ${hasScore}, gameState: ${game.state}, round: ${round ? round.n : false }`;
-//            rs.stuffObj = {id: id, hasLead: hasLead, isLead: isLead, team: team, scoreRef: scoreRef, hasScore: hasScore, gameState: game.state, round: (round ? round.n : false) };
             const rsCopy = Object.assign({}, rs);
-//            console.log(rs)
-//            delete rsCopy.ob;
         }
     } else {
         console.log(`getTheRenderState cannot complete; game not defined ()`)
     }
-//    log('rs:');
-//    log(rsCopy);
-//    Object.assign(rs, newRs);
-//    return {old: rs, new: newRs};
     rs.newRs = newRs;
     rs = newRs;
     return rs;

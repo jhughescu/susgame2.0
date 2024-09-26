@@ -180,6 +180,7 @@ class Game {
         return this.detailedScorePackets;
     }
     getTotals1() {
+//        console.log(`start t1`);
         const gp = this.persistentData;
         const sp = this.getDetailedScorePackets();
         const scores = {};
@@ -226,6 +227,7 @@ class Game {
                 out.push(outOb);
             }
         });
+//        console.log(`end t1`);
         return JSON.stringify(out);
     }
     getTotals2() {
@@ -271,7 +273,7 @@ class Game {
         });
         const totals2 = this.getTotals2();
         const outOb = totals2;
-        console.log(outOb)
+//        console.log(outOb)
         gp.mainTeams.forEach(t => {
 //            console.log(t.title);
             let pv = scores.scoresR2.filter(sc => sc.dest === t.id);
@@ -289,7 +291,7 @@ class Game {
             }
         });
         const outArr = [];
-        console.log(outOb)
+//        console.log(outOb)
         Object.entries(outOb).forEach(o => {
             outArr.push(o[1]);
         });
@@ -297,8 +299,10 @@ class Game {
 //        return outOb;
     }
     getTotals4() {
+//        console.log(`start t4`);
         const outOb = this.getTotals3();
         outOb.note = "this probably not used";
+//        console.log(`end t4`);
         return outOb;
     };
 }

@@ -125,6 +125,8 @@
     cursor: default;
 }
 
+
+
 @media (max-width: 400px) {
     .voteform .vote-tile {
         padding: 10px;
