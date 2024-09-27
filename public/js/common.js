@@ -550,17 +550,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const descMax = 150;
         const hasS = await thisRoundScored(myPlayer);
+//        console.log(hasS)
         if (hasS) {
+//            console.log('go');
             if (hasS.hasScore) {
+
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
                 socket.emit('getValues', vOb, (v) => {
+//                    console.log('got values', v);
                     ints.prop('disabled', true);
                     ints.addClass('disabled');
                     val.html(hasS.scorePacket.val);
                     desc.html(v.description);
                     action.val(v.action);
+                    if (window.forceUpdate) {
+                        forceUpdate();
+                    }
                 });
-//                console.log(`here it is`);
             } else {
                 ints.off('click');
                 butPlus.on('click', () => {

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-09-26T11:21:50+01:00",
-  "commitHash": "85ace11398d529215a6803664fb3feaae814f590",
-  "commitMessage": "All total calculations now in place, some reoraganisation needed. Front end input templates in place, blank input templates still need to be added.",
+  "timestamp": "2024-09-27T08:53:04+01:00",
+  "commitHash": "bc183a5ff49f45eaa4c5cbe69f5568912b12f901",
+  "commitMessage": "Allocation cards now have a 'complete' state - other cards will need similar as there is now a new template definition built in to the gameController",
   "branch": "main"
 }

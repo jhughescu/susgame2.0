@@ -751,17 +751,16 @@ document.addEventListener('DOMContentLoaded', function() {
             let rType = null;
 
             rOb.dynamicTeamData = [];
-//            console.log(rOb.game.values);
-//            console.log(rOb.game.detailedScorePackets);
             rOb.game.persistentData.mainTeams.forEach((t, i) => {
-//                t.values = rOb.game.values[i];
-//                console.log(t.id, t.title, rOb.game.values.filter(tm => tm.team === t.id));
-//                t.values = rOb.game.values[t.id];
                 t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
                 t.scores = rOb.game.detailedScorePackets.filter(sp => sp.src === t.id)[0];
                 rOb.dynamicTeamData.push(t)
             });
-            rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
+            if (Boolean(player.teamObj)) {
+//                console.log('no teamObj');
+                rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
+            }
+
             if (renderState.temp) {
                 rType = renderState.temp.replace(GAMESTUB, '');
             }
@@ -838,6 +837,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
 //            console.log('game update - do NOT render this client');
         }
+    };
+    const forceUpdate = () => {
+//        console.log(`I will force an update`);
+        const idOb = {game: game, playerID: player.id};
+//        console.log('yep');
+        socket.emit('getRenderState', idOb, (rs) => {
+//            console.log('returned state', rs);
+            updateGame(rs.theGame);
+            updateRenderState(rs);
+            render();
+        });
     };
 
     const objectSnapshot = (o) => {
@@ -980,6 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showGame = showGame;
     window.showPlayer = showPlayer;
     window.activateYourmove = activateYourmove;
+    window.forceUpdate = forceUpdate;
 //    window.renderTeam = renderTeam;
     /*
     window.addEventListener('beforeunload', function(event) {
