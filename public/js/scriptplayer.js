@@ -56,9 +56,12 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('ping');
     };
 
-
-
-
+    const checkGameChanges = (rg) => {
+        console.log('chechChange', rg.round, game.round)
+        if (game.round === `${rg.round}*`) {
+            console.log('ROUND COMPLETION DETECTED');
+        }
+    }
     const updateGame = (ob) => {
         if ($.isEmptyObject(game)) {
             game = ob;
@@ -66,28 +69,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             game = Object.assign(game, ob);
         }
-//        return;
-
         isItHere(justGame(game, 'updated game'));
         isItHere(game.playersFull);
-//        console.log(player);
-//        return;
         if (player) {
-
-//            console.log(player.index);
             if (player.hasOwnProperty('index')) {
                 if (player.index === 0) {
-//                    console.log('i am the one and only');
                     const lg = Object.assign({}, JSON.parse(JSON.stringify(game)));
                     delete lg.persistentData;
                     delete lg.presentation;
-//                    console.log(player);
                     for (let i in lg.playersFull) {
-//                        console.log('a deletion ');
                         showGame()
                         delete lg.playersFull[i].teamObj;
-//                        console.log(player);
-//                        console.log(showGame())
                     }
                     socket.emit('recordthegame', lg);
                 }
@@ -706,16 +698,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             const show = Object.assign({}, renderState);
-            delete renderState.note;
-            setRenderStateLocal(renderState);
 //            console.log(`updateRenderState`, ob);
 //            console.log(`renderState`, renderState);
+//            console.log(`renderState`, typeof(renderState));
+            if (typeof(renderState) === 'string') {
+//                console.log(`can't be a string, convert to Ob if JSON`);
+//                const amI = JSON.parse(renderState);
+//                console.log(amI);
+            }
+            delete renderState.note;
+            setRenderStateLocal(renderState);
         }
     };
     const gotoHomeState = () => {
         setRenderStateLocal(homeState);
+        homeState = JSON.parse(homeState);
         homeState.ob = player;
+//        console.log('homeState', typeof(homeState), isValidJSON(homeState), homeState);
+//        const j = JSON.parse(homeState);
+//        console.log(j);
         updateRenderState(homeState);
+
     };
     const resetScroll = () => {
         $('html, body').animate({
@@ -723,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     };
     const render = (cb) => {
-        console.log('RENDER');
+//        console.log('RENDER');
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
@@ -749,7 +752,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             let rType = null;
-
+            const fsp = window.filterScorePackets;
+            const gSPs = game.detailedScorePackets;
             rOb.dynamicTeamData = [];
             rOb.game.persistentData.mainTeams.forEach((t, i) => {
                 t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
@@ -757,17 +761,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 rOb.dynamicTeamData.push(t)
             });
             if (Boolean(player.teamObj)) {
-//                console.log('no teamObj');
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             }
-
+            if (player.teamObj) {
+                rOb.dynamicSubTeamData = [];
+    //            console.log('handle the secondary teams');
+                rOb.game.persistentData.secondaryTeams.forEach((t, i) => {
+                    rOb.dynamicSubTeamData = rOb.dynamicSubTeamData.concat(rOb.game.teams[t.id]);
+                });
+                rOb.scoresOut = fsp(gSPs, 'src', player.teamObj.id);
+                rOb.scoresOut1 = fsp(rOb.scoresOut, 'round', 1)[0];
+                rOb.scoresOut3 = fsp(rOb.scoresOut, 'round', 3);
+                rOb.scoresOut3All = [];
+                game.persistentData.mainTeams.forEach((t, i) => {
+                    const s = rOb.scoresOut3.filter(sp => sp.dest === t.id)[0];
+                    rOb.scoresOut3All[i] = Object.assign({val: s ? s.val : 0}, t);
+                });
+                const rsp = window.filterScorePackets(game.detailedScorePackets, 'round', game.round);
+                rOb.dynamicSubTeamData.forEach((t, i) => {
+                    const prsp = window.filterScorePackets(rsp, 'client', justNumber(t)).map(sp => sp.val);
+                    rOb.dynamicSubTeamData[i] = {id: t, votes: prsp};
+                });
+                rOb.myDynamicSubTeamData = rOb.dynamicSubTeamData.filter(td => td.id === player.id)[0];
+            }
             if (renderState.temp) {
                 rType = renderState.temp.replace(GAMESTUB, '');
             }
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
-//            console.log(renderState);
-            console.log(rOb);
+//            console.log(rOb);
+            console.log('RENDER', renderState);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
@@ -795,6 +818,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (player) {
                     const us = rOb._updateSource;
                     const ev = us.event.split(' ')[1].toLowerCase();
+//                    console.log(`ev: ${ev}`);
+//                    checkGameChanges(rgame);
                     switch (ev) {
                         case 'playerconnectevent':
                             // playerConnectEvents are client-specfic; only render self
@@ -813,6 +838,30 @@ document.addEventListener('DOMContentLoaded', function() {
                             break;
                         case 'presentationaction':
                             go = false;
+                            break;
+                        case 'startround':
+//                            console.log('%cstart the round, update accordingly', 'background-color: black; color: green;');
+//                            console.log(player);
+//                            console.log(rgame.persistentData.rounds);
+//                            console.log(rgame.persistentData.rounds[rgame.round]);
+//                            console.log(rgame.persistentData.rounds[rgame.round].type);
+//                            console.log(rgame.round, rgame.persistentData.rounds[rgame.round], player.teamObj.type, rgame.persistentData.rounds[rgame.round].type === player.teamObj.type )
+//                            console.log(renderState);
+                            if (renderState.temp !== 'game.main' && rgame.persistentData.rounds[rgame.round].type !== player.teamObj.type) {
+                                // not in the home state and not involved in this round - go home
+//                                console.log('%cnot in the home state and not involved in this round - go home', 'background-color: black; color: green;');
+                                gotoHomeState();
+                                render();
+                            } else {
+//                                console.log('%cno need to update me in this round', 'background-color: black; color: green;');
+                            }
+                            go = false;
+                            break;
+                        case 'endround':
+//                            console.log('end the round, update?');
+//                            gotoHomeState();
+//                            render();
+//                            go = true;
                             break;
                         default:
                             go = false;

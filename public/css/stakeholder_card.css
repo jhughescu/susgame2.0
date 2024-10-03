@@ -79,6 +79,7 @@
 .stakeholder_card .action_name {
 /*    top: 98px;*/
     top: 36px;
+    top: 16px;
 /*    left: 100px;*/
 /*    width: 200px;*/
     left: 50px;
@@ -89,10 +90,11 @@
 .stakeholder_card .action_desc {
     top: 95px;
     top: 46px;
+    top: 30px;
     left: 50px;
     width: 310px;
     height: 110px;
-    font-size: 1.1rem;
+    font-size: 1.0rem;
     word-break: keep-all;
 }
 .stakeholder_card .header, .stakeholder_card .action_name, .stakeholder_card .action_desc {
@@ -105,7 +107,34 @@
     width: 30px;
     font-size: 1.9rem;
 }
-
+.cardballs {
+    width: 330px;
+/*    margin: 0px auto;*/
+    margin-top: 30px;
+    margin-left: 60px;
+/*    background-color: blue;*/
+    color: white;
+}
+.cardballs .cardball_hide {
+    display: none;
+}
+.cardballs p {
+    position: relative;
+    top: -53px;
+    left: 5px;
+    font-size: 1.5rem;
+}
+.cardballs td {
+    padding: 0px;
+}
+.cardball {
+    position: relative;
+    left: 0px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: green;
+}
 
 /* ############################################## end stakeholder card ################################################ */
 

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-09-27T08:53:04+01:00",
-  "commitHash": "bc183a5ff49f45eaa4c5cbe69f5568912b12f901",
-  "commitMessage": "Allocation cards now have a 'complete' state - other cards will need similar as there is now a new template definition built in to the gameController",
+  "timestamp": "2024-10-03T11:06:14+01:00",
+  "commitHash": "d0770e92f59303551f01849f21dc179687ac3cf9",
+  "commitMessage": "Main team allocation now reroutes to static template on submission.",
   "branch": "main"
 }

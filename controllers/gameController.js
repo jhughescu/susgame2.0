@@ -718,11 +718,13 @@ const newGetTheRenderState = (game, id) => {
                 if (team) {
 //                    console.log('has teamObj');
                     let roundComplete = false;
+                    let round = null;
                     let roundNum = null;
                     let roundInfo = {}
                     inThisRound = false;
                     if (game.round) {
                         roundComplete = game.round.toString().indexOf('*', 0) > -1;
+                        round = game.round;
                         roundNum = tools.justNumber(game.round);
                         roundInfo = game.persistentData.rounds[roundNum];
                         inThisRound = team.type === roundInfo.type;
@@ -750,6 +752,8 @@ const newGetTheRenderState = (game, id) => {
                         teamHasScored: teamHasScored,
                         scoreCompletionMetric: scoreCompletionMetric,
                         gameRound: roundNum,
+                        gameRoundFull: round,
+                        roundComplete: roundComplete,
                         teamScoresChecked: filterScorePackets(game.uniqueID, 'src', team.id, scorePackets),
                         roundScoresChecked: roundScores
                     };
@@ -758,7 +762,11 @@ const newGetTheRenderState = (game, id) => {
                         rs.tempType = 'interaction';
                     }
                     if (scoreCompletionMetric && canInteract && inThisRound) {
-                        rs.temp = `game.${roundInfo.template}.complete`;
+                        if (roundComplete) {
+                            rs.temp = `game.main`;
+                        } else {
+                            rs.temp = `game.${roundInfo.template}.complete`;
+                        }
                     }
                 } else {
                     if (game.state === 'ended') {
@@ -1106,7 +1114,8 @@ const checkRound = (ob, cb) => {
             teams.forEach(t => {
                 ta.push(Boolean(rScores.filter(item => item.charAt(2) === t.id.toString()).length));
             });
-            const ra = gRound.type === 1 || gRound.type === 2 ? ta : pa;
+//            const ra = gRound.type === 1 || gRound.type === 2 ? ta : pa;
+            const ra = gRound.type === 1 ? ta : pa;
             logController.addLog('roundAll', {game: game.address, roundType: gRound.type, submissions: ra, playerSubs: pa, teamSubs: ta, rScores: rScores});
             if (cb) {
                 cb(ra);

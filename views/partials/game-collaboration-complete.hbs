@@ -1,0 +1,41 @@
+<div class='round round2 voteform' id='vote'>
+    {{#each scoresOut3All}}
+    {{#notSameTeam id ../teamObj.id}}
+    <div class='vote-tile-container'>
+        <div class='vote-tile'>
+            <div class='icon-container' style='background-color: {{this.displayColour}};'>
+<!--            <div class='icon-container'>-->
+                <img src='assets/icon-{{this.abbr}}-fill.svg' alt='{{this.title}} Icon' class='icon'>
+            </div>
+            <div class='title-container'>
+                <div class='title'>{{title}}</div>
+            </div>
+            <div class='description'>
+                {{values.description}}
+            </div>
+            <div class='counter resources-buttons' id='resources-buttons-{{this.id}}'>
+<!--                <div class='resources-score-team' id='resources-team-{{this.id}}'>-->
+                    <p><span class='value' id='voteValue{{this.id}}'>{{val}}</span></p>
+<!--                </div>-->
+<!--
+                <button class='resources-btn vote_btn_minus' id='vote_btn_minus-{{this.id}}'><span>-</span></button>
+                <button class='resources-btn vote_btn_plus' id='vote_btn_plus-{{this.id}}'>+</button>
+-->
+                <button class='resources-btn vote_btn_minus' disabled><span>-</span></button>
+                <button class='resources-btn vote_btn_plus' disabled>+</button>
+            </div>
+        </div>
+        <!-- Repeat the above 'vote-tile' div as needed -->
+    </div>
+    {{/notSameTeam}}
+    {{/each}}
+<!--    <div id='voteformsumm'><span id='vAvail'>0</span>/<span id='vTotal'>10</span><br><br><input type='submit' value='SUBMIT' class='buttonSubmit buttonAllocate' id='buttonAllocate'></div>-->
+</div>
+<style>
+
+
+
+
+</style>
+
+

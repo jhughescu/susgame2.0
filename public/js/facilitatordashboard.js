@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (cb) {
                     cb();
                 }
+                window.location.reload();
             });
         }
     };
@@ -255,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
     const onGameUpdate = (g) => {
-//        console.log(`###############################################`);
-//        console.log(`gameUpdate:`, g);
+        console.log(`###############################################`);
+        console.log(`gameUpdate:`, g);
 //        console.log(g._updateSource);
         const pv = procVal;
         let comp = 'playersFull';
@@ -2085,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`game.rounds[game.round].completionMsg`)
 //        console.log(game.persistentData.rounds[game.round].completionMsg);
         if (game.round > 0 && game.persistentData.rounds[game.round].hasOwnProperty('completionMsg')) {
-            alert(game.persistentData.rounds[game.round].completionMsg);
+//            alert(game.persistentData.rounds[game.round].completionMsg);
         }
     });
 

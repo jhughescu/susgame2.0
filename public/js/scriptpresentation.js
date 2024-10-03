@@ -108,22 +108,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
-//        console.log(`a game update: new round? ${game.round !== rGame.round}`);
-//        console.log(`watching for ${watchFor}`);
-//        console.log(rGame);
-//        console.log(rGame._updateSource);
         if (watchFor) {
-//            console.log(game[watchFor] === rGame[watchFor]);
-//            console.log(game[watchFor]);
-//            console.log(rGame[watchFor]);
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
-//                console.log(`watch diff (${watchFor}): ${rGame[watchFor]}`);
-//                console.log(game[watchFor].toString());
-//                console.log(rGame[watchFor].toString());
-//                console.log(rGame[watchFor].toString() === game[watchFor].toString());
                 if (watchFor === 'scores') {
 
                 }
+                console.log(`a match for the watch, update slide`);
                 updateSlide()
             }
         }
@@ -131,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function () {
             setWatch('scores');
         }
         game = rGame;
-//        console.log(game);
 
     };
     const estPanopto  = () => {
@@ -197,13 +186,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Returns an array of objects
         // NOTE "values" are always set prior to "scores", so "values" can be assumed here
         const t = game.persistentData.teamsArray;
-//        console.log(`prepScoresR1`);
-
         let rArr = [];
         let v = game.values;
         let s = sc ? sc : game.scores;
         s = filterScorePackets(s, 'round', 1);
-//        console.log(s)
         let sStatic = s.slice(0);
         if (v && s) {
             v = sortByProperty(v, 'team');
@@ -223,11 +209,35 @@ document.addEventListener('DOMContentLoaded', function () {
         let rArrNew = [];
         // use only r1 scores:
         sStatic = filterScorePackets(sStatic, 'round', 1);
-//        console.log(sStatic)
         sStatic.forEach(sp => {
-//            console.log(sp);
             const vl = v.find(obj => obj.team === sp.src);
-//            console.log(vl);
+            if (vl) {
+                const ob = {
+                    team: sp.src,
+                    title: t[sp.src].title,
+                    action: vl.action,
+                    description: vl.description,
+                    value: sp.val,
+                    teamObj: t[sp.src]
+                };
+                rArrNew.push(ob);
+            } else {
+                console.warn(`no vl found`)
+            }
+        });
+        return rArrNew;
+    };
+    const prepScoresR3 = (sc) => {
+        const t = game.persistentData.teamsArray;
+        const v = game.values;
+        let rArrNew = [];
+        let s = sc ? sc : game.scores;
+        s = filterScorePackets(s, 'round', 3);
+        let sStatic = s.slice(0);
+        // use only r3 scores:
+        sStatic = filterScorePackets(sStatic, 'round', 3);
+        sStatic.forEach(sp => {
+            const vl = v.find(obj => obj.team === sp.src);
             const ob = {
                 team: sp.src,
                 title: t[sp.src].title,
@@ -238,20 +248,15 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             rArrNew.push(ob);
         });
-//        console.log(`new array`, rArrNew);
         return rArrNew;
     };
     const showRound1 = () => {
-        console.log(`showRound1`);
+        console.log('showRound1')
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
-//            console.log(game)
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 1);
-            console.log(preScores);
-            game = rgame;
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 rs = filterScorePackets(rs, 'round', 1);
-//                console.log(rs);
                 const allScores = prepScoresR1(rs);
                 const rOb = {allScores: allScores};
                 const t = game.persistentData.teamsArray;
@@ -272,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderTemplate(targ, 'slides/showround1', rOb, () => {
                     allScores.forEach(s => {
                         const scoredBefore = filterScorePackets(preScores, 'src', s.team).length > 0;
-//                        console.log(`${s.title} has scored before? ${scoredBefore}`);
                         const leaf = $(`#stakeholder_card_${s.team}`).find('.leaf');
                         if (scoredBefore) {
                             leaf.show();
@@ -283,6 +287,98 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             });
 
+        });
+    };
+    const showRound3v1 = () => {
+        const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 3);
+        const rOb = {};
+        const t = game.persistentData.teamsArray;
+        const mtl = game.persistentData.mainTeams.length;
+        t.forEach((tm, i) => {
+            if (i < mtl) {
+                const ob = Object.assign({}, tm);
+                rOb[`card_${tm.id}`] = ob;
+            }
+        });
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+                const allScores = prepScoresR3(rs);
+                for (var i in rOb) {
+                    const jn = window.justNumber(i);
+                    rOb[i] = allScores[jn];
+                    if (rOb[i]) {
+                        const obCopy = JSON.parse(JSON.stringify(rOb[i]));
+                        rOb[i].displayColour = obCopy.teamObj.displayColour;
+                        rOb[i].id = obCopy.teamObj.id;
+                        rOb[i].votes = [];
+                        allScores.forEach(tm => {
+                            if (tm.team !== rOb[i].team) {
+                                const tOb = {
+                                    displayColour: tm.teamObj.displayColour,
+                                    value: tm.value
+                                };
+                                rOb[i].votes.push(tOb);
+                            }
+                        });
+                    }
+                }
+                renderTemplate(targ, 'slides/showround3', rOb, () => {
+                    console.log(allScores);
+                    console.log(allScores3);
+                    console.log(rOb);
+                });
+            });
+        });
+    };
+    const showRound3 = () => {
+        setWatch('scores');
+        const mt = game.persistentData.mainTeams;
+        const t = game.persistentData.teamsArray.slice(0, mt.length);
+        const fsp = window.filterScorePackets;
+        const v = game.values;
+//        console.log(v);
+        const outArr = [];
+        const outOb = {};
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+                const sr3 = fsp(rs, 'round', 3);
+
+                t.forEach(tm => {
+                    console.log(tm.title.toUpperCase());
+//                    console.log(tm.title, fsp(sr3, 'dest', tm.id));
+//                    const otherTeams = t.filter(ot => ot.id !== tm.id);
+                    const otherTeams = t.slice(0);
+                    const ac = v.filter(vp => vp.team === tm.id)[0];
+                    const o = {
+                        id: tm.id,
+                        title: tm.title,
+                        displayColour: tm.displayColour,
+                        action: ac.action,
+                        description: ac.description,
+                        votes: []
+                    };
+                    otherTeams.forEach(ot => {
+                        const tv = fsp(fsp(sr3, 'dest', tm.id), 'src', ot.id);
+//                        console.log(ot.title, tv);
+                        o.votes.push({
+                            id: ot.id,
+                            title: ot.title,
+                            displayColour: ot.displayColour,
+                            value: tv.length > 0 ? tv[0].val : '',
+                            opacity: tv.length > 0 ? 1 : 0.5,
+                            td: ot.id === tm.id ? 'hide' : 'show'
+                        })
+                    });
+                    outArr.push(o);
+                });
+//                console.log(outArr);
+                outArr.forEach((tm, i) => {
+                    outOb[`card_${i}`] = tm;
+                });
+                renderTemplate(targ, 'slides/showround3', outOb, () => {
+                    console.log(outOb);
+                });
+            });
         });
     };
     const getVidID = () => {
@@ -363,9 +459,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof(totals) === 'string') {
             totals = JSON.parse(totals);
         }
-        console.log(`totals for r ${round}`);
-        console.log(totals);
-        console.log(o);
+        if (!totals.hasOwnProperty('length')) {
+            totals = Object.values(totals);
+        }
+////        console.log(`totals for r ${round}`);
+//        console.log(totals);
+//        console.log(o);
         totals = totals.map(s => s.gt);
         let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
@@ -531,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //                console.log('action exists in the code');
                 window[slOb.action](rOb);
             } else {
-                console.log('action does not exist in code');
+                console.log(`action does not exist in code (${slOb.action})`);
             }
         }
     };
@@ -594,6 +693,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showScores = showScores;
     window.showValues = showValues;
     window.showRound1 = showRound1;
+    window.showRound3 = showRound3;
     window.showGameQR = showGameQR;
     window.renderTotals = renderTotals;
     window.unmute = unmute;

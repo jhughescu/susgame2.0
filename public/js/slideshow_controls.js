@@ -140,7 +140,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn(`multiple slides contain same trigger action.`);
         } else {
             if (trig.length) {
+                console.log('we have trig length');
                 const trigSlideRef = trig[0].ref;
+                console.log(`trigSlideRef: ${trigSlideRef}`);
                 if (trigSlideRef !== presentation.currentSlide) {
                     console.log(`findRoundTrigger will call gotoSlide`);
                     gotoSlide(trigSlideRef);
