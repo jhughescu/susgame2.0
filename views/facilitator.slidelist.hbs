@@ -12,8 +12,9 @@
     {{#each this}}
     <div class='slide_info' id='slide_info_{{this.ref}}'>
         <div class='progress'></div>
+        <div class='slidenote' id='slidenote_{{ref}}'>{{note}}</div>
         <div class='controls'>
-            <span class='link slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span><span class='material-symbols-outlined replay' id='sb_reload'>repeat</span>
+            <span class='{{#if isEnabled}}{{else}} disabled{{/if}} link slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span><span class='material-symbols-outlined replay' id='sb_reload'>repeat</span>
         </div>
     </div>
     {{/each}}

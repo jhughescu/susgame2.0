@@ -1,0 +1,13 @@
+#facilitateRoundsContent td {
+/*    background-color: black;*/
+    padding: 3px;
+    color: #c9ced9;
+}
+#facilitateRoundsContent td.current, #facilitateRoundsContent td.rnum {
+    color: white;
+}
+#facilitateRoundsContent .true {
+    color: green;
+    font-weight: bold;
+    text-align: center;
+}

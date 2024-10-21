@@ -224,9 +224,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (targ.indexOf('#', 0) === 0) {
             targ = targ.replace('#', '');
         }
-//        console.log(`targ: ${targ}`);
+        console.log(`targ: ${targ}, temp: ${temp}`);
         $(`#${targ}`).css({opacity: 0});
         const part = Handlebars.partials[temp];
+        console.log('renderPartial');
+        console.log(part);
 //        console.log(part(ob));
         if (document.getElementById(targ)) {
                 document.getElementById(targ).innerHTML = part(ob);
@@ -478,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
         } else {
-            console.log('no socket shared, cannot emit socket calls');
+//            console.log('no socket shared, cannot emit socket calls');
         }
     };
     const sortNumber = (a, b) => {
@@ -514,6 +516,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         return rg;
+    };
+    const reorderObject = (obj, firstKey) => {
+        let reordered = { [firstKey]: obj[firstKey] };
+        // Loop through the original object and add the rest of the properties
+        for (let key in obj) {
+            if (key !== firstKey) {
+                reordered[key] = obj[key];
+            }
+        }
+        return reordered;
     };
     // allocation/collaboration/vote controls can be used in facilitator dashboards, hence are defined in common.
     const getRemainingAllocation = (pl) => {
@@ -607,7 +619,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     desc.html('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem felis, lacinia non nibh at, maximus pretium mi. Proin imperdiet velit augue, quis laoreet neque iaculis vitae.');
                     val.html(1 + Math.ceil(Math.random() * 4));
                     const ch = action.find('option');
-                    action.prop('selectedIndex', 1 + Math.ceil(Math.random() * ch.length - 2));
+                    const range = ch.length;
+                    const pick = 1 + Math.floor(Math.random() * (range - 1));
+//                    console.log(range, pick)
+                    action.prop('selectedIndex', pick);
                 }
                 submit.on('click', () => {
                     let scoreV = parseInt(val.html());
@@ -621,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
                         socket.emit('submitValues', vob);
                         const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
+//                        console.log(`click the button, submit the score`);
                         socket.emit('submitScore', sob, (scores) => {
                             setupAllocationControl();
                         });
@@ -628,19 +644,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         } else {
-            console.log(`Whoops, no 'round scored' object found`);
+//            console.log(`Whoops, no 'round scored' object found`);
         }
     };
     const setupVoteControl = async (inOb) => {
-        const storeID = `votes-${game.address}-${player.id}-r${game.round}`;
+        const myPlayer = player === null ? inOb : player;
+        const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
         let stored = [];
         if (localStorage.getItem(storeID)) {
             stored = localStorage.getItem(storeID).split(',');
         }
-//        console.log(`setupVoteControl:`);
-//        console.log(stored);
-        const myPlayer = player === null ? inOb : player;
         const plIndex = procVal(myPlayer.index) - 1;
         const plID = justNumber(myPlayer.id);
         const hasS = await thisRoundScored(myPlayer);
@@ -693,22 +707,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     t += myScores[i].val;
                 });
                 vAvailDisp.html(Math.abs(t));
-                console.log('moooooooooooooooooo');
                 return;
             } else {
                 store = [];
                 t = 0, tni = 0, tai = 0;
-//                console.log('jhdkjkfjkjk');
                 val.each((i, v) => {
                     if (stored.length > 0) {
-//                        console.log(i, stored[i]);
                         $(v).html(stored[i])
                     }
                     const vv = parseInt($(v).html());
                     tai += Math.abs(vv);
                     tni += vv;
                     store.push(vv);
-
                 });
                 if (stored.length > 0) {
                     vAvailDisp.html(Math.abs(tai));
@@ -720,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     let ta = 0;
                     let tn = 0;
-
                     // player.teamObj.votes must be the same for each player at setup
                     const adj = $(this).attr('id').indexOf('plus', 0) > -1 ? 1 : -1;
                     const avail = justNumber(vTotalDisp.html()) - justNumber(vAvailDisp.html());
@@ -783,6 +792,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
 
                     });
+//                    console.log(`vote submitted`);
                     socket.emit('submitScoreForAverage', sOb);
                     localStorage.removeItem(storeID);
                     setupVoteControl(myPlayer);
@@ -791,10 +801,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     };
-    const setupCollaborationControl = async (inob) => {
-        const storeID = `collabs-${game.address}-${player.id}`;
+    const setupCollaborationControl = async (inOb) => {
+//        console.log('we set up collab control');
         const myPlayer = player === null ? inOb : player;
-//        console.log(`setupCollaborationControl`);
+        const storeID = `collabs-${game.address}-${myPlayer.id}`;
         const ra = getRemainingAllocation(myPlayer);
         const vAvailDisp = $('#vAvail');
         const vTotalDisp = $('#vTotal');
@@ -803,31 +813,27 @@ document.addEventListener('DOMContentLoaded', function () {
         const butRes = $('.resources-btn');
         const allV = $('.value');
         const submit = $(`#buttonAllocate`);
-//        console.log(butMinus);
-//                console.log(butPlus);
-//                console.log(submit);
-//        console.log(butRes);
         let store = [];
         let tva = 0;
         let stored = localStorage.getItem(storeID);
         let playerHasScored = false;
-//        console.log('try');
+
+
+
+//        console.log('OK, we just need to add a condition which means the form does not remember results if we are in the FDB');
+//        console.log(storeID, stored);
+
+
+
         socket.emit('getScorePackets', game.uniqueID, (s) => {
             const r = window.filterScorePackets(s, 'round', game.round);
-            const team = window.filterScorePackets(r, 'src', player.teamObj.id);
+            const team = window.filterScorePackets(r, 'src', myPlayer.teamObj.id);
             playerHasScored = team.length > 0;
             if (playerHasScored) {
-//                console.log(`player has scored`);
                 butRes.prop('disabled', true);
-//                butPlus.prop('disabled', true);
                 submit.prop('disabled', true);
-//                console.log(butMinus);
-//                console.log(butPlus);
-//                console.log(submit);
-//                console.log(butRes);
                 return;
             } else {
-//                console.log(`player has NOT scored`);
                 if (stored) {
                     stored = stored.split(',');
                 }
@@ -843,15 +849,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 const hasS = false;
                 const val = vTotalDisp;
                 myPlayer.teamObj.votes = ra;
-        //        vTotalDisp.html(ra - tva);
                 vTotalDisp.html(ra);
                 vAvailDisp.html(ra - (ra - tva));
                 allV.each((v, e) => {
                     const myVal = parseInt($(e).html());
                         const okMinus = myVal === 0;
                         const okPlus = parseInt(vAvailDisp.html()) === parseInt(vTotalDisp.html());
-                        console.log(okMinus, okPlus)
-        //                console.log(myVal, ok, parseInt(vAvailDisp.html()), parseInt(vTotalDisp.html(), parseInt(vAvailDisp.html()) === parseInt(vTotalDisp.html())));
+//                        console.log(okMinus, okPlus);
                         $(e).closest('.resources-buttons').find('.vote_btn_minus').prop('disabled', okMinus);
                         $(e).closest('.resources-buttons').find('.vote_btn_plus').prop('disabled', okPlus);
                 });
@@ -859,39 +863,35 @@ document.addEventListener('DOMContentLoaded', function () {
         //            alert('all dunne')
                 } else {
                     butRes.off('click').on('click', function () {
-
                         let v = parseInt(vTotalDisp.html());
                         const id = $(this).attr('id');
-        //                const disp = $(this).closest('tr').find('.value');
                         const disp = $(this).parent().find('.value');
                         const adj = $(this).attr('id').toLowerCase().includes('plus') ? 1 : -1;
-        //                console.log(`click ${adj}`);
                         if ((v - adj > -1) && (parseInt(disp.html()) + adj > -1)) {
                             disp.html(parseInt(disp.html()) + adj);
                             store = [];
                             allV.each((v, e) => {
                                 const val = Math.abs(parseInt($(e).html()));
                                 store.push(val);
-        //                        console.log(val);
                             });
                             localStorage.setItem(storeID, store.toString());
-                            setupCollaborationControl();
+                            setupCollaborationControl(myPlayer);
                         }
                     });
                     submit.off('click').on('click', () => {
-                        const src = player.teamObj.id;
+                        const src = myPlayer.teamObj.id;
+//                        console.log('click')
                         allV.each((i, e) => {
                             const dest = justNumber($(e).attr('id'));
                             const v = parseInt($(e).html());
+//                            console.log(v, $(e).html())
                             const scOb = {src: src, dest: dest, val: v, round: justNumber(game.round)};
                             const sob = {scoreCode: scOb, game: game.uniqueID, client: myPlayer.id};
-                            if (v > 0) {
-//                                console.log(sob);
+//                            if (v > 0) {
                                 socket.emit('submitScore', sob, (scores) => {
-                                    //
-                                    setupCollaborationControl();
+                                    setupCollaborationControl(myPlayer);
                                 });
-                            }
+//                            }
                         });
                     });
                 }
@@ -900,6 +900,24 @@ document.addEventListener('DOMContentLoaded', function () {
         })
 
     };
+
+    const createDynamicTeamData = () => {
+        const rOb = {game: game};
+        rOb.dynamicTeamData = [];
+        rOb.game.persistentData.mainTeams.forEach((t, i) => {
+            t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
+            t.scores = rOb.game.detailedScorePackets.filter(sp => sp.src === t.id)[0];
+            rOb.dynamicTeamData.push(t)
+        });
+        return rOb.dynamicTeamData;
+    };
+    const showDynamicTeamData = (dtd) => {
+        console.log(`dynamicTeamData`, dtd)
+    };
+    window.showDynamicTeamData = showDynamicTeamData;
+    window.createDynamicTeamData = createDynamicTeamData;
+
+
     // the 'share' methods are for sharing objects defined in other code files
     const socketShare = (sock, id) => {
         socket = sock;
@@ -932,6 +950,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.roundNumber = roundNumber;
     window.roundAll = roundAll;
     window.emitWithPromise = emitWithPromise;
+    window.reorderObject = reorderObject;
     window.loadCSS = loadCSS;
     window.loadJS = loadJS;
     window.isValidJSON = isValidJSON;

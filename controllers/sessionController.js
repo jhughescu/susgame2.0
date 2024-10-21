@@ -65,18 +65,22 @@ const generateColour = () => {
 
 
 async function getSessionWithID(id) {
-    //    console.log(`getSessionWithID: ${id}`);
-    try {
-        const session = await Session.findOne({
-            uniqueID: id
-        }).select('-password -_id -__v');
-        if (!session) {
-            // If session is not found, return an error
-            throw new Error(`getSessionWithID: Session not found (${id})`);
+//    console.log(`getSessionWithID: ${id}, id is null? ${id === null}, id is null string? ${id === 'null'}`);
+    if (id === null || id === 'null' || id === undefined) {
+        console.log(`getSessionWithID called with id null or undefined, cannot continue`);
+    } else {
+         try {
+            const session = await Session.findOne({
+                uniqueID: id
+            }).select('-password -_id -__v');
+            if (!session) {
+                // If session is not found, return an error
+                throw new Error(`getSessionWithID: Session not found (${id})`);
+            }
+            return session;
+        } catch (err) {
+            console.log(err);
         }
-        return session;
-    } catch (err) {
-        console.log(err);
     }
 };
 async function getSessionWithAddress(id) {

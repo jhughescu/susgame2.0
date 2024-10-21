@@ -103,8 +103,9 @@ async function restoreGame (o, cb) {
     // Restore by creating a new instance of Game and then loading any stored info from the database.
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
-//    console.log(`restoreGame:`)
-//    console.log(JSON.parse(o))
+//    console.log(`restoreGame:`);
+//    console.log(JSON.parse(o));
+    console.log(`restoreGame looks for session with ID ${game.uniqueID}`);
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
@@ -162,7 +163,8 @@ async function resetGame(id, cb) {
             state: 'pending',
             state: 'started',
             players: game.players,
-            teams: game.teams,
+//            teams: game.teams,
+            teams: [],
             scores: [],
             values: [],
             slide: game.slide,
@@ -431,7 +433,7 @@ const getScores = (gameID, cb) => {
     return ss;
 };
 const getScorePackets = (gameID, cb) => {
-//    console.log(`getScorePackets`);
+//    console.log(`call to getScorePackets`);
     if (gameID.toString().indexOf('game', 0) === -1) {
         gameID = `game-${gameID}`
     }
@@ -447,6 +449,7 @@ const getScorePackets = (gameID, cb) => {
     }
     if (cb) {
 //        console.log(`getScorePackets callback, sps:`, sps);
+//        console.log(`getScorePackets callback, returns ${sps.length} scores`);
         cb(sps);
     }
     return sps;
@@ -494,7 +497,7 @@ const getTotals4 = (gameID, cb) => {
     }
     const game = games[gameID];
     if (game) {
-//        console.log('we have a game');
+        console.log('we have a game');
         cb(game.getTotals4())
     } else {
 //        console.log('no game no way');
@@ -562,6 +565,7 @@ const createAggregate = (ob, cb) => {
 };
 const getAllValues = (gameID, cb) => {
     const game = games[gameID];
+//    console.log(games);
     let vs = [];
     if (game) {
         game.values.forEach(v => {
@@ -1064,8 +1068,8 @@ const startRound = async (ob) => {
     if (game) {
         const rounds = game.persistentData.rounds;
         const rIndex = ob.round - 1;
-        console.log(`startRound`);
-        console.log(ob.round);
+//        console.log(`startRound`);
+//        console.log(ob.round);
         if (ob.round > rounds.length) {
             const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
@@ -1080,7 +1084,7 @@ const startRound = async (ob) => {
                 const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
                 // eventEmitter.emit('gameUpdate', eGame);
                 emitUpdate(eGame);
-                console.log('startRound WILL emit gameUpdate (ob.ok set to true)');
+//                console.log('startRound WILL emit gameUpdate (ob.ok set to true)');
             } else {
                 console.log('startRound will not emit gameUpdate (ob.ok set to false)');
             }
@@ -1090,7 +1094,7 @@ const startRound = async (ob) => {
     }
 };
 const checkRound = (ob, cb) => {
-    console.log(`checkRound`);
+//    console.log(`checkRound`);
     // Check submitted scores against current round
     const gameID = typeof(ob) === 'string' || typeof(ob) === 'number' ? ob : ob.gameID;
     const game = games[`game-${gameID}`];
@@ -1147,7 +1151,7 @@ const endRound = async (ob, cb) => {
     }
 };
 const scoreSubmitted = async (ob, cb) => {
-//    console.log(`scoreSubmitted`);
+    console.log(`scoreSubmitted`);
     const sc = ob.scoreCode;
     const game = games[`game-${ob.game}`];
     if (game) {
@@ -1164,14 +1168,14 @@ const scoreSubmitted = async (ob, cb) => {
             return;
         }
         if (p) {
+            game.scores.push(p);
             const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
             if (session) {
                 const game = games[`game-${ob.game}`];
                 if (game) {
-                    game.scores = session.scores;
                     const roundComplete = checkRound(ob.game).indexOf(false) === -1;
+//                    console.log(`scores returned to game, ${game.scores.length} scores held`);
                     if (cb) {
-//                        console.log(`scoreSubmitted callback`);
                         cb(game.scores);
                     }
                     const eGame = Object.assign({_updateSource: {event: 'gameController scoreSubmitted', src: ob}}, game);
@@ -1210,30 +1214,30 @@ const scoreForAverageSubmitted = async (ob, cb) => {
             let d = sp.getDetail();
             scOut.push(p);
         });
+//        console.log(`scoreForAverageSubmitted`);
+//        console.log(game.scores);
+//        console.log(scOut);
+        game.scores = [...new Set([...game.scores, ...scOut])];
+//        console.log(noo);
         const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
         if (session) {
-            game.scores = session.scores;
-//            console.log(session.scores)
-//            console.log(`checkRound:`, checkRound(ob.game));
+//            game.scores = session.scores;
             const roundDetail = checkRound(ob.game);
             logController.addLog('round', {game: game.address, roundType: game.round.type, submissions: roundDetail});
-//            console.log(`roundDetail`);
-            console.log(roundDetail);
+//            console.log(roundDetail);
             const roundComplete = roundDetail.indexOf(false) === -1;
-//            console.log(`roundComplete: ${roundComplete}`);
             const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob}}, game);
             eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 eventEmitter.emit('roundComplete', eGame);
             }
-            eventEmitter.emit('scoresUpdated', eGame);
+//            eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 endRound(ob);
             }
         }
         let ssp = filterScorePackets(gameID, 'round', 2);
         ssp = filterScorePackets(gameID, 'src', sc[0].src, ssp);
-
     } else {
         console.log(`scoreForAverageSubmitted: game not found (game-${ob.game})`);
     }

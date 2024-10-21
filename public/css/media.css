@@ -54,4 +54,22 @@
         width: 30px;
         font-size: 1.6rem;
     }
+
+
+    .stakeholder_card .cardballs {
+/*        width: 330px;*/
+        width: 260px;
+        margin-top: -10px;
+        margin-left: 40px;
+    }
+    .stakeholder_card .cardballs p {
+        top: -43px;
+        left: 6px;
+        font-size: 1.3rem;
+    }
+    .stakeholder_card .cardball {
+        left: 0px;
+        width: 24px;
+        height: 24px;
+    }
 }

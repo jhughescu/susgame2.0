@@ -52,8 +52,14 @@ The panel which wil contain all required facilitate controls
     left: 820px;
     left: 729px;
     width: 500px;
-/*    top: 0px;*/
-    height: 500px;
+    top: 220px;
+    height: 350px;
+}
+#rounds {
+    left: 729px;
+    width: 500px;
+/*    top: 220px;*/
+    height: 140px;
 }
 .slidelist {
     top: 40px;

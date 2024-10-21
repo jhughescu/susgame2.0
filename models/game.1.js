@@ -179,6 +179,12 @@ class Game {
         });
         return this.detailedScorePackets;
     }
+    summValues(a) {
+        let sum = a.map(sp => sp.val).reduce(function(accumulator, currentValue) {
+            return accumulator + currentValue;
+        }, 0);
+        return sum;
+    }
     getTotals1() {
 //        console.log(`start t1`);
         const gp = this.persistentData;
@@ -230,10 +236,11 @@ class Game {
 //        console.log(`end t1`);
         return JSON.stringify(out);
     }
-    getTotals2() {
-
+    getTotalsSupp() {
+//        console.log(`####################################################################  getTotalsSupp`);
+//        console.log(`####################################################################  getTotalsSupp`);
+//        console.log(`####################################################################  getTotalsSupp`);
 //        return JSON.parse(this.getTotals1());
-
         // collaborative scores submitted: add to allocations
         const gp = this.persistentData;
         const sp = this.getDetailedScorePackets();
@@ -263,31 +270,69 @@ class Game {
         });
         return outOb;
     }
+    getTotals2() {
+        return this.getTotals1();
+//        return this.getTotalsSupp();
+    }
     getTotals3() {
         // collaborative scores submitted: add to allocations
+//        console.log(`getTotals3`)
         const gp = this.persistentData;
         const sp = this.getDetailedScorePackets();
+//        console.log(sp);
         const scores = {};
         gp.rounds.forEach(r => {
             scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
         });
-        const totals2 = this.getTotals2();
+        const totals2 = this.getTotalsSupp();
         const outOb = totals2;
-//        console.log(outOb)
         gp.mainTeams.forEach(t => {
-//            console.log(t.title);
-            let pv = scores.scoresR2.filter(sc => sc.dest === t.id);
-            pv = pv.concat(scores.scoresR4.filter(sc => sc.dest === t.id));
-//            console.log(pv);
-            let pvt = 0;
-            pv.forEach(sp => {
-                pvt += sp.val;
-            });
+            const pv2 = scores.scoresR2.filter(sc => sc.dest === t.id);
+            const pv4 = scores.scoresR4.filter(sc => sc.dest === t.id);
+            let c3 = scores.scoresR3.slice(0).filter(sc => sc.dest === t.id);
+            let ken = [];
+            const pv25 = pv2.filter(sc => sc.src === 5);
+            const pv26 = pv2.filter(sc => sc.src === 6);
+            const pv45 = pv4.filter(sc => sc.src === 5);
+            const pv46 = pv4.filter(sc => sc.src === 6);
             const tOb = outOb[`t${t.id}`];
+//            console.log('##########################');
+//            console.log(`get scores for team ${t.id} from`)
+//            console.log(c3)
+            gp.mainTeams.forEach(tm => {
+//                c3 = scores.scoresR3.filter(sc => sc.dest === t.id);
+//                console.log(`match against team ${tm.id}`)
+                c3.forEach(sc => {
+                    console.log(sc.src, tm.id)
+                });
+                const sca = c3.filter(sc => sc.src === tm.id);
+//                console.log(sca)
+                const v = sca.length ? sca[0].val : 0;
+//                c3[tm.id] = v;
+                ken[tm.id] = v;
+//                console.log(`returning ${v}`);
+//                console.log(tm.id, sca.length, v);
+            });
+            c3.forEach((s, i) => {
+                if (typeof(s) === 'object') {
+                    c3[i] = s.val;
+                }
+            });
             if (tOb) {
-                tOb.pv = pvt;
-                tOb.grandTotal = tOb.total * tOb.pv;
-                tOb.gt = tOb.total * tOb.pv;
+                const sv = this.summValues;
+                tOb.summary_r3 = ken;
+//                console.log('ReSULT')
+//                console.log(tOb.summary_r3)
+//                console.log(ken)
+                tOb.summary_pv1r2 = {all: pv25.map(sp => sp.val).join(','), count: pv25.length, summ: sv(pv25), av: sv(pv25) / pv25.length};
+                tOb.summary_pv2r2 = {all: pv26.map(sp => sp.val).join(','), count: pv26.length, summ: sv(pv26), av: sv(pv26) / pv26.length};
+                tOb.summary_pv1r4 = {all: pv45.map(sp => sp.val).join(','), count: pv45.length, summ: sv(pv45), av: sv(pv45) / pv45.length};
+                tOb.summary_pv2r4 = {all: pv46.map(sp => sp.val).join(','), count: pv46.length, summ: sv(pv46), av: sv(pv46) / pv46.length};
+                tOb.pvR2Total = (sv(pv25) / pv25.length) + (sv(pv26) / pv26.length);
+                tOb.pvR4Total = (sv(pv45) / pv45.length) + (sv(pv46) / pv46.length);
+                tOb.pvTotal = tOb.pvR2Total + tOb.pvR4Total;
+                tOb.gt = tOb.total * tOb.pvTotal;
+                tOb.gtRound = tools.roundNumber(tOb.total * tOb.pvTotal, 2);
             }
         });
         const outArr = [];

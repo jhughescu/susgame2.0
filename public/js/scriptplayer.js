@@ -712,7 +712,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const gotoHomeState = () => {
         setRenderStateLocal(homeState);
-        homeState = JSON.parse(homeState);
+//        if (window.isValidJSON(homeState))
+        console.log(homeState)
+        console.log(typeof(homeState))
+        if (typeof(homeState) !== 'object') {
+            homeState = JSON.parse(homeState);
+        }
         homeState.ob = player;
 //        console.log('homeState', typeof(homeState), isValidJSON(homeState), homeState);
 //        const j = JSON.parse(homeState);
@@ -751,9 +756,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+
+
             let rType = null;
             const fsp = window.filterScorePackets;
             const gSPs = game.detailedScorePackets;
+
+            /*
             rOb.dynamicTeamData = [];
             rOb.game.persistentData.mainTeams.forEach((t, i) => {
                 t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
@@ -763,9 +772,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Boolean(player.teamObj)) {
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             }
+            */
+
+            rOb.dynamicTeamData = createDynamicTeamData();
+            if (Boolean(player.teamObj)) {
+                rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
+            }
+
+//            showDynamicTeamData(rOb.dynamicTeamData);
+//            showDynamicTeamData(createDynamicTeamData().dynamicTeamData);
+//            showDynamicTeamData(createDynamicTeamData().dynamicTeamData);
+
+
+
             if (player.teamObj) {
                 rOb.dynamicSubTeamData = [];
-    //            console.log('handle the secondary teams');
                 rOb.game.persistentData.secondaryTeams.forEach((t, i) => {
                     rOb.dynamicSubTeamData = rOb.dynamicSubTeamData.concat(rOb.game.teams[t.id]);
                 });
@@ -784,6 +805,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 rOb.myDynamicSubTeamData = rOb.dynamicSubTeamData.filter(td => td.id === player.id)[0];
             }
+
+
+
+
             if (renderState.temp) {
                 rType = renderState.temp.replace(GAMESTUB, '');
             }

@@ -1,0 +1,42 @@
+#scoresummaries table {
+    width: 500px;
+    border-collapse: collapse;
+/*    opacity: 0.5;*/
+}
+
+ #scoresummaries table th #scoresummaries, #scoresummaries table td {
+/*    border: 1px solid #ddd;*/
+/*    padding: 8px;*/
+/*    text-align: left;*/
+    white-space: nowrap; /* Prevent text from breaking */
+    overflow: hidden; /* Hide overflow text */
+    transition: width 0.4s ease-in-out; /* Smooth transition for width */
+}
+
+#scoresummaries table th.contracted {
+    cursor: pointer;
+}
+
+#scoresummaries .contracted {
+    width: 30px;
+}
+
+#scoresummaries .expanded {
+    width: 150px;
+}
+
+#scoresummaries .full-name {
+    display: none;
+}
+
+#scoresummaries .initials {
+    display: inline;
+}
+
+#scoresummaries .show-full-name .initials {
+    display: none;
+}
+
+#scoresummaries .show-full-name .full-name {
+    display: inline;
+}

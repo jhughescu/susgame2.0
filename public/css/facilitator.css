@@ -211,7 +211,7 @@ td.boo {
 /*    color: inherit;*/
 }
 #scoresummaries td {
-    padding: 2px 6px;
+    padding: 2px 4px;
 }
 #scoresummaries td:nth-child(even) {
     background-color: rgba(0, 0, 0, 0.12);
@@ -241,6 +241,10 @@ td.grand:before {
 #scoresummaries .downloader {
     padding-top: 20px;
     padding-bottom: 30px;
+}
+#scoresummaries .paran, #scoresummaries .paran a {
+    color: #7badcc;
+    font-size: 0.6rem;
 }
 button.remove {
     color: red;

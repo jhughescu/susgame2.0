@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let videoPlayer = null;
     let autoplay = true;
     let watchFor = null;
+    let showDev = true;
     let currentSlideObject = null;
     const getSessionID = () => {
         const ID = window.location.hash.split('?')[0].replace('#', '');
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //                console.log(game);
                 const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
                 if (initSlide) {
-                    console.log('init', initSlide)
+//                    console.log('init', initSlide);
                     showSlide(initSlide);
                 }
             }
@@ -100,6 +101,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+        socket.on('roundComplete', () => {
+//            console.log(`game round: ${game.round}`);
+//            console.log(this[`showRound${game.round}`]);
+            const meth = this[`showRound${game.round}`];
+            if (Boolean(meth)) {
+                if (typeof (meth) === 'function') {
+                    meth();
+                }
+            }
+        });
+        socket.on('togglePresInfo', toggleDevInfo);
     };
     const setCurrentSlideObject = (slOb) => {
         currentSlideObject = Object.assign({}, slOb);
@@ -113,13 +125,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (watchFor === 'scores') {
 
                 }
-                console.log(`a match for the watch, update slide`);
+//                console.log(`a match for the watch, update slide`);
                 updateSlide()
             }
         }
         if (game.round !== rGame.round) {
             setWatch('scores');
         }
+//        console.log(`onGameUpdate`, rGame.values);
         game = rGame;
 
     };
@@ -133,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const setWatch = (l) => {
         // set a property of the game to watch
-        console.log(`watch for ${l}`);
+//        console.log(`watch for ${l}`);
         watchFor = l;
     };
     const init = () => {
@@ -167,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const showValues = () => {
+//        console.log(`showValues`);
         socket.emit('getAllValues', `game-${game.uniqueID}`, (v) => {
 //            console.log(`getAllValues callback`);
             const vals = Object.assign({}, v);
@@ -174,10 +188,10 @@ document.addEventListener('DOMContentLoaded', function () {
             for (let i in vals) {
                 vals[i].teamTitle = game.persistentData.teamsArray[vals[i].team].title;
             }
-            console.log(vals)
+//            console.log(vals);
             const valsArr = Object.values(vals);
             valsArr = sortByProperty(valsArr, 'team');
-            console.log(valsArr);
+//            console.log(valsArr);
             renderTemplate('insertion', 'slides/showvalues', v);
         })
     };
@@ -189,6 +203,14 @@ document.addEventListener('DOMContentLoaded', function () {
         let rArr = [];
         let v = game.values;
         let s = sc ? sc : game.scores;
+//        console.log(`scores values match? ${v.length === s.length}`);
+
+        if (v.length !== s.length) {
+            socket.emit('getAllValues', `game-${game.uniqueID}`, (v) => {
+                game.values = v;
+            })
+            return false;
+        }
         s = filterScorePackets(s, 'round', 1);
         let sStatic = s.slice(0);
         if (v && s) {
@@ -209,6 +231,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let rArrNew = [];
         // use only r1 scores:
         sStatic = filterScorePackets(sStatic, 'round', 1);
+//        console.log(`prepScoresR1`);
+//        console.log(sStatic);
+//        console.log(v);
         sStatic.forEach(sp => {
             const vl = v.find(obj => obj.team === sp.src);
             if (vl) {
@@ -250,14 +275,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return rArrNew;
     };
+
     const showRound1 = () => {
-        console.log('showRound1')
+//        console.log('showRound1');
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 1);
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 rs = filterScorePackets(rs, 'round', 1);
                 const allScores = prepScoresR1(rs);
+//                console.log(allScores)
+                if (!allScores) {
+                    console.log('fail due to values not being in place yet, return and run again after short delay');
+                    setTimeout(showRound1, 100);
+                    return;
+                }
                 const rOb = {allScores: allScores};
                 const t = game.persistentData.teamsArray;
                 t.forEach((s, i) => {
@@ -274,7 +306,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     card.description = s.description;
                     card.value = s.value;
                 })
+//                console.log(`render r1 template:`)
                 renderTemplate(targ, 'slides/showround1', rOb, () => {
+//                    console.log(`render callback`);
+//                    console.log(rOb);
                     allScores.forEach(s => {
                         const scoredBefore = filterScorePackets(preScores, 'src', s.team).length > 0;
                         const leaf = $(`#stakeholder_card_${s.team}`).find('.leaf');
@@ -330,8 +365,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     };
+    let delay = null;
+    const showRound3Delay = () => {
+        console.log(`%cHIT IT`, 'color: yellow;')
+    }
     const showRound3 = () => {
+        clearTimeout(delay);
+        delay = setTimeout(showRound3Delay, 1000);
         setWatch('scores');
+        console.log(`showRound3`)
         const mt = game.persistentData.mainTeams;
         const t = game.persistentData.teamsArray.slice(0, mt.length);
         const fsp = window.filterScorePackets;
@@ -342,9 +384,11 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 const sr3 = fsp(rs, 'round', 3);
-
+                console.log(`${rs.length} scores returned`);
+                console.log(rs);
+                console.log(sr3);
                 t.forEach(tm => {
-                    console.log(tm.title.toUpperCase());
+//                    console.log(`%c${tm.title.toUpperCase()}`, 'color: green;');
 //                    console.log(tm.title, fsp(sr3, 'dest', tm.id));
 //                    const otherTeams = t.filter(ot => ot.id !== tm.id);
                     const otherTeams = t.slice(0);
@@ -360,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     otherTeams.forEach(ot => {
                         const tv = fsp(fsp(sr3, 'dest', tm.id), 'src', ot.id);
 //                        console.log(ot.title, tv);
+
                         o.votes.push({
                             id: ot.id,
                             title: ot.title,
@@ -375,8 +420,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 outArr.forEach((tm, i) => {
                     outOb[`card_${i}`] = tm;
                 });
+                console.log(`call the render`);
                 renderTemplate(targ, 'slides/showround3', outOb, () => {
-                    console.log(outOb);
+//                    console.log(outOb);
+                    console.log(`render complete`)
                 });
             });
         });
@@ -411,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const showVideo = (slOb) => {
         removeTemplate(targ, () => {
-            console.log(`render with`, slOb)
+//            console.log(`render with`, slOb)
             renderTemplate(targ, 'slides/video_player', slOb, () => {
                 goVideo(slOb.srcRef);
                 videoPlayer = $('#videoPlayer');
@@ -452,20 +499,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
         const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-//        const round = 4;
-//        let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
+        console.log(`renderTotals:`, o)
+        console.log(`lets do getTotals${round}`);
         let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
-//        debugger;
+
         if (typeof(totals) === 'string') {
             totals = JSON.parse(totals);
         }
-        if (!totals.hasOwnProperty('length')) {
-            totals = Object.values(totals);
-        }
-////        console.log(`totals for r ${round}`);
+        let orig = {};
+//        console.log(`renderTotals for round ${round}: ${Boolean(totals)}`);
 //        console.log(totals);
-//        console.log(o);
+        if (!totals.hasOwnProperty('length')) {
+            orig = JSON.parse(JSON.stringify(totals));
+//            console.log('convert array:');
+            totals = Object.values(totals);
+
+        }
+        console.log(totals);
         totals = totals.map(s => s.gt);
+        console.log(totals);
+//        console.log(JSON.parse(JSON.stringify(totals)));
         let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
         const mult = 100 / max;
@@ -486,6 +539,57 @@ document.addEventListener('DOMContentLoaded', function () {
             total.html(roundNumber(totals[i], 1));
             const tPos = neg === 0 ? positive + 50 : positive;
             total.animate({bottom: `${tPos}px`});
+            $(`#b${i}Neg`).animate({height: `${neg}%`});
+        });
+    };
+    const renderTotalsV1 = async (o) => {
+        setWatch('scores');
+        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
+        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
+        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
+        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
+
+        if (typeof(totals) === 'string') {
+            totals = JSON.parse(totals);
+        }
+        let orig = {};
+        console.log(`renderTotals: ${Boolean(totals)}`);
+        console.log(totals);
+        if (!totals.hasOwnProperty('length')) {
+            orig = JSON.parse(JSON.stringify(totals));
+            console.log('convert array:');
+            totals = Object.values(totals);
+            console.log(totals);
+        }
+        totals = totals.map(s => s.gt);
+
+//        console.log(JSON.parse(JSON.stringify(totals)));
+        let tAbs = totals.map(s => s = Math.abs(s));
+        const max = tAbs.sort(sortNumber)[0];
+        const mult = 100 / max;
+        $(`.totalNum`).html('');
+        barsPos.each((i, b) => {
+            const ob = Boolean(totals[i]) ? totals[i] : orig[`t${i}`];
+            console.log(`using ${Boolean(totals[i]) ? 'array': 'object'}`)
+//            const perc = totals[i] * mult;
+            const perc = ob * mult;
+            let newH = perc;
+            let neg = Math.abs(newH);
+            if (newH < 0) {
+                newH = 0;
+            } else {
+                neg = 0;
+            }
+            const positive = (newH / 100) * $(b).parent().height();
+            const negative = (neg / 100) * $(b).parent().height();
+            $(b).animate({height: `${newH}%`});
+            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
+            total.html(roundNumber(totals[i], 1));
+            const tPos = neg === 0 ? positive + 50 : positive;
+            total.animate({bottom: `${tPos}px`});
+            console.log(i, perc, totals[i], mult, newH, total.html());
+            console.log(totals[`t${i}`]);
+            console.log(orig[`t${i}`]);
             $(`#b${i}Neg`).animate({height: `${neg}%`});
         });
     };
@@ -592,8 +696,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     // End Panopto
+    const toggleDevInfo = () => {
+        const devStr = `presDev-${game.address}`;
+//        console.log('toggle the devInfo', devStr, showDev, typeof(showDev));
+        if (localStorage.getItem(devStr)) {
+            showDev = localStorage.getItem(devStr);
+        }
+        showDev = procVal(showDev);
+//        console.log('toggle the devInfo', devStr, showDev, typeof(showDev));
+        showDev = !showDev;
+        localStorage.setItem(devStr, showDev);
+//        console.log(`toggleDevInfo, showDev:`, showDev);
+        devInfo();
+
+    };
     const devInfo = (slOb) => {
-        let isDev = false;
+//        let isDev = false;
+//        showDev = !showDev;
+        const devStr = `presDev-${game.address}`;
+//        console.log(`devInfo`, showDev);
+        if (localStorage.getItem(devStr)) {
+            showDev = localStorage.getItem(devStr);
+        }
+        showDev = procVal(showDev);
+        if (!Boolean(slOb)) {
+//            console.log(`make a slOb`);
+            slOb = game.presentation.slideData.slideList[game.slide];
+        }
+//        let isDev = showDev;
         let q = window.location.hash.split('?')[1];
         if (q) {
             q = Object.fromEntries(new URLSearchParams(q));
@@ -602,19 +732,26 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         const p = $('#devoverlay');
-        if (isDev) {
+        if (showDev) {
+//            console.log('ooh ahh')
             if (p.length > 0) {
+//                console.log('chips');
+                p.show();
                 if (p.is(':visible')) {
+//                    console.log('mice');
                     p.html('');
                     renderTemplate('devoverlay', 'presentation.devinfo', slOb, () => {
                         p.fadeIn();
                     });
                 }
             }
+
         } else {
             p.hide();
         }
     };
+//    window.devInfo = devInfo;
+//    window.toggleDevInfo = toggleDevInfo;
     const slideAction = (slOb) => {
         const rOb = {gameID: game.uniqueID};
 
@@ -623,23 +760,25 @@ document.addEventListener('DOMContentLoaded', function () {
 //            console.log(`the action is`, slOb.action);
             if (slOb.action.includes(':')) {
                 const s = slOb.action.split(':');
+//                console.log(`action item:`, s)
                 slOb.action = s[0];
                 rOb.actionArg = s[1];
             }
             if (window[slOb.action]) {
-//                console.log('action exists in the code');
+//                console.log('action exists in the code, rOb:');
+//                console.log(rOb)
                 window[slOb.action](rOb);
             } else {
-                console.log(`action does not exist in code (${slOb.action})`);
+//                console.log(`action does not exist in code (${slOb.action})`);
             }
         }
     };
     const showSlide = (slOb) => {
 //        console.log(`showSlide`, slOb);
         devInfo(slOb);
-         setCurrentSlideObject(slOb);
-        console.log(`currentSlideObject set to `, slOb);
-        console.log(`getCurrentSlide returns:`, getCurrentSlide());
+        setCurrentSlideObject(slOb);
+//        console.log(`currentSlideObject set to `, slOb);
+//        console.log(`getCurrentSlide returns:`, getCurrentSlide());
         slOb.gameAddress = game.address;
 
         if (slOb.type === 'video') {
@@ -658,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const updateSlide = () => {
-        console.log(`updateSlide`);
+//        console.log(`updateSlide`);
         const slOb = currentSlideObject;
         if (slOb) {
             if (slOb.action) {
@@ -690,6 +829,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderTemplate = window.renderTemplate;
     getTemplate = window.getTemplate;
+
+    this.showRound1 = showRound1;
+    this.showRound3 = showRound3;
+
     window.showScores = showScores;
     window.showValues = showValues;
     window.showRound1 = showRound1;

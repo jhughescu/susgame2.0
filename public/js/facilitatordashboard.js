@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         END_WARN: `Ending the game cannot be undone, please enter your password to continue.`,
         SESSION_WARN: `Continuing will reset the session, remove all players and mark this game as 'pending'. Are you sure you want to do this?`,
         SESSION_DONE: `The session has been reset.`,
+        NORESET: 'Cannot reset teams once scores have been submitted',
         noStart: {
             started: `The game has already started.`,
             ended: `Cannot start game, this session has already concluded.`
@@ -66,9 +67,9 @@ document.addEventListener('DOMContentLoaded', function() {
             mw.html(`<p>${log.msg}</p>`);
             setTimeout(() => {
                 return;
-                mw.find('span').fadeOut(1000, () => {
-                    mw.html('')
-                });
+//                mw.find('span').fadeOut(1000, () => {
+//                    mw.html('')
+//                });
             }, 5000);
         }
     };
@@ -102,6 +103,17 @@ document.addEventListener('DOMContentLoaded', function() {
         renderLogFeed();
     };
 
+    const clearAdvancedLocalStorage = () => {
+        let ls = localStorage;
+        const kill = ['votes', 'collabs', 'renderState', 'roundState'];
+        Object.keys(ls).forEach(i => {
+            const toKill = kill.some(t => i.includes(t));
+            if (toKill) {
+                localStorage.removeItem(i);
+            }
+        });
+        ls = localStorage;
+    };
     const resetSession = (cb) => {
 //        const w1 = confirm('Are you sure you want to reset the session?');
         const w = true;
@@ -156,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('restoreGame', JSON.stringify(session), (rgame) => {
             // Extra check to ensure game is not updated unnecessarily
             if (game === null) {
-                console.log('I SHOULD ONLY HAPPEN ONCE')
+//                console.log('I SHOULD ONLY HAPPEN ONCE');
                 clearTimeout(gameSeekTimeout);
                 addToLogFeed('game restore complete - game can recommence');
                 updateGame(rgame);
@@ -225,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (cb) {
                     cb();
                 }
+                clearAdvancedLocalStorage();
                 window.location.reload();
             });
         }
@@ -242,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // \/ optional method; listens for change to game object (use in dev only)
 //            setupWatch(game, handleChange);
         }
-//        console.log(`finale`, JSON.parse(JSON.stringify(game)));
+//        console.log(`let's update the game:`, JSON.parse(JSON.stringify(game)).teams);
     };
     const onScoreChange = (diff) => {
         console.log(`score change detected:`);
@@ -256,8 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
     const onGameUpdate = (g) => {
-        console.log(`###############################################`);
-        console.log(`gameUpdate:`, g);
+//        console.log(`###############################################`);
+//        console.log(`gameUpdate:`, g);
 //        console.log(g._updateSource);
         const pv = procVal;
         let comp = 'playersFull';
@@ -265,7 +278,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const cg = compareGames(g, comp);
         // scoreDiff will be an array of any scores that have changed in this update
         const scoreDiff = compareScores(g.scores);
-//        console.log(`scoreDiff`, scoreDiff);
         if (scoreDiff.length > 0) {
             onScoreChange(scoreDiff);
         }
@@ -273,6 +285,28 @@ document.addEventListener('DOMContentLoaded', function() {
 //            alert(`round complete!]`);
             addToLogFeed(`round ${game.round} complete`);
         }
+        if (g.hasOwnProperty('_updateSource')) {
+            if (g._updateSource.hasOwnProperty('event')) {
+                const us = g._updateSource;
+                const ev = us.event.split(' ')[1].toLowerCase();
+                let col = 'white';
+                switch (ev) {
+                    case 'scoresubmitted':
+                        col = 'red';
+                        break;
+                    case 'scoreforaveragesubmitted':
+                        col = 'red';
+                        break;
+                    case 'endround':
+                        col = 'green';
+                        break;
+                    default:
+                        col = 'white';
+                }
+//                console.log(`update event: %c${ev}`, `color: ${col};`)
+            }
+
+        };
         if (cg) {
             const cgf = cg.filter(str => !str.includes('warning'));
             const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
@@ -289,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderDelay = setTimeout(() => {
                     renderPlayers('facilitatePlayersContent');
                     updatePlayerMeter();
+                    updateRoundDisplay();
                     renderAdvanced();
 //                    console.log('the render')
                 }, 300);
@@ -387,6 +422,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     };
+    const restoreWidgets = () => {
+        const w = Object.keys({ ...localStorage }).filter(i => i.includes('wid'));
+        // Can't do it - widgets are launched by various methods which pass data, would have to locate/build data and find the method to launch widgets
+//        console.log(w);
+        if (w) {
+            w.forEach(id => {
+                const o = JSON.parse(localStorage.getItem(id));
+                if (o.hasOwnProperty('launchMethod')) {
+//                    console.log(this);
+//                    console.log(o.launchMethod, typeof(this[o.launchMethod]) === 'function', typeof(this['launchAdvanced']) === 'function');
+                }
+            });
+        }
+    };
     const removeWidget = (w) => {
         w.remove();
     };
@@ -410,6 +459,18 @@ document.addEventListener('DOMContentLoaded', function() {
 //            add
         });
     };
+    const updateWidgetInfo = (id, ob) => {
+//        console.log(id, ob);
+        let po = {}
+        let stored = localStorage.getItem(id);
+        if (stored) {
+            po = JSON.parse(stored);
+        }
+        po = Object.assign(po, ob);
+
+//        console.log(id, po);
+        localStorage.setItem(id, JSON.stringify(po));
+    };
     const addWidget = (id, ob, cb) => {
         const wid = `#${id}`;
         const wd = $(wid);
@@ -420,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
             w: ob.w ? ob.w : 0,
             h: ob.h ? ob.h : 0
         };
+//        console.log(ob);
         if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
             $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
@@ -431,8 +493,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (ob.hasOwnProperty('data')) {
                 tOb = Object.assign(tOb, ob.data);
             }
-//            console.log(tOb);
+//            console.log(`addWidget`, tOb);
             const temp = ob.data.preventTemplate ? 'facilitator.widget.nopartial' : 'facilitator.widget';
+//            console.log((rOb.x + rOb.w), window.innerWidth, (rOb.x + rOb.w) > window.innerWidth);
+            rOb.x = (rOb.w + rOb.x) > window.innerWidth ? window.innerWidth - rOb.w - 40 : rOb.x;
+            rOb.y = (rOb.h + rOb.y) > window.innerHeight ? window.innerHeight - rOb.h - 40 : rOb.y;
+            const stD = {open: true};
+            if (ob.hasOwnProperty('data')) {
+                if (ob.data.hasOwnProperty('launchMethod')) {
+                    stD.launchMethod = ob.data.launchMethod;
+                }
+            }
+            updateWidgetInfo(widID, stD);
             renderTemplate(id, temp, tOb, () => {
                 $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
                 const strOb = {x: rOb.x, y: rOb.y};
@@ -441,6 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const widclose = $(wid).find('#widgethandle').find('.widgetclose');
                 widbody.css({width: `100%`, height: '100%'});
                 widclose.off('click').on('click', function () {
+                    updateWidgetInfo(widID, {open: false});
                     removeWidget($(wid));
                 })
                 $(wid).draggable({
@@ -448,7 +521,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     containment: 'window',
                     stop: function () {
                         const pOb = {x: $(this).position().left, y: $(this).position().top};
-                        localStorage.setItem(widID, JSON.stringify(pOb));
+//                        localStorage.setItem(widID, JSON.stringify(pOb));
+                        updateWidgetInfo(widID, pOb);
                     }
                 });
                 if (cb) {
@@ -508,13 +582,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return rtn;
     };
     const resetTeams = () => {
-        if (game.scores.length > 0) {
+//        console.log(`resetTeams: ${game.scores.length}`);
+        if (game.scores.length === 0) {
             socket.emit('resetTeams', {address: game.address}, (rgame) => {
                 addToLogFeed('teams reset');
                 onGameUpdate(rgame);
+//                console.log(`resetTeams`)
+//                console.log(rgame)
             });
         } else {
-            alert('Cannot reset teams once scores have been submitted');
+            alert(messages.NORESET);
         }
     };
     const identifyPlayers = () => {
@@ -551,6 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'scores':
                 renderScores();
+                renderScores2();
                 break;
             default:
                 console.log(`setupTab: invalid argument provided.`);
@@ -667,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName', '#clearConsole', '#presInfo', '#downloadRes'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
         ids.forEach(id => {
@@ -713,6 +791,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         socket.emit('checkRound', {gameID: game.uniqueID, round: cr}, (summary) => {
                             showScoreSummary(summary, game.persistentData[game.persistentData.rounds[cr].teams]);
                         });
+                        break;
+                    case '#clearConsole':
+                        console.clear();
+                        break;
+                    case '#presInfo':
+                        socket.emit('togglePresInfo', game.address);
+                        break;
+                    case '#downloadRes':
+                        exportResults();
                         break;
                 }
 
@@ -781,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function() {
         gr.off('click').on('click', () => {
             resetGame(() => {
                 removeThisWidget(gr);
-                alert(messages.RESET_DONE);
+//                alert(messages.RESET_DONE);
             });
         });
         fg.off('click').on('click', () => {
@@ -861,6 +948,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const downloadScores = async (ob, id) => {
+        downloadFile(ob, `scores_${id}`);
+    }
+    const downloadFile = async (ob, id) => {
             socket.emit('requestCSV', ob, (csv) => {
                 try {
                     const csvData = csv
@@ -870,7 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const link = document.createElement('a');
                     link.href = window.URL.createObjectURL(blob);
 //                    link.download = 'data.csv';
-                    link.download = `scores_${id}.csv`;
+                    link.download = `${id}.csv`;
                     // Append the link to the body and click it
                     document.body.appendChild(link);
                     link.click();
@@ -1107,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const launchAdvanced = () => {
-        const rOb = {x: 100, y: 100, w: 500, h: 230, data: {preventTemplate: true}};
+        const rOb = {x: 100, y: 100, w: 500, h: 230, data: {preventTemplate: true, launchMethod: 'launchAdvanced'}};
 //        rOb.data.teamsAssigned = game.teams.length > 0;
 //        rOb.data.roundActive = game.round > 0;
 //        rOb.data.preventTemplate = true;
@@ -1245,16 +1335,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         tOb.game = game;
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
+                        console.log(`render game-${round.template}`);
+//                        console.log(tOb);
+                        tOb.dynamicTeamData = window.createDynamicTeamData();
                         renderPartial('formzone', `game-${round.template}`, tOb, () => {
                             $('.resources-btn').css({
                                 width: '30px',
                                 height: '30px',
                                 'background-color': 'green'
                             });
+                            console.log(round);
+                            console.log(round.type);
                             if (round.type === 1) {
-                                window.setupAllocationControl(pl);
+                                if (round.n === 3) {
+                                    window.setupCollaborationControl(pl)
+                                } else {
+                                    window.setupAllocationControl(pl);
+                                }
                             } else {
-//                                console.log('sheep')
+//                                console.log('sheep');
                                 window.setupVoteControl(pl);
                             }
                         });
@@ -1285,7 +1384,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     };
+    const updateRoundDisplay = () => {
+        const rounds = game.persistentData.rounds;
+        const slides = game.presentation.slideData.slideList;
+        const rArr = [];
+        slides.forEach(s => {
+            if (s.hasOwnProperty('action')) {
+                if (s.action.includes('startRound')) {
+                    const r = s.action.split(':')[1];
+                    const ob = {
+                        round: r,
+                        titleFull: s.title,
+                        title: s.title.replace(/\([^)]*\)/g, ''),
+                        data: rounds[r],
+                        current: justNumber(game.round) === justNumber(r),
+                        complete: game.round.toString().includes('*') && justNumber(game.round) === justNumber(r) || justNumber(game.round) > justNumber(r)
+                    }
+                    rArr.push(ob)
+                }
+            }
+        });
+        renderTemplate('facilitateRoundsContent', 'facilitator.rounds', rArr, () => {
 
+        });
+    };
     const processPlayers = (list) => {
         // add any special conditions prior to rendering the player list
         // Note add nothing here that should persist, this is a display-only method.
@@ -1315,9 +1437,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         list[i] = p.id;
                     }
                 }
-                const l = 10;
+                const l = 8;
                 if (list[i].teamObj) {
-                    list[i].teamObj.titleClip = `${list[i].teamObj.title.substr(0, l)}${list[i].teamObj.title.length > l ? '.. ' : ''}`;
+                    const ti = list[i].teamObj.title;
+                    list[i].teamObj.titleClip = `${ti.substr(0, l)}${ti.length > l ? '..' + ti.substr(ti.length - 1, 1) : ''}`;
                 }
             });
             const pso = playerSortOrder;
@@ -1382,6 +1505,80 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+    const developScores2 = async (cb) => {
+        // prep scores for display
+        if (game) {
+            const ob = {scores: game.scores};
+            const gp = game.persistentData;
+            const ts = gp.mainTeams;
+//            const ro = {};
+            const ro = [];
+            const mapT1 = {
+                t: 'team',
+                gt: 'grandTotal',
+                s: 'self',
+                s1: 'pv1',
+                s2: 'pv2',
+                st: 'pvTotal'
+            };
+            socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+                ts.forEach(t => {
+                    const mine = sp.filter(p => p.dest === t.id);
+//                    console.log(t);
+                    const tOb = {
+                        team: `${t.title.substr(0, 10)}${t.title.length > 10 ? '..' : ''}`,
+                        abbr: t.abbr,
+                        id: t.id,
+                        r1: mine.filter(p => p.round === 1),
+                        r2s5: mine.filter(p => p.round === 2).filter(p => p.src === 5),
+                        r2s6: mine.filter(p => p.round === 2).filter(p => p.src === 6),
+                        r2s5Summary: {total: 0, average: 0, scores: []},
+                        r2s6Summary: {total: 0, average: 0, scores: []},
+                        r3:  mine.filter(p => p.round === 3),
+                        r3Summary: [],
+                        r3Total: 0,
+                        r4s5: mine.filter(p => p.round === 4).filter(p => p.src === 5),
+                        r4s6: mine.filter(p => p.round === 4).filter(p => p.src === 6),
+                        r4s5Summary: {total: 0, average: 0, scores: []},
+                        r4s6Summary: {total: 0, average: 0, scores: []}
+                    };
+                    tOb.r1Summary = {total: tOb.r1.length === 0 ? 0 : tOb.r1[0].val};
+                    tOb.r2s5.forEach(p => {tOb.r2s5Summary.total += p.val, tOb.r2s5Summary.scores.push(p.val)});
+                    tOb.r2s6.forEach(p => {tOb.r2s6Summary.total += p.val, tOb.r2s6Summary.scores.push(p.val)});
+                    tOb.r2s5Summary.average = tOb.r2s5.length === 0 ? 0 : (tOb.r2s5Summary.total / tOb.r2s5.length);
+                    tOb.r2s6Summary.average = tOb.r2s6.length === 0 ? 0 : (tOb.r2s6Summary.total / tOb.r2s6.length);
+                    tOb.r1Total = tOb.r1Summary.total;
+                    tOb.r2s5All = tOb.r2s5Summary.scores.length === 0 ? 'n/a' : tOb.r2s5Summary.scores.join(',');
+                    tOb.r2s5Av = tOb.r2s5Summary.average;
+                    tOb.r2s6All = tOb.r2s6Summary.scores.length === 0 ? 'n/a' : tOb.r2s6Summary.scores.join(',');
+                    tOb.r2s6Av = tOb.r2s6Summary.average;
+                    tOb.r2Total = tOb.r2s5Summary.average + tOb.r2s6Summary.average;
+                    tOb.grandTotal1 = tOb.r2Total * tOb.r1Total;
+                    tOb.r3.forEach(p => {tOb.r3Total += p.val, tOb.r3Summary.push({s: p.src, v: p.val})});
+                    tOb.r4s5.forEach(p => {tOb.r4s5Summary.total += p.val, tOb.r4s5Summary.scores.push(p.val)});
+                    tOb.r4s6.forEach(p => {tOb.r4s6Summary.total += p.val, tOb.r4s6Summary.scores.push(p.val)});
+                    tOb.r4s5Summary.average = tOb.r4s5.length === 0 ? 0 : (tOb.r4s5Summary.total / tOb.r4s5.length);
+                    tOb.r4s6Summary.average = tOb.r4s6.length === 0 ? 0 : (tOb.r4s6Summary.total / tOb.r4s6.length);
+                    tOb.r4s5All = tOb.r4s5Summary.scores.length === 0 ? 'n/a' : tOb.r4s5Summary.scores.join(',');
+                    tOb.r4s5Av = tOb.r4s5Summary.average;
+                    tOb.r4s6All = tOb.r4s6Summary.scores.length === 0 ? 'n/a' : tOb.r4s6Summary.scores.join(',');
+                    tOb.r4s6Av = tOb.r4s6Summary.average;
+                    tOb.r4Total = tOb.r4s5Av + tOb.r4s6Av;
+                    tOb.grandTotalFinal = (tOb.r1Total + tOb.r3Total) * (tOb.r2Total + tOb.r4Total);
+                    ro.push(tOb);
+                });
+                sortBy(ro, 'grandTotal', true);
+                if (cb) {
+//                    console.log(ro)
+                    cb(ro);
+                }
+            });
+        } else {
+            if (cb) {
+                cb('nuffink');
+            }
+        }
+    };
     const developScores = async (cb) => {
         // prep scores for display
         if (game) {
@@ -1422,14 +1619,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     tOb.r2s6Summary.average = tOb.r2s6.length === 0 ? 0 : (tOb.r2s6Summary.total / tOb.r2s6.length);
                     tOb.r1Total = tOb.r1Summary.total;
                     tOb.r2s5All = tOb.r2s5Summary.scores.length === 0 ? 'n/a' : tOb.r2s5Summary.scores.join(',');
-//                    tOb.r2s5Summary.scoresStr =
                     tOb.r2s5Av = tOb.r2s5Summary.average;
                     tOb.r2s6All = tOb.r2s6Summary.scores.length === 0 ? 'n/a' : tOb.r2s6Summary.scores.join(',');
                     tOb.r2s6Av = tOb.r2s6Summary.average;
-//                    tOb.r2Total = tOb.r2s5Summary.total + tOb.r2s5Summary.total;
                     tOb.r2Total = tOb.r2s5Summary.average + tOb.r2s6Summary.average;
                     tOb.grandTotal = tOb.r2Total * tOb.r1Total;
-//                    ro[`t${tOb.id}`] = tOb;
                     ro.push(tOb);
                 });
                 sortBy(ro, 'grandTotal', true);
@@ -1443,55 +1637,114 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
+    const scoreSummaryInit = () => {
+
+        // NOT USED
+
+
+        var hoverTimeout;
+        console.log('askfasjkfdasjkasjdkask')
+        // Apply hover effect ONLY to 'PN' and 'Q' columns (2nd and 4th th elements)
+        $('.contracted').hover(
+            function() {
+                var $this = $(this);
+                var colIndex = $this.index();
+                console.log('hover')
+                // Set a delay of 1 second (1000 ms) before expanding
+                hoverTimeout = setTimeout(function() {
+                    $this.removeClass('contracted').addClass('expanded');
+                    console.log('hmmm')
+                }, 1000); // 1 second delay
+                console.log($this)
+                // After transition completes, show full column name and cell values
+                $this.on('transitionend', function() {
+                    console.log('end')
+                    $this.addClass('show-full-name'); // Show full name after expansion completes
+
+                    // Set full value for the corresponding column's table cells
+                    $('#scoresummaries').find('tr').each(function() {
+                        var $td = $(this).find('td').eq(colIndex);
+                        $td.text($td.data('full-value')); // Show full value
+                        console.log('dunne');
+                        console.log($td.data('full-value'));
+                    });
+                });
+            },
+            function() {
+                // Clear the timeout if the mouse leaves before the delay ends
+                clearTimeout(hoverTimeout);
+
+                var $this = $(this);
+                var colIndex = $this.index();
+
+                // Immediately contract the column and show initials
+                $(this).removeClass('expanded show-full-name').addClass('contracted');
+
+                // Set '...' for the corresponding column's table cells
+                $('#scoresummaries').find('tr').each(function() {
+                    var $td = $(this).find('td').eq(colIndex);
+                    $td.text('..'); // Show dots when contracted
+                });
+
+                // Ensure we don't keep triggering transitionend events during contraction
+                $(this).off('transitionend');
+            }
+        );
+    }
     const renderScoreboard = async () => {
-        developScores(o => {
-//            console.log(o);
+        developScores2(o => {
+            o = JSON.parse(JSON.stringify(o));
+            o.forEach(t => {
+                for (var i in t) {
+                    if (typeof(t[i]) === 'number') {
+                        t[i] = Math.round(t[i] * 100) / 100;
+                    }
+                }
+            });
             const newOb = {totalsObject: o};
+            console.log(newOb);
             renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
-//                console.log('run it');
+//                scoreSummaryInit();
                 document.querySelectorAll('.aligndecimal').forEach(function(el) {
                     let number = el.textContent.trim();
                     let [integer, decimal] = number.split('.');
-
                     if (!decimal) {
                         decimal = ''; // Make sure decimal is defined
                     }
-
                     let paddedNumber = `${integer.padStart(3, '\u00A0')}${parseInt(number) === parseFloat(number) ? '\u00A0': '.'}${decimal.padEnd(1, '\u00A0')}`;
                     $(el).html(paddedNumber);
-//                    console.log(number, parseInt(number) === parseFloat(number))
-//                    el.setAttribute('data-padded', paddedNumber);
                 });
 
             });
         });
     };
-    const renderScores = async () => {
+    const renderScores2 = async () => {
         if (game) {
-            console.log('renderScores')
             const ob = {scores: game.scores};
             const gp = game.persistentData;
             // run on a timeout to avoid multiple interations in dev
             clearTimeout(renderTimeout);
             renderTimeout = setTimeout(async () => {
+                let t = await emitWithPromise(socket, 'getTotals4', game.uniqueID);
+                if (t) {
+                    console.log(`we have tea`, t)
+                }
+            });
+        }
+    };
+    const renderScores = async () => {
 
+        if (game) {
+            const ob = {scores: game.scores};
+            const gp = game.persistentData;
+            // run on a timeout to avoid multiple interations in dev
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(async () => {
                 let t1 = await emitWithPromise(socket, 'getTotals1', game.uniqueID);
-                console.log('fish and chips');
-                console.log(t1);
                 if (t1) {
                     t1 = JSON.parse(t1);
                     t1 = roundAll(t1);
                 }
-                console.log(`i also got t1`, t1);
-                let t2 = await emitWithPromise(socket, 'getTotals2', game.uniqueID);
-                console.log('fish and chips');
-                console.log(t2);
-                let t3 = await emitWithPromise(socket, 'getTotals3', game.uniqueID);
-                console.log('hats and forks');
-                console.log(t3);
-//                let t4 = await emitWithPromise(socket, 'getTotals4', game.uniqueID);
-//                console.log('beef and peas');
-//                console.log(t4);
                 socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
                     ob.scorePackets = sp;
                     const scores = {};
@@ -1620,7 +1873,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderControls = () => {
         if (game) {
             const hasTeams = game.teams.length > 0;
-            const rendO = {disableAssignTeams: hasTeams, game: game};
+            const rendO = {
+                disableAssignTeams: hasTeams,
+                disableDownload: game.round !== '4*',
+                game: game
+            };
+//            console.log(rendO);
             window.renderTemplate('contentControls', 'facilitator.controls', rendO, () => {
                 setupControlLinks();
                 if (hasTeams) {
@@ -1689,8 +1947,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
                 renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
                     const sl = game.presentation.slideData.slideList.slice(0);
-                    sl.forEach(s => {
+                    sl.forEach((s, i) => {
+                        s._titleSimple = s.title;
                         s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+                        sl[i] = window.reorderObject(s, '_titleSimple');
                     });
                     renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
                         $('#tabFacilitate').css({height: '700px'});
@@ -1702,6 +1962,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         launchPresentation();
                     });
                     updatePlayerMeter();
+                    updateRoundDisplay();
                     const openAdvanced = $('#openAdvanced');
                     openAdvanced.off('click').on('click', () => {
                         launchAdvanced();
@@ -1728,31 +1989,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = 'facilitator-advanced';
         const rOb = {game: game};
         const isDev = await window.checkDevMode();
-//        console.log(isDev)
         rOb.teamsAssigned = game.teams.length > 0;
         rOb.roundActive = game.round > 0;
         rOb.scoresSubmitted = game.scores.length > 0;
         rOb.preventTemplate = true;
+        rOb.disableDownload = game.round !== '4*';
         rOb.isDev = isDev;
         renderTemplate(`widgetinner${id}`, 'facilitator.advanced', rOb, () => {
-//            console.log('dunne');
             const inner = $(`#widgetinner${id}`);
             const outer = $(`#widgetinner${id}`).parent();
             const controls = inner.find('div');
-//            controls.css({padding: '10px'});
-//            console.log(inner.height());
-//            console.log(outer.height());
             outer.css({height: `${controls.height() + 50}px`});
-//            outer.css({height: `330px`});
             setupControlLinks();
             // (see also setupAdvancedLinks)
         });
     };
 
-
     const initSession = async () => {
         addToLogFeed(`initSession, session state? ${session.state}`);
         setupBaseLinks();
+        restoreWidgets();
         if (session.state === 'started') {
             addToLogFeed('session already started, restore');
             restoreGame();
@@ -1874,6 +2130,37 @@ document.addEventListener('DOMContentLoaded', function() {
         return difference;
     };
 
+    const exportResults = async () => {
+        const mt = game.persistentData.mainTeams;
+//        console.log(mt);
+        const r = await emitWithPromise(socket, 'getTotals4', game.uniqueID);
+        const out = [];
+//        console.log(r);
+        if (r) {
+            r.forEach((t, i) => {
+                const o = {
+                    team: t.team,
+                    "Player Resources": t.self
+                };
+                o['Public Voice Resources 1'] = roundNumber(t.pvR2Total, 3);
+//                console.log(`run the loop for ${t.team}:`);
+//                console.log(t);
+                mt.forEach(tm => {
+//                    console.log(`team: ${tm.id}`);
+//                    console.log(t.summary_r3);
+                    o[tm.abbr] = tm.id === i ? 'x' : t.summary_r3[tm.id];
+                });
+                o['Total Player Resources'] = t.total;
+                o['Public Voice Resources 2'] = roundNumber(t.pvR4Total, 3);
+                o['Total Score'] = t.gtRound;
+                out.push(o);
+            });
+//            console.log(out);
+            out.forEach(t => console.log(t));
+            downloadFile(out, `sus_${game.address.replace('/', '')}_results`);
+        }
+    };
+
     // slideshow event handling
     const slideActions = {
         rAssignTeams: assignTeams
@@ -1907,21 +2194,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const onShowSlide = async (slOb) => {
         // To be used to trigger actions on slide auto-advance
 
-        // Not working yet - doesn't fire until another action is aclled, so can't be used to trigger pres actions.
+        // Not working yet - doesn't fire until another action is called, so can't be used to trigger pres actions.
         // Either find a way to trigger this earlier in the event stack OR add a flag to the object so that the socket emit only occurs when activated via autoplay.
 //        console.log(`onShowSlide`);
 //        console.log(slOb);
         const v = slOb.ref;
         const test = await slideTest(v);
-        return;
 
 
-        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await slideTest(v)};
-        console.log(`slideClick`, gOb);
-//        console.log(window.slideTest(v));
-        socket.emit('presentationEvent', gOb, (ob) => {
-            eventUpdate(ob);
-        });
+//        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await slideTest(v)};
+//        socket.emit('presentationEvent', gOb, (ob) => {
+//            eventUpdate(ob);
+//        });
     };
     const slideTest = async (n) => {
         // tests whether a slide can be loaded, returns Boolean. By default return true unless a test is defined by the action property
@@ -1975,6 +2259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return {tested: tested, test: test, ac: ac};
     };
 
+
     function handleChange(prop) {
 //        console.log(`change detected for property ${prop}`);
         if (typeof(game.players[0]) !== 'string') {
@@ -2005,7 +2290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const sockInit = () => {
         const sessionID = getSessionID();
-        console.log(`sockInit, sessionID: ${sessionID}`);
+//        console.log(`sockInit, sessionID: ${sessionID}`);
         window.socketShare(socket, 'fdb_socket');
         addToLogFeed(`sessionID: ${sessionID}`);
         if (sessionID) {
@@ -2014,6 +2299,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const domInit = () => {
 //        setupBaseLinks();
+        if (getSessionID() === null) {
+//            alert('The dashboard cannot be launched standalone, please open facilitatorlogin instead');
+            window.location.replace('facilitatorlogin');
+        }
     };
 
     let renderInt = null;
@@ -2040,6 +2329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
                 renderPlayers('facilitatePlayersContent');
                 updatePlayerMeter();
+                updateRoundDisplay();
                 if ($('#roundcompleter').length > 0) {
                     if ($('#roundcompleter').is(':visible')) {
                         closeModal();
@@ -2128,6 +2418,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.rScores = renderScoreboard;
     window.rf = renderFacilitate;
+
+//    window.oo = exportResults
     //
     domInit();
 });

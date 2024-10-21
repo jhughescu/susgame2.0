@@ -218,6 +218,7 @@ function initSocket(server) {
                     gameController.playerConnectEvent(pceo);
                 });
                 socket.on('submitScore', (ob, cb) => {
+//                    console.log(`submitScore heard in socket`);
                     const sp = gameController.scoreSubmitted(ob, cb);
                     io.to(facilitator).emit('scoreSubmitted', sp);
                 });
@@ -271,8 +272,13 @@ function initSocket(server) {
 //                const session = await sessionController.getSessionWithAddress(Q.id);
                 roomID = `${Q.id}-fac`
             } else {
+                console.log(`facilitator attempts to find session with ID ${Q.id}`);
                 const session = await sessionController.getSessionWithID(Q.id);
-                roomID = `${session.address}-fac`;
+                if (session) {
+                    roomID = `${session.address}-fac`;
+                } else {
+                    console.log(`facilitator connection found no session (id: ${Q.id})`)
+                }
             }
 //            roomID = '/trouot';
 //            console.log(`facilitator joins room ${roomID}`);
@@ -299,7 +305,7 @@ function initSocket(server) {
                 }
             });
             socket.on('restoreGame', (o, cb) => {
-                console.log(`restoreGame heard in socketController`);
+//                console.log(`restoreGame heard in socketController`);
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {
@@ -457,7 +463,7 @@ function initSocket(server) {
                 const rooms = ['-pres', '-pres-control', '']; /* empty value for the player clients */
                 rooms.forEach(r => {
                     const room = `${ob.address}${r}`;
-                    console.log(`emit scoreUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//                    console.log(`emit scoreUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
         //            console.log(getRoomSockets(room));
                     io.to(room).emit('scoreUpdate', ob.sp);
                 });
@@ -484,12 +490,18 @@ function initSocket(server) {
                     cb();
                 }
             });
+            socket.on('togglePresInfo', address => {
+                const room = `${address}-pres`;
+                const rooms = getRoomSockets(room);
+                io.to(room).emit('togglePresInfo');
+            })
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // presentation (or slideshow) controller ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation-control') {
 //            const roomID = `/${Q.id}-pres-control`;
+            console.log(`socketController - presentation-control calls getWithSessionID with ID ${Q.id}`);
             const session = await sessionController.getSessionWithID(Q.id);
             if (session) {
             roomID = `${session.address}-pres-control`;
@@ -527,6 +539,7 @@ function initSocket(server) {
 //            log(`presentation joined ${roomID}`);
             socket.emit('setGame', gameController.getGameWithAddress(`/${Q.id}`));
             socket.on('getScores', (gameID, cb) => {
+                console.log(`presentation requests scores`);
                 gameController.getScorePackets(gameID, cb);
             });
             socket.on('getAllValues', (gameID, cb) => {
@@ -626,6 +639,7 @@ function initSocket(server) {
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method
 //            log('sock');
+            console.log(`"other" event looks for session with ID ${id}`);
             sessionController.getSessionWithID(id);
         });
 
@@ -698,7 +712,7 @@ function initSocket(server) {
         const eGame = Object.assign({}, game);
         eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
 //        eGame.updateSource = Object.assign({'updateSource': 'eventEmitter'}, game);
-        const rooms = ['-pres', '-fac', '', '-displaygame']; /* empty value for the player clients */
+        const rooms = ['-pres', '-pres-control', '-fac', '', '-displaygame']; /* empty value for the player clients */
 //        console.log('hup date');
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
@@ -726,7 +740,7 @@ function initSocket(server) {
             const room = `${game.address}${r}`;
 //            console.log(`emit to room ${room} which has some socket(s)`);
 //            showRoomSize(room)
-            console.log(`emit to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//            console.log(`emit to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
 //            const eGame = Object.assign({_updateSource: {event: ''}}, game);
 //            console.log(getRoomSockets(room));
             const eGame = Object.assign({}, game);
@@ -895,7 +909,7 @@ function initSocket(server) {
         console.log('I have a session update:');
 //        console.log(s);
         const roomID = `${s.address}-displaysession`;
-        console.log(`emit onSessionUpdated to room ${roomID} which has ${getRoomSockets(roomID).size} socket(s)`);
+//        console.log(`emit onSessionUpdated to room ${roomID} which has ${getRoomSockets(roomID).size} socket(s)`);
         io.to(roomID).emit('onSessionUpdated', s);
     });
 };

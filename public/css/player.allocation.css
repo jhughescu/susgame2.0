@@ -34,3 +34,9 @@
     font-weight: bold;
     position: absolute;
 }
+
+
+/* Consider removing in deployment - dev requirement to keep team colour bar in view on forms */
+.nav-header-container {
+/*    position: fixed;*/
+}

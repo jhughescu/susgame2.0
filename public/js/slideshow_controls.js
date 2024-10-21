@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let base = null;
     let output = null;
     const setGame = (g) => {
+//        console.log('%cset game now', 'background-color: black; color: green; font-weight: bold;')
         game = g;
         slides = game.presentation.slideData.slideList;
         presentation = game.presentation;
@@ -50,27 +51,94 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSlidelist();
         updateAutoplay();
     };
+    const onGameUpdate = (rg) => {
+        const og = JSON.parse(JSON.stringify(game));
+        const gt = og.teams;
+        const event = rg._updateSource.event.split(' ').reverse()[0];
+        const allowedEvents = ['startRound', 'endRound', 'presentationAction'];
+        const isAllowed = allowedEvents.some(term => event.includes(term));
+        if (isAllowed) {
+//            \/ timeout used to ensure game has updated before this code runs
+            setTimeout(() => {
+                const teamsChanged = game.teams.length !== gt.length;
+                const roundChanged = justNumber(game.round) !== justNumber(og.round);
+                const roundCompleted = rg.round.toString().includes('*');
+//                console.log(`${event}:, teamsChanged: ${teamsChanged}, roundChanged: ${roundChanged}, roundCompleted: ${roundCompleted}`);
+                if (teamsChanged || roundChanged || roundCompleted) {
+                    updateSlidelist();
+                }
+                setupControls();
+            }, 300)
+        }
+    };
+    const getBlankSlide = () => {
+        return {isEnabled: false}
+    };
     const updateSlidelist = () => {
         const sl = slides.slice();
-        sl.forEach((s, i) => {
-            s.isCurrent = i === game.presentation.currentSlide;
+        $('.slide_link').each((i, s) => {
+            const slOb = sl[i];
+            slOb.isEnabled = true;
+            if (slOb.hasOwnProperty('action')) {
+                if (slOb.action.toLowerCase().includes('assignteams')) {
+                    if (game.teams.length > 0) {
+                        slOb.isEnabled = false;
+                    }
+                }
+                if (slOb.action.includes('startRound')) {
+                    const slR = window.justNumber(slOb.action);
+                    const gr = window.justNumber(game.round);
+                    slOb.gameRound = {round: game.round, number: gr};
+                    slOb.isNextRound = slR === gr + 1 && (game.round.toString().includes('*') || gr === 0);
+                    slOb.rCompleteNotThisNext = game.round.toString().includes('*') && slR !== gr + 1;
+                    if (!slOb.isNextRound && (slR !== gr)) {
+                        slOb.isEnabled = false;
+                    }
+                    if (slOb.rCompleteNotThisNext) {
+                        slOb.isEnabled = false;
+                    }
+                    slOb.teamsAssiged = game.teams.length > 0;
+                    if (game.teams.length === 0) {
+                        slOb.isEnabled = false;
+                    }
+                    slOb.title = `${slOb.title.includes('(R') ? '' : '(R' + slR + ') '}${slOb.title}`
+                }
+            }
+            slOb.title = `${slOb.type === 'video' && !slOb.title.includes('-symbols-') ? '<span class="slideicon material-symbols-outlined">movie</span>' : ''}${slOb.title}`;
+            slOb.isCurrent = i === game.presentation.currentSlide;
         });
+//        console.log(sl);
         window.renderTemplate('slidelist', 'facilitator.slidelist', sl, () => {
-            $('.slide_link').off('click').on('click', function () {
-//                const sID = parseInt($(this).attr('id').split('_')[2]);
+            const slidelink = $('.slide_link');
+            slidelink.off('click').on('click', function () {
+                const able = !$(this).attr('class').includes('disabled');
                 const sID = parseInt($(this).closest('.slide_info').attr('id').split('_')[2]);
-                console.log(`click the slide link, call gotoSlide`);
-                gotoSlide(sID);
+                if (able) {
+                    gotoSlide(sID);
+                }
+            });
+            let timer = null;
+            slidelink.off('mouseover').on('mouseover', function () {
+                const note = $(this).closest('.slide_info').find('.slidenote');
+                if (Boolean(note.html())) {
+                    timer = setTimeout(() => {
+                        note.fadeIn();
+                    }, 500)
+                }
+            });
+            slidelink.off('mouseout').on('mouseout', function () {
+                const note = $(this).closest('.slide_info').find('.slidenote');
+                if (Boolean(note.html())) {
+                    clearTimeout(timer);
+                    note.fadeOut();
+                }
             });
             $('.replay').off('click').on('click', function () {
                 const sID = parseInt($(this).closest('.slide_info').attr('id').split('_')[2]);
-//                console.log(`clicked ${sID}`);
                 const eOb = {gameID: game.uniqueID, event: 'reload'};
                 socket.emit(`presentationEvent`, eOb, (ob) => {
                     eventUpdate(ob);
                 });
-//                const sID = parseInt($(this).attr('id').split('_')[2]);
-//                gotoSlide(sID);
             });
         });
     };
@@ -104,8 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sb_next').attr({disabled: !presentation.hasNext});
     };
     const pEvent = (ev) => {
-        console.log(`pEvent`);
-        console.log(ev);
+//        console.log(`pEvent`, ev);
+//        console.log(ev);
         if (ev) {
             const eOb = {gameID: game.uniqueID, event: ev};
             socket.emit(`presentationEvent`, eOb, (ob) => {
@@ -114,37 +182,58 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.warn(`pEvent requires an event name (string)`);
         }
+    };
+    const slideRoundTrigger = (sl) => {
+        let tr = {triggers: false};
+        if (sl) {
+            if (sl.hasOwnProperty('action')) {
+                if (sl.action.includes('startRound')) {
+                    tr.triggers = true;
+                    tr.round = sl.action.split(':')[1];
+                }
+            }
+        }
+        return tr
     }
     const setupControls = () => {
         let b = base.find('.buttons').find('button');
+        const slPrevious = game.slide > 0 ? slides[game.slide - 1] : getBlankSlide();
+        const slNext = game.slide === slides.length - 1 ? getBlankSlide() : slides[game.slide + 1];
+        const disabled = {
+            previous: !slPrevious.isEnabled,
+            next: !slNext.isEnabled
+        }
         b = b.add($('.slideshow_control'));
-//        console.log(b);
         b.each((bt, el) => {
             let btn = $(el);
             let id = btn.attr('id').replace('sb_', '');
-            btn.off('click').on('click', function () {
-                pEvent(id);
-            })
+            if (!Boolean(disabled[id])) {
+                btn.off('click').on('click', function () {
+                    pEvent(id);
+                });
+                btn.removeClass('disabled');
+            } else {
+                btn.addClass('disabled');
+            }
         });
         socket.emit('checkSocket', {sock: 'pres', address: game.address}, (o) => {
-//            console.log(`checkSocket callback`, o);
             updatePresentationStatus(Boolean(o.total));
         });
     };
     const findRoundTrigger = (r) => {
         // looks for a slide which is to be triggered by scoring for a given round
-        console.log(`look for a trigger for round ${r}`);
+//        console.log(`look for a trigger for round ${r}`);
         const sl = presentation.slideData.slideList;
         const trig = sl.filter(o => o.trigger && o.trigger.includes(`scoreRound:${r}`));
         if (trig.length > 1) {
             console.warn(`multiple slides contain same trigger action.`);
         } else {
             if (trig.length) {
-                console.log('we have trig length');
+//                console.log('we have trig length');
                 const trigSlideRef = trig[0].ref;
-                console.log(`trigSlideRef: ${trigSlideRef}`);
+//                console.log(`trigSlideRef: ${trigSlideRef}`);
                 if (trigSlideRef !== presentation.currentSlide) {
-                    console.log(`findRoundTrigger will call gotoSlide`);
+//                    console.log(`findRoundTrigger will call gotoSlide`);
                     gotoSlide(trigSlideRef);
                 }
             }
@@ -154,10 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('init controls');
         setGame(game);
         base = $('#slideshow_controls');
-        setupControls();
         updatePresentation({hasPrevious: presentation.currentSlide > 0, hasNext: presentation.currentSlide < slides.length - 1});
         showCurrentSlide();
         updateSlidelist();
+        setupControls();
         updateAutoplay();
     };
     socket.on('presentationSlideUpdated', (ob) => {
@@ -172,6 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('presentationConnect', (boo) => {
 //        console.log(`pres connect: ${boo}`, boo);
         updatePresentationStatus(boo.connected);
+    });
+    socket.on('gameUpdate', (rg) => {
+        onGameUpdate(rg);
     });
     // expose methods to the parent page (make available to scriptpresentation.js)
     window.slideContolsInit = init;

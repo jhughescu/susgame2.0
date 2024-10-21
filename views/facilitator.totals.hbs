@@ -1,25 +1,31 @@
 <div id='scoresummaries'>
     <table class='nostripe totals'><tbody>
         <tr>
-        <th>team</th>
+        <th>Team</th>
         <th>self</th>
-<!--        <th>PV 1</th>-->
         <th>PV1</th>
-<!--        <th>PV 2</th>-->
         <th>PV2</th>
-        <th>PV t</th>
-        <th>total</th>
+        <th>PVt</th>
+        <th>2030</th>
+        <th>coll.</th>
+        <th>PV1</th>
+        <th>PV2</th>
+        <th>PVt</th>
+        <th>final</th>
         </tr>
         {{#each totalsObject}}
         <tr>
-        <td>{{team}}</td>
+        <td>{{abbr}}</td>
         <td class='emphasis'>{{r1Total}}</td>
-<!--        <td>{{r2s5All}}</td>-->
-        <td class='alignright'>{{r2s5Av}} (<a title='{{r2s5All}}'>{{r2s5Summary.scores.length}}</a>)</td>
-<!--        <td>{{r2s6All}}</td>-->
-        <td class='alignright'>{{r2s6Av}} (<a title='{{r2s6All}}'>{{r2s6Summary.scores.length}}</a>)</td>
+        <td class='alignright'>{{r2s5Av}} <span class='paran'><a title='{{r2s5All}}'>({{r2s5Summary.scores.length}})</a></span></td>
+        <td class='alignright'>{{r2s6Av}} <span class='paran'><a title='{{r2s6All}}'>({{r2s6Summary.scores.length}})</a></span></td>
         <td class='emphasis aligndecimal'>{{r2Total}}</td>
-        <td class='grand aligndecimal'>{{grandTotal}}</td></tr>
+        <td class='grand aligndecimal'>{{grandTotal1}}</td>
+        <td class='emphasis aligndecimal'>{{r3Total}}</td>
+        <td class='alignright'>{{r4s5Av}} <span class='paran'><a title='{{r4s5All}}'>({{r4s5Summary.scores.length}})</a></span></td>
+        <td class='alignright'>{{r4s6Av}} <span class='paran'><a title='{{r4s6All}}'>({{r4s6Summary.scores.length}})</a></span></td>
+        <td class='emphasis aligndecimal'>{{r4Total}}</td>
+        <td class='grand aligndecimal'>{{grandTotalFinal}}</td></tr>
         {{/each}}
     </tbody></table>
 </div>

@@ -1,0 +1,8 @@
+
+<table>
+
+<tr><th></th><th></th><th>completed?</th></tr>
+{{#each this}}
+    <tr><td class='rnum'>{{round}}</td><td class='{{#if current}} current{{/if}}'>{{{title}}}</td><td class='true'>{{#if complete}}&#10003;{{/if}}</td></tr>
+{{/each}}
+</table>

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-10-03T11:06:14+01:00",
-  "commitHash": "d0770e92f59303551f01849f21dc179687ac3cf9",
-  "commitMessage": "Main team allocation now reroutes to static template on submission.",
+  "timestamp": "2024-10-21T17:05:49+01:00",
+  "commitHash": "770ae2aa3aa3d6587e969e091dac75f8d61f7eb2",
+  "commitMessage": "Game flow update: PV rounds require all playes for completion, interective clients sent to homepage upon round start if they are not involved.",
   "branch": "main"
 }

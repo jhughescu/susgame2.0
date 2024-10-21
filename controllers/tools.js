@@ -29,8 +29,14 @@ const justNumber = (i) => {
     }
     return out;
 };
-const roundNumber = (n) => {
-    return Math.round(n * 1000) / 1000;
+const roundNumber = (n, r) => {
+    let m = 1;
+    let rr = r === undefined ? 3 : r;
+    for (let i = 0; i < rr; i++) {
+        m *= 10;
+    }
+//        console.log(`m is ${m}`);
+    return Math.round(n * m) / m;
 };
 const isValidJSON = (j) => {
 //    console.log(j);
