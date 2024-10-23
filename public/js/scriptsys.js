@@ -261,13 +261,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (rOb.values.length > 0) {
                         rOb.values = `(${rOb.values.length} values recorded)`
                     }
+                    if (rOb.password) {
+                        rOb.fdbLink = `${window.location.origin}/facilitatorlogin?s=${rOb.uniqueID}&p=${rOb.password}`;
+                    }
                     window.renderTemplate('sessionDetail', 'system.card.session', rOb, readySessionSpecificLinks);
                     $('#sessionDetail').fadeIn(300, () => {
-                        let vp = $('#val_password').add($(`#val_uniqueID`));
+                        let vp = $('#val_password').add($(`#val_uniqueID`)).add($(`#val_fdbLink`));
                         vp.addClass('link');
+//                        $(`#val_fdbLink`).attr('data-content', 'a canoe in a shed');
+//                        vp.attr('data-content', 'a canoe in a cow shed');
+//                        console.log($(`#val_fdbLink`));
                         vp.off('click').on('click', function() {
-                            copyToClipboard($(this).attr('id'));
+                            const msg = $(this).attr('id');
+//                            const msg = $(this).attr('data-content');
+                            copyToClipboard(msg);
+//                            console.log(msg);
                         });
+
                     });
 //                    readyLaunch();
                 });

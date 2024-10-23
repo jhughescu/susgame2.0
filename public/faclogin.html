@@ -34,7 +34,27 @@
         }
     </style>
     <script>
+        const autofill = () => {
+            const q = window.location.search;
+            const af = {};
+            if (Boolean(q)) {
+                const det = q.replace('?', '').split('&');
+                det.forEach(d => {
+                    d = d.split('=');
+                    af[d[0]] = d[1];
+                })
+            }
+            if (af.hasOwnProperty('p') && af.hasOwnProperty('s')) {
+//                console.log(af);
+//                console.log(af.s, af.s);
+                $('#password').html(af.p);
+                $('#session').html(af.s);
+                $('#password').val(af.p);
+                $('#session').val(af.s);
+            }
+        }
         $(document).ready(function() {
+            autofill();
             // Toggle password visibility
             $('#eye-toggle').hover(function() {
                 var passwordField = $('#password');

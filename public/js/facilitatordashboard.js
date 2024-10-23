@@ -2,9 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const getSessionID = () => {
         const cookies = document.cookie.split(';');
-//        console.log(`getSessionID`);
         for (let cookie of cookies) {
-//            console.log(cookie);
             const [cookieName, cookieValue] = cookie.trim().split('=');
             if (cookieName === 'sessionID') {
                 return decodeURIComponent(cookieValue);
