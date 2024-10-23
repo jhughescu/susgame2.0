@@ -598,6 +598,17 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('identifyPlayers');
         socket.emit('identifyPlayers', game);
     };
+    const signOut = () => {
+        const go = confirm('Are you sure you want to sign out of this session?');
+        if (go) {
+            document.cookie.split(';').forEach(c => {
+                const eqPos = c.indexOf('=');
+                const name = eqPos > -1 ? c.substring(0, eqPos) : c;
+                document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            });
+            window.location.replace('facilitatorlogin');
+        }
+    };
 
     const setupTab = (arg) => {
 //        console.log(`setupTab`);
@@ -745,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     };
     const setupControlLinks = () => {
-        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName', '#clearConsole', '#presInfo', '#downloadRes'];
+        const ids = ['#preview', '#resize', '#assign', '#reset', '#identify', '#startRound', '#completeRound', '#checkRound', '#slideshow', '#setName', '#clearConsole', '#presInfo', '#downloadRes', '#signOut'];
         const rSel = $('#contentControls').find('.buttonSet').find('button');
         const rVal = $('#roundInput');
         ids.forEach(id => {
@@ -800,6 +811,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     case '#downloadRes':
                         exportResults();
+                        break;
+                    case '#signOut':
+                        signOut();
                         break;
                 }
 
