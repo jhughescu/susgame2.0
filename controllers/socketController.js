@@ -8,6 +8,8 @@ const presentationController = require('./../controllers/presentationController'
 const downloadController = require('./../controllers/downloadController');
 const logController = require('./../controllers/logController');
 
+const tools = require('./../controllers/tools');
+
 const eventEmitter = getEventEmitter();
 
 let io = null;
@@ -289,10 +291,10 @@ function initSocket(server) {
     //            log('User disconnected from a facilitator dashboard');
             });
             socket.on('checkDevMode', () => {
-                const isDev = process.env.ISDEV;
+                const isDev = tools.procVal(process.env.ISDEV);
 //                console.log(`socketController isDev: ${isDev}, emit returnDevMode`);
                 socket.emit('returnDevMode', isDev);
-            })
+            });
             socket.on('getGame', (id, cb) => {
 //                console.log(`on getGame`)
                 gameController.getGame(id, cb);

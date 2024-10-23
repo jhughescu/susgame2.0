@@ -54,15 +54,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // observer.disconnect();
     };
     const checkDevMode = async () => {
-//        console.log('checking devMode A');
         return new Promise((resolve, reject) => {
-//            console.log('checking devMode B');
             socket.on('returnDevMode', (isDev) => {
-//                console.log(`return: ${isDev}`);
+                console.log(`the resolver, isDev: ${isDev}`);
                 resolve(isDev);
             });
             socket.emit('checkDevMode');
-
 
             // Handle errors
             socket.on('error', (error) => {
@@ -571,7 +568,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const descMax = 150;
         const hasS = await thisRoundScored(myPlayer);
-        const isDev = checkDevMode();
+        const isDev = await checkDevMode();
+        console.log(`setupAllocationControl, isDev? ${isDev}, isDev type: ${typeof(isDev)}`);
+        console.log(isDev)
+        if (isDev) {
+            console.log('is dev')
+        } else {
+            console.log('is not dev')
+        }
         if (hasS) {
             if (hasS.hasScore) {
                 const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
