@@ -54,20 +54,25 @@ document.addEventListener('DOMContentLoaded', function () {
         // observer.disconnect();
     };
     const checkDevMode = async () => {
-        return new Promise((resolve, reject) => {
-            socket.on('returnDevMode', (isDev) => {
-                console.log(`the resolver, isDev: ${isDev}`);
-                resolve(isDev);
-            });
-            socket.emit('checkDevMode');
+        let dm = false;
+        if (game.hasOwnProperty('isDev')) {
+            return game.isDev;
+        } else {
+            return new Promise((resolve, reject) => {
+                socket.on('returnDevMode', (isDev) => {
+                    console.log(`the resolver, isDev: ${isDev}`);
+                    resolve(isDev);
+                });
+                socket.emit('checkDevMode');
 
-            // Handle errors
-            socket.on('error', (error) => {
-                // Reject the promise with the error message
-                console.warn(`checkDevMode error ${error}`)
-                reject(error);
+                // Handle errors
+                socket.on('error', (error) => {
+                    // Reject the promise with the error message
+                    console.warn(`checkDevMode error ${error}`)
+                    reject(error);
+                });
             });
-        });
+        }
     }
     const procVal = (v) => {
         // process values into numbers, booleans etc
@@ -568,13 +573,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const descMax = 150;
         const hasS = await thisRoundScored(myPlayer);
-        const isDev = await checkDevMode();
-        console.log(`setupAllocationControl, isDev? ${isDev}, isDev type: ${typeof(isDev)}`);
-        console.log(isDev)
-        if (isDev) {
-            console.log('is dev')
+        let isDev = false;
+//        console.log(game);
+//        console.log(game.isDev);
+        if (game.hasOwnProperty('isDev')) {
+            isDev = game.isDev;
+//            console.log('set')
         } else {
-            console.log('is not dev')
+//            console.log('await');
+            isDev = await checkDevMode();
+        }
+//        console.log(`setupAllocationControl, isDev? ${isDev}, isDev type: ${typeof(isDev)}`);
+//        console.log(isDev);
+        if (isDev) {
+//            console.log('is dev')
+        } else {
+//            console.log('is not dev')
         }
         if (hasS) {
             if (hasS.hasScore) {

@@ -15,6 +15,7 @@ class Game {
         this.persistentData = null;
         this.round;
         this.mainTeamSize;
+        this.isDev = tools.procVal(process.env.ISDEV);
     }
 
     async loadPersistentData(type) {
