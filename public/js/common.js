@@ -55,7 +55,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const checkDevMode = async () => {
         let dm = false;
+//        console.log(`checkDevMode`);
         if (game.hasOwnProperty('isDev')) {
+//            console.log(game);
             return game.isDev;
         } else {
             return new Promise((resolve, reject) => {

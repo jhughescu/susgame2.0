@@ -281,7 +281,11 @@ class Game {
         const gp = this.persistentData;
         const sp = this.getDetailedScorePackets();
 //        console.log(sp);
+//        console.log(gp);
         const scores = {};
+        if (!gp.hasOwnProperty('rounds')) {
+            return [];
+        }
         gp.rounds.forEach(r => {
             scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
         });
@@ -304,7 +308,7 @@ class Game {
 //                c3 = scores.scoresR3.filter(sc => sc.dest === t.id);
 //                console.log(`match against team ${tm.id}`)
                 c3.forEach(sc => {
-                    console.log(sc.src, tm.id)
+//                    console.log(sc.src, tm.id);
                 });
                 const sca = c3.filter(sc => sc.src === tm.id);
 //                console.log(sca)
@@ -322,15 +326,25 @@ class Game {
             if (tOb) {
                 const sv = this.summValues;
                 tOb.summary_r3 = ken;
-//                console.log('ReSULT')
-//                console.log(tOb.summary_r3)
-//                console.log(ken)
+//                console.log('ReSULT');
+//                console.log(tOb.summary_r3);
+//                console.log(ken);
                 tOb.summary_pv1r2 = {all: pv25.map(sp => sp.val).join(','), count: pv25.length, summ: sv(pv25), av: sv(pv25) / pv25.length};
                 tOb.summary_pv2r2 = {all: pv26.map(sp => sp.val).join(','), count: pv26.length, summ: sv(pv26), av: sv(pv26) / pv26.length};
                 tOb.summary_pv1r4 = {all: pv45.map(sp => sp.val).join(','), count: pv45.length, summ: sv(pv45), av: sv(pv45) / pv45.length};
                 tOb.summary_pv2r4 = {all: pv46.map(sp => sp.val).join(','), count: pv46.length, summ: sv(pv46), av: sv(pv46) / pv46.length};
                 tOb.pvR2Total = (sv(pv25) / pv25.length) + (sv(pv26) / pv26.length);
+                tOb.pvR2Total = tOb.pvR2Total === null || tOb.pvR2Total === null || isNaN(tOb.pvR2Total) ? 0 : tOb.pvR2Total;
+//                tOb.pv45chips = sv(pv45);
+//                tOb.ooooooooooooooooopv45count = sv(pv45);
+//                tOb.ooooooooooooooooopv45length = pv45.length;
+//                tOb.ooooooooooooooooopv46count = sv(pv46);
+//                tOb.ooooooooooooooooopv46length = pv46.length;
+//                tOb.ooooooooooooooooopv46res = (sv(pv46) / pv46.length);
                 tOb.pvR4Total = (sv(pv45) / pv45.length) + (sv(pv46) / pv46.length);
+//                console.log(tOb.pvR4Total);
+                tOb.pvR4Total = tOb.pvR4Total === null || tOb.pvR4Total === 'null' || isNaN(tOb.pvR4Total) ? 0 : tOb.pvR4Total;
+
                 tOb.pvTotal = tOb.pvR2Total + tOb.pvR4Total;
                 tOb.gt = tOb.total * tOb.pvTotal;
                 tOb.gtRound = tools.roundNumber(tOb.total * tOb.pvTotal, 2);

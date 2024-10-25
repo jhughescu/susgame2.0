@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let watchFor = null;
     let showDev = true;
     let currentSlideObject = null;
+    let storePrefix = null;
     const getSessionID = () => {
         const ID = window.location.hash.split('?')[0].replace('#', '');
 //        console.log(window.location.hash);
@@ -37,6 +38,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (initSlide) {
 //                    console.log('init', initSlide);
                     showSlide(initSlide);
+                }
+                setStorePrefix();
+//                console.log('store thing sought:', getStorePrefix());
+//                console.log(localStorage.getItem(`${getStorePrefix()}-watch`));
+                if (localStorage.getItem(`${getStorePrefix()}-watch`)) {
+//                    console.log('store thing found')
+                    setWatch(localStorage.getItem(`${getStorePrefix()}-watch`));
                 }
             }
         });
@@ -120,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
+//        console.log(`onGameUpdate, watchFor: ${watchFor}`);
         if (watchFor) {
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
                 if (watchFor === 'scores') {
@@ -144,16 +153,27 @@ document.addEventListener('DOMContentLoaded', function () {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         console.log('Panopto API ready');
     };
+    const setStorePrefix = () => {
+        storePrefix = `presStore-${game.address}`;
+//        console.log(`storePrefix set to ${storePrefix}`);
+    };
+    const getStorePrefix = () => {
+        return storePrefix;
+    };
     const setWatch = (l) => {
         // set a property of the game to watch
 //        console.log(`watch for ${l}`);
+
         watchFor = l;
+        localStorage.setItem(`${getStorePrefix()}-watch`, l);
     };
     const init = () => {
         // Delay required to ensure game is started prior to init; find a better way to do this.
         setTimeout(() => {
 //            estPanopto();
+
             estSocket();
+
         }, 500);
     };
     const showScores = () => {
@@ -495,30 +515,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const renderTotals = async (o) => {
-        setWatch('scores');
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
         const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-        console.log(`renderTotals:`, o)
-        console.log(`lets do getTotals${round}`);
         let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
 
         if (typeof(totals) === 'string') {
             totals = JSON.parse(totals);
         }
         let orig = {};
-//        console.log(`renderTotals for round ${round}: ${Boolean(totals)}`);
-//        console.log(totals);
         if (!totals.hasOwnProperty('length')) {
             orig = JSON.parse(JSON.stringify(totals));
-//            console.log('convert array:');
             totals = Object.values(totals);
 
         }
-        console.log(totals);
         totals = totals.map(s => s.gt);
-        console.log(totals);
-//        console.log(JSON.parse(JSON.stringify(totals)));
         let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
         const mult = 100 / max;
@@ -538,7 +549,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
             total.html(roundNumber(totals[i], 1));
             const tPos = neg === 0 ? positive + 50 : positive;
-            total.animate({bottom: `${tPos}px`});
+
+            if (justNumber(total.html()) === 0) {
+                total.css({bottom: '40px'});
+                console.log('trtgfgfhff');
+            } else {
+                total.animate({bottom: `${tPos}px`});
+            }
             $(`#b${i}Neg`).animate({height: `${neg}%`});
         });
     };
