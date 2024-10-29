@@ -21,11 +21,9 @@ async function dbConnect() {
         await mongoose.connect(uri);
         console.log('DB connected');
         const db = mongoose.connection;
-//        console.log(db);
         const collection = db.collection('sessions');
         const changeStream = collection.watch();
         changeStream.on('change', (change) => {
-//            console.log('Change occurred:', change);
             dbEvents.emit('databaseChange', change);
             // Handle the change as needed
         });

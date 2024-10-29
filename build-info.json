@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-10-25T15:06:46+01:00",
-  "commitHash": "e5b7dd7f13e5289447ecee39d0840c9cc64fbccd",
-  "commitMessage": "Big change to the way isDev is established in common.js - is now a property of game.1 (hence available without server query)",
+  "timestamp": "2024-10-28T13:54:10Z",
+  "commitHash": "917e4408ed70f8a3f5b35c2b21723608a8a71e90",
+  "commitMessage": "Fixed errors with presentation code - bar charts animate correctly.",
   "branch": "main"
 }

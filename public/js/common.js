@@ -635,7 +635,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const base = label.html().replace(/[()/\d-]/g, ' ').replace(/\s+$/, '');
                     label.html(`${base}   (${summ})`);
                 });
-                if (isDev) {
+                let autofill = isDev;
+                autofill = false;
+                // Note - we need to detach autofill from isDev
+                if (autofill) {
                     desc.html('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem felis, lacinia non nibh at, maximus pretium mi. Proin imperdiet velit augue, quis laoreet neque iaculis vitae.');
                     val.html(1 + Math.ceil(Math.random() * 4));
                     const ch = action.find('option');
