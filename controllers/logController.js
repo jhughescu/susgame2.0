@@ -16,7 +16,7 @@ let logTime = null;
 
 
 const isDev = () => {
-    return true;
+//    return true;
     return Boolean(tools.procVal(process.env.isDev));
 };
 const emptyFolder = async (directoryPath) => {
@@ -76,17 +76,19 @@ const getFormattedTimestamp = () => {
     return `${datePart}-${timePart}`;
 };
 const writeBeautifiedJson = async (directoryPath, fileName, data) => {
-    try {
-        const timestamp = getFormattedTimestamp();
-        const newFileName = `${fileName}_${timestamp}.json`;
-        const newFilePath = path.join(directoryPath, newFileName);
-        // Beautify JSON
-        const beautifiedJson = beautify(data, null, 2, 100);
-        if (isDev()) {
-            await fs.writeFile(newFilePath, beautifiedJson);
+    if (isDev()) {
+        try {
+            const timestamp = getFormattedTimestamp();
+            const newFileName = `${fileName}_${timestamp}.json`;
+            const newFilePath = path.join(directoryPath, newFileName);
+            // Beautify JSON
+            const beautifiedJson = beautify(data, null, 2, 100);
+            if (isDev()) {
+                await fs.writeFile(newFilePath, beautifiedJson);
+            }
+        } catch (err) {
+            console.error(`Error creating file: ${err.message}`);
         }
-    } catch (err) {
-        console.error(`Error creating file: ${err.message}`);
     }
 };
 const updateUpdates = async () => {
@@ -133,48 +135,44 @@ const writeLogsV1 = async () => {
 };
 
 const writeLogs = async () => {
-    try {
-        let uf;
-
-        // Check if the log file exists
+    if (isDev()) {
         try {
-            const logData = await fs.readFile(getFilePath(LOG_FILE), 'utf-8');
-            uf = JSON.parse(logData); // Parse existing log data
-        } catch (err) {
-            // If the file doesn't exist, initialize an empty object
-            if (err.code === 'ENOENT') {
-                uf = {};
-            } else {
-                throw err; // Rethrow any other errors
+            let uf;
+            // Check if the log file exists
+            try {
+                const logData = await fs.readFile(getFilePath(LOG_FILE), 'utf-8');
+                uf = JSON.parse(logData); // Parse existing log data
+            } catch (err) {
+                // If the file doesn't exist, initialize an empty object
+                if (err.code === 'ENOENT') {
+                    uf = {};
+                } else {
+                    throw err; // Rethrow any other errors
+                }
             }
-        }
 
-        let index = Object.keys(uf).length;
-//        console.log(logList)
-        while (logList.length > 0) {
-            const u = logList.shift();
-//            console.log(typeof(u));
-//            console.log(u);
-//            const u = JSON.parse(uo.update);
-//            u.game = uo.game;
-//            u.timestamp = uo.timestamp;
-//            u.logType = uo.logType;
-            const newI = `update_${index}`;
-            uf[newI] = u;
-            index++;
-        }
+            let index = Object.keys(uf).length;
+            while (logList.length > 0) {
+                const u = logList.shift();
+                const newI = `update_${index}`;
+                uf[newI] = u;
+                index++;
+            }
 
-        const writer = beautify(uf, null, 2, 100);
-        await fs.writeFile(getFilePath(LOG_FILE), writer);
-        eventEmitter.emit('logsUpdated', writer);
-    } catch (err) {
-        console.error("Error writing logs:", err);
+            const writer = beautify(uf, null, 2, 100);
+            await fs.writeFile(getFilePath(LOG_FILE), writer);
+            eventEmitter.emit('logsUpdated', writer);
+        } catch (err) {
+            console.error("Error writing logs:", err);
+        }
     }
 };
 const getUpdateLog = async (cb) => {
-    const ul = await fs.readFile(LOG_UPDATE, 'utf-8');
-    if (cb) {
-        cb(ul);
+    if (isDev()) {
+        const ul = await fs.readFile(LOG_UPDATE, 'utf-8');
+        if (cb) {
+            cb(ul);
+        }
     }
 };
 const addUpdate = async (ob) => {
@@ -191,7 +189,9 @@ const addLog = async (id, ob) => {
     logTime = setTimeout(writeLogs, 500);
 };
 const init = () => {
-    fs.writeFile(LOG_UPDATE, '{}');
+    if (isDev()) {
+        fs.writeFile(LOG_UPDATE, '{}');
+    }
 };
 
 init();
