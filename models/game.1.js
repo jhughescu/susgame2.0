@@ -36,21 +36,16 @@ class Game {
     };
     assignTeamsOrder (ob) {
         // assign players to teams in the order they were registered:
-//        console.log(`assignTeamsOrder:`);
-//        console.log(ob);
         const force = Boolean(ob.force);
         if (this.persistentData) {
             let t = [];
             const pd = this.persistentData;
             const mt = pd.mainTeams;
             const st = pd.secondaryTeams;
-//            const ts = pd.hasOwnProperty('teamSize') ? pd.teamSize : 5;
             const ts = this.mainTeamSize === undefined ? 5 : this.mainTeamSize;
             let pl = this.players.slice();
             let mc = (mt.length * ts) + st.length;
             let sc = pl.length - mc;
-//            console.log(`${pl.length} players, team size: ${ts}, required: ${mc}`);
-//            console.log(`sc: ${sc}`);
             if (sc < 0 && !force) {
                 return `More players required, please try again when more have joined or reduce team size.`;
             }
@@ -61,7 +56,6 @@ class Game {
                     // lead for all main teams wil be first in the array:
                     if (this.playersFull.hasOwnProperty(pr)) {
                         const player = this.playersFull[pr];
-//                        console.log(player)
                         if (!ob.preview) {
                             player.isLead = i === 0;
                         }
@@ -74,13 +68,12 @@ class Game {
             // assume two sub teams - method should be modified if this number is ever in doubt.
             t.push(pl.splice(0, Math.ceil(pl.length / 2)));
             t.push(pl.splice(0));
-//            console.log(t);
             return assignError ? 'error assigning teams' : t;
         }
     }
     setTeams () {
         // set teams (teamObj) for all players in a game (init method)
-        console.log(`setTeams meth`)
+        console.log(`setTeams method - TEAMS, plural`)
         if (this.persistentData) {
             console.log('yep, PD')
             let pt = this.persistentData.teams;
@@ -102,36 +95,23 @@ class Game {
     }
     unsetTeams () {
         // set teams (teamObj) for all players in a game (init method)
-//        console.log(`unsetTeams`)
+//        console.log(`unsetTeams`);
         let pf = this.playersFull;
         for (var i in pf) {
             pf[i].teamObj = null;
             pf[i].isLead = null;
         }
-
-//        if (this.teams.length > 0) {
-//            this.teams.forEach((tl, i) => {
-//                tl.forEach(p => {
-//                    this.playersFull[p].teamObj = {};
-//                });
-//            });
-//        }
     }
     setTeam (player) {
         // set the team (teamObj) for a single player (restore method)
 //        console.log(`setTeam method`);
         if (this.persistentData) {
-//            console.log('yep, data is ready, teams?');
-//            console.log(this.teams)
             let pt = this.persistentData.teams;
-    //        let id = 'fake';
-//            console.log(`set teamObj for player ${player.id}`);
+//            console.log(this.teams);
             this.teams.forEach((t, i) => {
+//                console.log(t)
                 if (t.includes(player.id)) {
-//                    console.log(` - allocate team ${pt[`t${i}`].title}`);
-//                    console.log(t);
                     player.teamObj = pt[`t${i}`];
-//                    console.log(player.teamObj);
                     // Only players of team type 1 have leads
                     player.isLead = t[0] === player.id && player.teamObj.type === 1;
                 }
@@ -148,6 +128,7 @@ class Game {
         let t = this.teams.slice((st[0].id), (st[st.length - 1].id + 1));
         t.forEach((s, i) => t[i] = {id: i, l: s.length});
         t.sort((a, b) => {if (a.l > b.l) {return 1} else if (a.l < b.l) {return -1} else {return 0}});
+        console.log('addLatecomer')
         // the id value of t[0] is now the index of the secondary team with the smallest number of members
         if (player) {
             player.teamObj = st[t[0].id];

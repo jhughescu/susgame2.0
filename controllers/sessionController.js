@@ -207,8 +207,8 @@ async function getSession(req, res) {
     }
 };
 async function updateSession(uniqueID, updateOb) {
-    console.log(`updateSession ${uniqueID}`);
-    console.log(updateOb)
+//    console.log(`updateSession ${uniqueID}`);
+//    console.log(updateOb);
     try {
         const updatedSession = await Session.findOneAndUpdate({
                 uniqueID

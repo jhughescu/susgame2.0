@@ -741,6 +741,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') && renderState.ob !== undefined ? renderState.ob : {};
             rOb.game = game;
+            if (!player) {
+                return;
+            }
             if (Boolean(player.teamObj)) {
                 rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
             }
@@ -1024,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('renderPlayer', (rOb) => {
 //        isItHere(`renderPlayer`)
 //        isItHere(rOb)
+        console.log(`renderPlayer`)
         const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
         const temp = rOb.temp;
 //        renderState = {temp: temp, ob: ob};

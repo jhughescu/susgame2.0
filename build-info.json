@@ -1,6 +1,6 @@
 {
-  "timestamp": "2024-10-28T13:54:10Z",
-  "commitHash": "917e4408ed70f8a3f5b35c2b21723608a8a71e90",
-  "commitMessage": "Fixed errors with presentation code - bar charts animate correctly.",
+  "timestamp": "2024-10-31T11:59:53Z",
+  "commitHash": "1f826d16a60015b2c43a5f4b2457e70522fe8157",
+  "commitMessage": "de-linked autofill of allocation forms from isDev so game can be fully tested in dev mode",
   "branch": "main"
 }

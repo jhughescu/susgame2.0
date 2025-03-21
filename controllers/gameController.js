@@ -15,6 +15,7 @@ const eventEmitter = getEventEmitter();
 let updateDelay = null;
 const games = {};
 const logging = true;
+const autoTeam = true; /* autoTeam means players will be assigned a team upon entering the session */
 
 const log = (msg) => {
     if (process.env.ISDEV && logging) {
@@ -96,6 +97,11 @@ async function startGame (o, cb) {
 //        console.log('game to return:', rg);
         cb(rg);
     }
+
+//    console.log('result of startGame:');
+//    console.log(rg);
+
+
     return rg;
 };
 async function restoreGame (o, cb) {
@@ -111,6 +117,8 @@ async function restoreGame (o, cb) {
         game = Object.assign(game, session._doc);
         // RETAIN LINE BELOW:
         console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`);
+//        console.log(game.players);
+//        console.log(game.playersFull);
         restoreClients(game.address);
         eventEmitter.emit('gameRestored', {game: game.address});
     }
@@ -121,6 +129,7 @@ async function restoreGame (o, cb) {
     }
 };
 async function resetGame(id, cb) {
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> reset game');
     const game = getGameWithUniqueID(id);
     const exclusions = ['presentation', 'persistentData', 'players'];
     if (game) {
@@ -172,15 +181,19 @@ async function resetGame(id, cb) {
         };
         const session = await sessionController.updateSession(id, sOb);
         if (session) {
-//            log('return updated session here');
-//            log(session);
+            console.log('return updated session here');
+            console.log(session);
             if (cb) {
                 cb(session);
             }
+        } else {
+            console.log('no session')
         }
         const eGame = Object.assign({'_updateSource': {event: 'gameController resetGame'}}, game);
         // eventEmitter.emit('gameUpdate', eGame);
         emitUpdate(eGame);
+    } else {
+        console.log('no game');
     }
 };
 async function makeLead (ob) {
@@ -308,12 +321,29 @@ async function changeName (ob, cb) {
 
 const temp = () => {
     console.log('hiaisoj')
-}
+};
+const clearPlayers = (gID) => {
+    // clear the players AND teams
+    const g = games[gID];
+    console.log('clearPlayers method');
+//    console.log(g);
+    if (g) {
+        g.players = [];
+        g.playersFull = {};
+        g.teams = [];
+        g.teamObjects = {};
+    } else {
+        console.log(`game not found: ${gID}`);
+    }
+};
 const resetSession = async (id, cb) => {
     // dev only method for now
     console.log(`resetSession, id: ${id}`);
     const sesh = await sessionController.resetSession(id);
     const gID = `game-${id}`;
+//    console.log(games[gID])
+//    deleteGame(gID);
+    clearPlayers(gID);
     if (sesh) {
 //        delete games[gID];
         if (cb) {
@@ -415,7 +445,7 @@ const getGameWithAddress = (add) => {
     return null;
 };
 const getScores = (gameID, cb) => {
-    console.log(`getScores`);
+//    console.log(`getScores`);
     const game = games[gameID];
     let ss = [];
     if (game) {
@@ -600,6 +630,8 @@ const assignTeams = (ob, cb) => {
     switch (ob.type) {
         case 'order':
             t = game.assignTeamsOrder(ob);
+            console.log('teams as assigned:');
+            console.log(t);
             break;
         default:
             log('no order type specified');
@@ -627,7 +659,65 @@ const assignTeams = (ob, cb) => {
     }
 };
 
+const assignToNextTeam = (game, p, ID) => {
+    // 2025 method; players to be assigned to teams in order of arrival
+    // Read teams, create if it doesn't exist
+    // 5 main teams, sort on size, add player to first (smallest) team
+    // Once teams has length 5 and each el is teamSize create 2 new teams and assign all subsequent to these alternately
+    console.log(`>>>>>>>>>>>>>>>>>> assignToNextTeam`, p, ID);
+    console.log(game.players);
+        console.log(game.teams);
+    const PD = game.persistentData;
+    const ts = game.mainTeamSize === undefined ? 5 : game.mainTeamSize;
+    const playersFullNotReady = game.players.length > 0 && Object.values(game.playersFull).length === 0;
+//    console.log(`playersFullNotReady? ${playersFullNotReady}`);
+    if (!playersFullNotReady || game.teams.length === 0) {
+        console.log(`playersFull is ready to go OR teams undefined, we can set up teams`);
+//        if (game.teams.flat().includes(ID)) {
+//            console.log(`player ${ID} already exists in game.teams`);
+//        }
+//        console.log(game.playersFull)
+//        console.log(ID);
+        if (game.teams.flat().includes(ID)) {
+            console.log(`player ${ID} already registered for a team`);
+        } else {
+            if (game.teams.length === 0) {
+                console.log(`teams not defined, create from scratch`);
+                game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
+                game.teams[0].push(ID);
+            } else {
+                console.log(`teams length = ${game.teams.length}`);
+                if (game.teams.filter(t => t.length < ts).length === 0) {
+                    console.log('all main teams maxxed');
+                    // all main teams at max, add & begin building the 2 secondary teams
+                    const gt = game.teams;
+                    if (gt.length < Object.values(PD.teams).length) {
+                        gt.push([], []);
+                    }
+                    const st1 = gt[gt.length - 1];
+                    const st2 = gt[gt.length - 2];
+                    if (st1.length <= st2.length) {
+                        st1.push(ID);
+                    } else {
+                        st2.push(ID);
+                    }
+                } else {
+                    console.log('main teams not yet filled')
+                    game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
+                }
+            }
+        }
+
+        const uo = {teams: game.teams};
+        sessionController.updateSession(game.uniqueID, uo);
+        console.log(game.teams);
+    } else {
+        console.log(`can't set teams up yet, players exist but playersFull does not`);
+    }
+};
+
 const resetTeams = (ob, cb) => {
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> resetTeams');
     const game = getGameWithAddress(ob.address);
     let t = [];
     const uo = {teams: t};
@@ -676,6 +766,7 @@ const endGame = (game, cb) => {
     console.log(`end game with address ${game.address}`);
     routeController.destroyRoute(game.address);
     game.players = [];
+    game.playersFull = {};
     game.teams = [];
     game.state = 'ended';
     if (cb) {
@@ -684,9 +775,10 @@ const endGame = (game, cb) => {
     eventEmitter.emit('gameEnded', game);
 };
 const deleteGame = (gameID) => {
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> deleteGame');
     // Heavyweight deletion method. Called from socketController via sessionController, which have password safeguards etc.
     // Do not implement via other modules without adding significant protection.
-    const killID = `game-${gameID}`;
+    const killID = gameID.includes('game-') ? gameID : `game-${gameID}`;
     const game = games[killID];
     if (game) {
 //        console.log(`prepare to delete game`);
@@ -815,6 +907,7 @@ const getTheRenderState = (game, id) => {
     // returns an object which tells the player which template to render
     let rs = {};
     // Ensure current game data by deriving & fetching from the games object:
+//    console.log(`####################### ORIGINAL getTheRenderState: ${game.uniqueID}`);
     game = games[`game-${game.uniqueID}`];
     if (game) {
         if (game.persistentData) {
@@ -884,13 +977,11 @@ const getRenderState = (ob, cb) => {
 };
 const registerPlayer = (ob, cb) => {
     const game = getGameWithAddress(ob.game);
-//    console.log(`gameController registerPlayer`);
     let ID = null;
     let newP = null;
     let timer = null;
     let player = null;
     if (game) {
-//        console.log(`yep, game: ${game.persistentData.defaults.teamAssign}`);
         // store a copy of the list of players for later comparison
         const plOrig = JSON.stringify(game.players);
         // index will be the joining order (i.e first connected player index = 1 etc)
@@ -906,6 +997,34 @@ const registerPlayer = (ob, cb) => {
                 game.players.push(ob.player);
                 index = game.players.length;
             }
+            console.log(`gameController registerPlayer, ${ID} player already added? ${game.playersFull.hasOwnProperty(ID)} (players registered: ${Object.values(game.playersFull).length})`);
+            if (game.players.length > 0 && Object.values(game.playersFull).length === 0) {
+                console.log('>>>>>>>>>>>>>>>>>>>>>>>>> oh no, looks like players are re-entering before playersFull has been generated');
+            }
+            const playersNotExpanded = game.players.length > 0 && Object.values(game.playersFull).length === 0;
+
+            if (game.playersFull.hasOwnProperty(ID)) {
+                // player already registered with game
+                // update the existing player object with the new socketID
+                console.log('existing player re-enters');
+                game.playersFull[ID].socketID = ob.socketID;
+
+            } else {
+                // player not yet registered with game
+                console.log('this THINKS it is a new player')
+
+                if (autoTeam) {
+                    assignToNextTeam(game, player, ID);
+                    let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
+                    let pplayer = new Player(ID, plIndex, ob.socketID);
+                    game.playersFull[ID] = pplayer;
+                    game.setTeam(pplayer);
+                }
+            }
+
+
+
+            /*
             if (!game.playersFull.hasOwnProperty(ID)) {
                 let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
                 player = new Player(ID, plIndex, ob.socketID);
@@ -916,15 +1035,20 @@ const registerPlayer = (ob, cb) => {
                 // update the existing player object with the new socketID
                 game.playersFull[ID].socketID = ob.socketID;
             }
+            */
+
+
         } else {
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
             game.players.push(ID);
             newP = true;
         }
         if (newP && game.teams.length > 0) {
-            console.log(`looks like a new player (${ID}) joining after teams are assigned`);
-            game.addLatecomer(player);
-            sessionController.updateSession(game.uniqueID, {teams: game.teams});
+            if (!autoTeam) {
+                console.log(`looks like a new player (${ID}) joining after teams are assigned`);
+                game.addLatecomer(player);
+                sessionController.updateSession(game.uniqueID, {teams: game.teams});
+            }
         }
         const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
         emitUpdate(eGame);
@@ -952,24 +1076,20 @@ const registerPlayer = (ob, cb) => {
         }, 500);
     }
 };
-const registerPlayerV1 = (ob, cb) => {
-//    console.log(`registerPlayer to game ${ob.game}`);
-//    log(ob)
+const registerPlayerORIG = (ob, cb) => {
     const game = getGameWithAddress(ob.game);
+//    console.log(`gameController registerPlayer`);
     let ID = null;
     let newP = null;
     let timer = null;
     let player = null;
     if (game) {
-//        log(game);
-//        console.log('we have a game, go!');
         // store a copy of the list of players for later comparison
         const plOrig = JSON.stringify(game.players);
         // index will be the joining order (i.e first connected player index = 1 etc)
         let index = -1;
         if (ob.player) {
             ID = ob.player;
-//            console.log(`existing player, ID: ${ID}`);
             const pl = game.players.reduce((acc, plID) => {
                 acc[plID] = true;
                 return acc;
@@ -980,13 +1100,9 @@ const registerPlayerV1 = (ob, cb) => {
                 index = game.players.length;
             }
             if (!game.playersFull.hasOwnProperty(ID)) {
-//                let plIndex = index > -1 ? index : game.players.indexOf(ID) + 1;
                 let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
-//                log(`create new player with id ${ID} at index ${plIndex}`);
                 player = new Player(ID, plIndex, ob.socketID);
                 player.idNum = tools.justNumber(player.idNum);
-//                console.log('#  HERE WE GO HERE WE GO');
-//                console.log(player)
                 game.playersFull[ID] = player;
                 game.setTeam(player);
             } else {
@@ -994,7 +1110,6 @@ const registerPlayerV1 = (ob, cb) => {
                 game.playersFull[ID].socketID = ob.socketID;
             }
         } else {
-//            console.log(`new player, ID: ${ID}`);
             ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
             game.players.push(ID);
             newP = true;
@@ -1004,12 +1119,7 @@ const registerPlayerV1 = (ob, cb) => {
             game.addLatecomer(player);
             sessionController.updateSession(game.uniqueID, {teams: game.teams});
         }
-//        const eGame = Object.assign({'_updateEvent': 'registerPlayer'}, game);
-//        console.log('#####################################################################');
-//        console.log(ob.player);
-//        console.log(player);
         const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
-        // eventEmitter.emit('gameUpdate', eGame);
         emitUpdate(eGame);
         // Compare the list of players with the stored list & update database if they differ
         if (JSON.stringify(game.players) !== plOrig) {
@@ -1021,13 +1131,10 @@ const registerPlayerV1 = (ob, cb) => {
         }
         if (cb) {
             const renDo = getTheRenderState(game, ID);
-//            console.log(`ID: ${ID}`);
-//            console.log(`renDo:`, renDo.temp);
             cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
         } else {
             log('reg P, no CB');
         }
-//        log(`registerPlayer to game ${ob.game} with id: ${ID}`);
         return ID;
     } else {
         // safeguard against registration prior to completion of game setup

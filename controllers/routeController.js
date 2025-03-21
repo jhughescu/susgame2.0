@@ -218,6 +218,10 @@ app.get(`/updatelog`, (req, res) => {
     res.sendFile(path.join(basePath, 'updatelog.html'));
 });
 
+app.get(`/ptest`, (req, res) => {
+    res.sendFile(path.join(basePath, 'partials_test.html'));
+});
+
 
 // Declare the 404 response
 const notFoundHandler = (req, res) => {

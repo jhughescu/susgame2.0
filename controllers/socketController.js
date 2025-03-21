@@ -307,12 +307,12 @@ function initSocket(server) {
                 }
             });
             socket.on('restoreGame', (o, cb) => {
-//                console.log(`restoreGame heard in socketController`);
+                console.log(`restoreGame heard in socketController`);
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {
 //                sessionController.resetSession(id, cb);
-//                console.log(`####################################################################`);
+                console.log(`#################################################################### socketController resetSession`);
                 gameController.resetSession(id, cb);
             });
             socket.on('resetGame', (id, cb) => {
@@ -908,7 +908,7 @@ function initSocket(server) {
         });
     });
     eventEmitter.on('sessionUpdated', (s) => {
-        console.log('I have a session update:');
+//        console.log('I have a session update:');
 //        console.log(s);
         const roomID = `${s.address}-displaysession`;
 //        console.log(`emit onSessionUpdated to room ${roomID} which has ${getRoomSockets(roomID).size} socket(s)`);

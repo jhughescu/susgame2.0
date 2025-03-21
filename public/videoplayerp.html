@@ -4,6 +4,7 @@
     </head>
     <script>
         const getSessionID = () => {
+            return 'cocks';
             return window.parent.location.hash.replace('#', '');
         };
         const socket = io('', {
@@ -30,6 +31,7 @@
         };
         function onPanoptoEmbedApiReady() {
             console.log('found the api');
+            console.log(getVidID());
             embedApi = new EmbedApi("player", {
                 width: "100%",
                 height: "100%",
