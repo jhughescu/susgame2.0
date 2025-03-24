@@ -17,7 +17,9 @@ let logTime = null;
 
 const isDev = () => {
 //    return true;
-    return Boolean(tools.procVal(process.env.isDev));
+    const id = Boolean(tools.procVal(process.env.isDev));
+    console.log(id);
+    return id;
 };
 const emptyFolder = async (directoryPath) => {
     if (isDev()) {
@@ -92,28 +94,8 @@ const writeBeautifiedJson = async (directoryPath, fileName, data) => {
     }
 };
 const updateUpdates = async () => {
-    let uf = await fs.readFile(LOG_UPDATE);
-    uf = JSON.parse(uf);
-    let index = Object.keys(uf).length;
-    while (updateList.length > 0) {
-        const uo = updateList.shift();
-        const u = JSON.parse(uo.update);
-        u.game = uo.game;
-        u.timestamp = uo.timestamp;
-        const newI = `update_${index}`;
-        uf[newI] = u;
-        index++;
-    }
-    const writer = beautify(uf, null, 2, 100);
-    await fs.writeFile(LOG_UPDATE, writer);
-    eventEmitter.emit('updateLogUpdated', writer);
-};
-const getFilePath = (f) => {
-    return `logs/${f}.json`;
-};
-const writeLogsV1 = async () => {
-    try {
-        let uf = await fs.readFile(getFilePath(LOG_FILE));
+    if (isDev()) {
+        let uf = await fs.readFile(LOG_UPDATE);
         uf = JSON.parse(uf);
         let index = Object.keys(uf).length;
         while (updateList.length > 0) {
@@ -121,16 +103,40 @@ const writeLogsV1 = async () => {
             const u = JSON.parse(uo.update);
             u.game = uo.game;
             u.timestamp = uo.timestamp;
-            u.logType = uo.logType;
             const newI = `update_${index}`;
             uf[newI] = u;
             index++;
         }
         const writer = beautify(uf, null, 2, 100);
-        await fs.writeFile(getFilePath(LOG_FILE), writer);
-        eventEmitter.emit('logsUpdated', writer);
-    } catch (err) {
+        await fs.writeFile(LOG_UPDATE, writer);
+        eventEmitter.emit('updateLogUpdated', writer);
+    }
+};
+const getFilePath = (f) => {
+    return `logs/${f}.json`;
+};
+const writeLogsV1 = async () => {
+    if (isDev()) {
+        try {
+            let uf = await fs.readFile(getFilePath(LOG_FILE));
+            uf = JSON.parse(uf);
+            let index = Object.keys(uf).length;
+            while (updateList.length > 0) {
+                const uo = updateList.shift();
+                const u = JSON.parse(uo.update);
+                u.game = uo.game;
+                u.timestamp = uo.timestamp;
+                u.logType = uo.logType;
+                const newI = `update_${index}`;
+                uf[newI] = u;
+                index++;
+            }
+            const writer = beautify(uf, null, 2, 100);
+            await fs.writeFile(getFilePath(LOG_FILE), writer);
+            eventEmitter.emit('logsUpdated', writer);
+        } catch (err) {
 
+        }
     }
 };
 
@@ -176,17 +182,21 @@ const getUpdateLog = async (cb) => {
     }
 };
 const addUpdate = async (ob) => {
-    ob.timestamp = getFormattedTimestamp();
-    updateList.push(ob);
-    clearTimeout(updateTime);
-    updateTime = setTimeout(updateUpdates, 500);
+    if (isDev()) {
+        ob.timestamp = getFormattedTimestamp();
+        updateList.push(ob);
+        clearTimeout(updateTime);
+        updateTime = setTimeout(updateUpdates, 500);
+    }
 };
 const addLog = async (id, ob) => {
-    ob.timestamp = getFormattedTimestamp();
-    ob.logType = id;
-    logList.push(ob);
-    clearTimeout(logTime);
-    logTime = setTimeout(writeLogs, 500);
+    if (isDev()) {
+        ob.timestamp = getFormattedTimestamp();
+        ob.logType = id;
+        logList.push(ob);
+        clearTimeout(logTime);
+        logTime = setTimeout(writeLogs, 500);
+    }
 };
 const init = () => {
     if (isDev()) {
