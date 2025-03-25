@@ -18,7 +18,7 @@ let logTime = null;
 const isDev = () => {
 //    return true;
     const id = Boolean(tools.procVal(process.env.isDev));
-    console.log(id);
+//    console.log(id);
     return id;
 };
 const emptyFolder = async (directoryPath) => {
