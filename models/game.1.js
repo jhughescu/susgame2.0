@@ -107,7 +107,7 @@ class Game {
 //        console.log(`setTeam method`);
         if (this.persistentData) {
             let pt = this.persistentData.teams;
-//            console.log(this.teams);
+            console.log('teams', this.teams);
             this.teams.forEach((t, i) => {
 //                console.log(t)
                 if (t.includes(player.id)) {
