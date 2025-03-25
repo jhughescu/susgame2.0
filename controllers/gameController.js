@@ -1018,6 +1018,7 @@ const registerPlayer = (ob, cb) => {
                     let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
                     let pplayer = new Player(ID, plIndex, ob.socketID);
                     game.playersFull[ID] = pplayer;
+                    console.log('gameController calling setTeam')
                     game.setTeam(pplayer);
                 }
             }
