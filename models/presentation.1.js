@@ -15,6 +15,7 @@ class Presentation {
                 if (sli.type === 'video') {
                     sli.src = `${d.videoEnv}${d.videoLinks[sli.srcRef]}${d.videoSettings}`
                     sli.srcRef = d.videoLinks[sli.srcRef];
+                    sli.exclude = sli.exclude || false;
                 }
             }
             sli.behaviour = sli.hasOwnProperty('behaviour') ? sli.behaviour : 'default';

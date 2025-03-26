@@ -671,6 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
+
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -678,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (localStorage.getItem(storeID)) {
             stored = localStorage.getItem(storeID).split(',');
         }
+        console.log(`setupVoteControl, stored:`, stored);
         const plIndex = procVal(myPlayer.index) - 1;
         const plID = justNumber(myPlayer.id);
         const hasS = await thisRoundScored(myPlayer);
@@ -696,6 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.emit('getAggregates', aOb, (a, sp, report) => {
             const myScores = filterScorePackets(filterScorePackets(sp, 'client', plID), 'round', game.round);
             const playerHasScored = Boolean(myScores.length);
+            console.log('got aggregates', myScores)
             if (playerHasScored) {
 //                console.log(myScores);
 //                console.log(newMS);
@@ -811,14 +814,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 submit.off('click').on('click', () => {
                     const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
+                    let someZero = false;
+                    let goodToGo = true;
                     val.each((i, v) => {
-                        sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
-
+                        if (parseInt($(v).html()) === 0) {
+                            someZero = true;
+                        }
                     });
-//                    console.log(`vote submitted`);
-                    socket.emit('submitScoreForAverage', sOb);
-                    localStorage.removeItem(storeID);
-                    setupVoteControl(myPlayer);
+                    if (someZero) {
+                        goodToGo = window.confirm('If you continue this submission ALL the values on the form will be submitted. Are you sure you want to do this?');
+                    }
+                    if (goodToGo) {
+                        val.each((i, v) => {
+                            sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+                        });
+    //                    console.log(`vote submitted`);
+                        socket.emit('submitScoreForAverage', sOb);
+                        localStorage.removeItem(storeID);
+                        setupVoteControl(myPlayer);
+                    }
+
+
+                    return;
+
+
+                    if (someZero) {
+                        console.log('one or more zeroes');
+                    } else {
+                        val.each((i, v) => {
+                            sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+                        });
+    //                    console.log(`vote submitted`);
+                        socket.emit('submitScoreForAverage', sOb);
+                        localStorage.removeItem(storeID);
+                        setupVoteControl(myPlayer);
+                    }
                 });
             }
         });
@@ -903,18 +933,26 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     submit.off('click').on('click', () => {
                         const src = myPlayer.teamObj.id;
-//                        console.log('click')
+                        console.log('click')
+                        let anyZero = false;
+                        allV.each((i, e) => {
+                            const v = parseInt($(e).html());
+                            if (v === 0) {
+                                anyZero = true;
+                            }
+                        });
+                        if (anyZero) {
+                            alert('Some zeroes')
+                        }
+                        debugger;
                         allV.each((i, e) => {
                             const dest = justNumber($(e).attr('id'));
                             const v = parseInt($(e).html());
-//                            console.log(v, $(e).html())
                             const scOb = {src: src, dest: dest, val: v, round: justNumber(game.round)};
                             const sob = {scoreCode: scOb, game: game.uniqueID, client: myPlayer.id};
-//                            if (v > 0) {
-                                socket.emit('submitScore', sob, (scores) => {
-                                    setupCollaborationControl(myPlayer);
-                                });
-//                            }
+                            socket.emit('submitScore', sob, (scores) => {
+                                setupCollaborationControl(myPlayer);
+                            });
                         });
                     });
                 }

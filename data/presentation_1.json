@@ -3,7 +3,7 @@
         {"id": "1", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "action": "showGameQR"},
         {"id": "2", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape", "behaviour": "loop"},
         {"id": "3", "type": "video", "srcRef": "v2", "title": "Welcome"},
-        {"id": "4", "type": "slide", "title": "Assign Teams", "slide": "slide_210_checkdevice", "action": "rAssignTeams", "note": "Not available after teams assigned"},
+        {"id": "4", "type": "slide", "title": "Assign Teams", "slide": "slide_210_checkdevice", "action": "rAssignTeams", "note": "Not available after teams assigned", "exclude": true},
         {"id": "5", "type": "video", "srcRef": "v3", "title": "Resources"},
         {"id": "6", "type": "video", "srcRef": "v4", "title": "PVPlayers"},
         {"id": "7", "type": "video", "srcRef": "v5", "title": "Instruction"},

@@ -624,6 +624,18 @@ const getValues = (idOb, cb) => {
         console.log(`no game called ${idOb.gameID}`);
     }
 };
+const onTeamsAssigned = (t, g) => {
+    // requites args t (game.teams) and g (game)
+    const ok = t !== undefined && g !== undefined;
+    if (ok) {
+        const uo = {teams: t};
+        sessionController.updateSession(g.uniqueID, uo);
+        g.setTeams();
+        eventEmitter.emit('teamsAssigned', g);
+    } else {
+        console.log(`ERROR: attempt to call onTeamsAssigned without sufficient args`)
+    }
+};
 const assignTeams = (ob, cb) => {
     const game = getGameWithAddress(ob.address);
     let t = null;
@@ -642,10 +654,14 @@ const assignTeams = (ob, cb) => {
             // Don't run if previewing
             game.teams = t;
             if (!ob.preview) {
+                onTeamsAssigned(t, game);
+                // below moved to onTeamsAssigned
+                /*
                 const uo = {teams: t};
                 sessionController.updateSession(game.uniqueID, uo);
                 game.setTeams();
                 eventEmitter.emit('teamsAssigned', game);
+                */
             }
             if (cb) {
                 cb(game);
@@ -664,31 +680,25 @@ const assignToNextTeam = (game, p, ID) => {
     // Read teams, create if it doesn't exist
     // 5 main teams, sort on size, add player to first (smallest) team
     // Once teams has length 5 and each el is teamSize create 2 new teams and assign all subsequent to these alternately
-    console.log(`>>>>>>>>>>>>>>>>>> assignToNextTeam`, p, ID);
-    console.log(game.players);
-        console.log(game.teams);
+//    console.log(`>>>>>>>>>>>>>>>>>> assignToNextTeam`, p, ID);
+//    console.log(game.players);
+//    console.log(game.teams);
     const PD = game.persistentData;
     const ts = game.mainTeamSize === undefined ? 5 : game.mainTeamSize;
     const playersFullNotReady = game.players.length > 0 && Object.values(game.playersFull).length === 0;
-//    console.log(`playersFullNotReady? ${playersFullNotReady}`);
     if (!playersFullNotReady || game.teams.length === 0) {
-        console.log(`playersFull is ready to go OR teams undefined, we can set up teams`);
-//        if (game.teams.flat().includes(ID)) {
-//            console.log(`player ${ID} already exists in game.teams`);
-//        }
-//        console.log(game.playersFull)
-//        console.log(ID);
+//        console.log(`playersFull is ready to go OR teams undefined, we can set up teams`);
         if (game.teams.flat().includes(ID)) {
-            console.log(`player ${ID} already registered for a team`);
+//            console.log(`player ${ID} already registered for a team`);
         } else {
             if (game.teams.length === 0) {
-                console.log(`teams not defined, create from scratch`);
+//                console.log(`teams not defined, create from scratch`);
                 game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
                 game.teams[0].push(ID);
             } else {
-                console.log(`teams length = ${game.teams.length}`);
+//                console.log(`teams length = ${game.teams.length}`);
                 if (game.teams.filter(t => t.length < ts).length === 0) {
-                    console.log('all main teams maxxed');
+//                    console.log('all main teams maxxed');
                     // all main teams at max, add & begin building the 2 secondary teams
                     const gt = game.teams;
                     if (gt.length < Object.values(PD.teams).length) {
@@ -701,16 +711,27 @@ const assignToNextTeam = (game, p, ID) => {
                     } else {
                         st2.push(ID);
                     }
+
                 } else {
-                    console.log('main teams not yet filled')
+//                    console.log('main teams not yet filled')
                     game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
                 }
             }
         }
 
+        const fullTeamStack = game.teams.length === PD.mainTeams.length + PD.secondaryTeams.length;
+        const allTeamsOccupied = game.teams.filter(t => t.length === 0).length === 0;
+        // NOTE not getting called because this block only runs when setting up the PV teams.
+        // INSTEAD add a new conditional which checks for teams.length against full team size (main + secondary) and only then looks for empty teams
+        console.log(`assignToNextTeam - number of teams: ${game.teams.length}, number of EMPTY teams: ${game.teams.filter(t => t.length === 0).length}, fullTeamStack? ${fullTeamStack}, allTeamsOccupied? ${allTeamsOccupied}`);
+        if (fullTeamStack && allTeamsOccupied) {
+            onTeamsAssigned(game.teams, game);
+        }
+
+
         const uo = {teams: game.teams};
         sessionController.updateSession(game.uniqueID, uo);
-        console.log(game.teams);
+//        console.log(game.teams);
     } else {
         console.log(`can't set teams up yet, players exist but playersFull does not`);
     }
@@ -1002,7 +1023,6 @@ const registerPlayer = (ob, cb) => {
                 console.log('>>>>>>>>>>>>>>>>>>>>>>>>> oh no, looks like players are re-entering before playersFull has been generated');
             }
             const playersNotExpanded = game.players.length > 0 && Object.values(game.playersFull).length === 0;
-
             if (game.playersFull.hasOwnProperty(ID)) {
                 // player already registered with game
                 // update the existing player object with the new socketID
@@ -1011,14 +1031,13 @@ const registerPlayer = (ob, cb) => {
 
             } else {
                 // player not yet registered with game
-                console.log('this THINKS it is a new player')
-
+                console.log('this THINKS it is a new player');
                 if (autoTeam) {
                     assignToNextTeam(game, player, ID);
                     let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
                     let pplayer = new Player(ID, plIndex, ob.socketID);
                     game.playersFull[ID] = pplayer;
-                    console.log('gameController calling setTeam')
+                    console.log('gameController calling setTeam');
                     game.setTeam(pplayer);
                 }
             }

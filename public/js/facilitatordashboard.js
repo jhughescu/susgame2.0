@@ -558,6 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     };
     const assignTeams = (force) => {
+        console.log('assignTeams')
         const assOb = {address: game.address, type: 'order', preview: false};
         let rtn = false;
         if (force) {
@@ -571,6 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     addToLogFeed('teams successfully assigned', true);
                     onGameUpdate(rgame);
                     highlightTab('teams');
+//                    renderSlidelist(rgame);
                     rtn = true;
                 }
             });
@@ -579,6 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return rtn;
     };
+    window.assignTeams = assignTeams;
     const resetTeams = () => {
 //        console.log(`resetTeams: ${game.scores.length}`);
         if (game.scores.length === 0) {
@@ -1945,6 +1948,26 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     };
+    const renderSlidelist = (game) => {
+//        console.log(`renderSlidelist (new)`);
+        let sl = game.presentation.slideData.slideList.slice(0);
+        sl.forEach((s, i) => {
+            s._titleSimple = s.title;
+            s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
+            sl[i] = window.reorderObject(s, '_titleSimple');
+        });
+//        console.log(`renderFacilitate`, sl);
+//        console.log(`slidelist length: ${sl.length}`);
+        // 20250325 don't render any slides marked as 'exclude'
+        const sla = sl.filter(s => !s.exclude);
+//        console.log(`slidelist length: ${sla.length}`);
+//        console.log(sla);
+        renderTemplate(`slidelist`, `facilitator.slidelist`, sla, () => {
+            $('#tabFacilitate').css({height: '700px'});
+            slideContolsInit(game);
+            window.updateSlideList();
+        });
+    };
     const renderFacilitate = () => {
         // Screen which can be used to run the whole game
 //        console.log(`renderFacilitate`);
@@ -1958,16 +1981,22 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(`game NOT pending: ${game.state}`);
                 game.urlPresentation = `${game.base}/presentation#${game.address.replace('/', '')}`
                 renderTemplate(`contentFacilitate`, `facilitator.facilitate`, game, () => {
+
+                    renderSlidelist(game);
+                    /*
                     const sl = game.presentation.slideData.slideList.slice(0);
                     sl.forEach((s, i) => {
                         s._titleSimple = s.title;
                         s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
                         sl[i] = window.reorderObject(s, '_titleSimple');
                     });
+                    console.log(`renderFacilitate`, sl)
                     renderTemplate(`slidelist`, `facilitator.slidelist`, sl, () => {
                         $('#tabFacilitate').css({height: '700px'});
                         slideContolsInit(game);
                     });
+                    */
+
                     renderPlayers('facilitatePlayersContent');
                     const launchBut = $('#facilitateSlideshow').find('#makePres');
                     launchBut.off('click').on('click', () => {
@@ -2365,6 +2394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         game.teams = rgame.teams;
         game.playersFull = rgame.playersFull;
         renderPlayers('facilitatePlayersContent');
+        renderSlidelist(rgame)
     });
     socket.on('scoreSubmitted', (ob) => {
         // Nothing here, look for gameUpdate instead

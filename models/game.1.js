@@ -85,6 +85,8 @@ class Game {
                         if (this.playersFull[p]) {
                             this.playersFull[p].teamObj = t;
                             console.log(`team assigned to player ${p}`);
+                            const pf = this.playersFull[p];
+                            console.log(`${pf.id} assigned to ${pf.teamObj.title} team as ${pf.isLead ? 'lead' : 'ordinary member'}`);
                         } else {
                             console.log(`cannot assign team to ${p}`);
                         }
@@ -107,13 +109,14 @@ class Game {
 //        console.log(`setTeam method`);
         if (this.persistentData) {
             let pt = this.persistentData.teams;
-            console.log('teams', this.teams);
+//            console.log('teams', this.teams);
             this.teams.forEach((t, i) => {
 //                console.log(t)
                 if (t.includes(player.id)) {
                     player.teamObj = pt[`t${i}`];
                     // Only players of team type 1 have leads
                     player.isLead = t[0] === player.id && player.teamObj.type === 1;
+                    console.log(`${player.id} assigned to ${player.teamObj.title} team as ${player.isLead ? 'lead' : 'ordinary member'}`);
                 }
             })
         } else {

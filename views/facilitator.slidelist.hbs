@@ -6,11 +6,9 @@
     {{/each}}
 </tbody></table>
 -->
-
-
 <div class='vertstack'>
     {{#each this}}
-    <div class='slide_info' id='slide_info_{{this.ref}}'>
+    <div class='slide_info exc_{{exclude}}' id='slide_info_{{this.ref}}'>
         <div class='progress'></div>
         <div class='slidenote' id='slidenote_{{ref}}'>{{note}}</div>
         <div class='controls'>

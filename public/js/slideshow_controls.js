@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return {isEnabled: false}
     };
     const updateSlidelist = () => {
-        const sl = slides.slice();
+        // knock out any excluded slides
+        const sl = slides.slice().filter(s => !s.exclude);
         $('.slide_link').each((i, s) => {
             const slOb = sl[i];
             slOb.isEnabled = true;
@@ -269,4 +270,5 @@ document.addEventListener('DOMContentLoaded', function() {
     window.slideContolsInit = init;
     window.pEvent = pEvent;
     window.findRoundTrigger = findRoundTrigger;
+    window.updateSlideList = updateSlidelist;
 });
