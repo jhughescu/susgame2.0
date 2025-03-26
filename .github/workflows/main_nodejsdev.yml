@@ -27,7 +27,7 @@ jobs:
           npm run test --if-present
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -r release.zip ./*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -44,15 +44,22 @@ jobs:
 
     steps:
       - name: Checkout repository (IMPORTANT!)
-        uses: actions/checkout@v4  # <-- Add this step to pull the latest code
+        uses: actions/checkout@v4  # Ensures the latest code is pulled
 
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: .  # Ensure it downloads to the correct directory
+
+      - name: Debug - List downloaded files
+        run: ls -l
+
+      - name: Debug - Check if ZIP is valid
+        run: unzip -t release.zip
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: unzip release.zip -d extracted_files
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -60,5 +67,5 @@ jobs:
         with:
           app-name: 'nodejsdev'
           slot-name: 'Production'
-          package: .
+          package: extracted_files
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D54DCD50AFE744A18F308C9AB6E189AE }}
