@@ -835,20 +835,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
 
-                    return;
-
-
-                    if (someZero) {
-                        console.log('one or more zeroes');
-                    } else {
-                        val.each((i, v) => {
-                            sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
-                        });
-    //                    console.log(`vote submitted`);
-                        socket.emit('submitScoreForAverage', sOb);
-                        localStorage.removeItem(storeID);
-                        setupVoteControl(myPlayer);
-                    }
                 });
             }
         });
