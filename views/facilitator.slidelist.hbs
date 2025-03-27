@@ -8,7 +8,7 @@
 -->
 <div class='vertstack'>
     {{#each this}}
-    <div class='slide_info exc_{{exclude}}' id='slide_info_{{this.ref}}'>
+    <div class='slide_info exc_{{exclude}}{{#if linkFail}} linkFail{{/if}}' id='slide_info_{{this.ref}}'{{#if linkFail}} title='video reference update required'{{/if}}>
         <div class='progress'></div>
         <div class='slidenote' id='slidenote_{{ref}}'>{{note}}</div>
         <div class='controls'>

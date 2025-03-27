@@ -34,6 +34,10 @@
     position: relative;
 /*    padding: 20px;*/
 }
+.slide_info.linkFail {
+    color: #d80101;
+    text-decoration: line-through;
+}
 .slidenote {
     display: none;
     position: absolute;

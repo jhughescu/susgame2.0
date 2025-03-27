@@ -489,6 +489,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     };
+    const showImage = (slOb) => {
+        removeTemplate(targ, () => {
+            renderTemplate(targ, 'slides/imageslide', slOb, () => {
+
+            });
+        });
+    };
     const videoPosition = (o) => {
         // called from videoplayer (html), sending a comparison object (total/now)
 //        console.log(currentSlideObject);
@@ -501,10 +508,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Specific actions
     const showGameQR = (rOb) => {
-        console.log(`showGameQR`, rOb);
+//        console.log(`showGameQR`, rOb);
         rOb = Object.assign(rOb, qrRenderMain);
         renderTemplate('qr', `qr/qrcode-${game.uniqueID}`, rOb, () => {
-            console.log('rendered');
+//            console.log('rendered');
         })
     };
 
@@ -802,6 +809,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (slOb.type === 'video') {
             showVideo(slOb)
+        } else if (slOb.type === 'image') {
+            showImage(slOb);
         } else if (slOb.type === 'slide') {
             const slideID = `slides/${slOb.slide}`;
             renderTemplate(targ, slideID, game, () => {
