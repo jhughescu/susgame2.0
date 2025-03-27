@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
         4: 'client'
     };
 
+    // messages
+    const HASZEROES = `If you continue this submission ALL the values on the form will be submitted. Are you sure you want to do this?`;
+    // end messages
+
     // Define the setupObserver function to accept an element ID as an argument
     const setupObserver = (elementId, cb) => {
         // Select the target element based on the provided ID
@@ -822,13 +826,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     });
                     if (someZero) {
-                        goodToGo = window.confirm('If you continue this submission ALL the values on the form will be submitted. Are you sure you want to do this?');
+                        goodToGo = window.confirm(HASZEROES);
                     }
                     if (goodToGo) {
                         val.each((i, v) => {
                             sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
                         });
-    //                    console.log(`vote submitted`);
                         socket.emit('submitScoreForAverage', sOb);
                         localStorage.removeItem(storeID);
                         setupVoteControl(myPlayer);
@@ -919,17 +922,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     submit.off('click').on('click', () => {
                         const src = myPlayer.teamObj.id;
-                        console.log('click')
-                        let anyZero = false;
-                        allV.each((i, e) => {
-                            const v = parseInt($(e).html());
-                            if (v === 0) {
-                                anyZero = true;
+
+                        let someZero = false;
+                        let goodToGo = true;
+                        allV.each((i, v) => {
+                            if (parseInt($(v).html()) === 0) {
+                                someZero = true;
                             }
                         });
-                        if (anyZero) {
-                            alert('Some zeroes')
+                        if (someZero) {
+                            goodToGo = window.confirm(HASZEROES);
                         }
+                        if (goodToGo) {
+
+                        }
+
                         debugger;
                         allV.each((i, e) => {
                             const dest = justNumber($(e).attr('id'));

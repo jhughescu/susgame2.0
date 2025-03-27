@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Delay required to ensure game is started prior to init; find a better way to do this.
         setTimeout(() => {
 //            estPanopto();
-
+            toggleOverlay();
             estSocket();
 
         }, 500);
@@ -480,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
         removeTemplate(targ, () => {
 //            console.log(`render with`, slOb)
             renderTemplate(targ, 'slides/video_player', slOb, () => {
+                slideAction(slOb);
                 goVideo(slOb.srcRef);
                 videoPlayer = $('#videoPlayer');
                 setTimeout(() => {
@@ -758,7 +759,8 @@ document.addEventListener('DOMContentLoaded', function () {
 //                    console.log('mice');
                     p.html('');
                     renderTemplate('devoverlay', 'presentation.devinfo', slOb, () => {
-                        p.fadeIn();
+//                        p.fadeIn();
+                        p.hide();
                     });
                 }
             }
@@ -842,6 +844,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const onGameRestored = () => {
         window.location.reload();
     };
+
+    const toggleOverlay = () => {
+        let sequence = ["shift", "d", "b"];
+        let index = 0;
+
+        $(document).on("keydown", (e) => {
+            if (e.key.toLowerCase() === sequence[index]) {
+                index++;
+                if (index === sequence.length) {
+                    $("#devoverlay").toggle();
+                    index = 0; // Reset sequence after triggering
+                }
+            } else {
+                index = 0; // Reset if wrong key is pressed
+            }
+        });
+    };
+
+
+
     init();
 
     renderTemplate = window.renderTemplate;

@@ -80,6 +80,15 @@ td {
     width: 400px;
     height: 400px;
 }
+.videoqr#qr {
+/*    width: 100%;*/
+    width: 300px;
+    left: calc(50vw - 150px);
+    top: 20px;
+    position: absolute;
+/*    background-color: blue;*/
+/*    margin: 0px auto;*/
+}
 
 
 /* Intro slide */

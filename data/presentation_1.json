@@ -1,7 +1,7 @@
 {
     "slideList": [
         {"id": "1", "type": "slide", "slide": "slide_010_intro", "title": "Introduction", "action": "showGameQR"},
-        {"id": "2", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape", "behaviour": "loop"},
+        {"id": "2", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape", "behaviour": "loop", "action": "showGameQR"},
         {"id": "3", "type": "video", "srcRef": "v2", "title": "Welcome"},
         {"id": "5", "type": "video", "srcRef": "v3", "title": "Resources"},
         {"id": "6", "type": "video", "srcRef": "v4", "title": "PVPlayers"},
@@ -22,7 +22,7 @@
         {"id": "21", "title": "Exit Screen", "type": "slide"}
     ],
     "videoLinks": {
-        "v1": "4d35e81e-85e8-4fd3-8394-b0a100e3fbf8",
+        "v1": "83943b38-d332-4e2c-a125-b2820023dbdb",
         "v2": "929cbf78-615a-418b-bbf3-b0ff00cc187d",
         "v3": "a9834d0f-53bc-4a88-986f-b0ff00cc189a",
         "v4": "bc305fde-6f86-408a-9bab-b0ff00cc184e",
