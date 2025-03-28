@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     };
     const assignTeams = (force) => {
-        console.log('assignTeams')
+//        console.log('assignTeams')
         const assOb = {address: game.address, type: 'order', preview: false};
         let rtn = false;
         if (force) {

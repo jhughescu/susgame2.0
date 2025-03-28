@@ -572,6 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const setupMainControl = () => {
+        console.log(`setupMainControl`);
         const l = $('.link_main');
         const ls = $(`#link_resources`);
         const lg = $(`#link_global`);

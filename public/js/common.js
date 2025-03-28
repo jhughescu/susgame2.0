@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // messages
-    const HASZEROES = `If you continue this submission ALL the values on the form will be submitted. Are you sure you want to do this?`;
+    const HASZEROES = `You are about to submit your final vote for all teams, this action cannot be undone. Are you sure?`;
     // end messages
 
     // Define the setupObserver function to accept an element ID as an argument
