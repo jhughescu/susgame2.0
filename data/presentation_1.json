@@ -26,7 +26,7 @@
         {"id": "23", "type": "video", "srcRef": "v13", "title": "Post-Extinction Park"},
         {"id": "23", "type": "video", "srcRef": "v14", "title": "Global Equity"},
         {"id": "23", "type": "video", "srcRef": "v15", "title": "Craft Protein Fest"},
-        {"id": "23", "type": "video", "srcRef": "v16", "title": "Tranquilium Valley", "linkFail": true},
+        {"id": "23", "type": "video", "srcRef": "v16", "title": "Tranquilium Valley"},
         {"id": "21", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:4", "trigger": "scoreRound:4"},
         {"id": "23", "type": "video", "srcRef": "v17", "title": "Post-final Futures"},
         {"id": "22", "title": "Exit Screen", "type": "slide"}
