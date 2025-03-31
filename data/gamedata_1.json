@@ -165,5 +165,11 @@
     "actions": ["action 1", "action 2", "action 3", "action 4", "action 5"],
     "constants": {
         "presentation": "suspresstore"
-    }
+    },
+    "headlines": [
+        {"t": 12, "img": "Article1-img-100", "h": "Governments threaten to deploy army as occupy retail movement escalates"},
+        {"t": 5, "img": "Article2-img-100", "h": "Eco-protection laws cause mass evictions"},
+        {"t": 4, "img": "Article3-img-100", "h": "Poisoned by plastic and unable to afford health care"},
+        {"t": 2, "img": "Article4-img-100", "h": "Highest recorded referendums in a single year"}
+    ]
 }

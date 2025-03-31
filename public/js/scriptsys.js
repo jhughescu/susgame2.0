@@ -225,12 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const getSession = (sessionID) => {
         // Prompt the user to enter a password
-        let password = prompt('Session password will be omitted from return unless admin password is provided here:', 'canary');
+        let password = prompt('Session password will be omitted from return unless admin password is provided here:');
         if (!password) {
             password = '';
         }
         // Perform a fetch call to the server with the session ID as a parameter
-//        console.log('we go anyway')
         fetch('/admin/getSession?sessionID=' + sessionID, {
                 method: 'POST',
                 headers: {
@@ -248,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Process the data received from the server
                 $('#sessionDetail').fadeOut(300, function () {
                     const rOb = data;
-//                    console.log(rOb);
                     if (rOb.players.length > 10) {
                         rOb.players = `${rOb.players.join(',').substr(0, 20)}..`;
                     }
@@ -268,18 +266,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#sessionDetail').fadeIn(300, () => {
                         let vp = $('#val_password').add($(`#val_uniqueID`)).add($(`#val_fdbLink`));
                         vp.addClass('link');
-//                        $(`#val_fdbLink`).attr('data-content', 'a canoe in a shed');
-//                        vp.attr('data-content', 'a canoe in a cow shed');
-//                        console.log($(`#val_fdbLink`));
                         vp.off('click').on('click', function() {
                             const msg = $(this).attr('id');
-//                            const msg = $(this).attr('data-content');
                             copyToClipboard(msg);
-//                            console.log(msg);
                         });
 
                     });
-//                    readyLaunch();
                 });
             })
             .catch(error => {
@@ -337,6 +329,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     };
+    const checkPassword = (inp) => {
+        console.log('ckp', inp);
+    };
+    const showModal = (ob) => {
+        $('#modal').show({
+
+            done: () => {
+                const b = $('#modal').find('button');
+                const i = $('#modal').find('input');
+                if (ob.input) {
+                    b.show();
+                    i.show();
+                    b.off('click').on('click', () => {
+                        ob.test(i.val());
+                    });
+                }
+            }
+        });
+    };
+    const showPasswordModal = () => {
+        const ob = {
+            input: true,
+            message: "provide the admin password if you want to reveal session password",
+            test: checkPassword
+        };
+        showModal(ob);
+    };
+    window.showPasswordModal = showPasswordModal;
+//    showPasswordModal();
     socket.on('databaseChange', (ch) => {
         console.log('times they are a changing');
         console.log(ch);

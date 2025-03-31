@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const updateGame = (ob) => {
+        console.log(`updateGame:`, ob)
         if ($.isEmptyObject(game)) {
             game = ob;
             window.gameShare(game);
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem(lID, res);
 
                 if (ob.game) {
-                    console.log('yep, game');
+//                    console.log('yep, game');
                     ob.game = JSON.parse(ob.game);
                     if (ob.game.round) {
                         ob.game.round = justNumber(ob.game.round);
@@ -331,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } else {
-            console.log('player does not exist');
+//            console.log('player does not exist');
         }
 
         player = newPlayer;
@@ -612,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const setupMainControl = () => {
-        console.log(`setupMainControl`);
+//        console.log(`setupMainControl`);
         const l = $('.link_main');
         const ls = $(`#link_resources`);
         const lg = $(`#link_global`);
@@ -838,6 +839,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
 //            console.log('RENDER', renderState);
+            rOb.headlines = rOb.game.persistentData.headlines.slice(0);
+            rOb.showHeadlines = justNumber(game.slide) > 4;
+
+//            console.log(`do I know the round? ${game.round} (${typeof(game.round)})`);
+            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
@@ -857,15 +863,16 @@ document.addEventListener('DOMContentLoaded', function() {
         render();
     };
     const onGameUpdate = (rOb) => {
-//        console.log(`onGameUpdate`, rOb);
+        console.log(`onGameUpdate`, rOb);
         const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
         let go = Boolean(player);
+        console.log(`go: ${go}`);
         if (rOb.hasOwnProperty('_updateSource')) {
             if (rOb._updateSource.hasOwnProperty('event')) {
                 if (player) {
                     const us = rOb._updateSource;
                     const ev = us.event.split(' ')[1].toLowerCase();
-//                    console.log(`ev: ${ev}`);
+                    console.log(`ev: ${ev}`);
 //                    checkGameChanges(rgame);
                     switch (ev) {
                         case 'playerconnectevent':
@@ -917,6 +924,8 @@ document.addEventListener('DOMContentLoaded', function() {
             activateYourmove();
         } else {
 //            console.log('game update - do NOT render this client');
+            // just update the game, don't render.
+            updateGame(rgame);
         }
     };
     const forceUpdate = () => {

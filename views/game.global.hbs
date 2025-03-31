@@ -9,8 +9,20 @@
 	</div>
 </div>
 		<!-- Main Content -->
-{{#moreThan game.slide -10}}
-<div class='devnote'>NOTE: News headlines visble by default in development. In deployment headlines will only be visible after a certain point in the presentation</div>
+{{#if showHeadlines}}
+<!-- <div class='devnote'>NOTE: News headlines visble by default in development. In deployment headlines will only be visible after a certain point in the presentation</div> -->
+{{#each headlines}}
+<div class="article-container">
+	<div class="article-img">
+		<img alt="" src="assets/{{img}}.jpg"/>
+	</div>
+	<div class="article-headline">
+		<h3>{{h}}</h3>
+		<p>{{t}} hours ago</p>
+	</div>
+</div>
+{{/each}}
+<!--
 <div class="article-container">
 	<div class="article-img">
 		<img alt="" src="assets/Article1-img-100.jpg"/>
@@ -47,6 +59,11 @@
 		<p>2 hours ago</p>
 	</div>
 </div>
+-->
 {{else}}
-No headlines to show at this time
-{{/moreThan}}
+<div class="article-container">
+    <div class="article-headline">
+        <p>No headlines to show at this time</p>
+    </div>
+</div>
+{{/if}}

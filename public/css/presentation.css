@@ -252,4 +252,5 @@ img.fullscreen {
     transform: translate(-50%, -50%);
     width: auto; /* Maintain aspect ratio */
     max-width: 100vw; /* Prevent overflow on wide screens */
+    background-color: blue;
 }
