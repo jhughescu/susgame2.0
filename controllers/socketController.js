@@ -162,6 +162,11 @@ function initSocket(server) {
                 console.log('snc')
                 gameController.changeName(ob, cb);
             });
+            socket.on('testPassword', async (pw, cb) => {
+                if (cb) {
+                    cb(pw === process.env.ADMIN_PASSWORD);
+                }
+            });
         }
         // End ystem admin client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

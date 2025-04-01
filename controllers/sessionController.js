@@ -175,12 +175,12 @@ async function getSession(req, res) {
         //        console.log('Session ID:', sessionId);
         let noPass = true;
         if (req.body.password) {
-            //            console.log('password provided; if it matches, return the full session')
+//            console.log('password provided; if it matches, return the full session', req.body.password, req.body.password === process.env.ADMIN_PASSWORD)
             //            console.log(req.body.password);
-            noPass = !req.body.password === process.env.ADMIN_PASSWORD;
+            noPass = req.body.password !== process.env.ADMIN_PASSWORD;
         }
         const boSelector = `-_id -__v${noPass ? ' -password' : ''}`;
-        //        console.log(boSelector);
+//        console.log(noPass, boSelector);
         const session = await Session.findOne({
             uniqueID: sessionId
         }).select(boSelector);

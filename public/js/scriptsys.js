@@ -223,13 +223,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Deselect the text
         window.getSelection().removeAllRanges();
     };
-    const getSession = (sessionID) => {
+    const getSession = async (sessionID) => {
+        /*
         // Prompt the user to enter a password
         let password = prompt('Session password will be omitted from return unless admin password is provided here:');
         if (!password) {
             password = '';
         }
+        */
+        const password = $('#verifyPassword').val();
         // Perform a fetch call to the server with the session ID as a parameter
+
+//        console.log(sessionID, password);
         fetch('/admin/getSession?sessionID=' + sessionID, {
                 method: 'POST',
                 headers: {
@@ -329,35 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     };
-    const checkPassword = (inp) => {
-        console.log('ckp', inp);
-    };
-    const showModal = (ob) => {
-        $('#modal').show({
-
-            done: () => {
-                const b = $('#modal').find('button');
-                const i = $('#modal').find('input');
-                if (ob.input) {
-                    b.show();
-                    i.show();
-                    b.off('click').on('click', () => {
-                        ob.test(i.val());
-                    });
-                }
-            }
-        });
-    };
-    const showPasswordModal = () => {
-        const ob = {
-            input: true,
-            message: "provide the admin password if you want to reveal session password",
-            test: checkPassword
-        };
-        showModal(ob);
-    };
-    window.showPasswordModal = showPasswordModal;
-//    showPasswordModal();
     socket.on('databaseChange', (ch) => {
         console.log('times they are a changing');
         console.log(ch);
