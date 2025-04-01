@@ -104,7 +104,7 @@ position: relative;
 #tabGame #qrcodegame {
     top: 20px;
 }
-#tabGame #qrcodepres {
+#tabGame #qrcodegamedev {
     top: 300px;
 }
 #tabGame .qrcode {

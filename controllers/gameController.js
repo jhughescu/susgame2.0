@@ -36,7 +36,7 @@ async function startGame (o, cb) {
 //    console.log(`gameController startGame, session:`);
 //    console.log(session);
     const game = `game-${session.uniqueID}`;
-    log(`startGame: ${game}`);
+//    log(`startGame: ${game}`);
     let rg = null;
     if (!games.hasOwnProperty(game)) {
 //        console.log('no game exists, create it');
@@ -81,6 +81,8 @@ async function startGame (o, cb) {
     rg = games[game];
     Object.assign(rg, session);
     routeController.createRoute(`${session.address}`);
+////    console.log(`gameController sets the QR`);
+//    console.log(session);
     gfxController.generateSessionQR(session);
     try {
         await rg.loadPersistentData(session.type);

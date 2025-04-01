@@ -1,4 +1,5 @@
 const express = require('express');
+const ngrok = require('ngrok');
 const fs = require('fs');
 const handlebars = require('handlebars');
 const exphbs = require('express-handlebars');
@@ -32,6 +33,23 @@ const getTimeStamp = () => {
     const ts = `timestamp: ${d.getFullYear()}${padNum(d.getMonth())}${padNum(d.getDay())} ${padNum(d.getHours())}:${padNum(d.getMinutes())}:${padNum(d.getSeconds())}`;
     return ts;
 };
+const initNgrok = async () => {
+    try {
+        const url = await ngrok.connect(PORT); // Start ngrok and get the public URL
+//        console.log(`ngrok tunnel established: ${url}`);
+
+        // Store the ngrok URL in a variable or database if needed
+        global.ngrokUrl = url;
+    } catch (error) {
+        console.error('Error starting ngrok:', error);
+    }
+};
+process.on('SIGINT', async () => {
+    console.log('Shutting down...');
+    await ngrok.disconnect(); // Stop ngrok tunnel
+    process.exit();
+});
+
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/models', express.static(path.join(__dirname, 'models')));
@@ -50,12 +68,8 @@ databaseController.dbConnect();
 initSocket(server);
 if (Boolean(process.env.isDev)) {
     server.listen(PORT, HOST, () => {
-//        console.log(chalk.green(`local wifi connection available`), chalk.cyan(`use [cmd ipconfig IPv4 Address]:${PORT}`));
-//        const ip = tools.getIPv4Address();
-//        let isDev = Boolean(process.env.isDev);
-//        console.log(chalk.yellowBright(ip), Boolean(ip), tools.procVal(process.env.isDev), isDev);
         console.log(`Server running at http://${HOST}:${PORT} ${getTimeStamp()}`);
-//        console.log('test');
+        initNgrok();
     });
 } else {
     server.listen(PORT, () => {

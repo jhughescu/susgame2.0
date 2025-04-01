@@ -194,9 +194,11 @@ async function getSession(req, res) {
             const ip = tools.getIPv4Address();
             if (Boolean(ip)) {
                 session.localIP = ip;
+                if (global.ngrokUrl) {
+                    session.localDevAddress = global.ngrokUrl;
+                }
             }
         }
-//        console.log(session)
 //         Send the session back to the client as a response
         res.json(session);
     } catch (error) {

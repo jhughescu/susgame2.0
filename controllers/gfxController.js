@@ -20,6 +20,7 @@ const generateQR = (data, id) => {
             color: colours
         }
         const output = imgPath.replace('ID', id);
+//        console.log(output)
         QRCode.toFile(output, data, options, (err) => {
             if (err) {
                 console.error(err);
@@ -58,7 +59,11 @@ const deleteQRImg = (id) => {
 }
 const generateSessionQR = (session) => {
 //    console.log(`generateSessionQR`, session);
+//    console.log(`generateSessionQR: ${session.base}${session.address}, uniqueID: ${session.uniqueID}`);
     generateQR(`${session.base}${session.address}`, session.uniqueID);
+    if (session.localDevAddress) {
+        generateQR(`${session.localDevAddress}${session.address}`, `dev${session.uniqueID}`);
+    }
 //    generateQR(`${session.base}/presentation#${session.address.replace('/', '')}`, `${session.uniqueID}-presentation`);
 };
 const ensureDirectoryExists = async (directory) => {
@@ -86,7 +91,7 @@ const createTemplateQR = async (tOb) => {
         const dir = temPath.split('/').slice(0, 2).join('/');
         await ensureDirectoryExists(dir);
         await fs.promises.writeFile(temPath.replace('ID', ID), content, 'utf8');
-//        console.log(`wrote `)
+//        console.log(`wrote ${temPath.replace('ID', ID)}`);
         return fileContent;
     } catch (err) {
         throw err; // Throw any errors that occur

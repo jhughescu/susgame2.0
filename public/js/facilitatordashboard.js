@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
 //                game = rgame;
-//                console.log(`startGame callback, rgame:`, rgame);
+                console.log(`startGame callback, rgame:`, rgame);
                 updateGame(rgame);
                 addToLogFeed('game ready');
                 getSession(game.uniqueID, () => {
@@ -1516,6 +1516,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $(`#${targ}`).html('');
         } else {
             window.renderTemplate(targ, 'gameCard', rOb, () => {
+                console.log(rOb);
     //            console.log('the renderTemplate callback');
             });
         }
@@ -2084,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(`session.localIP: ${session.localIP}`);
                 session.playerURL = `${session.base}${session.address}`
                 addToLogFeed('session data found:');
-//            console.log(data)
+            console.log(data)
                 addToLogFeed(`${JSON.stringify(data).substr(0, 45)}...`);
                 initSession();
             })

@@ -17,7 +17,8 @@ const sessionSchema = new Schema({
     scores: Array,
     values: Array,
     idColour: String,
-    localIP: String
+    localIP: String,
+    localDevAddress: String
 });
 
 module.exports = mongoose.model('Session', sessionSchema);

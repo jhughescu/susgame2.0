@@ -250,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 // Process the data received from the server
+//            console.log(data);
                 $('#sessionDetail').fadeOut(300, function () {
                     const rOb = data;
                     if (rOb.players.length > 10) {
