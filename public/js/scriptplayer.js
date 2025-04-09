@@ -291,14 +291,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const getAddress = () => {
         return window.location.pathname;
     };
+    const startContentCheck = () =>{
+        setInterval(() => {
+            const c = $('#insertion').children(':visible').length === 0;
+            if (c) {
+                console.log('no content visible')
+                socket.emit('playerErrorReport', {player: player, err: 'no page content; force refresh'});
+//                debugger;
+                window.location.reload();
+            }
+        }, 2000);
+    };
     const playerConnect = (lid) => {
         gID = window.location.pathname;
         lIDStub = `${lid}-${getAddress()}`;
 //        lID = lid;
 //        lID = `${lid}${getPlayerID()}`;
 //        console.log(window.location.search);
-//        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
+        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
 //        console.log(`heidee`, getPlayerID());
+        startContentCheck();
         onConnect();
     };
     const getTeam = (fgame) => {

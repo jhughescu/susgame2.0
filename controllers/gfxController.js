@@ -7,6 +7,21 @@ const data = 'this is a QR code';
 
 const colours = {dark: '#252721', light: '#ffffff'}
 
+const generateQRText = async (url, cb) => {
+    try {
+        const svg = await QRCode.toString(url, {
+            type: 'svg',
+            color: { dark: colours.dark, light: colours.light }
+        });
+        if (cb) {
+            cb(svg);
+        }
+        return svg;
+    } catch (err) {
+        console.error('Error generating QR code:', err);
+        return null;
+    }
+};
 const generateQR = (data, id) => {
     QRCode.toDataURL(data, (err, url) => {
         if (err) {
@@ -101,4 +116,5 @@ module.exports = {
 //    generateQR,
     deleteQR,
     generateSessionQR,
+    generateQRText
 }

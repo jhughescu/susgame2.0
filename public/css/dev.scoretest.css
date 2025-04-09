@@ -1,0 +1,30 @@
+html, body {
+    background-color: white;
+    color: black;
+    font-family: 'arial';
+}
+td, th {
+    background-color: grey;
+}
+td, tr {
+    text-align: center;
+    padding: 2px;
+}
+.blank, td.input {
+    background-color: transparent;
+}
+input {
+    width: 30px;
+}
+.res {
+    background-color: yellow;
+}
+.sub {
+    background-color: #ffffa2;
+}
+.final {
+    background-color: #78ff04;
+}
+.strong {
+    font-weight: bold;
+}

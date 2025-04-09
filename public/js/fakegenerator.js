@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     const fakeNum = $('#num');
     const fakeRange = {min: 1, max: 40};
+    let game = null;
     function rsort () {
         return Math.floor(Math.random() * 3) - 1;
     }
@@ -48,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     p.push({id: pl});
                 }
             });
-//            console.log(pt);
             if (p.length === 0) {
                 alert('all registered fakes already open');
                 return;
@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     }
+
     function launchFakes(event) {
         event.preventDefault();
         const num = parseInt(document.getElementById('num').value);
@@ -97,14 +98,65 @@ document.addEventListener('DOMContentLoaded', function() {
             fakeNum.val(fakeRange.max)
         }
     }
-
+    const getQR = () => {
+        const c = countFakes();
+        console.log(`getQR, ${c} fake${c === 1 ? '' : 's'} registered`);
+        if (!isNaN(c)) {
+            const url = `${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`;
+            $('#qroverlay').html('');
+            socket.emit('getQrString', url, (str) => {
+                console.log(`update QR to ${url}`);
+                const qrstr = `${url}${str}`;
+                $('#qroverlay').html(qrstr);
+            });
+        }
+    };
+    const showQR = () => {};
+    const countFakes = () => {
+        let c = null;
+        const g = game;
+        if (g) {
+            c = g.players.filter(p => p.includes('f')).length;
+        }
+        return c;
+    };
+    const countFakesV1 = () => {
+        let c = null;
+        const g = game;
+        if (g) {
+            const pb = g.players;
+            const pf = g.playersFull;
+            const p = []
+            pb.forEach(pl => {
+                if (pf.hasOwnProperty(pl)) {
+                    if (!pf[pl].connected) {
+                        p.push({id: pl});
+                    }
+                } else {
+                    p.push({id: pl});
+                }
+            });
+            c = p.length;
+        }
+        return c;
+//        console.log(`we currently have ${c} fake player${c === 1 ? '': 's'}`);
+    };
+    const onGameUpdate = () => {
+        console.log(`game update, number of fakes: ${countFakes()}`);
+        console.log(game.players);
+        console.log(game.playersFull);
+        getQR();
+    };
     socket.on('checkOnConnection', () => {
-        //
+        socket.emit('getGame', gameID, (g) => {
+            game = g;
+            onGameUpdate();
+        });
     });
-    socket.on('', () => {
-        //
+    socket.on('gameUpdate', (o) => {
+        game = o;
+        onGameUpdate();
     });
-
     window.launchFakes = launchFakes;
     window.reopenFakes = reopenFakes;
     window.checkInputType = checkInputType;

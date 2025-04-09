@@ -7,6 +7,7 @@ const adminController = require('./../controllers/adminController');
 const presentationController = require('./../controllers/presentationController');
 const downloadController = require('./../controllers/downloadController');
 const logController = require('./../controllers/logController');
+const gfxController = require('./../controllers/gfxController');
 
 const tools = require('./../controllers/tools');
 
@@ -255,6 +256,9 @@ function initSocket(server) {
 //                    console.log('herd');
                     logController.writeBeautifiedJson(`logs`, `game`, g);
                 });
+                socket.on('playerErrorReport', (o) => {
+                    console.log(`PLAYER ERROR: ${o.err} (${o.player.id})`);
+                });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
                 if (!Boolean(gameController.getGameWithAddress(src))) {
@@ -501,7 +505,10 @@ function initSocket(server) {
                 const room = `${address}-pres`;
                 const rooms = getRoomSockets(room);
                 io.to(room).emit('togglePresInfo');
-            })
+            });
+            socket.on('getQrString', (url, cb) => {
+                gfxController.generateQRText(url, cb);
+            });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

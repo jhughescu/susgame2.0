@@ -2085,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(`session.localIP: ${session.localIP}`);
                 session.playerURL = `${session.base}${session.address}`
                 addToLogFeed('session data found:');
-            console.log(data)
+//            console.log(data);
                 addToLogFeed(`${JSON.stringify(data).substr(0, 45)}...`);
                 initSession();
             })

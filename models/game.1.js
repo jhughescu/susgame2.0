@@ -222,10 +222,6 @@ class Game {
         return JSON.stringify(out);
     }
     getTotalsSupp() {
-//        console.log(`####################################################################  getTotalsSupp`);
-//        console.log(`####################################################################  getTotalsSupp`);
-//        console.log(`####################################################################  getTotalsSupp`);
-//        return JSON.parse(this.getTotals1());
         // collaborative scores submitted: add to allocations
         const gp = this.persistentData;
         const sp = this.getDetailedScorePackets();
@@ -234,10 +230,6 @@ class Game {
         gp.rounds.forEach(r => {
             scores[`scoresR${r.n}`] = sp.filter(p => p.round === r.n);
         });
-//        outOb.scores = scores;
-//        console.log('here?');
-//        console.log(scores.scoresR1.filter(sc => sc.dest === t.id));
-
         gp.mainTeams.forEach(t => {
             let r1Scores = scores.scoresR1.filter(sc => sc.dest === t.id);
             const ob = {
@@ -247,7 +239,6 @@ class Game {
                 collab: 0
             };
             scores.scoresR3.filter(sc => sc.dest === t.id).forEach(sp => {
-//                console.log(sp);
                 ob.collab += sp.val;
             });
             ob.total = ob.self + ob.collab;

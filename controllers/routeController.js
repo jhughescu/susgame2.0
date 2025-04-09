@@ -223,6 +223,13 @@ app.get(`/ptest`, (req, res) => {
 });
 
 
+app.get('/dev/scores', (req, res) => {
+//    const o = {teams: [0,1,2,3,4]}
+//    res.render('dev_scoretest', o);
+    res.sendFile(path.join(basePath, 'dev.score.test.html'));
+});
+
+
 // Declare the 404 response
 const notFoundHandler = (req, res) => {
     res.status(404).sendFile(path.join(basePath, '404.html'));
