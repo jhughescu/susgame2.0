@@ -418,6 +418,9 @@ function initSocket(server) {
             socket.on('getScorePackets', (gameID, cb) => {
                 gameController.getScorePackets(gameID, cb);
             });
+            socket.on('getScores', (gameID, cb) => {
+                gameController.getScores(gameID, cb);
+            });
             socket.on('getTotals1', (gameID, cb) => {
                 gameController.getTotals1(gameID, cb);
             });
@@ -649,6 +652,31 @@ function initSocket(server) {
         }
          // end session display client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+        // scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (Q.role === 'scoretest') {
+//            console.log('score test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+//            console.log(Q);
+//            console.log(Q.id);
+//            console.log(gameController.getGameWithAddress(Q.id))
+            const roomID = `/game-${Q.id}-scoreSetter`;
+            socket.join(roomID);
+//            console.log('room size', showRoomSize(roomID));
+            socket.on('sendScores', (o, cb) => {
+//                console.log('scores Sent');
+                gameController.onScoresSent(o, cb);
+            });
+            socket.on('getGame', (o, cb) => {
+//                console.log('##########################################');
+                cb(gameController.getGameWithAddress(`/game-${o}`));
+//                console.log(gameController.getGameWithUniqueID(`/game-${o}`));
+//                console.log('##########################################');
+            });
+            socket.on('forceScore', (o, cb) => {
+                gameController.forceScore(o, cb);
+            });
+        }
+        // end scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method
@@ -726,7 +754,7 @@ function initSocket(server) {
         const eGame = Object.assign({}, game);
         eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
 //        eGame.updateSource = Object.assign({'updateSource': 'eventEmitter'}, game);
-        const rooms = ['-pres', '-pres-control', '-fac', '', '-displaygame']; /* empty value for the player clients */
+        const rooms = ['-pres', '-pres-control', '-fac', '', '-displaygame', '-scoreSetter']; /* empty value for the player clients */
 //        console.log('hup date');
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
@@ -749,12 +777,12 @@ function initSocket(server) {
         // NOTE scoresUpdated is being used by the presentation but should really be replaced by the more general & useful gameUpdate event
 //        console.log(`on scoresUpdated:`);
 
-        const rooms = ['-pres', '-fac', '']; /* empty value for the player clients */
+        const rooms = ['-pres', '-fac', '', '-scoreSetter']; /* empty value for the player clients */
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
 //            console.log(`emit to room ${room} which has some socket(s)`);
 //            showRoomSize(room)
-//            console.log(`emit to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+//            console.log(`emit scoresUpdated to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
 //            const eGame = Object.assign({_updateSource: {event: ''}}, game);
 //            console.log(getRoomSockets(room));
             const eGame = Object.assign({}, game);

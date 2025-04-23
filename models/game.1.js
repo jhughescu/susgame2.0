@@ -73,22 +73,22 @@ class Game {
     }
     setTeams () {
         // set teams (teamObj) for all players in a game (init method)
-        console.log(`setTeams method - TEAMS, plural`)
+//        console.log(`setTeams method - TEAMS, plural`)
         if (this.persistentData) {
-            console.log('yep, PD')
+//            console.log('yep, PD')
             let pt = this.persistentData.teams;
             if (this.teams.length > 0) {
-                console.log(`yep, teams: ${this.teams.length}`);
+//                console.log(`yep, teams: ${this.teams.length}`);
                 this.teams.forEach((tl, i) => {
                     const t = pt[`t${i}`];
                     tl.forEach(p => {
                         if (this.playersFull[p]) {
                             this.playersFull[p].teamObj = t;
-                            console.log(`team assigned to player ${p}`);
+//                            console.log(`team assigned to player ${p}`);
                             const pf = this.playersFull[p];
-                            console.log(`${pf.id} assigned to ${pf.teamObj.title} team as ${pf.isLead ? 'lead' : 'ordinary member'}`);
+//                            console.log(`${pf.id} assigned to ${pf.teamObj.title} team as ${pf.isLead ? 'lead' : 'ordinary member'}`);
                         } else {
-                            console.log(`cannot assign team to ${p}`);
+//                            console.log(`cannot assign team to ${p}`);
                         }
                     });
                 });
@@ -116,7 +116,7 @@ class Game {
                     player.teamObj = pt[`t${i}`];
                     // Only players of team type 1 have leads
                     player.isLead = t[0] === player.id && player.teamObj.type === 1;
-                    console.log(`${player.id} assigned to ${player.teamObj.title} team as ${player.isLead ? 'lead' : 'ordinary member'}`);
+//                    console.log(`${player.id} assigned to ${player.teamObj.title} team as ${player.isLead ? 'lead' : 'ordinary member'}`);
                 }
             })
         } else {

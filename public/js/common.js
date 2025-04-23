@@ -360,6 +360,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return newObj;
     };
+    const clone = (o) => {
+        // return a simple flat duplicate of an object
+        return JSON.parse(JSON.stringify(o));
+    };
     const createCopyLinks = () => {
         let uc = $('.copylink');
         uc.off('click').on('click', function() {
@@ -675,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
-
+//        console.log(`setupVoteControl`);
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -844,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     const setupCollaborationControl = async (inOb) => {
-//        console.log('we set up collab control');
+        console.log('we set up collab control');
         const myPlayer = player === null ? inOb : player;
         const storeID = `collabs-${game.address}-${myPlayer.id}`;
         const ra = getRemainingAllocation(myPlayer);
@@ -937,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         }
 
-                        debugger;
+//                        debugger;
                         allV.each((i, e) => {
                             const dest = justNumber($(e).attr('id'));
                             const v = parseInt($(e).html());
@@ -1016,6 +1020,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setupPanel = setupPanel;
     window.setupObserver = setupObserver;
     window.copyObjectWithExclusions = copyObjectWithExclusions;
+    window.clone = clone;
     window.copyToClipboard = copyToClipboard;
     window.createCopyLinks = createCopyLinks;
     window.getQueries = getQueries;

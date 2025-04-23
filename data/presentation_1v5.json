@@ -16,27 +16,20 @@
         {"id": "14", "type": "video", "srcRef": "v8", "title": "Launch to 2050"},
         {"id": "15", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "16", "type": "video", "srcRef": "v10", "title": "Recalculation Collaboration Strategy"},
-
-        {"id": "17", "type": "image", "src": "slide_img_04.jpg", "title": "NEW SLIDE (updates devices)", "action": "startRound:3", "note": "Only available in sequence"},
-        {"id": "18", "type": "slide", "slide": "slide_110_stakeholders", "title": "NEW Display Teams Allocation", "action": "showRound3", "trigger": "scoreRound:3"},
-
-        {"id": "19", "type": "image", "src": "slide_img_15.jpg", "title": "Collaboration Prompt (updates devices)", "action": "startRound:4", "note": "Only available in sequence"},
-        {"id": "20", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Team Collaboration", "action": "showRound4", "trigger": "scoreRound:4", "note": "Only available in sequence"},
-        {"id": "21", "type": "video", "srcRef": "v19", "title": "2030 Headlines PV"},
-        {"id": "22", "type": "image", "src": "slide_img_10.jpg", "title": "Public Voices Prompt (updates devices)", "action": "startRound:5", "note": "Only available in sequence"},
-        {"id": "23", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:5", "trigger": "scoreRound:5"},
-
-
-
-        {"id": "24", "type": "video", "srcRef": "v11", "title": "Post-collaboration 4 Futures"},
-        {"id": "25", "type": "video", "srcRef": "v12", "title": "Quadrant of Futures"},
-        {"id": "26", "type": "image", "src": "slide_img_20.jpg", "title": "Quadrant of Futures Still"},
-        {"id": "27", "type": "video", "srcRef": "v13", "title": "Post-Extinction Park"},
-        {"id": "28", "type": "video", "srcRef": "v14", "title": "Global Equity Tribunal"},
-        {"id": "29", "type": "video", "srcRef": "v15", "title": "Craft Protein Fest"},
-        {"id": "30", "type": "video", "srcRef": "v16", "title": "Tranquilium Valley"},
-        {"id": "31", "type": "video", "srcRef": "v17", "title": "Post-4 Futures"},
-        {"id": "32", "type": "image", "src": "slide_img_25.jpg", "title": "Post-4 Futures Still"}
+        {"id": "17", "type": "image", "src": "slide_img_15.jpg", "title": "Collaboration Prompt (updates devices)", "action": "startRound:3", "note": "Only available in sequence"},
+        {"id": "18", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Team Collaboration", "action": "showRound3", "trigger": "scoreRound:3", "note": "Only available in sequence"},
+        {"id": "19", "type": "video", "srcRef": "v19", "title": "2030 Headlines PV"},
+        {"id": "20", "type": "image", "src": "slide_img_10.jpg", "title": "Public Voices Prompt (updates devices)", "action": "startRound:4", "note": "Only available in sequence"},
+        {"id": "21", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:4", "trigger": "scoreRound:4"},
+        {"id": "22", "type": "video", "srcRef": "v11", "title": "Post-collaboration 4 Futures"},
+        {"id": "23", "type": "video", "srcRef": "v12", "title": "Quadrant of Futures"},
+        {"id": "7", "type": "image", "src": "slide_img_20.jpg", "title": "Quadrant of Futures Still"},
+        {"id": "23", "type": "video", "srcRef": "v13", "title": "Post-Extinction Park"},
+        {"id": "23", "type": "video", "srcRef": "v14", "title": "Global Equity Tribunal"},
+        {"id": "23", "type": "video", "srcRef": "v15", "title": "Craft Protein Fest"},
+        {"id": "23", "type": "video", "srcRef": "v16", "title": "Tranquilium Valley"},
+        {"id": "23", "type": "video", "srcRef": "v17", "title": "Post-4 Futures"},
+        {"id": "7", "type": "image", "src": "slide_img_25.jpg", "title": "Post-4 Futures Still"}
     ],
     "videoLinks": {
         "v1OLD": "83943b38-d332-4e2c-a125-b2820023dbdb",

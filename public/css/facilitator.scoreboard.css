@@ -1,0 +1,10 @@
+.inputs .input {
+/*    background-color: white; */
+}
+.inputs td {
+    width: 10px;
+    padding: 2px;
+    background-color: black;
+    margin: 1px;
+    border: 2px;
+}

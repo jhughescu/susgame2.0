@@ -427,8 +427,9 @@ const getGame = (id, cb) => {
     return gg;
 };
 const getGameWithUniqueID = (id) => {
+//    console.log(`getGameWithUniqueID`, id, Object.values(games).length)
     for (let g in games) {
-//        console.log(games[g].uniqueID.toString(), id.toString())
+//        console.log('-', games[g].uniqueID.toString(), id.toString())
 //        console.log(games[g].uniqueID.toString() === id.toString())
         if (games[g].uniqueID.toString() === id.toString()) {
 //            log(games[g].uniqueID)
@@ -437,7 +438,7 @@ const getGameWithUniqueID = (id) => {
     }
 };
 const getGameWithAddress = (add) => {
-//    console.log(`GETGAMEWITHADDRESS: ${add}`)
+//    console.log(`GETGAMEWITHADDRESS: ${add} (${Object.values(games).length} games)`);
     for (let g in games) {
 //        console.log(games[g].address, add)
         if (games[g].address === add) {
@@ -725,7 +726,7 @@ const assignToNextTeam = (game, p, ID) => {
         const allTeamsOccupied = game.teams.filter(t => t.length === 0).length === 0;
         // NOTE not getting called because this block only runs when setting up the PV teams.
         // INSTEAD add a new conditional which checks for teams.length against full team size (main + secondary) and only then looks for empty teams
-        console.log(`assignToNextTeam - number of teams: ${game.teams.length}, number of EMPTY teams: ${game.teams.filter(t => t.length === 0).length}, fullTeamStack? ${fullTeamStack}, allTeamsOccupied? ${allTeamsOccupied}`);
+//        console.log(`assignToNextTeam - number of teams: ${game.teams.length}, number of EMPTY teams: ${game.teams.filter(t => t.length === 0).length}, fullTeamStack? ${fullTeamStack}, allTeamsOccupied? ${allTeamsOccupied}`);
         if (fullTeamStack && allTeamsOccupied) {
             onTeamsAssigned(game.teams, game);
         }
@@ -1020,26 +1021,26 @@ const registerPlayer = (ob, cb) => {
                 game.players.push(ob.player);
                 index = game.players.length;
             }
-            console.log(`gameController registerPlayer, ${ID} player already added? ${game.playersFull.hasOwnProperty(ID)} (players registered: ${Object.values(game.playersFull).length})`);
+//            console.log(`gameController registerPlayer, ${ID} player already added? ${game.playersFull.hasOwnProperty(ID)} (players registered: ${Object.values(game.playersFull).length})`);
             if (game.players.length > 0 && Object.values(game.playersFull).length === 0) {
-                console.log('>>>>>>>>>>>>>>>>>>>>>>>>> oh no, looks like players are re-entering before playersFull has been generated');
+//                console.log('>>>>>>>>>>>>>>>>>>>>>>>>> oh no, looks like players are re-entering before playersFull has been generated');
             }
             const playersNotExpanded = game.players.length > 0 && Object.values(game.playersFull).length === 0;
             if (game.playersFull.hasOwnProperty(ID)) {
                 // player already registered with game
                 // update the existing player object with the new socketID
-                console.log('existing player re-enters');
+//                console.log('existing player re-enters');
                 game.playersFull[ID].socketID = ob.socketID;
 
             } else {
                 // player not yet registered with game
-                console.log('this THINKS it is a new player');
+//                console.log('this THINKS it is a new player');
                 if (autoTeam) {
                     assignToNextTeam(game, player, ID);
                     let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
                     let pplayer = new Player(ID, plIndex, ob.socketID);
                     game.playersFull[ID] = pplayer;
-                    console.log('gameController calling setTeam');
+//                    console.log('gameController calling setTeam');
                     game.setTeam(pplayer);
                 }
             }
@@ -1279,14 +1280,64 @@ const endRound = async (ob, cb) => {
         console.log(`endGame cannot complete, no game exists with ID ${game_id}`);
     }
 };
-const scoreSubmitted = async (ob, cb) => {
-    console.log(`scoreSubmitted`);
+const setAllScores = async (ob, cb) => {
     const sc = ob.scoreCode;
     const game = games[`game-${ob.game}`];
     if (game) {
-        let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
+        // once game confirmed, carry out any requisite conversion and send to server, also update the current game
+
+    }
+};
+const onScoresSent = async (o, cb) => {
+//    console.log(typeof(games), games.hasOwnProperty('length'));
+    Object.keys(games).forEach(k => {console.log(k)})
+    const ro = {};
+    if (!o.hasOwnProperty('gameID')) {
+        ro.msg = 'no gameID provided';
+    } else {
+        if (!games[o.gameID]) {
+            ro.msg = `no game with ID ${o.gameID}`;
+        } else {
+            const G = games[o.gameID];
+            ro.G = G;
+
+            if (o.pw === process.env.ADMIN_PASSWORD) {
+                ro.msg = 'success';
+
+//                let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
+//                let p = sp.getPacket();
+//                let d = sp.getDetail();
+                if (o.scores) {
+                    G.scores = o.scores;
+                    const session = await sessionController.updateSession(o.gameID.replace('game-', ''), {scores: o.scores});
+                    if (session) {
+
+                    }
+                }
+
+            } else {
+                ro.msg = 'failure';
+            }
+        }
+    }
+//    console.log(`yes they are ${o.pw === process.env.ADMIN_PASSWORD}`);
+//    const ro = {msg: o.pw === process.env.ADMIN_PASSWORD ? 'all done' : 'no way, sorry'}
+    if (cb) {
+        cb(ro);
+    }
+
+};
+const scoreSubmitted = async (ob, cb) => {
+    console.log(`scoreSubmitted`);
+//    console.log(ob);
+    const sc = ob.scoreCode;
+    const game = games[`game-${ob.game}`];
+    if (game) {
+        let sp = new ScorePacket(ob.forceRound ? sc.round : game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
+        console.log(game.scores);
+        console.log(p);
         if (game.scores.indexOf(p) > -1) {
             // Duplicate scores are not allowed (score packets must be unique)
             // In case of a duplicate score submission, callback the scores and end the method.
@@ -1301,9 +1352,9 @@ const scoreSubmitted = async (ob, cb) => {
             const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
             if (session) {
                 const game = games[`game-${ob.game}`];
+                console.log('FINAL', game.scores)
                 if (game) {
                     const roundComplete = checkRound(ob.game).indexOf(false) === -1;
-//                    console.log(`scores returned to game, ${game.scores.length} scores held`);
                     if (cb) {
                         cb(game.scores);
                     }
@@ -1327,6 +1378,32 @@ const scoreSubmitted = async (ob, cb) => {
     } else {
         console.log(`no game with ID game-${ob.game}`);
         return false;
+    }
+};
+const forceScore = async (ob, cb) => {
+    const sc = ob.scoreCode;
+    const game = games[`game-${ob.game}`];
+    if (game) {
+        const sub = sc.split('_').slice(0, 3).join('_');
+        const m = game.scores.filter(i => i.startsWith(sub));
+//        console.log('forceScore:');
+//        console.log(sc);
+//        console.log(ob.scorePacket);
+//        console.log(sub);
+//        console.log(game.scores);
+//        console.log(m);
+//        console.log('##################### end');
+        if (m.length < 2) {
+            let na = game.scores.filter(i => !i.startsWith(sub));
+            game.scores = na;
+            const session = await sessionController.updateSession(ob.game, {scores: na});
+            if (session) {
+                scoreSubmitted({scoreCode: ob.scorePacket, game: ob.game, forceRound: true}, cb);
+            }
+        } else {
+            console.log(`more than one matched score for ${sc}, this is likely an error.`)
+        }
+
     }
 };
 const scoreForAverageSubmitted = async (ob, cb) => {
@@ -1437,6 +1514,7 @@ module.exports = {
     getGame,
     getGameCount,
     getGameWithAddress,
+    getGameWithUniqueID,
     startGame,
     endGame,
     restoreGame,
@@ -1455,11 +1533,14 @@ module.exports = {
     startRound,
     checkRound,
     scoreSubmitted,
+    forceScore,
+    onScoresSent,
     scoreForAverageSubmitted,
     createAggregate,
     valuesSubmitted,
     presentationAction,
     getScorePackets,
+    getScores,
     getTotals1,
     getTotals2,
     getTotals3,

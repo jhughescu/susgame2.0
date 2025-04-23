@@ -1,77 +1,99 @@
-
-
-
-   <table><tbody>
-    <tr id='header_era'>
-        <th colspan='5'>2030</th>
-        <th colspan='19'>2040</th>
-        <th colspan='1'>FINAL</th>
-    </tr>
-    <tr id='header_blocks'>
-        <th colspan='1' class='blank'></th>
-        <th colspan='3'>Public Voices</th>
-        <th colspan='2' class='blank'></th>
-        <th colspan='6'>Collaboration</th>
-        <th colspan='1' class='blank'></th>
-        <th colspan='3'>Public Voices</th>
-        <th colspan='1' class='blank'></th>
-        <th colspan='6'>Share</th>
-        <th colspan='2' class='blank'></th>
-    </tr>
-    <tr id='header_titles'>
-        <th>Allocation</th>
-        <th>PV1</th>
-        <th>PV2</th>
-        <th>PVtotal</th>
-        <th>a * PV</th>
-        <th>Allocation</th>
-        <th>EB</th>
-        <th>SE</th>
-        <th>IC</th>
-        <th>CO</th>
-        <th>G</th>
-        <th>Ctotal</th>
-        <th>A+C</th>
-        <th>PV1</th>
-        <th>PV2</th>
-        <th>PVtotal</th>
-        <th>(A+C) * PV</th>
-        <th>s1</th>
-        <th>s2</th>
-        <th>s3</th>
-        <th>s4</th>
-        <th>s5</th>
-        <th>stotal</th>
-        <th>sc + sh</th>
-        <th>2030 + 2040</th>
-    </tr>
-    {{#each teams}}
-    <tr class='inputs' id='input{{this}}'>
-        <td class='input'><input class='a1' id='a1_{{this}}'></td>
-        <td class='input'><input class='pv_1_1' id='pv1_{{this}}_1'></td>
-        <td class='input'><input class='pv_1_2' id='pv2_{{this}}_1'></td>
-        <td class='res pvt1' id='pvt{{this}}1'>val</td>
-        <td class='res final strong 2030total' id='2030total{{this}}'>val</td>
-        <td class='input'><input class='a2' id='a2_{{this}}'></td>
-        <td class='input'><input class='ci' id='ci1_{{this}}'></td>
-        <td class='input'><input class='ci' id='ci2_{{this}}'></td>
-        <td class='input'><input class='ci' id='ci3_{{this}}'></td>
-        <td class='input'><input class='ci' id='ci4_{{this}}'></td>
-        <td class='input'><input class='ci' id='ci5_{{this}}'></td>
-        <td class='res ctotal' id='ctotal{{this}}'>val</td>
-        <td class='res final allCollTotal' id='allcolltotal{{this}}'>val</td>
-        <td class='input'><input class='pv_2_1' id='pv1_{{this}}_2'></td>
-        <td class='input'><input class='pv_2_2' id='pv2_{{this}}_2'></td>
-        <td class='res pvt2' id='pvt{{this}}2'>val</td>
-        <td class='res final allCollPV' id='acpv{{this}}'>val</td>
-        <td class='res sub sval sval_0' id='s_{{this}}_0'>vs1</td>
-        <td class='res sub sval sval_1' id='s_{{this}}_1'>vs1</td>
-        <td class='res sub sval sval_2' id='s_{{this}}_2'>vs2</td>
-        <td class='res sub sval sval_3' id='s_{{this}}_3'>vs3</td>
-        <td class='res sub sval sval_4' id='s_{{this}}_4'>vs4</td>
-        <td class='res shTotal' id='svaltotal_{{this}}'>val</td>
-        <td class='res final strong scoreShare' id='scsh_{{this}}'>val</td>
-        <td class='res final strong 2040total' id='20302040_{{this}}'>val</td>
-    </tr>
-    {{/each}}
-</tbody></table>
+<div id='changeFormWrapper'>
+    <div id='changeForm'>
+        <div id='changeMsg'></div>
+        <div id='changeScore'></div>
+        <input type='number'>
+        <button>submit</button>
+        <div id='formSummary'></div>
+    </div>
+</div>
+<table>
+    <tbody>
+        <tr id='header_era'>
+            <th colspan='1' class='blank'></th>
+            <th colspan='5'>2030</th>
+            <th colspan='1' class='blank nofill'></th>
+            <th colspan='19'>2040</th>
+            <th colspan='1' class='blank nofill'></th>
+            <th colspan='1'>FINAL</th>
+        </tr>
+        <tr id='header_blocks'>
+            <th colspan='1' class='blank'></th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='3'>Public Voices</th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='1' class='blank nofill'></th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='6'>Collaboration</th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='3'>Public Voices</th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='6'>Share</th>
+            <th colspan='1' class='blank'></th>
+            <th colspan='1' class='blank nofill'></th>
+            <th colspan='1' class='blank'></th>
+        </tr>
+        <tr id='header_titles'>
+            <th></th>
+            <th>All.</th>
+            <th>PV1</th>
+            <th>PV2</th>
+            <th>PVt</th>
+            <th>a*PV</th>
+            <th class='blank nofill'></th>
+            <th>All.</th>
+            <th>G</th>
+            <th>IC</th>
+            <th>EB</th>
+            <th>CO</th>
+            <th>SE</th>
+            <th>ct</th>
+            <th>A+C</th>
+            <th>PV1</th>
+            <th>PV2</th>
+            <th>PVt</th>
+            <th>(A+C)pv</th>
+            <th>s1</th>
+            <th>s2</th>
+            <th>s3</th>
+            <th>s4</th>
+            <th>s5</th>
+            <th>stotal</th>
+            <th>sc+sh</th>
+            <th class='blank nofill'></th>
+            <th>30+40</th>
+        </tr>
+        {{#each teams}}
+            <tr class='inputs' id='input{{this.id}}'>
+                <td>{{this.title}}</td>
+                <td class='input a1' id='a1_1_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
+                <td class='input pv_1_1' id='pv_2_5_{{this.id}}_v_5'></td>
+                <td class='input pv_1_2' id='pv_2_6_{{this.id}}_v_6'></td>
+                <td class='res pvt1' id='pvt{{this.id}}1'>val</td>
+                <td class='res final strong 2030total' id='2030total{{this.id}}'>val</td>
+                <td class='blank nofill'>{{this.title}}</td>
+                <td class='input a2' id='a2_3_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
+                <td class='input res sub c' id='c_4_{{this.id}}_0_v_0'></td>
+                <td class='input res sub c' id='c_4_{{this.id}}_1_v_1'></td>
+                <td class='input res sub c' id='c_4_{{this.id}}_2_v_2'></td>
+                <td class='input res sub c' id='c_4_{{this.id}}_3_v_3'></td>
+                <td class='input res sub c' id='c_4_{{this.id}}_4_v_4'></td>
+                <td class='res ctotal' id='ctotal{{this.id}}'>val</td>
+                <td class='res final allCollTotal' id='allcolltotal{{this.id}}'>val</td>
+                <td class='input pv_2_1' id='pv_5_5_{{this.id}}_v_5'></td>
+                <td class='input pv_2_2' id='pv_5_6_{{this.id}}_v_6'></td>
+                <td class='res pvt2' id='pvt{{this.id}}2'>val</td>
+                <td class='res final allCollPV' id='acpv{{this.id}}'>val</td>
+                <td class='res sub sval sval_0' id='s_{{this.id}}_0'>vs1</td>
+                <td class='res sub sval sval_1' id='s_{{this.id}}_1'>vs1</td>
+                <td class='res sub sval sval_2' id='s_{{this.id}}_2'>vs2</td>
+                <td class='res sub sval sval_3' id='s_{{this.id}}_3'>vs3</td>
+                <td class='res sub sval sval_4' id='s_{{this.id}}_4'>vs4</td>
+                <td class='res shTotal' id='svaltotal_{{this.id}}'>val</td>
+                <td class='res final strong scoreShare' id='scsh_{{this.id}}'>val</td>
+                <td class='blank nofill'>{{this.title}}</td>
+                <td class='res final strong 2040total' id='20302040_{{this.id}}'>val</td>
+            </tr>
+        {{/each}}
+    </tbody>
+</table>

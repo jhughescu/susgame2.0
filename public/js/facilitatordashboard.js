@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return null;
     };
+//    setTimeout(() => {console.log(getSessionID())}, 1000);
     const socket = io('', {
         query: {
             role: 'facilitator',
@@ -46,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ended: `Cannot start game, this session has already concluded.`
         }
     };
+    const roundRef = {
+        COLLAB: 4
+    }
 
     socket.on('checkOnConnection', () => {
 //        console.log('connected one way or another, find out if there is a game on, game:');
@@ -1362,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log(round);
                             console.log(round.type);
                             if (round.type === 1) {
-                                if (round.n === 3) {
+                                if (round.n === roundRef.COLLAB) {
                                     window.setupCollaborationControl(pl)
                                 } else {
                                     window.setupAllocationControl(pl);
@@ -1516,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $(`#${targ}`).html('');
         } else {
             window.renderTemplate(targ, 'gameCard', rOb, () => {
-                console.log(rOb);
+//                console.log(rOb);
     //            console.log('the renderTemplate callback');
             });
         }
@@ -1653,6 +1657,220 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
+
+    // new methods which support developScores3:
+    let scorePackets = [];
+    const getRoundScores = (r, a) => {
+//        const A = a || scores;
+        const A = a || scorePackets;
+        let sc = [];
+        if (typeof(A[0]) === 'string') {
+            sc = A.filter(s => parseInt(s.split('_')[0]) === parseInt(r));
+        } else {
+            sc = A.filter(s => s.round === parseInt(r));
+        }
+        return sc;
+    };
+    const getSrcScores = (r, a) => {
+//        const A = a || scores;
+        const A = a || scorePackets;
+        let sc = [];
+        if (typeof(A[0]) === 'string') {
+            sc = A.filter(s => parseInt(s.split('_')[1]) === parseInt(r));
+        } else {
+            sc = A.filter(s => s.src === parseInt(r));
+        }
+        return sc;
+    };
+    const getDestScores = (r, a) => {
+//        const A = a || scores;
+        const A = a || scorePackets;
+        let sc = [];
+        if (typeof(A[0]) === 'string') {
+            sc = A.filter(s => parseInt(s.split('_')[2]) === parseInt(r));
+        } else {
+            sc = A.filter(s => s.dest === parseInt(r));
+        }
+        return sc;
+    };
+    const getTotalVals = (a) => {
+        let t = 0;
+        a.forEach(s => {
+            const v = typeof(s) === 'string' ? parseInt(s.split('_')[3]) : s.val;
+            t += isNaN(v) ? 0: v;
+        });
+        return t;
+    };
+    const getScoreValue = (s) => {
+        const r = s === undefined ? 0 : (typeof(s) === 'string' ? parseInt(s.split('_')[3]) : s.val);
+        return r;
+    };
+    const processData = () => {
+        // creates a scores object for display
+        const out = {};
+        const T = 5;
+        const gtv = getTotalVals;
+        const gds = getDestScores;
+        const gss = getSrcScores;
+        const grs = getRoundScores;
+        const gsv = getScoreValue;
+        let shArray = new Array();
+        let shTotal = new Array(5).fill(0);
+        let c = 0;
+//        console.log(scorePackets);
+        for (let i = 0; i < T; i++) {
+            const a1 = gsv(grs(1)[i]);
+            const a2 = gsv(grs(3)[i]);
+            const t = gtv(gds(i, grs(4)));
+            const at = gtv(gds(i, grs(3))) + gtv(gds(i, grs(4))); /* formula N */
+            const pv1_1 = gsv(gss(5, grs(2))[i]); /* first PV1 score  */
+            const pv1_2 = gsv(gss(6, grs(2))[i]); /* first PV2 score  */
+            const pvt1 = gtv(gds(i, grs(2))); /* first PV total */
+            const apv1 = a1 * pvt1;
+            const collArray = gds(i, grs(4));
+            const collScores = [];
+//            console.log(collArray);
+            const pv2_1 = gsv(gss(5, grs(5))[i]); /* second PV1 score  */
+            const pv2_2 = gsv(gss(6, grs(5))[i]); /* second PV2 score  */
+            const pvt2 = gtv(gds(i, grs(5))); /* second PV total */
+            const acpvf = (gtv(gds(i, grs(3))) + gtv(gds(i, grs(4)))) * gtv(gds(i, grs(5))); /* formula P */
+            console.log('loop');
+            for (let j = 0; j < T; j++) {
+                const coll = gds(i, grs(4));
+                const coll2 = gds(i, collArray);
+                const collScoreArr = gss(j, coll2);
+                const collScore = collScoreArr.length ? gsv(collScoreArr[0]) : '-';
+                collScores.push(collScore);
+//                console.log(collScoreArr);
+//                console.log(collScore);
+                const sc = getScoreValue(coll[j]);
+                const f = (sc / at) * acpvf;
+                shArray.push(f);
+                if (!isNaN(f)) {
+                    shTotal[i] += f;
+                }
+            };
+            out[`r${i}`] = {
+                a1: a1,
+                collTotal: t,
+                collScores: collScores,
+                allCollTotal: at,
+                pv1_1: pv1_1,
+                pv1_2: pv1_2,
+                pvt1: pvt1,
+                total2030: apv1,
+                a2: a2,
+                pv2_1: pv2_1,
+                pv2_2: pv2_2,
+                pvt2: pvt2,
+                allCollPV: acpvf,
+                shTotal: shTotal,
+                shArray: []
+            };
+        }
+        Object.values(out).forEach((r, i) => {
+            for (let j = 0; j < T; j++) {
+                r.shArray.push(shArray[(j * T) + i]);
+            }
+            r.shTotal = r.shArray.reduce((total, num) => total + (isNaN(num) ? 0 : num), 0);
+                r.scorePlusShare = r.shTotal + r.allCollPV;
+                r.grandTotal = r.scorePlusShare + r.total2030;
+            });
+
+//        console.log('##############################################################');
+        Object.values(out).forEach((r, i) => {
+//            console.log(r);
+            if (i === 0) {
+                Object.entries(r).forEach((e, j) => {
+//                    console.log('-', e[0], e[1]);
+                });
+            }
+        });
+        console.log(out);
+        return out;
+    };
+    const updateScoreboard = () => {
+        const T = processData();
+        const R = $('.inputs');
+        R.find('input').css({width: '20px;'});
+        if (Object.values(T).length !== R.length) {
+            console.log('data error: mismatch between processed team scores and display rows');
+        } else {
+            R.each((i, ri) => {
+                const r = $(ri);
+                const t = Object.values(T)[i];
+                console.log(t);
+                const a1 = $(r.find('.a1'));
+                const pv1_1 = $(r.find('.pv_1_1'));
+                const pv1_2 = $(r.find('.pv_1_2'));
+                const pvt1 = $(r.find('.pvt1'));
+//                console.log(i, pvt1);
+                const total2030 = $(r.find('.2030total'));
+
+                const a2 = $(r.find('.a2'));
+
+                const totalColl = $(r.find('.ctotal'));
+                const allCollTotal = $(r.find('.allCollTotal'));
+                const pv2_1 = $(r.find('.pv_2_1'));
+                const pv2_2 = $(r.find('.pv_2_2'));
+                const pvt2 = $(r.find('.pvt2'));
+                const allCollPV = $(r.find('.allCollPV'));
+                const shTotal = $(r.find('.shTotal'));
+                const scoreShare = $(r.find('.scoreShare'));
+                const total2040 = $(r.find('.2040total'));
+                //
+
+                //
+//                debugger;
+//                return;
+                const sh = r.find('.sval');
+                sh.each((j, s) => {
+                    const v = t.shArray[j];
+                    $(s).html(v);
+                    $(s).removeClass('blank');
+                    if (i === j) {
+                        $(s).addClass('blank');
+                    }
+                });
+                a1.html(t.a1);
+                pv1_1.html(t.pv1_1);
+                pv1_2.html(t.pv1_2);
+                pvt1.html(t.pvt1);
+                total2030.html(t.total2030);
+                const C = r.find('.c');
+                C.each((j, c) => {
+                    $(c).html(t.collScores[j]);
+                });
+                // 2040
+                a1.html(t.a1);
+                totalColl.html(t.collTotal);
+                allCollTotal.html(t.allCollTotal);
+                pv2_1.html(t.pv2_1);
+                pv2_2.html(t.pv2_2);
+                pvt2.html(t.pvt2);
+                allCollPV.html(t.allCollPV);
+                shTotal.html(t.shTotal);
+                scoreShare.html(t.scorePlusShare);
+                total2040.html(t.grandTotal);
+
+            })
+        }
+    };
+    //
+    const developScores3 = async (cb) => {
+        if (game) {
+            socket.emit(`getScorePackets`, game.uniqueID, (sp) => {
+//                console.log('###########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+                scorePackets = sp;
+//                const scoresObject = processData();
+
+                if (cb) {
+//                    cb(scoresObject)
+                    cb();
+                }
+            });
+        }
+    };
     const scoreSummaryInit = () => {
 
         // NOT USED
@@ -1706,8 +1924,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 $(this).off('transitionend');
             }
         );
-    }
+    };
     const renderScoreboard = async () => {
+        developScores3((sp) => {
+            renderTemplate('facilitateScoresContent', 'dev_scoretest', {teams: [0, 1, 2, 3, 4]}, () => {
+                updateScoreboard();
+            });
+        });
+        return;
+        developScores2(o => {
+            o = JSON.parse(JSON.stringify(o));
+            o.forEach(t => {
+                for (var i in t) {
+                    if (typeof(t[i]) === 'number') {
+                        t[i] = Math.round(t[i] * 100) / 100;
+                    }
+                }
+            });
+            const newOb = {totalsObject: o};
+//            console.log(newOb);
+            renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
+                document.querySelectorAll('.aligndecimal').forEach(function(el) {
+                    let number = el.textContent.trim();
+                    let [integer, decimal] = number.split('.');
+                    if (!decimal) {
+                        decimal = ''; // Make sure decimal is defined
+                    }
+                    let paddedNumber = `${integer.padStart(3, '\u00A0')}${parseInt(number) === parseFloat(number) ? '\u00A0': '.'}${decimal.padEnd(1, '\u00A0')}`;
+                    $(el).html(paddedNumber);
+                });
+
+            });
+        });
+    };
+    const renderScoreboardV1 = async () => {
         developScores2(o => {
             o = JSON.parse(JSON.stringify(o));
             o.forEach(t => {
@@ -1720,7 +1970,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const newOb = {totalsObject: o};
             console.log(newOb);
             renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
-//                scoreSummaryInit();
                 document.querySelectorAll('.aligndecimal').forEach(function(el) {
                     let number = el.textContent.trim();
                     let [integer, decimal] = number.split('.');
