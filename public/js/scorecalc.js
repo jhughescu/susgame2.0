@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 id: gameID
             }
         });
-        console.log('socket');
+        console.log('socket', socket);
         socket.on('gameUpdate', (game) => {
             console.log('update heard')
             onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const initV1 = () => {
         socket.emit('getGame', gameID, (m) => {
-//            console.log('is me? ');
+            console.log('is me? ');
 //            console.log(m);
             updateScores(m);
         });
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const updateScores = (g) => {
-        console.log('update scores scorecalc');
+        console.log('update scores scorecalc', g);
         if (g) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const onUpdate = (game) => {
-//        console.log('an update', game);
+        console.log('an update', game);
         updateScores(game);
     }
     const initScoreboard = (gid) => {
