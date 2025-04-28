@@ -515,7 +515,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 };
     const getAndRenderGame = () => {
+        console.log('getting game to render', gameID)
         socket.emit('getGame', gameID, (m) => {
+            console.log('i have the game, render can complete');
+            console.log(m);
             updateScores(m);
         });
     };
@@ -527,7 +530,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 id: gameID
             }
         });
+        console.log('socket');
         socket.on('gameUpdate', (game) => {
+            console.log('update heard')
             onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
         });
         window.renderTemplate('insertion', 'dev_scoretest', { teams: teams }, () => {
