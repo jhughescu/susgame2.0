@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const updateScores = (g) => {
-        console.log('update scores scorecalc', g);
+        console.log('update scores scorecalc', Boolean(g), typeof(g), g);
         if (Boolean(g)) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
