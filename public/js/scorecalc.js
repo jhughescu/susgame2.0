@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const processData = () => {
         // creates a scores object for display
-        console.log('~~~~~~~~~~~~~~~~~ PROCESS DATA ~~~~~~~~~~~~~~~~~~~~');
+//        console.log('~~~~~~~~~~~~~~~~~ PROCESS DATA ~~~~~~~~~~~~~~~~~~~~');
 //        console.log(scores)
         const out = {};
         const T = 5;
@@ -220,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(out);
         return out;
     };
+    window.getScoresSummary = processData;
     const renderFormSummary = (o) => {
         const S = $('#formSummary');
         const T = game.persistentData.teamsArray;
@@ -290,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (roundClicked > game.round) {
                         msg = `This round has not yet been started.`
                     } else {
-                        msg = `No score set, you can probably set one.`;
+                        msg = ` it is probably OK to set this score.`;
                         safeScore = true;
                     }
                 }

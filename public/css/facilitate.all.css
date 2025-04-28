@@ -48,18 +48,20 @@ The panel which wil contain all required facilitate controls
     width: 380px;
 }
 #scoreboard {
-    left: 950px;
-    left: 820px;
+/*    display: none;*/
     left: 729px;
     width: 500px;
-    top: 220px;
-    height: 350px;
+/*    top: 220px;*/
+    top: 250px;
+/*    height: 350px;*/
+    height: 320px;
 }
 #rounds {
     left: 729px;
     width: 500px;
 /*    top: 220px;*/
-    height: 140px;
+/*    height: 140px;*/
+    height: 170px;
 }
 .slidelist {
     top: 40px;

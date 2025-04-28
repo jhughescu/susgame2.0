@@ -484,6 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
             h: ob.h ? ob.h : 0
         };
 //        console.log(ob);
+//        console.log(wid);
         if (wd.length === 0) {
             // (can't use 'w' in here because this block runs only when 'w' does not exist)
             $(`#overlay`).append(`<div class="widget" id="${id}"></div>`);
@@ -507,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             updateWidgetInfo(widID, stD);
+//            console.log('render', id, temp);
             renderTemplate(id, temp, tOb, () => {
                 $(wid).css({left: `${rOb.x}px`, top: `${rOb.y}px`, width: `${rOb.w}px`, height: `${rOb.h}px`});
                 const strOb = {x: rOb.x, y: rOb.y};
@@ -1659,8 +1661,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // new methods which support developScores3:
+    // Block below removed to new scorecalc module
+
     let scorePackets = [];
-    const getRoundScores = (r, a) => {
+    const getRoundScoresGONE = (r, a) => {
 //        const A = a || scores;
         const A = a || scorePackets;
         let sc = [];
@@ -1671,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return sc;
     };
-    const getSrcScores = (r, a) => {
+    const getSrcScoresGONE = (r, a) => {
 //        const A = a || scores;
         const A = a || scorePackets;
         let sc = [];
@@ -1682,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return sc;
     };
-    const getDestScores = (r, a) => {
+    const getDestScoresGONE = (r, a) => {
 //        const A = a || scores;
         const A = a || scorePackets;
         let sc = [];
@@ -1693,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return sc;
     };
-    const getTotalVals = (a) => {
+    const getTotalValsGONE = (a) => {
         let t = 0;
         a.forEach(s => {
             const v = typeof(s) === 'string' ? parseInt(s.split('_')[3]) : s.val;
@@ -1701,11 +1705,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return t;
     };
-    const getScoreValue = (s) => {
+    const getScoreValueGONE = (s) => {
         const r = s === undefined ? 0 : (typeof(s) === 'string' ? parseInt(s.split('_')[3]) : s.val);
         return r;
     };
-    const processData = () => {
+    const processDataGONE = () => {
         // creates a scores object for display
         const out = {};
         const T = 5;
@@ -1789,7 +1793,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(out);
         return out;
     };
-    const updateScoreboard = () => {
+    const updateScoreboardGONE = () => {
         const T = processData();
         const R = $('.inputs');
         R.find('input').css({width: '20px;'});
@@ -1856,6 +1860,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     };
+
     //
     const developScores3 = async (cb) => {
         if (game) {
@@ -1925,13 +1930,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         );
     };
+    const renderScoreFrame = () => {
+        const id = 'facilitator-scoreboard';
+        const rOb = {game: game, teams: window.getScoresSummary()};
+//        console.log(rOb);
+        renderTemplate(`widgetinner${id}`, 'facilitator.scoreboard', rOb, () => {
+            const inner = $(`#widgetinner${id}`);
+            const outer = $(`#widgetinner${id}`).parent();
+            const controls = inner.find('div');
+//            outer.css({height: `${controls.height() + 50}px`});
+        });
+    };
     const renderScoreboard = async () => {
-        developScores3((sp) => {
+        renderTemplate('facilitateScoresContent', 'scoresLaunch', {}, () => {
+            $('#facilitateScoresContent').find('button').off('click').on('click', () => {
+//                renderTemplate('scoreframe', 'facilitator.scoreboard', {});
+                const rOb = {x: 100, y: 100, w: 980, h: 270, data: {preventTemplate: true, launchMethod: 'renderScoreboard'}};
+                const id = 'facilitator-scoreboard';
+//                console.log('i want to add a widget')
+                addWidget(id, rOb, (w) => {
+                    renderScoreFrame();
+                });
+            });
+        });
+        /*developScores3((sp) => {
             renderTemplate('facilitateScoresContent', 'dev_scoretest', {teams: [0, 1, 2, 3, 4]}, () => {
                 updateScoreboard();
             });
         });
-        return;
+        */
+        /*
         developScores2(o => {
             o = JSON.parse(JSON.stringify(o));
             o.forEach(t => {
@@ -1956,6 +1984,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             });
         });
+        */
     };
     const renderScoreboardV1 = async () => {
         developScores2(o => {
@@ -1984,6 +2013,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const renderScores2 = async () => {
+        return;
         if (game) {
             const ob = {scores: game.scores};
             const gp = game.persistentData;
@@ -1998,7 +2028,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const renderScores = async () => {
-
+        return;
         if (game) {
             const ob = {scores: game.scores};
             const gp = game.persistentData;
@@ -2099,6 +2129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ob.gameInfo[`round${r.n}`] = justNumber(game.round) === r.n;
                     });
 //                    console.log(`render scores with`, ob);
+
                     renderTemplate('contentScores', 'facilitator.scores', ob, () => {
                         setupScoreControls();
                     });

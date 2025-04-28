@@ -1290,7 +1290,8 @@ const setAllScores = async (ob, cb) => {
 };
 const onScoresSent = async (o, cb) => {
 //    console.log(typeof(games), games.hasOwnProperty('length'));
-    Object.keys(games).forEach(k => {console.log(k)})
+//    Object.keys(games).forEach(k => {console.log(k)});
+//    console.log(o);
     const ro = {};
     if (!o.hasOwnProperty('gameID')) {
         ro.msg = 'no gameID provided';
@@ -1300,28 +1301,28 @@ const onScoresSent = async (o, cb) => {
         } else {
             const G = games[o.gameID];
             ro.G = G;
-
-            if (o.pw === process.env.ADMIN_PASSWORD) {
-                ro.msg = 'success';
-
-//                let sp = new ScorePacket(game.round, sc.src, sc.dest, sc.val, 1);
-//                let p = sp.getPacket();
-//                let d = sp.getDetail();
+//            const sesh = await sessionController.getSessionWithAddress(o.gameID.replace('game-', ''));
+//            if (sesh) {
+//                console.log(sesh)
+//            }
+            const spw = await sessionController.getSessionPassword(o.gameID.replace('game-', ''));
+//            console.log(o.pw, spw.password)
+            if (o.pw === process.env.ADMIN_PASSWORD || o.pw === spw.password) {
+                ro.msg = 'password success, session not set';
                 if (o.scores) {
                     G.scores = o.scores;
                     const session = await sessionController.updateSession(o.gameID.replace('game-', ''), {scores: o.scores});
                     if (session) {
+                        ro.msg = 'password success, session set success';
 
                     }
                 }
 
             } else {
-                ro.msg = 'failure';
+                ro.msg = 'failure - wrong password';
             }
         }
     }
-//    console.log(`yes they are ${o.pw === process.env.ADMIN_PASSWORD}`);
-//    const ro = {msg: o.pw === process.env.ADMIN_PASSWORD ? 'all done' : 'no way, sorry'}
     if (cb) {
         cb(ro);
     }
