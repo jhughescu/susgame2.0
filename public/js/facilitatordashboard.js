@@ -1938,6 +1938,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const inner = $(`#widgetinner${id}`);
             const outer = $(`#widgetinner${id}`).parent();
             const controls = inner.find('div');
+            window.initScoreboard(game.address);
 //            outer.css({height: `${controls.height() + 50}px`});
         });
     };
@@ -1945,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTemplate('facilitateScoresContent', 'scoresLaunch', {}, () => {
             $('#facilitateScoresContent').find('button').off('click').on('click', () => {
 //                renderTemplate('scoreframe', 'facilitator.scoreboard', {});
-                const rOb = {x: 100, y: 100, w: 980, h: 270, data: {preventTemplate: true, launchMethod: 'renderScoreboard'}};
+                const rOb = {x: 100, y: 100, w: 980, h: 290, data: {preventTemplate: true, launchMethod: 'renderScoreboard'}};
                 const id = 'facilitator-scoreboard';
 //                console.log('i want to add a widget')
                 addWidget(id, rOb, (w) => {

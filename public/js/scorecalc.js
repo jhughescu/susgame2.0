@@ -18,13 +18,15 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('inputValues', JSON.stringify(inputValues));
         localStorage.setItem('resContents', JSON.stringify(resContents));
     };
-    const gameID = 'vik6'; /* hard coded in dev */
-    const socket = io('', {
-        query: {
-            role: 'scoretest',
-            id: gameID
-        }
-    });
+//    const gameID = 'vik6'; /* hard coded in dev */
+//    const socket = io('', {
+//        query: {
+//            role: 'scoretest',
+//            id: gameID
+//        }
+//    });
+    let gameID = null;
+    let socket = null;
     const teams = [
         {
             id: 0,
@@ -220,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(out);
         return out;
     };
-    window.getScoresSummary = processData;
+//    window.getScoresSummary = processData;
     const renderFormSummary = (o) => {
         const S = $('#formSummary');
         const T = game.persistentData.teamsArray;
@@ -519,6 +521,15 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const init = () => {
 //        console.log(`init`);
+        socket = io('', {
+            query: {
+                role: 'scoretest',
+                id: gameID
+            }
+        });
+        socket.on('gameUpdate', (game) => {
+            onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
+        });
         window.renderTemplate('insertion', 'dev_scoretest', { teams: teams }, () => {
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);
@@ -592,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const updateScores = (g) => {
-//        alert(`no game found (${g.address}) - check that the dashboard is running`);
+        console.log('update scores scorecalc');
         if (g) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
@@ -602,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             updateScoreboard();
         } else {
-            console.log(`no game found (${g.address}) - check that the dashboard is running`);
+            console.log(`no game found - check that the dashboard is running`);
         }
     };
     const getScoresFromBoard = () => {
@@ -645,9 +656,16 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log('an update', game);
         updateScores(game);
     }
+    const initScoreboard = (gid) => {
+        // needs a game ID in order to launch
+        gameID = gid.replace('/game-', '');
+        console.log(`initScoreboard: ${gid} ${gameID}`);
+        if (gameID) {
+            init();
+        }
+    };
 
-    socket.on('gameUpdate', (game) => {
-        onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
-    });
-    init();
+    window.initScoreboard = initScoreboard;
+    window.getScoresSummary = processData;
+//    init();
 });
