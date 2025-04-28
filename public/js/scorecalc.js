@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const updateScores = (g) => {
         console.log('update scores scorecalc', Boolean(g), typeof(g), g);
-        if (Boolean(g)) {
+        if (typeof(g) === 'object') {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
                 scores = g.scores;
