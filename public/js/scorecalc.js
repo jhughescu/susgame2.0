@@ -592,6 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const updateScores = (g) => {
+//        alert(`no game found (${g.address}) - check that the dashboard is running`);
         if (g) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
@@ -599,10 +600,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 scorePackets = createScorePackets();
 
             }
-//            console.log('hup', g);
             updateScoreboard();
         } else {
-            alert('no game f0und - check that the dashboard is running');
+            console.log(`no game found (${g.address}) - check that the dashboard is running`);
         }
     };
     const getScoresFromBoard = () => {
