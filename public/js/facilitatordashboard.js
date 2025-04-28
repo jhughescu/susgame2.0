@@ -1943,7 +1943,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const renderScoreboard = async () => {
-        renderTemplate('facilitateScoresContent', 'scoresLaunch', {}, () => {
+        renderTemplate('facilitateScoresContent', 'scoreslaunch', {}, () => {
             $('#facilitateScoresContent').find('button').off('click').on('click', () => {
 //                renderTemplate('scoreframe', 'facilitator.scoreboard', {});
                 const rOb = {x: 100, y: 100, w: 980, h: 290, data: {preventTemplate: true, launchMethod: 'renderScoreboard'}};
