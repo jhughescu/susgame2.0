@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 F.removeClass('active');
                 setTimeout(() => {
                     $('.input.selected').removeClass('selected');
-                }, 1500);
+                }, 1500);F
             });
         });
     };
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const updateScores = (g) => {
         console.log('update scores scorecalc', g);
-        if (g) {
+        if (Boolean(g)) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
                 scores = g.scores;
