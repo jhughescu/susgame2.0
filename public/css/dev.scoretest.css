@@ -1,46 +1,61 @@
 html, body {
-    background-color: white;
-    color: black;
-    font-family: 'arial';
+/*    background-color: white;*/
+/*    color: black;*/
+/*    font-family: 'arial';*/
 }
-td, th {
+.interactivescoreboard {
+/*    padding-top: 30px;*/
+    margin-top: 20px;
+}
+.interactivescoreboard td, .interactivescoreboard th {
     background-color: grey;
-}
-td, tr {
-    text-align: center;
     padding: 2px;
+    border: 3px solid white;
+    border-collapse: separate;
 }
-.blank, td.input {
+.interactivescoreboard td.clickable {
+    border: 3px solid white;
+    outline: 2px solid #0000c1;
+    outline-offset: -3px;
+    cursor: pointer;
+}
+.interactivescoreboard th {
+/*    background-color: grey;*/
+/*    padding: 2px;*/
+/*    border: 3px solid white;*/
+/*    border-collapse: separate;*/
+}
+.interactivescoreboard td, .interactivescoreboard tr {
+    text-align: center;
+/*    color: red;*/
+}
+.blank, .interactivescoreboard td.input {
     background-color: transparent;
 }
 input {
-    width: 30px;
+/*    width: 30px;*/
 }
-.res {
+.interactivescoreboard .res {
     background-color: yellow;
 }
-.sub {
+.interactivescoreboard .sub {
     background-color: #ffffa2;
 }
-.final {
+.interactivescoreboard .final {
     background-color: #78ff04;
 }
-.strong {
+.interactivescoreboard .strong {
     font-weight: bold;
 }
-.blank {
+.interactivescoreboard .blank {
     background-color: grey;
 }
-.blank.nofill {
+.interactivescoreboard .blank.nofill {
     background-color: transparent;
     width: 10px;
 }
-td.clickable {
-/*    background-color: red;*/
-    border: 2px solid #0000c1;
-    cursor: pointer;
-}
-td.selected {
+
+.interactivescoreboard td.selected {
     background-color: aqua;
 }
 #changeFormWrapper {
@@ -48,20 +63,24 @@ td.selected {
     position: absolute;
     top: 0px;
     left: 0px;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
 /*    background-color: blue;*/
 }
 #changeForm {
+    font-size: 0.9rem;
     position: relative;
     margin: 30px auto;
     padding: 10px;
-    width: 360px;
+    width: 450px;
     height: 160px;
     background-color: rgb(255, 255, 255);
     border-radius: 10px;
     border: 5px solid #333333;
+}
+#changeForm input {
+    width: 80px;
 }
 #changeFormWrapper.active {
     display: block;
@@ -72,3 +91,4 @@ td.selected {
     background-color: transparent;
     text-align: left;
 }
+

@@ -425,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     const restoreWidgets = () => {
+//        return;
         const w = Object.keys({ ...localStorage }).filter(i => i.includes('wid'));
         // Can't do it - widgets are launched by various methods which pass data, would have to locate/build data and find the method to launch widgets
 //        console.log(w);
@@ -434,6 +435,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (o.hasOwnProperty('launchMethod')) {
 //                    console.log(this);
 //                    console.log(o.launchMethod, typeof(this[o.launchMethod]) === 'function', typeof(this['launchAdvanced']) === 'function');
+                    // use delay to ensure readiness prior to reopening widgets
+                    setTimeout(() => {
+                        switch (o.launchMethod) {
+                            case 'launchScoreboard':
+                                if (o.open) {
+//                                    console.log(`launchScoreboardboard`);
+                                    launchScoreboard();
+                                }
+                                break;
+                        };
+                    }, 1000);
                 }
             });
         }
@@ -1939,53 +1951,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const outer = $(`#widgetinner${id}`).parent();
             const controls = inner.find('div');
             window.initScoreboard(game.address);
+            window.renderScoreboard('insertion');
 //            outer.css({height: `${controls.height() + 50}px`});
         });
     };
-    const renderScoreboard = async () => {
+    const launchScoreboard = () => {
+        const rOb = {x: 100, y: 100, w: 980, h: 290, data: {preventTemplate: true, launchMethod: 'launchScoreboard'}};
+        const id = 'facilitator-scoreboard';
+        addWidget(id, rOb, (w) => {
+            renderScoreFrame();
+        });
+    };
+    const renderScoreboardLaunch = async () => {
         renderTemplate('facilitateScoresContent', 'scoreslaunch', {}, () => {
             $('#facilitateScoresContent').find('button').off('click').on('click', () => {
-//                renderTemplate('scoreframe', 'facilitator.scoreboard', {});
-                const rOb = {x: 100, y: 100, w: 980, h: 290, data: {preventTemplate: true, launchMethod: 'renderScoreboard'}};
-                const id = 'facilitator-scoreboard';
-//                console.log('i want to add a widget')
-                addWidget(id, rOb, (w) => {
-                    renderScoreFrame();
-                });
+                launchScoreboard();
             });
         });
-        /*developScores3((sp) => {
-            renderTemplate('facilitateScoresContent', 'dev_scoretest', {teams: [0, 1, 2, 3, 4]}, () => {
-                updateScoreboard();
-            });
-        });
-        */
-        /*
-        developScores2(o => {
-            o = JSON.parse(JSON.stringify(o));
-            o.forEach(t => {
-                for (var i in t) {
-                    if (typeof(t[i]) === 'number') {
-                        t[i] = Math.round(t[i] * 100) / 100;
-                    }
-                }
-            });
-            const newOb = {totalsObject: o};
-//            console.log(newOb);
-            renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
-                document.querySelectorAll('.aligndecimal').forEach(function(el) {
-                    let number = el.textContent.trim();
-                    let [integer, decimal] = number.split('.');
-                    if (!decimal) {
-                        decimal = ''; // Make sure decimal is defined
-                    }
-                    let paddedNumber = `${integer.padStart(3, '\u00A0')}${parseInt(number) === parseFloat(number) ? '\u00A0': '.'}${decimal.padEnd(1, '\u00A0')}`;
-                    $(el).html(paddedNumber);
-                });
-
-            });
-        });
-        */
     };
     const renderScoreboardV1 = async () => {
         developScores2(o => {
@@ -2291,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         launchAdvanced();
                     });
                     window.createCopyLinks();
-                    renderScoreboard();
+                    renderScoreboardLaunch();
                 });
             }
         } else {
@@ -2740,7 +2722,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            window.setupAllocationControl();
 //        });
     };
-    window.rScores = renderScoreboard;
+//    window.rScores = renderScoreboard;
     window.rf = renderFacilitate;
 
 //    window.oo = exportResults

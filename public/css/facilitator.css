@@ -131,7 +131,7 @@ position: relative;
     font-size: 0.8rem;
     text-align: left;
 }
-.playerlist td, th {
+.playerlist td, .playerlist th {
 /*    background-color: green;*/
     padding: 5px 20px 0px 0px;
     padding: 0px;

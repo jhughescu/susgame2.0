@@ -130,9 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         storeState();
     };
     const processData = () => {
-        // creates a scores object for display
-//        console.log('~~~~~~~~~~~~~~~~~ PROCESS DATA ~~~~~~~~~~~~~~~~~~~~');
-//        console.log(scores)
+//        console.log(`processData`);
         const out = {};
         const T = 5;
         const gtv = getTotalVals;
@@ -143,20 +141,17 @@ document.addEventListener('DOMContentLoaded', function () {
         let shArray = new Array();
         let shTotal = new Array(5).fill(0);
         let c = 0;
+//        for (let i = 0; i < T; i++) {
+//            const t = gtv(gss(i, grs(1)));
+//            console.log(t);
+//        }
         for (let i = 0; i < T; i++) {
-//            const a1 = gsv(grs(1)[i]);
-//            const a1 = gsv(gds(i, grs(1))[0]);
             const a1 = gds(i, grs(1))[0];
             const a2 = gds(i, grs(3))[0];
-//            const a2 = gsv(grs(3)[i]);
             const t = gtv(gds(i, grs(4)));
             const at = gtv(gds(i, grs(3))) + gtv(gds(i, grs(4))); /* formula N */
-            //const pv1_1 = gss(5, grs(2))[i]; /* first PV1 score  */
-            //const pv1_2 = gss(6, grs(2))[i]; /* first PV2 score  */
             const pv1_1 = gds(i, gss(5, grs(2)))[0]; /* first PV1 score  */
             const pv1_2 = gds(i, gss(6, grs(2)))[0]; /* first PV2 score  */
-//            console.log(`pv1_1: ${pv1_1}`, pv1_1, gsv(gds(i, gss(6, grs(2)))[0]));
-//            console.log(`pv1_2: ${pv1_2}`, pv1_2);
             const pvt1 = gtv(gds(i, grs(2))); /* first PV total */
             const apv1 = gsv(a1) * pvt1;
             const collArray = gds(i, grs(4));
@@ -165,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const pv2_2 = gds(i, gss(6, grs(5)))[0]; /* second PV2 score  */
             const pvt2 = gtv(gds(i, grs(5))); /* second PV total */
             const acpvf = (gtv(gds(i, grs(3))) + gtv(gds(i, grs(4)))) * gtv(gds(i, grs(5))); /* formula P */
-//            console.log('share loop');
             for (let j = 0; j < T; j++) {
                 const coll = gds(i, grs(4));
                 const coll2 = gds(i, collArray);
@@ -174,12 +168,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 collScores.push(collScore);
                 const sc = gsv(gss(j, coll)[0]);
                 const f = (sc / at) * acpvf;
-//                console.log(`${i}, ${j}, ${sc} / ${at} = ${(sc / at)}, acpvf: ${acpvf}, result: ${f}`);
                 shArray.push({sh: i === j ? 0 : f});
                 if (!isNaN(f)) {
                     shTotal[i] += f;
                 }
             };
+            const rExp1 = gtv(gss(i, grs(1)));
             out[`r${i}`] = {
                 t: teams[i].title,
                 a1: a1,
@@ -196,47 +190,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 pvt2: pvt2,
                 allCollPV: acpvf,
                 shTotal: shTotal,
-                shArray: []
+                shArray: [],
+                teamExpR1: rExp1
             };
-//            console.log(out[`r${i}`]);
         }
-//        console.log(shArray);
         Object.values(out).forEach((r, i) => {
-//            console.log('share loop', i);
             for (let j = 0; j < T; j++) {
                 const n = shArray[(j * T) + i].sh;
                 r.shArray.push(n);
-//                console.log(((j * T) + i), r.shArray);
             }
             r.shTotal = r.shArray.reduce((total, num) => total + (isNaN(num) ? 0 : num), 0);
-                r.scorePlusShare = r.shTotal + r.allCollPV;
-                r.grandTotal = r.scorePlusShare + r.total2030;
-            });
-        Object.values(out).forEach((r, i) => {
-            if (i === 0) {
-                Object.entries(r).forEach((e, j) => {
-//                    console.log('-', e[0], e[1]);
-                });
-            }
+            r.scorePlusShare = r.shTotal + r.allCollPV;
+            r.grandTotal = r.scorePlusShare + r.total2030;
         });
 //        console.log(out);
         return out;
     };
 //    window.getScoresSummary = processData;
     const renderFormSummary = (o) => {
+        console.log(o)
         const S = $('#formSummary');
         const T = game.persistentData.teamsArray;
 //        console.log(S);
         let s = '<table class="formSummary">';
         s += `<tr><td>round:</td><td>${o.round}</td></tr>`;
         s += `<tr><td>source:</td><td>${T[o.src].title} (${T[o.src].id})</td></tr>`;
-        s += `<tr><td>dest:</td><td>${T[o.dest].title} (${T[o.dest].id})</td></tr>`;
+        s += `<tr><td>target:</td><td>${T[o.dest].title} (${T[o.dest].id})</td></tr>`;
+        s += `<tr><td>remaining:</td><td>${o.remain}</td></tr>`;
         s += '</table>';
         S.html(s);
 //        console.log(game);
     };
     const openForm = (o) => {
+//        console.log(o);
+//        console.log(game);
+        const team = game.persistentData.teamsArray[o.scoreSub.src];
+//        console.log(team);
         const F = $('#changeFormWrapper');
+        const inp = F.find('input');
         F.addClass('active');
         F.off('click').on('click', function () {
             $(this).removeClass('active');
@@ -247,30 +238,38 @@ document.addEventListener('DOMContentLoaded', function () {
             e.stopPropagation();
         });
         F.find('#changeMsg').html(o.msg);
-        F.find('input').val(o.val);
+        inp.val(o.val);
         F.find('button').data('scoreData', o);
+        o.scoreSub.remain = team.votes - justNumber(o.val);
         renderFormSummary(o.scoreSub);
+        inp.on('change', () => {
+            console.log(inp.val());
+            renderFormSummary(Object.assign(o.scoreSub, {remain: team.votes - justNumber(inp.val())}));
+        });
         F.find('button').off('click').on('click', function () {
-            const sd = $(this).data('scoreData');
-            const sp = sd.sp;
-            const score = o.scoreSub;
-            score.val = window.justNumber(F.find('input').val());
-            const sc = createScore(score.round, score.src, score.dest, score.val, score.client);
-            console.log(sc);
-            console.log(score);
-//            return
-            socket.emit('forceScore', {scoreCode: sc, scorePacket: score, game: game.uniqueID}, (o) => {
-                game.scores = o;
-                updateScores(game);
-                F.removeClass('active');
-                setTimeout(() => {
-                    $('.input.selected').removeClass('selected');
-                }, 1500);F
-            });
+            const ok = o.scoreSub.remain >= 0;
+            if (ok) {
+                const sd = $(this).data('scoreData');
+                const sp = sd.sp;
+                const score = o.scoreSub;
+                score.val = window.justNumber(F.find('input').val());
+                const sc = createScore(score.round, score.src, score.dest, score.val, score.client);
+                socket.emit('forceScore', {scoreCode: sc, scorePacket: score, game: game.uniqueID}, (o) => {
+                    game.scores = o;
+                    updateScores(game);
+                    F.removeClass('active');
+                    setTimeout(() => {
+                        $('.input.selected').removeClass('selected');
+                    }, 1500);
+                });
+            } else {
+                alert(`The team in question doesn't have enough remaining resources, please adjust before trying again.`)
+            }
         });
     };
     const makeClickables = (boo) => {
 //        console.log(`makeClickables`, boo);
+//        console.log(game)
         $('.input').off('click');
         $('#all').html(boo ? 'Full Edit Mode' : 'Single Score Edit Mode')
         if (boo) {
@@ -293,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (roundClicked > game.round) {
                         msg = `This round has not yet been started.`
                     } else {
-                        msg = ` it is probably OK to set this score.`;
+                        msg = `It is probably safe to set or overwrite this score.`;
                         safeScore = true;
                     }
                 }
@@ -515,27 +514,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 };
     const getAndRenderGame = () => {
-        console.log('getting game to render', gameID)
+//        console.log('getting game to render', gameID);
+//        console.log(socket)
         socket.emit('getGame', gameID, (m) => {
-            console.log('i have the game, render can complete');
-            console.log(m);
+//            console.log('i have the game, render can complete');
+//            console.log(m);
             updateScores(m);
         });
     };
-    const init = () => {
-//        console.log(`init`);
-        socket = io('', {
-            query: {
-                role: 'scoretest',
-                id: gameID
-            }
-        });
-        console.log('socket', socket);
-        socket.on('gameUpdate', (game) => {
-            console.log('update heard')
-            onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
-        });
-        window.renderTemplate('insertion', 'dev_scoretest', { teams: teams }, () => {
+    const renderScoreboard = (id) => {
+//        console.log('render');
+        window.renderTemplate(id, 'dev_scoretest', { teams: teams }, () => {
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);
             $('#all').off('click').on('click', toggleEditable);
@@ -552,6 +541,22 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             getAndRenderGame();
         });
+    };
+    const init = () => {
+//        console.log(`scorecalc init`);
+        socket = io('', {
+            query: {
+                role: 'scoretest',
+                id: gameID
+            }
+        });
+//        console.log('socket', socket);
+        socket.on('gameUpdate', (game) => {
+//            console.log('update heard');
+            onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
+        });
+        return;
+
     };
     const initV1 = () => {
         socket.emit('getGame', gameID, (m) => {
@@ -607,9 +612,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     };
-    const updateScores = async (g) => {
-        console.log('update scores scorecalc', Boolean(g), typeof(g), (typeof(g) === 'object'), g);
-        if (typeof(g) === 'object' || 1 < 4) {
+    const updateScores = (g) => {
+//        console.log('update scores scorecalc', g);
+        if (g) {
             game = g;
             if (g.scores.sort().toString() !== scores.sort().toString()) {
                 scores = g.scores;
@@ -658,18 +663,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const onUpdate = (game) => {
-        console.log('an update', game);
+//        console.log('an update', game);
         updateScores(game);
     }
     const initScoreboard = (gid) => {
         // needs a game ID in order to launch
         gameID = gid.replace('/game-', '');
-        console.log(`initScoreboard: ${gid} ${gameID}`);
+//        console.log(`initScoreboard: ${gid} ${gameID}`);
         if (gameID) {
             init();
         }
     };
-
+    window.renderScoreboard = renderScoreboard;
     window.initScoreboard = initScoreboard;
     window.getScoresSummary = processData;
 //    init();

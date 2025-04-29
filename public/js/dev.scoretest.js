@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    return;
     const getVal = (id) => {
         return parseInt($(`#${id}`).val()); // Fixed template literal issue
     };
