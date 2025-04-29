@@ -682,61 +682,56 @@ const assignToNextTeam = (game, p, ID) => {
     // 2025 method; players to be assigned to teams in order of arrival
     // Read teams, create if it doesn't exist
     // 5 main teams, sort on size, add player to first (smallest) team
-    // Once teams has length 5 and each el is teamSize create 2 new teams and assign all subsequent to these alternately
-//    console.log(`>>>>>>>>>>>>>>>>>> assignToNextTeam`, p, ID);
-//    console.log(game.players);
 //    console.log(game.teams);
     const PD = game.persistentData;
     const ts = game.mainTeamSize === undefined ? 5 : game.mainTeamSize;
     const playersFullNotReady = game.players.length > 0 && Object.values(game.playersFull).length === 0;
-    if (!playersFullNotReady || game.teams.length === 0) {
-//        console.log(`playersFull is ready to go OR teams undefined, we can set up teams`);
-        if (game.teams.flat().includes(ID)) {
-//            console.log(`player ${ID} already registered for a team`);
-        } else {
-            if (game.teams.length === 0) {
-//                console.log(`teams not defined, create from scratch`);
-                game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
-                game.teams[0].push(ID);
+    if (!PD) {
+        console.log('failure in assignToNextTeam - no persistentData found');
+    } else {
+        if (!playersFullNotReady || game.teams.length === 0) {
+            if (game.teams.flat().includes(ID)) {
+    //            console.log(`player ${ID} already registered for a team`);
             } else {
-//                console.log(`teams length = ${game.teams.length}`);
-                if (game.teams.filter(t => t.length < ts).length === 0) {
-//                    console.log('all main teams maxxed');
-                    // all main teams at max, add & begin building the 2 secondary teams
-                    const gt = game.teams;
-                    if (gt.length < Object.values(PD.teams).length) {
-                        gt.push([], []);
-                    }
-                    const st1 = gt[gt.length - 1];
-                    const st2 = gt[gt.length - 2];
-                    if (st1.length <= st2.length) {
-                        st1.push(ID);
-                    } else {
-                        st2.push(ID);
-                    }
-
+                if (game.teams.length === 0) {
+    //                console.log(`teams not defined, create from scratch`);
+                    game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
+                    game.teams[0].push(ID);
                 } else {
-//                    console.log('main teams not yet filled')
-                    game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
+    //                console.log(`teams length = ${game.teams.length}`);
+                    if (game.teams.filter(t => t.length < ts).length === 0) {
+    //                    console.log('all main teams maxxed');
+                        // all main teams at max, add & begin building the 2 secondary teams
+                        const gt = game.teams;
+                        if (gt.length < Object.values(PD.teams).length) {
+                            gt.push([], []);
+                        }
+                        const st1 = gt[gt.length - 1];
+                        const st2 = gt[gt.length - 2];
+                        if (st1.length <= st2.length) {
+                            st1.push(ID);
+                        } else {
+                            st2.push(ID);
+                        }
+
+                    } else {
+    //                    console.log('main teams not yet filled')
+                        game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
+                    }
                 }
             }
+            const fullTeamStack = game.teams.length === PD.mainTeams.length + PD.secondaryTeams.length;
+            const allTeamsOccupied = game.teams.filter(t => t.length === 0).length === 0;
+            // NOTE not getting called because this block only runs when setting up the PV teams.
+            // INSTEAD add a new conditional which checks for teams.length against full team size (main + secondary) and only then looks for empty teams
+            if (fullTeamStack && allTeamsOccupied) {
+                onTeamsAssigned(game.teams, game);
+            }
+            const uo = {teams: game.teams};
+            sessionController.updateSession(game.uniqueID, uo);
+        } else {
+            console.log(`can't set teams up yet, players exist but playersFull does not`);
         }
-
-        const fullTeamStack = game.teams.length === PD.mainTeams.length + PD.secondaryTeams.length;
-        const allTeamsOccupied = game.teams.filter(t => t.length === 0).length === 0;
-        // NOTE not getting called because this block only runs when setting up the PV teams.
-        // INSTEAD add a new conditional which checks for teams.length against full team size (main + secondary) and only then looks for empty teams
-//        console.log(`assignToNextTeam - number of teams: ${game.teams.length}, number of EMPTY teams: ${game.teams.filter(t => t.length === 0).length}, fullTeamStack? ${fullTeamStack}, allTeamsOccupied? ${allTeamsOccupied}`);
-        if (fullTeamStack && allTeamsOccupied) {
-            onTeamsAssigned(game.teams, game);
-        }
-
-
-        const uo = {teams: game.teams};
-        sessionController.updateSession(game.uniqueID, uo);
-//        console.log(game.teams);
-    } else {
-        console.log(`can't set teams up yet, players exist but playersFull does not`);
     }
 };
 
