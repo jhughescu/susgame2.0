@@ -9,7 +9,7 @@
         {"id": "7", "type": "image", "src": "slide_img_03.jpg", "title": "2030 Headlines Still"},
         {"id": "8", "type": "video", "srcRef": "v18", "title": "Post-2030 Headlines"},
         {"id": "7", "type": "image", "src": "slide_img_04.jpg", "title": "Post-2030 Headlines Still (updates devices)", "action": "startRound:1", "note": "Only available in sequence"},
-        {"id": "10", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Teams Allocation", "action": "showRound1", "trigger": "scoreRound:1"},
+        {"id": "10", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Teams Allocation", "actionNO": "showAllocation:1", "action": "showRound1", "trigger": "scoreRound:1"},
         {"id": "11", "type": "video", "srcRef": "v19", "title": "Post-2030 Headlines PV"},
         {"id": "12", "type": "image", "src": "slide_img_10.jpg", "title": "Post-2030 Headlines PV Still (updates devices)", "action": "startRound:2", "note": "Only available in sequence"},
         {"id": "13", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Allocation results", "action": "renderTotals:2", "trigger": "scoreRound:2"},

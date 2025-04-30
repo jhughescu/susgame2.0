@@ -260,14 +260,14 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`let's update the game:`, JSON.parse(JSON.stringify(game)).teams);
     };
     const onScoreChange = (diff) => {
-        console.log(`score change detected:`);
+//        console.log(`score change detected:`);
 
         if (diff.length > 1) {
             console.warn(`multiple score changes detected - should not be possible, check code`);
         }
         const sc = diff.map(unpackScore)[0];
         window.findRoundTrigger(sc.round);
-        renderScoreboard();
+        window.renderScoreboard('insertion');
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
     const onGameUpdate = (g) => {
@@ -1366,9 +1366,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
                         tOb.game = game;
+//                        console.log(game.playersFull);
+//                        console.log(game.teams);
+//                        console.log(round);
+//                        console.log(round.type === 1);
+//                        console.log(tOb)
+//                        console.log(tOb.teamObj.id)
+//                        console.log(pl)
                         pl.teamObj = Object.assign({}, tOb.teamObj);
                         $('#formname').html(tOb.teamObj.title);
-                        console.log(`render game-${round.template}`);
+//                        console.log(`render game-${round.template}`);
 //                        console.log(tOb);
                         tOb.dynamicTeamData = window.createDynamicTeamData();
                         renderPartial('formzone', `game-${round.template}`, tOb, () => {
@@ -1377,8 +1384,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 height: '30px',
                                 'background-color': 'green'
                             });
-                            console.log(round);
-                            console.log(round.type);
+//                            console.log(round);
+//                            console.log(round.type);
                             if (round.type === 1) {
                                 if (round.n === roundRef.COLLAB) {
                                     window.setupCollaborationControl(pl)
@@ -1950,7 +1957,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const inner = $(`#widgetinner${id}`);
             const outer = $(`#widgetinner${id}`).parent();
             const controls = inner.find('div');
-            window.initScoreboard(game.address);
+            window.initScoreboard(game.address, 'dashboard', game);
             window.renderScoreboard('insertion');
 //            outer.css({height: `${controls.height() + 50}px`});
         });
@@ -2213,22 +2220,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const renderSlidelist = (game) => {
-//        console.log(`renderSlidelist (new)`);
+//        console.log('renderSlidelist', game);
         let sl = game.presentation.slideData.slideList.slice(0);
         sl.forEach((s, i) => {
             s._titleSimple = s.title;
             s.title = s.title.replace(/\(/gm, '<span class="hint">(').replace(/\)/gm, ')</span>');
             sl[i] = window.reorderObject(s, '_titleSimple');
         });
-//        console.log(`renderFacilitate`, sl);
-//        console.log(`slidelist length: ${sl.length}`);
         // 20250325 don't render any slides marked as 'exclude'
         const sla = sl.filter(s => !s.exclude);
-//        console.log(`slidelist length: ${sla.length}`);
 //        console.log(sla);
         renderTemplate(`slidelist`, `facilitator.slidelist`, sla, () => {
             $('#tabFacilitate').css({height: '700px'});
-            slideContolsInit(game);
+            window.slideContolsInit(game);
             window.updateSlideList();
         });
     };

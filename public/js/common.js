@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     } else {
                         const tID = myPlayer.teamObj.id;
                         let t = myPlayer.teamObj.id;
-                        const vob = {game: game.uniqueID, values: {team: t, action: actionV, description: descV}};
+                        const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
                         socket.emit('submitValues', vob);
                         const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
 //                        console.log(`click the button, submit the score`);

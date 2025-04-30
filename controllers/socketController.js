@@ -653,27 +653,24 @@ function initSocket(server) {
          // end session display client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if (Q.role === 'scoretest') {
-//            console.log('score test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-//            console.log(Q);
-//            console.log(Q.id);
-//            console.log(gameController.getGameWithAddress(Q.id))
-            const roomID = `/game-${Q.id}-scoreSetter`;
-            socket.join(roomID);
-//            console.log('room size', showRoomSize(roomID));
-            socket.on('sendScores', (o, cb) => {
-//                console.log('scores Sent');
-                gameController.onScoresSent(o, cb);
-            });
-            socket.on('getGame', (o, cb) => {
-//                console.log('##########################################');
-                cb(gameController.getGameWithAddress(`/game-${o}`));
-//                console.log(gameController.getGameWithUniqueID(`/game-${o}`));
-//                console.log('##########################################');
-            });
-            socket.on('forceScore', (o, cb) => {
-                gameController.forceScore(o, cb);
-            });
+        if (Q.role) {
+            if (Q.role.split('.')[0] === 'scoretest') {
+                const id = Q.id.replace('game-', '');
+                const roomID = `/game-${id}-scoreSetter`;
+                socket.join(roomID);
+    //            console.log('############################## scoretest room size', roomID, showRoomSize(roomID));
+                socket.on('sendScores', (o, cb) => {
+    //                console.log('scores Sent');
+                    gameController.onScoresSent(o, cb);
+                });
+                socket.on('getGame', (o, cb) => {
+    //                console.log('try to get the game');
+                    cb(gameController.getGameWithAddress(`/game-${o}`));
+                });
+                socket.on('forceScore', (o, cb) => {
+                    gameController.forceScore(o, cb);
+                });
+            }
         }
         // end scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

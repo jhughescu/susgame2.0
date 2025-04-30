@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let base = null;
     let output = null;
     const setGame = (g) => {
-//        console.log('%cset game now', 'background-color: black; color: green; font-weight: bold;')
+        console.log('%cset game now', 'background-color: black; color: green; font-weight: bold;')
         game = g;
         slides = game.presentation.slideData.slideList;
         presentation = game.presentation;
@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const event = rg._updateSource.event.split(' ').reverse()[0];
         const allowedEvents = ['startRound', 'endRound', 'presentationAction'];
         const isAllowed = allowedEvents.some(term => event.includes(term));
+        game = rg;
         if (isAllowed) {
 //            \/ timeout used to ensure game has updated before this code runs
             setTimeout(() => {
@@ -77,6 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const updateSlidelist = () => {
         // knock out any excluded slides
         const sl = slides.slice().filter(s => !s.exclude);
+//        console.log('slideObjects');
+//        console.log(game);
         $('.slide_link').each((i, s) => {
             const slOb = sl[i];
             slOb.isEnabled = true;
@@ -102,7 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (game.teams.length === 0) {
                         slOb.isEnabled = false;
                     }
-                    slOb.title = `${slOb.title.includes('(R') ? '' : '(R' + slR + ') '}${slOb.title}`
+                    slOb.title = `${slOb.title.includes('(R') ? '' : '(R' + slR + ') '}${slOb.title}`;
+//                    console.log(slOb);
                 }
             }
             slOb.title = `${slOb.type === 'video' && !slOb.title.includes('-symbols-') ? '<span class="slideicon material-symbols-outlined">movie</span>' : ''}${slOb.title}`;

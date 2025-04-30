@@ -65,14 +65,30 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     };
+    const getScorePackets = () => {
+        let sp = null;
+        if (scorePackets.length > 0) {
+            sp = scorePackets;
+        } else {
+            if (game) {
+                scores = game.scores;
+                scorePackets = createScorePackets();
+                sp = scorePackets;
+            }
+        }
+//        console.log(`getScorePackets`, sp);
+        return sp;
+    };
     const getRoundScores = (r, a) => {
 //        const A = a || scores;
-        const A = a || scorePackets;
+        const A = a || getScorePackets();
         let sc = [];
-        if (typeof(A[0]) === 'string') {
-            sc = A.filter(s => parseInt(s.split('_')[0]) === parseInt(r));
-        } else {
-            sc = A.filter(s => s.round === parseInt(r));
+        if (A) {
+            if (typeof(A[0]) === 'string') {
+                sc = A.filter(s => parseInt(s.split('_')[0]) === parseInt(r));
+            } else {
+                sc = A.filter(s => s.round === parseInt(r));
+            }
         }
         return sc;
     };
@@ -131,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const processData = () => {
 //        console.log(`processData`);
+//        console.log(game)
         const out = {};
         const T = 5;
         const gtv = getTotalVals;
@@ -516,14 +533,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const getAndRenderGame = () => {
 //        console.log('getting game to render', gameID);
 //        console.log(socket)
-        socket.emit('getGame', gameID, (m) => {
-//            console.log('i have the game, render can complete');
-//            console.log(m);
-            updateScores(m);
-        });
+        if (socket) {
+            socket.emit('getGame', gameID, (m) => {
+    //            console.log('i have the game, render can complete');
+    //            console.log(m);
+                updateScores(m);
+            });
+        }
     };
     const renderScoreboard = (id) => {
-//        console.log('render');
+//        console.log('renderScoreboard', id);
         window.renderTemplate(id, 'dev_scoretest', { teams: teams }, () => {
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);
@@ -542,21 +561,20 @@ document.addEventListener('DOMContentLoaded', function () {
             getAndRenderGame();
         });
     };
-    const init = () => {
-//        console.log(`scorecalc init`);
+    const init = (clientID) => {
         socket = io('', {
             query: {
-                role: 'scoretest',
+                role: `scoretest.${clientID}`,
                 id: gameID
             }
         });
-//        console.log('socket', socket);
         socket.on('gameUpdate', (game) => {
-//            console.log('update heard');
             onUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
         });
-        return;
-
+        socket.on('scoresUpdate', (game) => {
+            onScoresUpdate(window.clone(Object.assign({method: 'gameUpdate'}, game)));
+        });
+//        console.log(socket);
     };
     const initV1 = () => {
         socket.emit('getGame', gameID, (m) => {
@@ -621,7 +639,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 scorePackets = createScorePackets();
 
             }
+//            console.log('new game', game);
             updateScoreboard();
+//            console.log(processData());
         } else {
             console.log(`no game found - check that the dashboard is running`);
         }
@@ -666,12 +686,29 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log('an update', game);
         updateScores(game);
     }
-    const initScoreboard = (gid) => {
+    const onScoresUpdate = (game) => {
+//        console.log('a score update', game);
+        updateScores(game);
+    }
+    const initScoreboard = (gid, cid, g) => {
         // needs a game ID in order to launch
-        gameID = gid.replace('/game-', '');
-//        console.log(`initScoreboard: ${gid} ${gameID}`);
-        if (gameID) {
-            init();
+        // also needs a client ID to differentiate between instances.
+        // can take an optional arg 'g' which is a game object
+//        console.log(`initScoreboard`);
+        if (cid === undefined) {
+
+            console.log('client ID must be provided as second arg in initScoreboard');
+        } else {
+//            console.log('all good');
+            gameID = gid.replace('/game-', '');
+    //        console.log(`initScoreboard: ${gid} ${gameID}`);
+            if (gameID) {
+                init(cid);
+            }
+            if (g) {
+//                console.log(`game established`, g);
+                game = g;
+            }
         }
     };
     window.renderScoreboard = renderScoreboard;

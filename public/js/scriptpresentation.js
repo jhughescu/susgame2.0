@@ -30,22 +30,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (rgame) {
                 game = rgame;
             }
-//            console.log(`on setGame:`);
-//            console.log(game);
             if (game) {
-//                console.log(game);
                 const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
                 if (initSlide) {
-//                    console.log('init', initSlide);
                     showSlide(initSlide);
                 }
                 setStorePrefix();
-//                console.log('store thing sought:', getStorePrefix());
-//                console.log(localStorage.getItem(`${getStorePrefix()}-watch`));
                 if (localStorage.getItem(`${getStorePrefix()}-watch`)) {
-//                    console.log('store thing found')
                     setWatch(localStorage.getItem(`${getStorePrefix()}-watch`));
                 }
+                window.initScoreboard(getSessionID(), 'presentation', game);
             }
         });
         socket.on('gameReady', (rGame) => {
@@ -66,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
             onScoreUpdate(sp);
         });
         socket.on('showSlide', (slOb) => {
-            console.log(`socket event`, slOb)
+//            console.log(`socket event`, slOb)
             showSlide(slOb);
         });
         socket.on('updateProperty', (slOb) => {
@@ -173,13 +167,12 @@ document.addEventListener('DOMContentLoaded', function () {
 //            estPanopto();
             toggleOverlay();
             estSocket();
-
         }, 500);
     };
     const showScores = () => {
         socket.emit('getScores', `game-${game.uniqueID}`, (s) => {
-            console.log(`showScores callback`);
-            console.log(s);
+//            console.log(`showScores callback`);
+//            console.log(s);
             renderTemplate('insertion', 'slides/showscores', s);
         })
     };
@@ -223,6 +216,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let rArr = [];
         let v = game.values;
         let s = sc ? sc : game.scores;
+//        console.log(v);
+//        v = v.filter(p => p.round === 1);
+//        console.log(v);
 //        console.log(`scores values match? ${v.length === s.length}`);
 
         if (v.length !== s.length) {
@@ -231,12 +227,16 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             return false;
         }
+
         s = filterScorePackets(s, 'round', 1);
+//        console.log(s);
         let sStatic = s.slice(0);
         if (v && s) {
             v = sortByProperty(v, 'team');
             s = sortByProperty(s, 'src');
+//            console.log(s)
             v.forEach((vu, i) => {
+//                console.log(s[i]);
                 const ob = {
                     team: vu.team,
                     title: t[vu.team].title,
@@ -254,6 +254,55 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(`prepScoresR1`);
 //        console.log(sStatic);
 //        console.log(v);
+        sStatic.forEach(sp => {
+            const vl = v.find(obj => obj.team === sp.src);
+            if (vl) {
+                const ob = {
+                    team: sp.src,
+                    title: t[sp.src].title,
+                    action: vl.action,
+                    description: vl.description,
+                    value: sp.val,
+                    teamObj: t[sp.src]
+                };
+                rArrNew.push(ob);
+            } else {
+                console.warn(`no vl found`)
+            }
+        });
+        return rArrNew;
+    };
+    const prepAllocations = (n, sc) => {
+        // prep votes & values for rendering. Takes a required 'n' and an optional 'sc' arg.
+        // Returns an array of objects
+        // NOTE "values" are always set prior to "scores", so "values" can be assumed here
+        const t = game.persistentData.teamsArray;
+        let rArr = [];
+        let v = game.values;
+        let s = sc ? sc : game.scores;
+        v = v.filter(p => p.round === n);
+        s = filterScorePackets(s, 'round', n);
+//        console.log(s);
+        let sStatic = s.slice(0);
+        if (v && s) {
+            v = sortByProperty(v, 'team');
+            s = sortByProperty(s, 'src');
+            v.forEach((vu, i) => {
+//                console.log(s[i]);
+                const ob = {
+                    team: vu.team,
+                    title: t[vu.team].title,
+                    action: vu.action,
+                    description: vu.description,
+                    value: s[i].val,
+                    teamObj: t[vu.team]
+                }
+                rArr[i] = ob;
+            });
+        }
+        let rArrNew = [];
+        // use only r[n] scores:
+        sStatic = filterScorePackets(sStatic, 'round', n);
         sStatic.forEach(sp => {
             const vl = v.find(obj => obj.team === sp.src);
             if (vl) {
@@ -297,7 +346,13 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const showRound1 = () => {
-//        console.log('showRound1');
+        showAllocationSlide(1);
+    };
+    const showRound3 = () => {
+        showAllocationSlide(3);
+    };
+    const showRound1V1 = () => {
+        console.log('showRound1');
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 1);
@@ -388,17 +443,16 @@ document.addEventListener('DOMContentLoaded', function () {
     let delay = null;
     const showRound3Delay = () => {
         console.log(`%cHIT IT`, 'color: yellow;')
-    }
-    const showRound3 = () => {
+    };
+    const showRound3V1 = () => {
         clearTimeout(delay);
         delay = setTimeout(showRound3Delay, 1000);
         setWatch('scores');
-        console.log(`showRound3`)
+        console.log(`showRound3`);
         const mt = game.persistentData.mainTeams;
         const t = game.persistentData.teamsArray.slice(0, mt.length);
         const fsp = window.filterScorePackets;
         const v = game.values;
-//        console.log(v);
         const outArr = [];
         const outOb = {};
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
@@ -408,9 +462,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(rs);
                 console.log(sr3);
                 t.forEach(tm => {
-//                    console.log(`%c${tm.title.toUpperCase()}`, 'color: green;');
-//                    console.log(tm.title, fsp(sr3, 'dest', tm.id));
-//                    const otherTeams = t.filter(ot => ot.id !== tm.id);
                     const otherTeams = t.slice(0);
                     const ac = v.filter(vp => vp.team === tm.id)[0];
                     const o = {
@@ -423,8 +474,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
                     otherTeams.forEach(ot => {
                         const tv = fsp(fsp(sr3, 'dest', tm.id), 'src', ot.id);
-//                        console.log(ot.title, tv);
-
                         o.votes.push({
                             id: ot.id,
                             title: ot.title,
@@ -436,18 +485,139 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     outArr.push(o);
                 });
-//                console.log(outArr);
                 outArr.forEach((tm, i) => {
                     outOb[`card_${i}`] = tm;
                 });
                 console.log(`call the render`);
                 renderTemplate(targ, 'slides/showround3', outOb, () => {
-//                    console.log(outOb);
                     console.log(`render complete`)
                 });
             });
         });
     };
+    let alloCount = 0;
+    const showAllocationSlide = (n) => {
+//        console.log(`showRound${n}, ${game.round}`);
+        setWatch('scores');
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', n);
+            socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+                rs = filterScorePackets(rs, 'round', n);
+                const allScores = prepAllocations(n, rs);
+//                console.log(allScores);
+                if (!allScores) {
+                    console.log('fail due to values not being in place yet, return and run again after short delay');
+                    if (alloCount++ < 5) {
+                        // prevent this from running for too long
+                        setTimeout(() => {
+                            showAllocationSlide(n);
+                        }, 100);
+                        return;
+                    }
+                    return;
+                } else {
+                    alloCount = 0;
+                }
+                const rOb = {allScores: allScores};
+                const t = game.persistentData.teamsArray;
+                t.forEach((s, i) => {
+                    rOb[`card_${i}`] = {
+                        id: s.id,
+                        title: s.title,
+                        displayColour: s.displayColour,
+                        icon: `card_icon_${s.abbr}`
+                    }
+                })
+                allScores.forEach(s => {
+                    const card = rOb[`card_${s.team}`];
+                    card.action = s.action,
+                    card.description = s.description;
+                    card.value = s.value;
+                })
+//                console.log(rOb);
+                renderTemplate(targ, 'slides/showround1', rOb, () => {
+                    allScores.forEach(s => {
+                        const scoredBefore = filterScorePackets(preScores, 'src', s.team).length > 0;
+                        const leaf = $(`#stakeholder_card_${s.team}`).find('.leaf');
+                        if (scoredBefore) {
+                            leaf.show();
+                        } else {
+                            leaf.fadeIn();
+                        }
+                    })
+                });
+            });
+
+        });
+    };
+    const showRoundAllocation = (n) => {
+        clearTimeout(delay);
+        delay = setTimeout(showRound3Delay, 1000);
+        setWatch('scores');
+        console.log(`showRound3`);
+        const mt = game.persistentData.mainTeams;
+        const t = game.persistentData.teamsArray.slice(0, mt.length);
+        const fsp = window.filterScorePackets;
+        const v = game.values;
+//        console.log(v)
+        const outArr = [];
+        const outOb = {};
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+                const sr3 = fsp(rs, 'round', n);
+//                console.log(`${rs.length} scores returned`);
+//                console.log(rs);
+//                console.log(sr3);
+                t.forEach((tm, i) => {
+//                    console.log(i, tm.id);
+                    const otherTeams = t.slice(0);
+//                    const ac = v.filter(vp => vp.team === tm.id)[0];
+                    let ac = v.filter(vp => vp.team === tm.id);
+//                    console.log(ac);
+                    let o = {votes: []}
+                    if (ac) {
+                        ac = ac.filter(vp => vp.round === n)[0];
+//                        console.log(ac);
+                        if (ac) {
+                            o = {
+                                id: tm.id,
+                                title: tm.title,
+                                displayColour: tm.displayColour,
+                                action: ac.action,
+                                description: ac.description,
+                                round: ac.round,
+                                votes: []
+                            };
+                            console.log(o);
+                        }
+                    }
+                    otherTeams.forEach(ot => {
+                        const tv = fsp(fsp(sr3, 'dest', tm.id), 'src', ot.id);
+                        o.votes.push({
+                            id: ot.id,
+                            title: ot.title,
+                            displayColour: ot.displayColour,
+                            value: tv.length > 0 ? tv[0].val : '',
+                            opacity: tv.length > 0 ? 1 : 0.5,
+                            td: ot.id === tm.id ? 'hide' : 'show'
+                        })
+                    });
+                    outArr.push(o);
+                    console.log('push', o)
+                });
+                outArr.forEach((tm, i) => {
+                    outOb[`card_${i}`] = tm;
+                });
+                console.log(`call the render`, outOb);
+//                return 'method complete';
+                renderTemplate(targ, `slides/showround${n}`, outOb, () => {
+                    console.log(`render complete`)
+                });
+            });
+        });
+        return 'showRoundAllocation has no return value';
+    };
+    window.tester = showAllocationSlide;
     const getVidID = () => {
         // used in the panopto video player html to access current vid details
         let vid = null;
@@ -560,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (justNumber(total.html()) === 0) {
                 total.css({bottom: '40px'});
-                console.log('trtgfgfhff');
+//                console.log('trtgfgfhff');
             } else {
                 total.animate({bottom: `${tPos}px`});
             }

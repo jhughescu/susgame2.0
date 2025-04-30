@@ -440,8 +440,9 @@ const getGameWithUniqueID = (id) => {
 const getGameWithAddress = (add) => {
 //    console.log(`GETGAMEWITHADDRESS: ${add} (${Object.values(games).length} games)`);
     for (let g in games) {
-//        console.log(games[g].address, add)
+//        console.log(games[g].address, add);
         if (games[g].address === add) {
+//            console.log('#################################################################')
             return games[g];
         }
     }
@@ -1324,16 +1325,13 @@ const onScoresSent = async (o, cb) => {
 
 };
 const scoreSubmitted = async (ob, cb) => {
-    console.log(`scoreSubmitted`);
-//    console.log(ob);
+//    console.log(`scoreSubmitted`);
     const sc = ob.scoreCode;
     const game = games[`game-${ob.game}`];
     if (game) {
         let sp = new ScorePacket(ob.forceRound ? sc.round : game.round, sc.src, sc.dest, sc.val, 1);
         let p = sp.getPacket();
         let d = sp.getDetail();
-        console.log(game.scores);
-        console.log(p);
         if (game.scores.indexOf(p) > -1) {
             // Duplicate scores are not allowed (score packets must be unique)
             // In case of a duplicate score submission, callback the scores and end the method.
@@ -1348,7 +1346,7 @@ const scoreSubmitted = async (ob, cb) => {
             const session = await sessionController.updateSession(ob.game, { $push: {scores: p}});
             if (session) {
                 const game = games[`game-${ob.game}`];
-                console.log('FINAL', game.scores)
+//                console.log('FINAL', game.scores)
                 if (game) {
                     const roundComplete = checkRound(ob.game).indexOf(false) === -1;
                     if (cb) {
@@ -1383,12 +1381,6 @@ const forceScore = async (ob, cb) => {
         const sub = sc.split('_').slice(0, 3).join('_');
         const m = game.scores.filter(i => i.startsWith(sub));
 //        console.log('forceScore:');
-//        console.log(sc);
-//        console.log(ob.scorePacket);
-//        console.log(sub);
-//        console.log(game.scores);
-//        console.log(m);
-//        console.log('##################### end');
         if (m.length < 2) {
             let na = game.scores.filter(i => !i.startsWith(sub));
             game.scores = na;
@@ -1445,8 +1437,8 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     }
 };
 const valuesSubmitted = async (ob) => {
-//    console.log(`#################################### give ####### me ####### a ####### break #####################`);
     if (ob.hasOwnProperty('values')) {
+        console.log(`valuesSubmitted`, ob);
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
         if (session) {
             const game = games[`game-${ob.game}`];
