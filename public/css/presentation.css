@@ -247,71 +247,93 @@ img.fullscreen {
 #totals_table_display #wrapper {
     width: 100vw;
     height: 100vh;
-    background-color: red;
+/*    background-color: red;*/
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 #totals_table_display #totals_table {
-    background-color: blue;
+/*    background-color: blue;*/
     padding: 40px;
 }
 
 /* NEW STUFF BELOW< NEEDS ALTERING */
-.interactivescoreboard {
+#totals_table_display {
 /*    padding-top: 30px;*/
     margin-top: 20px;
+    font-size: 2rem;
+
 }
-.interactivescoreboard td, .interactivescoreboard th {
-    background-color: grey;
+#totals_table_display th {
+    background-color: #11195c;
+    color: white;
+}
+#totals_table_display td {
+/*    background-color: white;*/
+    min-width: 40px;
+    color: black;
+}
+#totals_table_display td.title {
+    color: white;
+    padding-right: 10px;
+}
+#totals_table_display td, #totals_table_display th {
+/*    background-color: grey;*/
     padding: 2px;
-    border: 3px solid white;
+    border: 3px solid black;
     border-collapse: separate;
 }
-.interactivescoreboard td.clickable {
+#totals_table_display td.clickable {
+/*
     border: 3px solid white;
     outline: 2px solid #0000c1;
     outline-offset: -3px;
     cursor: pointer;
+*/
 }
-.interactivescoreboard th {
+#totals_table_display th {
 /*    background-color: grey;*/
 /*    padding: 2px;*/
 /*    border: 3px solid white;*/
 /*    border-collapse: separate;*/
 }
-.interactivescoreboard td, .interactivescoreboard tr {
+#totals_table_display td, #totals_table_display tr {
     text-align: center;
 /*    color: red;*/
 }
-.blank, .interactivescoreboard td.input {
+.blank, #totals_table_display td.input {
     background-color: transparent;
+}
+#totals_table_display td.input {
+    background-color: white;
 }
 input {
 /*    width: 30px;*/
 }
-.interactivescoreboard .res {
+#totals_table_display .res {
     background-color: yellow;
 }
-.interactivescoreboard .sub {
+#totals_table_display .sub {
     background-color: #ffffa2;
 }
-.interactivescoreboard .final {
+#totals_table_display .final {
     background-color: #78ff04;
 }
-.interactivescoreboard .strong {
+#totals_table_display .strong {
     font-weight: bold;
 }
-.interactivescoreboard .blank {
+#totals_table_display .blank {
     background-color: grey;
+    background-color: #11195c;
 }
-.interactivescoreboard .blank.nofill {
+#totals_table_display .blank.nofill {
     background-color: transparent;
     width: 10px;
+    min-width: 10px;
 }
 
-.interactivescoreboard td.selected {
+#totals_table_display td.selected {
     background-color: aqua;
 }
 #changeFormWrapper {

@@ -294,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#reset').hide();
             $('.input').addClass('clickable');
             $('.input').on('click', function () {
+//                console.log('askasjks')
                 let msg = '';
                 const r = window.justNumber($(this).closest('.inputs').attr('id'));
                 const id = $(this).attr('id');
@@ -335,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const getFieldsObject = () => {
         const R = $('.inputs');
+//        console.log(R);
         const O = {};
         R.each((i, ri) => {
             const o = {};
@@ -358,6 +360,7 @@ document.addEventListener('DOMContentLoaded', function () {
             o.sh = r.find('.sval');
             O[`r${i}`] = o;
         });
+//        console.log(O);
         return O;
     };
     const updateScoreboardFields = () => {
@@ -541,9 +544,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     };
-    const renderScoreboard = (id) => {
+    const renderScoreboard = (id, temp, cb) => {
 //        console.log('renderScoreboard', id);
-        window.renderTemplate(id, 'dev_scoretest', { teams: teams }, () => {
+        const T = temp || 'dev_scoretest';
+        window.renderTemplate(id, T, { teams: teams }, () => {
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);
             $('#all').off('click').on('click', toggleEditable);
@@ -559,6 +563,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
             });
             getAndRenderGame();
+            if (cb) {
+                cb();
+            }
         });
     };
     const init = (clientID) => {
@@ -578,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const initV1 = () => {
         socket.emit('getGame', gameID, (m) => {
-            console.log('is me? ');
+//            console.log('is me? ');
 //            console.log(m);
             updateScores(m);
         });
@@ -714,5 +721,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.renderScoreboard = renderScoreboard;
     window.initScoreboard = initScoreboard;
     window.getScoresSummary = processData;
-//    init();
+    window.updateScoreTable = updateScoreboardFields;
+    //    init();
 });

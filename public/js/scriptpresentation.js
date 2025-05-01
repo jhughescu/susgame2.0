@@ -122,20 +122,17 @@ document.addEventListener('DOMContentLoaded', function () {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
-//        console.log(`onGameUpdate, watchFor: ${watchFor}`);
         if (watchFor) {
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
                 if (watchFor === 'scores') {
 
                 }
-//                console.log(`a match for the watch, update slide`);
                 updateSlide()
             }
         }
         if (game.round !== rGame.round) {
             setWatch('scores');
         }
-//        console.log(`onGameUpdate`, rGame.values);
         game = rGame;
 
     };
@@ -781,7 +778,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const renderTotalsTable = () => {
-        window.renderScoreboard('totals_table');
+        window.renderScoreboard('totals_table', 'presentation.results', () => {
+            const ss = window.getScoresSummary();
+            window.updateScoreTable();
+
+        });
     };
     const renderTotals = async (o) => {
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
@@ -866,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         $(`.totalNum`).html('');
         barsPos.each((i, b) => {
-            console.log(totals[i])
+//            console.log(totals[i])
             const perc = totals[i] * mult;
             let newH = perc;
             let neg = Math.abs(newH);

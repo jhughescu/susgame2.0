@@ -1,4 +1,5 @@
-<div id='changeFormWrapper'>
+<!--
+   <div id='changeFormWrapper'>
     <div id='changeForm'>
         <div id='changeMsg'></div>
         <div id='changeScore'></div>
@@ -7,10 +8,11 @@
         <div id='formSummary'></div>
     </div>
 </div>
+-->
 <table class='interactivescoreboard'>
     <tbody>
         <tr id='header_era'>
-            <th colspan='1' class='blank'></th>
+            <th colspan='1' class='blank nofill'></th>
             <th colspan='5'>2030</th>
             <th colspan='1' class='blank nofill'></th>
             <th colspan='19'>2040</th>
@@ -18,7 +20,7 @@
             <th colspan='1'>FINAL</th>
         </tr>
         <tr id='header_blocks'>
-            <th colspan='1' class='blank'></th>
+            <th colspan='1' class='blank nofill'></th>
             <th colspan='1' class='blank'></th>
             <th colspan='3'>Public Voices</th>
             <th colspan='1' class='blank'></th>
@@ -34,44 +36,44 @@
             <th colspan='1' class='blank'></th>
         </tr>
         <tr id='header_titles'>
-            <th></th>
-            <th>All.</th>
-            <th>PV1</th>
-            <th>PV2</th>
-            <th>PVt</th>
-            <th>a*PV</th>
             <th class='blank nofill'></th>
-            <th>All.</th>
+            <th>self</th>
+            <th>pv1</th>
+            <th>pv2</th>
+            <th>pv</th>
+            <th>2030</th>
+            <th class='blank nofill'></th>
+            <th>self</th>
             <th>G</th>
-            <th>IC</th>
-            <th>EB</th>
-            <th>CO</th>
-            <th>SE</th>
-            <th>ct</th>
-            <th>A+C</th>
-            <th>PV1</th>
-            <th>PV2</th>
-            <th>PVt</th>
-            <th>(A+C)pv</th>
-            <th>s1</th>
-            <th>s2</th>
-            <th>s3</th>
-            <th>s4</th>
-            <th>s5</th>
-            <th>stotal</th>
-            <th>sc+sh</th>
+            <th>I</th>
+            <th>E</th>
+            <th>C</th>
+            <th>S</th>
+            <th>t</th>
+            <th>a+c</th>
+            <th>pv1</th>
+            <th>pv2</th>
+            <th>pvt</th>
+            <th>score</th>
+            <th>G</th>
+            <th>I</th>
+            <th>E</th>
+            <th>C</th>
+            <th>S</th>
+            <th></th>
+            <th>2040</th>
             <th class='blank nofill'></th>
             <th>30+40</th>
         </tr>
         {{#each teams}}
             <tr class='inputs' id='input{{this.id}}'>
-                <td>{{this.title}}</td>
+                <td class='title'>{{this.title}}</td>
                 <td class='input a1' id='a1_1_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
                 <td class='input pv_1_1' id='pv_2_5_{{this.id}}_v_5'></td>
                 <td class='input pv_1_2' id='pv_2_6_{{this.id}}_v_6'></td>
                 <td class='res pvt1' id='pvt{{this.id}}1'></td>
                 <td class='res final strong 2030total' id='2030total{{this.id}}'></td>
-                <td class='blank nofill'>{{this.title}}</td>
+                <td class='blank nofill'></td>
                 <td class='input a2' id='a2_3_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
                 <!--
                 <td class='input resNO sub c' id='c_4_{{this.id}}_0_v_0'></td>
@@ -99,7 +101,7 @@
                 <td class='res sub sval sval_4' id='s_{{this.id}}_4'></td>
                 <td class='res shTotal' id='svaltotal_{{this.id}}'></td>
                 <td class='res final strong scoreShare' id='scsh_{{this.id}}'></td>
-                <td class='blank nofill'>{{this.title}}</td>
+                <td class='blank nofill'></td>
                 <td class='res final strong 2040total' id='20302040_{{this.id}}'></td>
             </tr>
         {{/each}}
