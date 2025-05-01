@@ -780,6 +780,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     };
+    const renderTotalsTable = () => {
+        window.renderScoreboard('totals_table');
+    };
     const renderTotals = async (o) => {
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
@@ -1211,6 +1214,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showGameQR = showGameQR;
     window.showCollaboration = showCollaboration;
     window.renderTotals = renderTotals;
+    window.renderTotalsTable = renderTotalsTable;
     window.unmute = unmute;
     window.maxVol = maxVol;
     window.ensureAudio = ensureAudio;

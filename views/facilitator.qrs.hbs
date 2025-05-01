@@ -1,0 +1,10 @@
+<div class='qrcode' id='qrcodegame'>
+   game:
+    <div class='colourStrip' style='background-color: {{game.idColour}}'></div>
+    <img src='public/assets/qr/qrcode-{{game.uniqueID}}.svg'>
+</div>
+<div class='qrcode' id='qrcodegamedev'>
+   local (ONLY use in development):
+    <div class='colourStrip' style='background-color: {{game.idColour}}'></div>
+    <img src='public/assets/qr/qrcode-dev{{game.uniqueID}}.svg'>
+</div>

@@ -850,6 +850,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // amends links already setup in the setupControlLinks method
         const al = $('#facilitator-advanced');
         const bt = al.find('#reset');
+        const lqr = al.find('#launchqr');
         const qr = al.find('#showqr');
         const ge = al.find('#gameEnding');
         const gr = al.find('#gameReset');
@@ -864,6 +865,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     removeThisWidget($(this));
                 });
             }
+        });
+        lqr.off('click').on('click', () => {
+            launchQRs();
         });
         qr.off('click').on('click', () => {
             socket.emit('presentationOverlay', {type: 'qr', game: game.address});
@@ -1951,15 +1955,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const renderScoreFrame = () => {
         const id = 'facilitator-scoreboard';
-        const rOb = {game: game, teams: window.getScoresSummary()};
-//        console.log(rOb);
+        const rOb = {game: game};
         renderTemplate(`widgetinner${id}`, 'facilitator.scoreboard', rOb, () => {
             const inner = $(`#widgetinner${id}`);
             const outer = $(`#widgetinner${id}`).parent();
             const controls = inner.find('div');
             window.initScoreboard(game.address, 'dashboard', game);
             window.renderScoreboard('insertion');
-//            outer.css({height: `${controls.height() + 50}px`});
         });
     };
     const launchScoreboard = () => {
@@ -1967,6 +1969,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = 'facilitator-scoreboard';
         addWidget(id, rOb, (w) => {
             renderScoreFrame();
+        });
+    };
+    const renderQRs = () => {
+//        console.log(`renderQRs`)
+        const id = 'facilitator-qrs';
+        const rOb = {game: game};
+        renderTemplate(`widgetinner${id}`, 'facilitator.qrs', rOb, () => {
+            const inner = $(`#widgetinner${id}`);
+            const outer = $(`#widgetinner${id}`).parent();
+            const controls = inner.find('div');
+//            window.initScoreboard(game.address, 'dashboard', game);
+//            window.renderScoreboard('insertion');
+            inner.find('.qrcode').css({
+                width: '200px',
+                float: 'left'
+            });
+        });
+    };
+    const launchQRs = () => {
+        const rOb = {x: 100, y: 100, w: 420, h: 270, data: {preventTemplate: true, launchMethod: 'launchQRs'}};
+        const id = 'facilitator-qrs';
+        addWidget(id, rOb, (w) => {
+            renderQRs();
         });
     };
     const renderScoreboardLaunch = async () => {

@@ -257,7 +257,10 @@ function initSocket(server) {
                     logController.writeBeautifiedJson(`logs`, `game`, g);
                 });
                 socket.on('playerErrorReport', (o) => {
-                    console.log(`PLAYER ERROR: ${o.err} (${o.player.id})`);
+                    console.log(`PLAYER ERROR: ${o.err}`);
+                    if (o.player) {
+                        console.log(`PLAYER ERROR ADDITIONAL: ${o.err} (${o.player.id})`);
+                    }
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));

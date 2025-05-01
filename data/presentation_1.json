@@ -26,6 +26,7 @@
         {"id": "22", "type": "image", "src": "slide_img_10.jpg", "title": "Public Voices Prompt (updates devices)", "action": "startRound:5", "note": "Only available in sequence"},
         {"id": "24", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display 2040 Results", "action": "renderTotals:2040", "trigger": "scoreRound:5"},
         {"id": "25", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:final", "trigger": "scoreRound:99"},
+        {"id": "26", "type": "slide", "slide": "slide_3020_totaltable", "title": "Display Final Results (table)", "action": "renderTotalsTable", "trigger": "scoreRound:999"},
 
 
 
