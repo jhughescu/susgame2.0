@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return rArrNew;
     };
-    const prepScoresR3 = (sc) => {
+    const prepScoresR3V1 = (sc) => {
         const t = game.persistentData.teamsArray;
         const v = game.values;
         let rArrNew = [];
@@ -330,6 +330,29 @@ document.addEventListener('DOMContentLoaded', function () {
         let sStatic = s.slice(0);
         // use only r3 scores:
         sStatic = filterScorePackets(sStatic, 'round', 3);
+        sStatic.forEach(sp => {
+            const vl = v.find(obj => obj.team === sp.src);
+            const ob = {
+                team: sp.src,
+                title: t[sp.src].title,
+                action: vl.action,
+                description: vl.description,
+                value: sp.val,
+                teamObj: t[sp.src]
+            };
+            rArrNew.push(ob);
+        });
+        return rArrNew;
+    };
+    const prepCollaborations = (sc) => {
+        const t = game.persistentData.teamsArray;
+        const v = game.values;
+        let rArrNew = [];
+        let s = sc ? sc : game.scores;
+        s = filterScorePackets(s, 'round', 4);
+        let sStatic = s.slice(0);
+        // use only r3 scores:
+        sStatic = filterScorePackets(sStatic, 'round', 4);
         sStatic.forEach(sp => {
             const vl = v.find(obj => obj.team === sp.src);
             const ob = {
@@ -437,6 +460,71 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log(allScores3);
                     console.log(rOb);
                 });
+            });
+        });
+    };
+    const showCollaboration = () => {
+//        console.log(`showCollaboration`);
+
+        const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 4);
+        const rOb = {};
+
+        const t = game.persistentData.teamsArray;
+        const mtl = game.persistentData.mainTeams.length;
+        t.forEach((tm, i) => {
+            if (i < mtl) {
+                const ob = Object.assign({}, tm);
+                rOb[`card_${tm.id}`] = ob;
+            }
+        });
+
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
+//                const allScores = prepScoresR3(rs);
+                const allScores = prepCollaborations(rs);
+                const rOb2 = {};
+                const scoreSumm = window.getScoresSummary();
+                const vals1 = game.values.filter(v => v.round === 1);
+                Object.entries(scoreSumm).forEach((r, i) => {
+                    const votes = r[1].collScores;
+                    votes.forEach((v, n) => {
+                        votes[n] = {
+                            value: typeof(v) === 'object' ? v.val : '',
+                            displayColour: t[n].displayColour
+                        };
+                    });
+                    votes.splice(i, 1);
+                    const vals = vals1.filter(v => v.team === i)[0];
+
+                    const ob = Object.assign(t[i], {
+                        votes: votes,
+                        action: vals.action,
+                        description: vals.description
+                    });
+                    rOb2[`card_${i}`] = ob;
+                });
+                for (var i in rOb) {
+                    const jn = window.justNumber(i);
+                    rOb[i] = allScores[jn];
+                    if (rOb[i]) {
+                        const obCopy = JSON.parse(JSON.stringify(rOb[i]));
+                        rOb[i].displayColour = obCopy.teamObj.displayColour;
+                        rOb[i].id = obCopy.teamObj.id;
+                        rOb[i].votes = [];
+                        allScores.forEach(tm => {
+                            if (tm.team !== rOb[i].team) {
+                                const tOb = {
+                                    displayColour: tm.teamObj.displayColour,
+                                    value: tm.value
+                                };
+                                rOb[i].votes.push(tOb);
+                            }
+                        });
+                    }
+                }
+                console.log('go render', rOb);
+                console.log('go render', rOb2);
+                renderTemplate(targ, 'slides/showround4', rOb2, () => {});
             });
         });
     };
@@ -695,24 +783,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const renderTotals = async (o) => {
         const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
         const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
-
-        if (typeof(totals) === 'string') {
-            totals = JSON.parse(totals);
-        }
-        let orig = {};
-        if (!totals.hasOwnProperty('length')) {
-            orig = JSON.parse(JSON.stringify(totals));
-            totals = Object.values(totals);
-
-        }
-        totals = totals.map(s => s.gt);
+//        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
+        const typeMap = {
+            t2030: 'total2030',
+            t2040: 'scorePlusShare',
+            tfinal: 'grandTotal'
+        };
+        const scoresSumm = window.getScoresSummary();
+        const totals = Object.values(scoresSumm).map(s => s[typeMap[`t${o.actionArg}`]]);
+        console.log(o.actionArg)
+        console.log(typeMap[o.actionArg])
         let tAbs = totals.map(s => s = Math.abs(s));
         const max = tAbs.sort(sortNumber)[0];
         const mult = 100 / max;
         $(`.totalNum`).html('');
+        console.log(o);
+        console.log(scoresSumm);
+        console.log(totals);
         barsPos.each((i, b) => {
+            console.log(totals[i]);
             const perc = totals[i] * mult;
             let newH = perc;
             let neg = Math.abs(newH);
@@ -727,7 +816,69 @@ document.addEventListener('DOMContentLoaded', function () {
             const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
             total.html(roundNumber(totals[i], 1));
             const tPos = neg === 0 ? positive + 50 : positive;
+//            console.log(neg, tPos);
+            if (justNumber(total.html()) === 0) {
+                total.css({bottom: '40px'});
+//                console.log('trtgfgfhff');
+            } else {
+                total.animate({bottom: `${tPos}px`});
+            }
+            $(`#b${i}Neg`).animate({height: `${neg}%`});
+        });
+    };
+    const renderTotalsV2 = async (o) => {
+        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
+        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
+        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
+        const scoresSumm = window.getScoresSummary();
+//        const newTotals = Object.values(scoresSumm).map(s => s.scorePlusShare);
+        const newTotals = Object.values(scoresSumm).map(s => s.grandTotal);
+        /*
+        console.log('renderTotals', o);
+        console.log(round);
+        console.log(game);
+        console.log(scoresSumm);
+        console.log(newTotals);
+        */
+//        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
+        let totals = []
+//        console.log(totals);
+        /*
+        if (typeof(totals) === 'string') {
+            totals = JSON.parse(totals);
+        }
+        let orig = {};
+        if (!totals.hasOwnProperty('length')) {
+            orig = JSON.parse(JSON.stringify(totals));
+            totals = Object.values(totals);
 
+        }
+        */
+        totals = newTotals;
+//        totals = totals.map(s => s.gt);
+
+        let tAbs = totals.map(s => s = Math.abs(s));
+        const max = tAbs.sort(sortNumber)[0];
+        const mult = 100 / max;
+
+        $(`.totalNum`).html('');
+        barsPos.each((i, b) => {
+            console.log(totals[i])
+            const perc = totals[i] * mult;
+            let newH = perc;
+            let neg = Math.abs(newH);
+            if (newH < 0) {
+                newH = 0;
+            } else {
+                neg = 0;
+            }
+            const positive = (newH / 100) * $(b).parent().height();
+            const negative = (neg / 100) * $(b).parent().height();
+            $(b).animate({height: `${newH}%`});
+            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
+            total.html(roundNumber(totals[i], 1));
+            const tPos = neg === 0 ? positive + 50 : positive;
+            console.log(neg, tPos)
             if (justNumber(total.html()) === 0) {
                 total.css({bottom: '40px'});
 //                console.log('trtgfgfhff');
@@ -956,9 +1107,11 @@ document.addEventListener('DOMContentLoaded', function () {
 //            console.log(`the action is`, slOb.action);
             if (slOb.action.includes(':')) {
                 const s = slOb.action.split(':');
-//                console.log(`action item:`, s)
+//                console.log(`action item:`, s);
                 slOb.action = s[0];
                 rOb.actionArg = s[1];
+//                console.log(slOb.action);
+//                console.log(rOb.actionArg);
             }
             if (window[slOb.action]) {
 //                console.log('action exists in the code, rOb:');
@@ -1056,6 +1209,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showRound1 = showRound1;
     window.showRound3 = showRound3;
     window.showGameQR = showGameQR;
+    window.showCollaboration = showCollaboration;
     window.renderTotals = renderTotals;
     window.unmute = unmute;
     window.maxVol = maxVol;

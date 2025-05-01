@@ -12,7 +12,7 @@
         {"id": "10", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Teams Allocation", "actionNO": "showAllocation:1", "action": "showRound1", "trigger": "scoreRound:1"},
         {"id": "11", "type": "video", "srcRef": "v19", "title": "Post-2030 Headlines PV"},
         {"id": "12", "type": "image", "src": "slide_img_10.jpg", "title": "Post-2030 Headlines PV Still (updates devices)", "action": "startRound:2", "note": "Only available in sequence"},
-        {"id": "13", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Allocation results", "action": "renderTotals:2", "trigger": "scoreRound:2"},
+        {"id": "13", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Allocation results", "action": "renderTotals:2030", "trigger": "scoreRound:2"},
         {"id": "14", "type": "video", "srcRef": "v8", "title": "Launch to 2050"},
         {"id": "15", "type": "video", "srcRef": "v9", "title": "Disruption"},
         {"id": "16", "type": "video", "srcRef": "v10", "title": "Recalculation Collaboration Strategy"},
@@ -21,10 +21,11 @@
         {"id": "18", "type": "slide", "slide": "slide_110_stakeholders", "title": "NEW Display Teams Allocation", "action": "showRound3", "trigger": "scoreRound:3"},
 
         {"id": "19", "type": "image", "src": "slide_img_15.jpg", "title": "Collaboration Prompt (updates devices)", "action": "startRound:4", "note": "Only available in sequence"},
-        {"id": "20", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Team Collaboration", "action": "showRound4", "trigger": "scoreRound:4", "note": "Only available in sequence"},
+        {"id": "20", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Team Collaboration", "action": "showCollaboration", "trigger": "scoreRound:4", "note": "Only available in sequence"},
         {"id": "21", "type": "video", "srcRef": "v19", "title": "2030 Headlines PV"},
         {"id": "22", "type": "image", "src": "slide_img_10.jpg", "title": "Public Voices Prompt (updates devices)", "action": "startRound:5", "note": "Only available in sequence"},
-        {"id": "23", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:5", "trigger": "scoreRound:5"},
+        {"id": "24", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display 2040 Results", "action": "renderTotals:2040", "trigger": "scoreRound:5"},
+        {"id": "25", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:final", "trigger": "scoreRound:99"},
 
 
 
