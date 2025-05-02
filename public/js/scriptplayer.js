@@ -906,6 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             go = false;
                             break;
                         case 'startround':
+//                            window.location.reload();
                             if (renderState.temp !== 'game.main' && rgame.persistentData.rounds[rgame.round].type !== player.teamObj.type) {
                                 // not in the home state and not involved in this round - go home
                                 gotoHomeState();

@@ -4,16 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustainabilty Game 404</title>
+    <title>Sustainabilty Game Help Page</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/help.js"></script>
 
     <link rel='stylesheet' href='/css/basics.css'>
     <link rel='stylesheet' href='/css/home.css'>
     <link rel='stylesheet' href='/css/help.css'>
-    <link rel='stylesheet' href='/css/fog.css'>
+<!--    <link rel='stylesheet' href='/css/fog.css'>-->
 
 </head>
 
 <body>
+<!--
     <div class='fogwrapper'>
         <div id="foglayer_01" class="fog">
             <div class="image01"></div>
@@ -28,14 +34,18 @@
             <div class="image02"></div>
         </div>
     </div>
+-->
 
     <div class='wrapper intro'>
         <div id='circle-wrapper'>
             <div class='circle' id='circle-fill'></div>
         </div>
+        <div id='header'>
+
+        </div>
         <div id='content'>
             <div id='innercontent'>
-                <p>Sorry, something has gone wrong. We may be able to help, please <a href='help'>follow this link</a> to find out how.</p>
+                <p>If you have experienced a 404 error, please <a  id='clearAll'>follow this link</a> to clear any old data and reload the game.</p>
             </div>
         </div>
         <div class="big container intro fullscreen1">
@@ -46,5 +56,3 @@
 </body>
 
 </html>
-
-

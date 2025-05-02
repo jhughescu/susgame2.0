@@ -677,6 +677,14 @@ function initSocket(server) {
         }
         // end scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+        // help page client (doesn't need to be linked to a game) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (src.includes('/help')) {
+            socket.emit('helpSetup', {
+                storageID: process.env.STORAGE_ID
+            });
+        }
+        // end help page client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         // Handle other socket events
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method

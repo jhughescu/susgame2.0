@@ -229,6 +229,12 @@ app.get('/dev/scores', (req, res) => {
     res.sendFile(path.join(basePath, 'dev.score.test.html'));
 });
 
+app.get('/help', (req, res) => {
+    res.sendFile(path.join(basePath, 'help.html'));
+});
+app.get('/404', (req, res) => {
+    res.sendFile(path.join(basePath, '404.html'));
+});
 
 // Declare the 404 response
 const notFoundHandler = (req, res) => {
