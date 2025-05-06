@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = io();
+//    const socket = io();
+    let socket = null;
+
     let gID = null;
     let lIDStub = null;
     let lID = null;
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let returnRenderState = {};
     let pingCheck = 0;
     let pingState = true;
+    const connectionTimer = 500;
     const homeStateObj = {note: 'homeState setting', temp: 'game.main', partialName: 'game-links', ob: player, tempType: 'homeState', sub: null};
     let homeState = JSON.stringify(homeStateObj);
     const qu = window.getQueries(window.location.href);
@@ -55,6 +58,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         socket.emit('ping');
     };
+
+    const estSocket = () => {
+//        console.log('############################### est socket');
+        socket = io();
+        setupSocket();
+    };
+    const connectCheck = () => {
+//        console.log('checking content')
+        if ($('#insertion').find('div').length === 1) {
+//            console.log('no content rendered, try to establish socket');
+            setTimeout(() => {
+                estSocket();
+                setTimeout(() => {
+                    connectCheck();
+                }, connectionTimer);
+            }, connectionTimer);
+        } else {
+            console.log('content rendered');
+        }
+    };
+    setTimeout(() => {
+        console.log('connect socket');
+        estSocket();
+        setTimeout(() => {
+            connectCheck();
+        }, connectionTimer);
+    }, connectionTimer);
+
 
     const checkGameChanges = (rg) => {
         console.log('chechChange', rg.round, game.round)
@@ -1008,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Start observing the target div for changes
     observer.observe(targetDiv, config);
-
+    const setupSocket = () => {
     socket.on('gameUpdate', (rOb) => {
 //        console.log('socket hears gameUpdate');
 //        console.log(rOb);
@@ -1083,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('ponged');
         pingState = true;
     });
-
+    }
     renderTemplate = window.renderTemplate;
     procVal = window.procVal;
     //
@@ -1104,4 +1135,5 @@ document.addEventListener('DOMContentLoaded', function() {
         event.returnValue = 'Are you sure you want to leave? You may not be able to rejoin the session.';
     });
     */
+
 });

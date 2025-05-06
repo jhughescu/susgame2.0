@@ -179,7 +179,7 @@ function initSocket(server) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
 //            showRoomSize(src);
-//            console.log(`player joins room ${src} ${socket.id}`);
+            console.log(`player joins room ${src} ${socket.id}`);
             const queries = getQueries(ref);
             const isReal = queries['isAdmin'] !== true;
             if (isReal) {
