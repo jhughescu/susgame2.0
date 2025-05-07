@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addToStorage = (id, ob) => {
         const stId = getStorageID(id);
 //        console.log(`addToStorage`, stId, JSON.stringify(ob));
+//        console.log(`addToStorage`, stId, window.clone(ob));
         localStorage.setItem(stId, JSON.stringify(ob));
     };
     const getFromStorage = (id) => {
@@ -75,11 +76,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, connectionTimer);
             }, connectionTimer);
         } else {
-            console.log('content rendered');
+//            console.log('content rendered');
         }
     };
     setTimeout(() => {
-        console.log('connect socket');
+//        console.log('connect socket');
         estSocket();
         setTimeout(() => {
             connectCheck();
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const updateGame = (ob) => {
-        console.log(`updateGame:`, ob)
+//        console.log(`updateGame:`, ob)
         if ($.isEmptyObject(game)) {
             game = ob;
             window.gameShare(game);
@@ -339,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        lID = lid;
 //        lID = `${lid}${getPlayerID()}`;
 //        console.log(window.location.search);
-        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
+//        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
 //        console.log(`heidee`, getPlayerID());
         startContentCheck();
         onConnect();
@@ -681,7 +682,30 @@ document.addEventListener('DOMContentLoaded', function() {
         setupHomeButton();
     };
     const setupConnectonControl = () => {
-//        console.log(`setupConnectonControl`);
+
+        setupHomeButton();
+//        const a = $('a');
+        const a = $('.team-link');
+        a.off('click').on('click', function () {
+//            console.clear();
+            const t = $(this).attr('id').split('_')[1];
+            const tm = Object.assign({}, game.persistentData.teams[`t${t}`]);
+            tm.game = {};
+            delete tm.game;
+//            console.log(`yep`, tm);
+            setHash(`connecton.team${t}`);
+            const sob = {temp: `game.connecton.team`, ob: tm, preserveOb: true};
+//            console.log(`setupConnectonControl sends:`, window.clone(sob));
+            setRenderStateLocal(sob);
+            // 20250507 Why was the line below included? It caused a render error...
+//            updateRenderState({temp: `game.connecton.team`, ob: tm});
+            render(() => {
+                console.log(`ok, we can set up the button now`)
+            });
+        })
+    };
+    const setupConnectonControlV1 = () => {
+        console.log(`setupConnectonControl`);
         setupHomeButton();
 //        const a = $('a');
         const a = $('.team-link');
@@ -690,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tm = Object.assign({}, game.persistentData.teams[`t${t}`]);
             tm.game = {};
             delete tm.game;
-//            console.log(`yep`, tm);
+            console.log(`yep`, tm);
             setHash(`connecton.team${t}`)
             setRenderStateLocal({temp: `game.connecton.team`, ob: tm, preserveOb: true});
             updateRenderState({temp: `game.connecton.team`, ob: tm});
@@ -755,6 +779,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return srs;
     };
     const setRenderStateLocal = (ob) => {
+//        console.log(`******************** setRenderStateLocal hears:`, window.clone(ob));
 //        console.log(`setRenderStateLocal is the ONLY way to store a render state locally`)
         // make renderStateLocal into a duplicate of (not a pointer to) the arg.
         renderStateLocal = typeof(ob) === 'string' ? JSON.parse(ob) : Object.assign({}, ob);
@@ -766,10 +791,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         // Only allow storage of correctly defined state data
         if (renderStateLocal.hasOwnProperty('temp')) {
-            addToStorage('renderState', renderStateLocal);
-//            console.log(`renderState stored with temp ${renderState.temp}`);
+//            addToStorage('renderState', renderStateLocal);
+            addToStorage('renderState', window.clone(renderStateLocal));
+//            console.log(`renderState stored with temp ${renderState.temp}`, window.clone(renderStateLocal));
         } else {
-//            console.warn(`renderState not stored as no 'temp' property found`);
+            console.warn(`renderState not stored as no 'temp' property found`);
         }
     };
     const updateRenderState = (ob) => {
@@ -820,6 +846,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
+//        console.log(renderState === srs);
+//        console.log(srs);
         renderState = srs ? srs : renderState;
 //        console.log(renderState);
         if (typeof(renderState) === 'object' && !$.isEmptyObject(renderState)) {
@@ -886,7 +914,8 @@ document.addEventListener('DOMContentLoaded', function() {
             rOb.showHeadlines = justNumber(game.slide) > 4;
 
 //            console.log(`do I know the round? ${game.round} (${typeof(game.round)})`);
-            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
+//            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
+//            console.log(`renderTemplate`, targ, renderState.temp, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();
@@ -906,16 +935,16 @@ document.addEventListener('DOMContentLoaded', function() {
         render();
     };
     const onGameUpdate = (rOb) => {
-        console.log(`onGameUpdate`, rOb);
+//        console.log(`onGameUpdate`, rOb);
         const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
         let go = Boolean(player);
-        console.log(`go: ${go}`);
+//        console.log(`go: ${go}`);
         if (rOb.hasOwnProperty('_updateSource')) {
             if (rOb._updateSource.hasOwnProperty('event')) {
                 if (player) {
                     const us = rOb._updateSource;
                     const ev = us.event.split(' ')[1].toLowerCase();
-                    console.log(`ev: ${ev}`);
+//                    console.log(`ev: ${ev}`);
 //                    checkGameChanges(rgame);
                     switch (ev) {
                         case 'playerconnectevent':

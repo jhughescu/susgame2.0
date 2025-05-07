@@ -208,7 +208,7 @@ async function getSession(req, res) {
         });
     }
 };
-async function updateSession(uniqueID, updateOb) {
+async function updateSession(uniqueID, updateOb, cb) {
 //    console.log(`updateSession ${uniqueID}`);
 //    console.log(updateOb);
     try {
@@ -221,10 +221,16 @@ async function updateSession(uniqueID, updateOb) {
         ).select(select + ' -password');
 //        console.log('updatedSession', updatedSession);
         eventEmitter.emit('sessionUpdated', updatedSession);
+        if (cb) {
+            cb(updatedSession)
+        }
         return updatedSession;
     } catch (error) {
         console.log('Error updating document:');
 //        console.error('Error updating document:', error);
+        if (cb) {
+            cb({error: 'update failed, session not found'});
+        }
         throw error;
     }
 };

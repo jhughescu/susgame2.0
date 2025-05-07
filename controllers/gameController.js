@@ -736,8 +736,13 @@ const assignToNextTeam = (game, p, ID) => {
                 onTeamsAssigned(game.teams, game);
             }
             const uo = {teams: game.teams};
-            console.log(`player added: ${ID}, teamID: ${teamID}`);
-            sessionController.updateSession(game.uniqueID, uo);
+//            console.log(`player added: ${ID}, teamID: ${teamID}`);
+            sessionController.updateSession(game.uniqueID, uo, (s) => {
+//                console.log('cb', s);
+                const pl = game.playersFull[ID];
+                console.log(`player ${ID} added to ${pl.teamObj.title} (socket: ${pl.socketID})`)
+            });
+//            console.log(game.playersFull[ID]);
         } else {
             console.log(`can't set teams up yet, players exist but playersFull does not`);
         }
