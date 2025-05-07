@@ -687,11 +687,13 @@ const assignToNextTeam = (game, p, ID) => {
     const PD = game.persistentData;
     const ts = game.mainTeamSize === undefined ? 5 : game.mainTeamSize;
     const playersFullNotReady = game.players.length > 0 && Object.values(game.playersFull).length === 0;
+    let teamID = 0;
     if (!PD) {
         console.log('failure in assignToNextTeam - no persistentData found');
     } else {
         if (!playersFullNotReady || game.teams.length === 0) {
             if (game.teams.flat().includes(ID)) {
+                teamID = game.teams.findIndex(team => team.includes(ID));
     //            console.log(`player ${ID} already registered for a team`);
             } else {
                 if (game.teams.length === 0) {
@@ -711,13 +713,18 @@ const assignToNextTeam = (game, p, ID) => {
                         const st2 = gt[gt.length - 2];
                         if (st1.length <= st2.length) {
                             st1.push(ID);
+                            teamID = gt.length - 1;
                         } else {
                             st2.push(ID);
+                            teamID = gt.length;
                         }
 
                     } else {
     //                    console.log('main teams not yet filled')
-                        game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
+//                        game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
+                        const smallestTeam = game.teams.reduce((a, b) => (a.length <= b.length ? a : b));
+                        teamID = game.teams.indexOf(smallestTeam);
+                        smallestTeam.push(ID);
                     }
                 }
             }
@@ -729,6 +736,7 @@ const assignToNextTeam = (game, p, ID) => {
                 onTeamsAssigned(game.teams, game);
             }
             const uo = {teams: game.teams};
+            console.log(`player added: ${ID}, teamID: ${teamID}`);
             sessionController.updateSession(game.uniqueID, uo);
         } else {
             console.log(`can't set teams up yet, players exist but playersFull does not`);
