@@ -857,6 +857,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
         const resourceRemaining = PD.teamsArray[team.id].votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
 //        console.log(team);
+        console.log('scoreSumm:');
         console.log(scoreSumm);
 //        console.log(PD.teamsArray[team.id].votes);
         console.log(`resourceRemaining: ${resourceRemaining}`);
