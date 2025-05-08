@@ -1315,100 +1315,92 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(str);
     };
     const showRoundCompleter = () => {
-        const r = window.justNumber(game.round);
-        const pf = game.playersFull;
-        if ($.isEmptyObject(pf)) {
-            alert(`Can't complete this action, game.playersFull is not defined. Try reconnecting any fake player clients.`);
-            return;
-        }
-        if (r > 0) {
-            const round = game.persistentData.rounds[r];
-            const subs = round.submissions;
-            const teams = game.persistentData[round.teams];
-            // scores assumed to be always required:
-            const scorePackets = filterScorePackets(game.scores.map(unpackScore), 'round', round.n);
-            let scorers = [];
-            const rOb = {teams: [], players: [], scorers: []};
-            if (round.type === 1) {
-                // teams score
-                scorers = teams;
-            } else {
-                // players score
-                teams.forEach(t => {
-                    const tm = game.teams[t.id];
-                    tm.forEach(p => {
-                        scorers.push(game.playersFull[p]);
-                    });
-                });
+        socket.emit('getGame', game.address, (g) => {
+            updateGame(g);
+            const r = window.justNumber(game.round);
+            const pf = game.playersFull;
+            if ($.isEmptyObject(pf)) {
+                alert(`Can't complete this action, game.playersFull is not defined. Try reconnecting any fake player clients.`);
+                return;
             }
-            scorers.forEach(t => {
-                const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
-                if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
-                    rOb.scorers.push(Object.assign({flag: round.type === 1 ? t.title : `${t.teamObj.title} ${t.id}`}, t));
-                }
-            });
-            $('#modal').modal({
-                closeExisting: true
-            });
-            rOb.isLead = true;
-            rOb.currentRoundComplete = false;
-            if (rOb.scorers.length > 0) {
-                renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
-                    let tl = $('.modtablinks');
-                    tl.off('click');
-                    tl.on('click', function () {
-                        const tOb = {isLead: true, currentRoundComplete: false};
-                        const id = $(this).attr('id').replace('link_', '');
-                        if (round.type === 1) {
-                            tOb.teamObj = game.persistentData.teams[`t${id}`];
-                        } else {
-                            game.teams.forEach((t, i) => {
-                                if (t.indexOf(id, 0) > -1) {
-                                    tOb.teamObj = game.persistentData.teams[`t${i}`];
-                                }
-                            });
-                        }
-                        const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
-                        tOb.game = game;
-//                        console.log(game.playersFull);
-//                        console.log(game.teams);
-//                        console.log(round);
-//                        console.log(round.type === 1);
-//                        console.log(tOb)
-//                        console.log(tOb.teamObj.id)
-//                        console.log(pl)
-                        pl.teamObj = Object.assign({}, tOb.teamObj);
-                        $('#formname').html(tOb.teamObj.title);
-//                        console.log(`render game-${round.template}`);
-//                        console.log(tOb);
-                        tOb.dynamicTeamData = window.createDynamicTeamData();
-                        renderPartial('formzone', `game-${round.template}`, tOb, () => {
-                            $('.resources-btn').css({
-                                width: '30px',
-                                height: '30px',
-                                'background-color': 'green'
-                            });
-//                            console.log(round);
-//                            console.log(round.type);
-                            if (round.type === 1) {
-                                if (round.n === roundRef.COLLAB) {
-                                    window.setupCollaborationControl(pl)
-                                } else {
-                                    window.setupAllocationControl(pl);
-                                }
-                            } else {
-//                                console.log('sheep');
-                                window.setupVoteControl(pl);
-                            }
+            if (r > 0) {
+                const round = game.persistentData.rounds[r];
+                const subs = round.submissions;
+                const teams = game.persistentData[round.teams];
+                // scores assumed to be always required:
+                const scorePackets = filterScorePackets(game.scores.map(unpackScore), 'round', round.n);
+                let scorers = [];
+                const rOb = {teams: [], players: [], scorers: []};
+                if (round.type === 1) {
+                    // teams score
+                    scorers = teams;
+                } else {
+                    // players score
+                    teams.forEach(t => {
+                        const tm = game.teams[t.id];
+                        tm.forEach(p => {
+                            scorers.push(game.playersFull[p]);
                         });
                     });
+                }
+                scorers.forEach(t => {
+                    const comp = round.type === 1 ? {prop: 'src', val: t.id} : {prop: 'client', val: justNumber(t.id)};
+                    if (filterScorePackets(scorePackets, comp.prop, comp.val).length === 0) {
+                        rOb.scorers.push(Object.assign({flag: round.type === 1 ? t.title : `${t.teamObj.title} ${t.id}`}, t));
+                    }
                 });
+                $('#modal').modal({
+                    closeExisting: true
+                });
+                rOb.isLead = true;
+                rOb.currentRoundComplete = false;
+                if (rOb.scorers.length > 0) {
+                    renderTemplate('modaltheatre', 'facilitator.roundcompleter', rOb, () => {
+                        let tl = $('.modtablinks');
+                        tl.off('click');
+                        tl.on('click', function () {
+                            const tOb = {isLead: true, currentRoundComplete: false};
+                            const id = $(this).attr('id').replace('link_', '');
+                            if (round.type === 1) {
+                                tOb.teamObj = game.persistentData.teams[`t${id}`];
+                            } else {
+                                game.teams.forEach((t, i) => {
+                                    if (t.indexOf(id, 0) > -1) {
+                                        tOb.teamObj = game.persistentData.teams[`t${i}`];
+                                    }
+                                });
+                            }
+                            const pl = game.playersFull[round.type === 1 ? game.teams[tOb.teamObj.id][0] : id];
+                            tOb.game = game;
+                            pl.teamObj = Object.assign({}, tOb.teamObj);
+                            $('#formname').html(tOb.teamObj.title);
+                            tOb.dynamicTeamData = window.createDynamicTeamData();
+                            renderPartial('formzone', `game-${round.template}`, tOb, () => {
+                                $('.resources-btn').css({
+                                    width: '30px',
+                                    height: '30px',
+                                    'background-color': 'green'
+                                });
+                                if (round.type === 1) {
+                                    if (round.n === roundRef.COLLAB) {
+                                        window.setupCollaborationControl(pl)
+                                    } else {
+                                        window.setupAllocationControl(pl);
+                                    }
+                                } else {
+                                    window.setupVoteControl(pl);
+                                }
+                            });
+                        });
+                    });
+                } else {
+                    $(`#modaltheatre`).html(`Round ${r} is complete, no further input needed.`);
+                }
             } else {
-                $(`#modaltheatre`).html(`Round ${r} is complete, no further input needed.`);
+                alert(`No round currently active.`);
             }
-        } else {
-            alert(`No round currently active.`);
-        }
+        });
+
     };
     const updatePlayerMeter = () => {
 
