@@ -1449,6 +1449,11 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     }
 };
 const valuesSubmitted = async (ob) => {
+//    console.log(`valuesSubmitted:`);
+//    console.log(ob);
+    if (typeof (ob.round) === 'string') {
+        ob.round = parseInt(ob.round);
+    }
     if (ob.hasOwnProperty('values')) {
         console.log(`valuesSubmitted`, ob);
         const session = await sessionController.updateSession(ob.game, { $push: {values: ob.values}});
