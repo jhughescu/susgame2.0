@@ -539,6 +539,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return reordered;
     };
+    const formatGame = () => {
+        // ensure the game object is always correctly formatted
+        if (typeof(game.round) === 'string' && !game.round.includes('*')) {
+            game.round = parseInt(game.round);
+        }
+    };
     // allocation/collaboration/vote controls can be used in facilitator dashboards, hence are defined in common.
     const getRemainingAllocation = (pl) => {
         const s = game.scores.map(sp => window.unpackScore(sp));
@@ -572,119 +578,132 @@ document.addEventListener('DOMContentLoaded', function () {
         return ra;
     };
     const setupAllocationControl = async (inOb) => {
-        console.log(`setupAllocationControl`);
+//        console.log(`setupAllocationControl`);
+//        console.log(game);
+//        console.log(`${game.round} (${typeof(game.round)})`);
+        formatGame();
+//        console.log(game);
+//        console.log(`${game.round} (${typeof(game.round)})`);
+//        console.log(player === null);
+//        console.log(player);
+//        console.log(inOb);
         const myPlayer = player === null ? inOb : player;
         const PD = game.persistentData;
-        const team = myPlayer.teamObj;
-        const butMinus = $('#vote_btn_minus');
-        const butPlus = $('#vote_btn_plus');
-        const val = $('.tempV');
-        const remain = $('.remainVal');
-        const submit = $(`#buttonAllocate`);
-        const action = $(`#action-choice`);
-        const desc = $(`#actionDesc`);
-        const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
-        const descMax = 150;
-        const hasS = await thisRoundScored(myPlayer);
-        window.initScoreboard(game.address, myPlayer.id, game);
-        const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
-        console.log(scoreSumm);
-//        const resourceRemaining = team.votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
-        // Allocation ALWAYS has full vote potential
-        const resourceRemaining = PD.teamsArray[team.id].votes;
-//        console.log(game.round);
-//        console.log(team);
-        console.log(`resourceRemaining: ${resourceRemaining}`);
-        remain.html(resourceRemaining);
-        let isDev = false;
-        if (game.hasOwnProperty('isDev')) {
-            isDev = game.isDev;
-        } else {
-            isDev = await checkDevMode();
-        }
-        if (hasS) {
-            if (hasS.hasScore) {
-                const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
-                socket.emit('getValues', vOb, (v) => {
-//                    console.log('got values', v);
-                    ints.prop('disabled', true);
-                    ints.addClass('disabled');
-                    val.html(hasS.scorePacket.val);
-                    desc.html(v.description);
-                    action.val(v.action);
-                    if (window.forceUpdate) {
-                        forceUpdate();
-                    }
-                });
+        let team = null;
+        if (myPlayer) {
+            team = myPlayer.teamObj;
+            const butMinus = $('#vote_btn_minus');
+            const butPlus = $('#vote_btn_plus');
+            const val = $('.tempV');
+            const remain = $('.remainVal');
+            const submit = $(`#buttonAllocate`);
+            const action = $(`#action-choice`);
+            const desc = $(`#actionDesc`);
+            const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
+            const descMax = 150;
+            const hasS = await thisRoundScored(myPlayer);
+            window.initScoreboard(game.address, myPlayer.id, game);
+            const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
+//            console.log(scoreSumm);
+    //        const resourceRemaining = team.votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
+            // Allocation ALWAYS has full vote potential
+            const resourceRemaining = PD.teamsArray[team.id].votes;
+    //        console.log(game.round);
+    //        console.log(team);
+//            console.log(`resourceRemaining: ${resourceRemaining}`);
+            remain.html(resourceRemaining);
+            let isDev = false;
+            if (game.hasOwnProperty('isDev')) {
+                isDev = game.isDev;
             } else {
-                ints.off('click');
-                butPlus.on('click', () => {
-                    let v = parseInt(val.html());
-                    if (v < resourceRemaining) {
-                        v += 1;
-                        val.html(v);
-                    }
-                });
-                butMinus.on('click', () => {
-                    let v = parseInt(val.html());
-                    if (v > 1) {
-                        v -= 1;
-                        val.html(v);
-                    }
-                });
-                desc.on('input', function () {
-                    const t = $(this).val();
-                    if (containsEmail(t)) {
-                        alert('Please do not include email addresses.')
-                    }
-                    if (t.length >= descMax) {
-                        $(this).val(t.substr(0, descMax - 1));
-                    }
-                    const summ = `${t.length}/${descMax}`;
-                    const label = $(this).parent().find('#moveDescLabel');
-                    const base = label.html().replace(/[()/\d-]/g, ' ').replace(/\s+$/, '');
-                    label.html(`${base}   (${summ})`);
-                });
-                let autofill = isDev;
-                autofill = false;
-                // Note - we need to detach autofill from isDev
-                if (autofill) {
-                    desc.html('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem felis, lacinia non nibh at, maximus pretium mi. Proin imperdiet velit augue, quis laoreet neque iaculis vitae.');
-                    val.html(1 + Math.ceil(Math.random() * 4));
-                    const ch = action.find('option');
-                    const range = ch.length;
-                    const pick = 1 + Math.floor(Math.random() * (range - 1));
-                    action.prop('selectedIndex', pick);
-                }
-                submit.on('click', () => {
-//                    console.log('submit');
-                    const allGone = justNumber(val.html()) === resourceRemaining;
-                    let ok = true;
-                    if (allGone) {
-                        ok = window.confirm('If you use up all your resources now you may not be able to contribute to subsequent rounds. Are you sure you want to continue?');
-                    }
-                    if (ok) {
-                        let scoreV = parseInt(val.html());
-                        let actionV = action.val();
-                        let descV = desc.val();
-                        if (scoreV === 0 || actionV === '' || descV === '') {
-                            alert('Please complete all options and allocate at least 1 resource')
-                        } else {
-                            const tID = myPlayer.teamObj.id;
-                            let t = myPlayer.teamObj.id;
-                            const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
-                            socket.emit('submitValues', vob);
-                            const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
-                            socket.emit('submitScore', sob, (scores) => {
-                                setupAllocationControl();
-                            });
-                        }
-                    }
-                });
+                isDev = await checkDevMode();
             }
-        } else {
-//            console.log(`Whoops, no 'round scored' object found`);
+            if (hasS) {
+                if (hasS.hasScore) {
+                    const vOb = {gameID: `game-${game.uniqueID}`, team: myPlayer.teamObj.id};
+                    socket.emit('getValues', vOb, (v) => {
+    //                    console.log('got values', v);
+                        ints.prop('disabled', true);
+                        ints.addClass('disabled');
+                        val.html(hasS.scorePacket.val);
+                        desc.html(v.description);
+                        action.val(v.action);
+                        if (window.forceUpdate) {
+                            forceUpdate();
+                        }
+                    });
+                } else {
+                    ints.off('click');
+                    butPlus.on('click', () => {
+                        let v = parseInt(val.html());
+                        if (v < resourceRemaining) {
+                            v += 1;
+                            val.html(v);
+                        }
+                    });
+                    butMinus.on('click', () => {
+                        let v = parseInt(val.html());
+                        if (v > 1) {
+                            v -= 1;
+                            val.html(v);
+                        }
+                    });
+                    desc.on('input', function () {
+                        const t = $(this).val();
+                        if (containsEmail(t)) {
+                            alert('Please do not include email addresses.')
+                        }
+                        if (t.length >= descMax) {
+                            $(this).val(t.substr(0, descMax - 1));
+                        }
+                        const summ = `${t.length}/${descMax}`;
+                        const label = $(this).parent().find('#moveDescLabel');
+                        const base = label.html().replace(/[()/\d-]/g, ' ').replace(/\s+$/, '');
+                        label.html(`${base}   (${summ})`);
+                    });
+                    let autofill = isDev;
+                    autofill = false;
+                    // Note - we need to detach autofill from isDev
+                    if (autofill) {
+                        desc.html('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem felis, lacinia non nibh at, maximus pretium mi. Proin imperdiet velit augue, quis laoreet neque iaculis vitae.');
+                        val.html(1 + Math.ceil(Math.random() * 4));
+                        const ch = action.find('option');
+                        const range = ch.length;
+                        const pick = 1 + Math.floor(Math.random() * (range - 1));
+                        action.prop('selectedIndex', pick);
+                    }
+                    submit.on('click', () => {
+    //                    console.log('submit');
+                        const allGone = justNumber(val.html()) === resourceRemaining;
+                        let ok = true;
+                        if (allGone) {
+                            ok = window.confirm('If you use up all your resources now you may not be able to contribute to subsequent rounds. Are you sure you want to continue?');
+                        }
+                        if (ok) {
+                            let scoreV = parseInt(val.html());
+                            let actionV = action.val();
+                            let descV = desc.val();
+                            if (scoreV === 0 || actionV === '' || descV === '') {
+                                alert('Please complete all options and allocate at least 1 resource')
+                            } else {
+                                const tID = myPlayer.teamObj.id;
+                                let t = myPlayer.teamObj.id;
+                                console.log(game.round, typeof(game.round))
+                                const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
+                                socket.emit('submitValues', vob);
+                                const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
+                                socket.emit('submitScore', sob, (scores) => {
+                                    setupAllocationControl();
+                                });
+                            }
+                        }
+                    });
+                }
+            } else {
+    //            console.log(`Whoops, no 'round scored' object found`);
+            }
         }
+
     };
     const setupVoteControl = async (inOb) => {
         console.log(`setupVoteControl`);
