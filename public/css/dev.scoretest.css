@@ -19,6 +19,12 @@ html, body {
     outline-offset: -3px;
     cursor: pointer;
 }
+.interactivescoreboard td.notclickable {
+    border: 3px solid white;
+    outline: 2px solid #0d0d14;
+    outline-offset: -3px;
+/*    cursor: pointer;*/
+}
 .interactivescoreboard th {
 /*    background-color: grey;*/
 /*    padding: 2px;*/
@@ -92,3 +98,14 @@ input {
     text-align: left;
 }
 
+.teamHeader {
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px #1a1a1a;
+}
+
+.interactivescoreboard td, .interactivescoreboard th {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}

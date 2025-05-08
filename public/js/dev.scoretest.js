@@ -518,7 +518,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const init = () => {
-//        console.log(`init`);
+        console.log(`init`);
+        console.log(teams)
         window.renderTemplate('insertion', 'dev_scoretest', { teams: teams }, () => {
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);

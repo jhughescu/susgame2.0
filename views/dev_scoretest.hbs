@@ -65,13 +65,13 @@
         </tr>
         {{#each teams}}
             <tr class='inputs' id='input{{this.id}}'>
-                <td>{{this.title}}</td>
+                <td class='teamHeader' style='background-color: {{this.displayColour}};'>{{this.title}}</td>
                 <td class='input a1' id='a1_1_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
                 <td class='input pv_1_1' id='pv_2_5_{{this.id}}_v_5'></td>
                 <td class='input pv_1_2' id='pv_2_6_{{this.id}}_v_6'></td>
                 <td class='res pvt1' id='pvt{{this.id}}1'></td>
                 <td class='res final strong 2030total' id='2030total{{this.id}}'></td>
-                <td class='blank nofill'>{{this.title}}</td>
+                <td class='blank nofill teamHeader' style='background-color: {{this.displayColour}};'>{{this.title}}</td>
                 <td class='input a2' id='a2_3_{{this.id}}_{{this.id}}_v_{{this.id}}'></td>
                 <!--
                 <td class='input resNO sub c' id='c_4_{{this.id}}_0_v_0'></td>
@@ -99,7 +99,7 @@
                 <td class='res sub sval sval_4' id='s_{{this.id}}_4'></td>
                 <td class='res shTotal' id='svaltotal_{{this.id}}'></td>
                 <td class='res final strong scoreShare' id='scsh_{{this.id}}'></td>
-                <td class='blank nofill'>{{this.title}}</td>
+                <td class='blank nofill teamHeader' style='background-color: {{this.displayColour}};'>{{this.title}}</td>
                 <td class='res final strong 2040total' id='20302040_{{this.id}}'></td>
             </tr>
         {{/each}}

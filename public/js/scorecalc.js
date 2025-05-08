@@ -223,7 +223,10 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(out);
         return out;
     };
-//    window.getScoresSummary = processData;
+    const expandTeams = () => {
+        const pdt = game.persistentData.teamsArray;
+        teams.forEach((t, i) => t.displayColour = pdt[i].displayColour);
+    };
     const renderFormSummary = (o) => {
         console.log(o)
         const S = $('#formSummary');
@@ -292,6 +295,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (boo) {
             $('#send').hide();
             $('#reset').hide();
+            $('.input').addClass('notclickable');
+            return;
             $('.input').addClass('clickable');
             $('.input').on('click', function () {
 //                console.log('askasjks')
@@ -545,9 +550,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const renderScoreboard = (id, temp, cb) => {
-//        console.log('renderScoreboard', id);
+        expandTeams();
+////        console.log('renderScoreboard', id, teams);
+//        console.log(game.persistentData.teamsArray);
         const T = temp || 'dev_scoretest';
         window.renderTemplate(id, T, { teams: teams }, () => {
+//            return;
             $('#reset').off('click').on('click', resetAll);
             $('#send').off('click').on('click', sendScores);
             $('#all').off('click').on('click', toggleEditable);
@@ -590,6 +598,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateScores(m);
         });
 //        return;
+
         window.renderTemplate('insertion', 'dev_scoretest', { teams: teams }, () => {
             // Restore input values
             const storedInputValues = JSON.parse(localStorage.getItem('inputValues')) || {};
@@ -685,8 +694,8 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(o.scores.sort())
 
         socket.emit('sendScores', o, (ro) => {
-            console.log('dunne', ro.msg);
-            console.log(ro);
+//            console.log('dunne', ro.msg);
+//            console.log(ro);
         });
     };
     const onUpdate = (game) => {
@@ -708,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
 //            console.log('all good');
             gameID = gid.replace('/game-', '');
-    //        console.log(`initScoreboard: ${gid} ${gameID}`);
+//            console.log(`initScoreboard: ${gid} ${gameID}`);
             if (gameID) {
                 init(cid);
             }

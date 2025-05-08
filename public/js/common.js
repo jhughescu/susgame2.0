@@ -572,33 +572,35 @@ document.addEventListener('DOMContentLoaded', function () {
         return ra;
     };
     const setupAllocationControl = async (inOb) => {
-//        console.log(`setupAllocationControl`);
+        console.log(`setupAllocationControl`);
         const myPlayer = player === null ? inOb : player;
+        const PD = game.persistentData;
+        const team = myPlayer.teamObj;
         const butMinus = $('#vote_btn_minus');
         const butPlus = $('#vote_btn_plus');
         const val = $('.tempV');
+        const remain = $('.remainVal');
         const submit = $(`#buttonAllocate`);
         const action = $(`#action-choice`);
         const desc = $(`#actionDesc`);
         const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
         const descMax = 150;
         const hasS = await thisRoundScored(myPlayer);
+        window.initScoreboard(game.address, myPlayer.id, game);
+        const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
+        console.log(scoreSumm);
+//        const resourceRemaining = team.votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
+        // Allocation ALWAYS has full vote potential
+        const resourceRemaining = PD.teamsArray[team.id].votes;
+//        console.log(game.round);
+//        console.log(team);
+        console.log(`resourceRemaining: ${resourceRemaining}`);
+        remain.html(resourceRemaining);
         let isDev = false;
-//        console.log(game);
-//        console.log(game.isDev);
         if (game.hasOwnProperty('isDev')) {
             isDev = game.isDev;
-//            console.log('set')
         } else {
-//            console.log('await');
             isDev = await checkDevMode();
-        }
-//        console.log(`setupAllocationControl, isDev? ${isDev}, isDev type: ${typeof(isDev)}`);
-//        console.log(isDev);
-        if (isDev) {
-//            console.log('is dev')
-        } else {
-//            console.log('is not dev')
         }
         if (hasS) {
             if (hasS.hasScore) {
@@ -618,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ints.off('click');
                 butPlus.on('click', () => {
                     let v = parseInt(val.html());
-                    if (v < 10) {
+                    if (v < resourceRemaining) {
                         v += 1;
                         val.html(v);
                     }
@@ -652,25 +654,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     const ch = action.find('option');
                     const range = ch.length;
                     const pick = 1 + Math.floor(Math.random() * (range - 1));
-//                    console.log(range, pick)
                     action.prop('selectedIndex', pick);
                 }
                 submit.on('click', () => {
-                    let scoreV = parseInt(val.html());
-                    let actionV = action.val();
-                    let descV = desc.val();
-                    if (scoreV === 0 || actionV === '' || descV === '') {
-                        alert('Please complete all options and allocate at least 1 resource')
-                    } else {
-                        const tID = myPlayer.teamObj.id;
-                        let t = myPlayer.teamObj.id;
-                        const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
-                        socket.emit('submitValues', vob);
-                        const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
-//                        console.log(`click the button, submit the score`);
-                        socket.emit('submitScore', sob, (scores) => {
-                            setupAllocationControl();
-                        });
+//                    console.log('submit');
+                    const allGone = justNumber(val.html()) === resourceRemaining;
+                    let ok = true;
+                    if (allGone) {
+                        ok = window.confirm('If you use up all your resources now you may not be able to contribute to subsequent rounds. Are you sure you want to continue?');
+                    }
+                    if (ok) {
+                        let scoreV = parseInt(val.html());
+                        let actionV = action.val();
+                        let descV = desc.val();
+                        if (scoreV === 0 || actionV === '' || descV === '') {
+                            alert('Please complete all options and allocate at least 1 resource')
+                        } else {
+                            const tID = myPlayer.teamObj.id;
+                            let t = myPlayer.teamObj.id;
+                            const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
+                            socket.emit('submitValues', vob);
+                            const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
+                            socket.emit('submitScore', sob, (scores) => {
+                                setupAllocationControl();
+                            });
+                        }
                     }
                 });
             }
@@ -679,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const setupVoteControl = async (inOb) => {
-//        console.log(`setupVoteControl`);
+        console.log(`setupVoteControl`);
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -706,26 +714,12 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.emit('getAggregates', aOb, (a, sp, report) => {
             const myScores = filterScorePackets(filterScorePackets(sp, 'client', plID), 'round', game.round);
             const playerHasScored = Boolean(myScores.length);
-            console.log('got aggregates', myScores)
-            if (playerHasScored) {
-//                console.log(myScores);
-//                console.log(newMS);
-            }
             let t = 0, tni = 0, tai = 0;
-//            store = [];
             val.each((i, v) => {
-                if (stored.length > 0) {
-//                    $(v).html(stored[i])
-                }
                 const vv = parseInt($(v).html());
                 tai += Math.abs(vv);
                 tni += vv;
-//                store.push(vv);
-
             });
-            if (stored.length > 0) {
-//                vAvailDisp.html(Math.abs(tai));
-            }
             localStorage.setItem(storeID, store.join(','));
             let okAll = justNumber(vAvailDisp.html()) !== justNumber(vTotalDisp.html());
             if (playerHasScored) {
@@ -736,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 butPlus.prop('disabled', true);
                 submit.prop('disabled', true);
                 val.each((i, v) => {
-
                     $(v).html(myScores[i].val);
                     t += myScores[i].val;
                 });
@@ -779,10 +772,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const h = $(this).parent().parent().parent().find('.value');
                     let v = parseInt(h.html());
                     const OK = OK1;
-//                    if (!atMax || (atMax && adj < 0)) {
-                        v += adj;
-                        h.html(v);
-//                    }
+                    v += adj;
+                    h.html(v);
                     store = [];
                     val.each((i, v) => {
                         const myVal = parseInt($(v).html());
@@ -796,7 +787,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 let okPlus2 = tai !== justNumber(vTotalDisp.html());
                 let okMinus2 = tni !== 0;
                 okPlus2 = okMinus2 = true;
-
                 if (okAll) {
                     butAdj.prop('disabled', false);
                 } else {
@@ -818,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             bPlus.prop('disabled', true);
                         }
                     });
-
                 }
                 submit.off('click').on('click', () => {
                     const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
@@ -840,8 +829,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         localStorage.removeItem(storeID);
                         setupVoteControl(myPlayer);
                     }
-
-
                 });
             }
         });
@@ -849,7 +836,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const setupCollaborationControl = async (inOb) => {
         console.log('we set up collab control');
+        const PD = game.persistentData;
         const myPlayer = player === null ? inOb : player;
+        const team = myPlayer.teamObj;
         const storeID = `collabs-${game.address}-${myPlayer.id}`;
         const ra = getRemainingAllocation(myPlayer);
         const vAvailDisp = $('#vAvail');
@@ -864,7 +853,13 @@ document.addEventListener('DOMContentLoaded', function () {
         let stored = localStorage.getItem(storeID);
         let playerHasScored = false;
 
-
+        window.initScoreboard(game.address, myPlayer.id, game);
+        const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
+        const resourceRemaining = PD.teamsArray[team.id].votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
+//        console.log(team);
+        console.log(scoreSumm);
+//        console.log(PD.teamsArray[team.id].votes);
+        console.log(`resourceRemaining: ${resourceRemaining}`);
 
 //        console.log('OK, we just need to add a condition which means the form does not remember results if we are in the FDB');
 //        console.log(storeID, stored);
@@ -895,8 +890,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const hasS = false;
                 const val = vTotalDisp;
                 myPlayer.teamObj.votes = ra;
-                vTotalDisp.html(ra);
+//                vTotalDisp.html(ra);
                 vAvailDisp.html(ra - (ra - tva));
+                vTotalDisp.html(resourceRemaining);
                 allV.each((v, e) => {
                     const myVal = parseInt($(e).html());
                         const okMinus = myVal === 0;
