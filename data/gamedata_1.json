@@ -160,7 +160,7 @@
             "completionMsg": "At least one member of each team has submitted a score, marking the round as complete. However some players may not yet have submitted a score."
         },
 
-        {"n": 3, "flag": "e1r3", "action": "startRoundE1R3", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1, "submissions": ["scores", "values"],
+        {"n": 3, "flag": "e1r3", "action": "startRoundE1R3", "id": "allocation", "template": "allocation", "teams": "mainTeams", "type": 1, "submissions": ["scores", "values"], "resetVotes": true,
             "completionMsg": "All teams have submitted scores, the round is complete."
         },
 

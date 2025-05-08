@@ -1204,11 +1204,12 @@ const startRound = async (ob) => {
     const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
+    console.log(`startRound:`);
+    console.log(round);
     if (game) {
         const rounds = game.persistentData.rounds;
+        console.log(rounds[round]);
         const rIndex = ob.round - 1;
-//        console.log(`startRound`);
-//        console.log(ob.round);
         if (ob.round > rounds.length) {
             const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
             eventEmitter.emit('gameWarning', {gameID: game.address, warning: warning});
@@ -1216,14 +1217,12 @@ const startRound = async (ob) => {
             if (okToUpdate) {
                 game.round = ob.round;
             }
-//            console.log(`change round to ${ob.round}`);
             const session = await sessionController.updateSession(gameID, { round });
+            console.log(session);
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             if (okToUpdate) {
                 const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
-                // eventEmitter.emit('gameUpdate', eGame);
                 emitUpdate(eGame);
-//                console.log('startRound WILL emit gameUpdate (ob.ok set to true)');
             } else {
                 console.log('startRound will not emit gameUpdate (ob.ok set to false)');
             }

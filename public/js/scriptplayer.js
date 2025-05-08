@@ -682,7 +682,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupHomeButton();
     };
     const setupConnectonControl = () => {
-
         setupHomeButton();
 //        const a = $('a');
         const a = $('.team-link');
