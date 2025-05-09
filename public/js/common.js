@@ -977,9 +977,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const createDynamicTeamData = () => {
         const rOb = {game: game};
+        console.log(rOb.game);
         rOb.dynamicTeamData = [];
         rOb.game.persistentData.mainTeams.forEach((t, i) => {
             t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
+
             t.scores = rOb.game.detailedScorePackets.filter(sp => sp.src === t.id)[0];
             rOb.dynamicTeamData.push(t)
         });

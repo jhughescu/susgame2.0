@@ -419,7 +419,10 @@ const getGame = (id, cb) => {
     }
     if (!gg) {
         console.log(`no game with ID ${id}`)
+    } else {
+        gg.detailedScorePackets = gg.getDetailedScorePackets();
     }
+
 //    log(gg);
     if (cb) {
         cb(gg);

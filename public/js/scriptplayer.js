@@ -878,7 +878,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let rType = null;
             const fsp = window.filterScorePackets;
             const gSPs = game.detailedScorePackets;
-            rOb.dynamicTeamData = createDynamicTeamData();
+            rOb.dynamicTeamData = window.createDynamicTeamData();
+            console.log(rOb.dynamicTeamData)
             if (Boolean(player.teamObj)) {
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             }
@@ -914,7 +915,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 //            console.log(`do I know the round? ${game.round} (${typeof(game.round)})`);
 //            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
-//            console.log(`renderTemplate`, targ, renderState.temp, rOb);
+            console.log(`renderTemplate`, targ, renderState.temp, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 setupControl(rType);
                 setHash();

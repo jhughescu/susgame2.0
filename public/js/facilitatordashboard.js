@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addToLogFeed('start new game');
 //        console.log(`start new game: ${session.state}`);
         if (session.state === 'pending') {
-            socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type});
+            socket.emit('preparePresentation', {sessionID: session.uniqueID, type: session.type, address: session.address});
             socket.emit('startGame', JSON.stringify(session), (rgame) => {
 //                game = rgame;
                 console.log(`startGame callback, rgame:`, rgame);

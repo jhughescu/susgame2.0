@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
             onScoreUpdate(sp);
         });
         socket.on('showSlide', (slOb) => {
-//            console.log(`socket event`, slOb)
+            console.log(`socket event`, slOb);
             showSlide(slOb);
         });
         socket.on('updateProperty', (slOb) => {
@@ -114,6 +114,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
         socket.on('togglePresInfo', toggleDevInfo);
+        socket.on('preparePresentation', () => {
+//            console.log('YES');
+        });
     };
     const setCurrentSlideObject = (slOb) => {
         currentSlideObject = Object.assign({}, slOb);
@@ -122,6 +125,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
+//        console.log(`onGameUpdate`, rGame);
+//        console.log(`watchFor`, watchFor);
         if (watchFor) {
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
                 if (watchFor === 'scores') {
@@ -269,10 +274,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return rArrNew;
     };
+    let valInt = null;
     const prepAllocations = (n, sc) => {
         // prep votes & values for rendering. Takes a required 'n' and an optional 'sc' arg.
         // Returns an array of objects
         // NOTE "values" are always set prior to "scores", so "values" can be assumed here
+//        console.log(`${window.clone(game).values.length} values recorded`);
+//        clearInterval(valInt);
+//        valInt = setInterval(() => {
+//            console.log(`${window.clone(game).values.length} values recorded`);
+//        }, 500);
         const t = game.persistentData.teamsArray;
         let rArr = [];
         let v = game.values;
@@ -298,9 +309,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         let rArrNew = [];
+//        console.log(`prepAllocations, values: `, v);
         // use only r[n] scores:
         sStatic = filterScorePackets(sStatic, 'round', n);
-        sStatic.forEach(sp => {
+        sStatic.forEach((sp, i) => {
+//            console.log(sp);
             const vl = v.find(obj => obj.team === sp.src);
             if (vl) {
                 const ob = {
@@ -585,11 +598,17 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(`showRound${n}, ${game.round}`);
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            onGameUpdate(rgame);
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', n);
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 rs = filterScorePackets(rs, 'round', n);
+//                console.log(`${rs.length} r${n} scores found`);
+//                console.log(`${rgame.values.length} values found`);
+                if (rs.length !== rgame.values.length) {
+//                    console.log('mismatch, try again');
+//                    console.log(rgame.values);
+                }
                 const allScores = prepAllocations(n, rs);
-//                console.log(allScores);
                 if (!allScores) {
                     console.log('fail due to values not being in place yet, return and run again after short delay');
                     if (alloCount++ < 5) {
@@ -619,7 +638,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     card.description = s.description;
                     card.value = s.value;
                 })
-//                console.log(rOb);
                 renderTemplate(targ, 'slides/showround1', rOb, () => {
                     allScores.forEach(s => {
                         const scoredBefore = filterScorePackets(preScores, 'src', s.team).length > 0;
@@ -632,14 +650,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
                 });
             });
-
         });
     };
     const showRoundAllocation = (n) => {
         clearTimeout(delay);
         delay = setTimeout(showRound3Delay, 1000);
         setWatch('scores');
-        console.log(`showRound3`);
+//        console.log(`showRound3`);
         const mt = game.persistentData.mainTeams;
         const t = game.persistentData.teamsArray.slice(0, mt.length);
         const fsp = window.filterScorePackets;

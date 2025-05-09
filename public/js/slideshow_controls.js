@@ -150,10 +150,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const gotoSlide = async (v) => {
 //        const
 //        return;
-        console.log(`gotoSlide will call slideTest`);
+//        console.log(`gotoSlide will call slideTest`);
+//        console.log(v);
         const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v};
 //        const gOb = {gameID: game.uniqueID, event: 'gotoSlide', val: v, test: await window.slideTest(v)};
-        console.log(`slideClick`, gOb);
+//        console.log(`slideClick`, gOb);
 //        console.log(window.slideTest(v));
         socket.emit('presentationEvent', gOb, (ob) => {
             eventUpdate(ob);
@@ -244,6 +245,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
+    const resetCheck = (ob) => {
+        // called from the FDB, wait for slides to be initialised and then go to the first one
+        if (slides) {
+//            console.log('i have the slides now');
+//            console.log(slides);
+//            console.log(slides[0]);
+            gotoSlide(0);
+        } else {
+            setTimeout(() => {
+                resetCheck(ob);
+            }, 300);
+        }
+    };
     const init = (game) => {
 //        console.log('init controls');
         setGame(game);
@@ -269,6 +283,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     socket.on('gameUpdate', (rg) => {
         onGameUpdate(rg);
+    });
+    socket.on('preparePresentation', (ob) => {
+        resetCheck(ob);
     });
     // expose methods to the parent page (make available to scriptpresentation.js)
     window.slideContolsInit = init;

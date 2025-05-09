@@ -7,6 +7,10 @@ const sessionController = require('./../controllers/sessionController');
 const { getEventEmitter } = require('./../controllers/eventController');
 
 const eventEmitter = getEventEmitter();
+const preparePresentation = (ob) => {
+//    console.log('prep pres');
+//    console.log(ob);
+};
 const setPresentation = () => {};
 const showSlide = () => {
     const slOb = presentation.slideData.slideList[presentation.currentSlide];
@@ -121,4 +125,7 @@ const pEvent = (ob, cb) => {
         console.log(`no such game ${ob.gameID}`);
     }
 };
-module.exports = { pEvent };
+module.exports = {
+    pEvent,
+    preparePresentation
+};

@@ -324,7 +324,7 @@ function initSocket(server) {
             });
             socket.on('resetSession', (id, cb) => {
 //                sessionController.resetSession(id, cb);
-                console.log(`#################################################################### socketController resetSession`);
+//                console.log(`#################################################################### socketController resetSession`);
                 gameController.resetSession(id, cb);
             });
             socket.on('resetGame', (id, cb) => {
@@ -437,7 +437,7 @@ function initSocket(server) {
                 gameController.getTotals4(gameID, cb);
             });
             socket.on('submitScore', (ob, cb) => {
-                console.log(`############################ submitScore`);
+//                console.log(`############################ submitScore`);
                 const sp = gameController.scoreSubmitted(ob, cb);
 //                io.to(facilitator).emit('scoreSubmitted', sp);
                 socket.emit('scoreSubmitted', sp);
@@ -489,6 +489,16 @@ function initSocket(server) {
                 const rid = `${ob.game}-pres`;
 //                console.log(`pre rooms: ${rid} ${showRoomSize(rid)}`);
                 io.to(rid).emit('toggleOverlay', ob.type);
+            });
+            socket.on('preparePresentation', (ob) => {
+                const rid = `${ob.address}-pres`;
+//                console.log(`pre rooms: ${rid} ${showRoomSize(rid)}`);
+//                console.log(ob)
+                io.to(rid).emit('preparePresentation', ob);
+                const ridC = `${ob.address}-pres-control`;
+//                console.log(`pre rooms: ${ridC} ${showRoomSize(ridC)}`);
+//                console.log(ob)
+                io.to(ridC).emit('preparePresentation', ob);
             });
             socket.on('resetEndedGame', (ob, cb) => {
 //                console.log(`resetEndedGame`);
@@ -550,7 +560,7 @@ function initSocket(server) {
 //            console.log(`seek game with address /${Q.id}: `);
             const roomID = `/${Q.id}-pres`;
             const controlID = `/${Q.id}-pres-control`;
-//            console.log(facID);
+            console.log(`presentation roomID: ${roomID}`);
 //            showRoomSize(facID);
 //            const session = await sessionController.getSessionWithAddress(`/${Q.id}`);
 //            console.log(session)
@@ -754,8 +764,6 @@ function initSocket(server) {
         */
         // Handle other socket events specific to the admin dashboard...
     });
-
-
 
     eventEmitter.on('gameUpdate', (game) => {
 //        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
