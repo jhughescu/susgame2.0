@@ -1421,6 +1421,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const updateRoundDisplay = () => {
+        console.log('updateRoundDisplay', game.round);
+//        console.log(game.round);
         const rounds = game.persistentData.rounds;
         const slides = game.presentation.slideData.slideList;
         const rArr = [];

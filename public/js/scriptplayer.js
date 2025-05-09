@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('player exists');
             if (Boolean(player.teamObj) && Boolean(newPlayer.teamObj)) {
                 if (player.teamObj.id !== newPlayer.teamObj.id || player.isLead !== newPlayer.isLead) {
-                    window.location.reload();
+//                    window.location.reload();
                 }
             }
         } else {
@@ -385,8 +385,9 @@ document.addEventListener('DOMContentLoaded', function() {
         window.playerShare(player);
     };
     const teamsAssigned = (fgame) => {
-//        console.log(`teamsAssigned`);
-//        console.log(fgame);
+        console.log(`teamsAssigned`);
+        console.log(window.clone(fgame));
+        console.log(window.clone(player));
         updateGame(fgame);
         setPlayer(fgame);
         updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
@@ -472,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const activateYourmoveButton = () => {
+        console.log(`activateYourmoveButton`);
         const ymb = $('.yourmove-btn');
 //        console.log(ymb);
         if (ymb.length > 0) {
@@ -502,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const activateYourmove = async () => {
+        console.log(`activateYourmove`);
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
@@ -677,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
             resetScroll();
             render();
         });
+        activateYourmove();
     };
     const setupGlobalControl = () => {
         setupHomeButton();
