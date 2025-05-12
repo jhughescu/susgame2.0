@@ -262,6 +262,11 @@ function initSocket(server) {
                         console.log(`PLAYER ERROR ADDITIONAL: ${o.err} (${o.player.id})`);
                     }
                 });
+                socket.on('getLoremIpsum', (n, cb) => {
+                    if (cb) {
+                        cb(tools.getLoremIpsum(n));
+                    }
+                });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
 //                console.log(Boolean(gameController.getGameWithAddress(src)));
                 if (!Boolean(gameController.getGameWithAddress(src))) {
@@ -524,6 +529,11 @@ function initSocket(server) {
             });
             socket.on('getQrString', (url, cb) => {
                 gfxController.generateQRText(url, cb);
+            });
+            socket.on('getLoremIpsum', (n, cb) => {
+                if (cb) {
+                    cb(tools.getLoremIpsum(n));
+                }
             });
         }
         // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

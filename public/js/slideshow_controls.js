@@ -258,6 +258,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }
     };
+    const showSlides = () => {
+        if (slides) {
+            console.log(slides)
+        } else {
+            console.log('no slides to show');
+        }
+    };
     const init = (game) => {
 //        console.log('init controls');
         setGame(game);
@@ -292,4 +299,5 @@ document.addEventListener('DOMContentLoaded', function() {
     window.pEvent = pEvent;
     window.findRoundTrigger = findRoundTrigger;
     window.updateSlideList = updateSlidelist;
+    window.showSlides = showSlides;
 });

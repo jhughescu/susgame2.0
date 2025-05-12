@@ -545,6 +545,11 @@ document.addEventListener('DOMContentLoaded', function () {
             game.round = parseInt(game.round);
         }
     };
+    const isLocal = () => {
+        const il = window.location.hostname.includes('localhost');
+        return il;
+    };
+//    console.log(isLocal());
     // allocation/collaboration/vote controls can be used in facilitator dashboards, hence are defined in common.
     const getRemainingAllocation = (pl) => {
         const s = game.scores.map(sp => window.unpackScore(sp));
@@ -577,6 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log(`Team ${t.title} has ${ra} vote${ra > 1 ? 's' : ''} remaining`);
         return ra;
     };
+
     const setupAllocationControl = async (inOb) => {
 //        console.log(`setupAllocationControl`);
 //        console.log(game);
@@ -602,6 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
             const descMax = 150;
             const hasS = await thisRoundScored(myPlayer);
+
             window.initScoreboard(game.address, myPlayer.id, game);
             const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
 //            console.log(scoreSumm);
@@ -612,6 +619,25 @@ document.addEventListener('DOMContentLoaded', function () {
     //        console.log(team);
 //            console.log(`resourceRemaining: ${resourceRemaining}`);
             remain.html(resourceRemaining);
+
+
+//            console.log('local', isLocal());
+            if (isLocal()) {
+                socket.emit('getLoremIpsum', 7, (li) => {
+//                    console.log('li:', li);
+                    desc.val(li);
+                    val.html(Math.ceil(Math.random() * 4));
+                    let actions = $('#action-choice option').map(function() {
+                        return $(this).val();
+                    }).get().slice(1);
+                    action.val(actions[Math.floor(Math.random() * actions.length)]);
+                });
+            }
+
+
+
+
+
             let isDev = false;
             if (game.hasOwnProperty('isDev')) {
                 isDev = game.isDev;
@@ -688,7 +714,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             } else {
                                 const tID = myPlayer.teamObj.id;
                                 let t = myPlayer.teamObj.id;
-                                console.log(game.round, typeof(game.round))
+                                console.log(game.round, typeof(game.round));
+//                                console.log('slides:');
+//                                window.showSlides();
                                 const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};
                                 socket.emit('submitValues', vob);
                                 const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
@@ -706,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     const setupVoteControl = async (inOb) => {
-        console.log(`setupVoteControl`);
+//        console.log(`setupVoteControl`);
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -714,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (localStorage.getItem(storeID)) {
             stored = localStorage.getItem(storeID).split(',');
         }
-        console.log(`setupVoteControl, stored:`, stored);
+//        console.log(`setupVoteControl, stored:`, stored);
         const plIndex = procVal(myPlayer.index) - 1;
         const plID = justNumber(myPlayer.id);
         const hasS = await thisRoundScored(myPlayer);
@@ -830,6 +858,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 submit.off('click').on('click', () => {
                     const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
+//                    console.log('votes/values submitted, slides:');
+//                    window.showSlides();
                     let someZero = false;
                     let goodToGo = true;
                     val.each((i, v) => {
@@ -977,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const createDynamicTeamData = () => {
         const rOb = {game: game};
-        console.log(rOb.game);
+//        console.log(rOb.game);
         rOb.dynamicTeamData = [];
         rOb.game.persistentData.mainTeams.forEach((t, i) => {
             t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];

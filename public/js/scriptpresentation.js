@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         socket.on('setGame', (rgame) => {
             if (rgame) {
-                game = rgame;
+                updateGame(rgame);
             }
             if (game) {
                 const initSlide = game.presentation.slideData.slideList[game.presentation.currentSlide];
@@ -44,7 +44,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         socket.on('gameReady', (rGame) => {
 //            console.log(`oo, game is ready`, rGame);
-            game = rGame;
+//            game = rGame;
+            updateGame(rGame);
         });
         socket.on('gameUpdate', (rGame) => {
 //            console.log('a game update', rGame);
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
             onScoreUpdate(sp);
         });
         socket.on('showSlide', (slOb) => {
-            console.log(`socket event`, slOb);
+//            console.log(`socket event`, slOb);
             showSlide(slOb);
         });
         socket.on('updateProperty', (slOb) => {
@@ -118,15 +119,26 @@ document.addEventListener('DOMContentLoaded', function () {
 //            console.log('YES');
         });
     };
+    const updateGame = (g) => {
+        // unified method for updating the game object
+        game = g;
+    };
     const setCurrentSlideObject = (slOb) => {
         currentSlideObject = Object.assign({}, slOb);
+//        console.log(`setCurrentSlideObject:`);
+//        console.log(window.clone(slOb));
+//        console.log(window.clone(currentSlideObject));
+//        console.log('end of objects ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     };
     const getCurrentSlideObject = () => {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
-//        console.log(`onGameUpdate`, rGame);
-//        console.log(`watchFor`, watchFor);
+        console.log(`onGameUpdate`, rGame);
+        console.log(`watchFor`, watchFor);
+        console.log('watched game: ', game[watchFor].toString());
+        console.log('watched rGame: ', rGame[watchFor].toString());
+        console.log('different?', (game[watchFor].toString() !== rGame[watchFor].toString()));
         if (watchFor) {
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
                 if (watchFor === 'scores') {
@@ -138,7 +150,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (game.round !== rGame.round) {
             setWatch('scores');
         }
-        game = rGame;
+//        game = rGame;
+        updateGame(rGame);
 
     };
     const estPanopto  = () => {
@@ -355,6 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return rArrNew;
     };
     const prepCollaborations = (sc) => {
+        console.log(`prepCollaborations`);
         const t = game.persistentData.teamsArray;
         const v = game.values;
         let rArrNew = [];
@@ -595,10 +609,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     let alloCount = 0;
     const showAllocationSlide = (n) => {
-//        console.log(`showRound${n}, ${game.round}`);
+        console.log(`showRound${n}, ${game.round}`);
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             onGameUpdate(rgame);
+            console.log(rgame.values);
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', n);
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 rs = filterScorePackets(rs, 'round', n);
@@ -802,162 +817,53 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const renderTotals = async (o) => {
-        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
-        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-//        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-        const typeMap = {
-            t2030: 'total2030',
-            t2040: 'scorePlusShare',
-            tfinal: 'grandTotal'
-        };
-        const scoresSumm = window.getScoresSummary();
-        const totals = Object.values(scoresSumm).map(s => s[typeMap[`t${o.actionArg}`]]);
-        console.log(o.actionArg)
-        console.log(typeMap[o.actionArg])
-        let tAbs = totals.map(s => s = Math.abs(s));
-        const max = tAbs.sort(sortNumber)[0];
-        const mult = 100 / max;
-        $(`.totalNum`).html('');
-        console.log(o);
-        console.log(scoresSumm);
-        console.log(totals);
-        barsPos.each((i, b) => {
-            console.log(totals[i]);
-            const perc = totals[i] * mult;
-            let newH = perc;
-            let neg = Math.abs(newH);
-            if (newH < 0) {
-                newH = 0;
-            } else {
-                neg = 0;
-            }
-            const positive = (newH / 100) * $(b).parent().height();
-            const negative = (neg / 100) * $(b).parent().height();
-            $(b).animate({height: `${newH}%`});
-            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-            total.html(roundNumber(totals[i], 1));
-            const tPos = neg === 0 ? positive + 50 : positive;
-//            console.log(neg, tPos);
-            if (justNumber(total.html()) === 0) {
-                total.css({bottom: '40px'});
-//                console.log('trtgfgfhff');
-            } else {
-                total.animate({bottom: `${tPos}px`});
-            }
-            $(`#b${i}Neg`).animate({height: `${neg}%`});
-        });
-    };
-    const renderTotalsV2 = async (o) => {
-        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
-        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-        const scoresSumm = window.getScoresSummary();
-//        const newTotals = Object.values(scoresSumm).map(s => s.scorePlusShare);
-        const newTotals = Object.values(scoresSumm).map(s => s.grandTotal);
-        /*
-        console.log('renderTotals', o);
-        console.log(round);
-        console.log(game);
-        console.log(scoresSumm);
-        console.log(newTotals);
-        */
-//        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
-        let totals = []
-//        console.log(totals);
-        /*
-        if (typeof(totals) === 'string') {
-            totals = JSON.parse(totals);
-        }
-        let orig = {};
-        if (!totals.hasOwnProperty('length')) {
-            orig = JSON.parse(JSON.stringify(totals));
-            totals = Object.values(totals);
-
-        }
-        */
-        totals = newTotals;
-//        totals = totals.map(s => s.gt);
-
-        let tAbs = totals.map(s => s = Math.abs(s));
-        const max = tAbs.sort(sortNumber)[0];
-        const mult = 100 / max;
-
-        $(`.totalNum`).html('');
-        barsPos.each((i, b) => {
-//            console.log(totals[i])
-            const perc = totals[i] * mult;
-            let newH = perc;
-            let neg = Math.abs(newH);
-            if (newH < 0) {
-                newH = 0;
-            } else {
-                neg = 0;
-            }
-            const positive = (newH / 100) * $(b).parent().height();
-            const negative = (neg / 100) * $(b).parent().height();
-            $(b).animate({height: `${newH}%`});
-            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-            total.html(roundNumber(totals[i], 1));
-            const tPos = neg === 0 ? positive + 50 : positive;
-            console.log(neg, tPos)
-            if (justNumber(total.html()) === 0) {
-                total.css({bottom: '40px'});
-//                console.log('trtgfgfhff');
-            } else {
-                total.animate({bottom: `${tPos}px`});
-            }
-            $(`#b${i}Neg`).animate({height: `${neg}%`});
-        });
-    };
-    const renderTotalsV1 = async (o) => {
-        setWatch('scores');
-        const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
-        const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
-        const round = o.hasOwnProperty('actionArg') ? o.actionArg : window.justNumber(game.round);
-        let totals = await emitWithPromise(socket, `getTotals${round}`, game.uniqueID);
-
-        if (typeof(totals) === 'string') {
-            totals = JSON.parse(totals);
-        }
-        let orig = {};
-        console.log(`renderTotals: ${Boolean(totals)}`);
-        console.log(totals);
-        if (!totals.hasOwnProperty('length')) {
-            orig = JSON.parse(JSON.stringify(totals));
-            console.log('convert array:');
-            totals = Object.values(totals);
+//        console.clear();
+        console.log(`+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++`);
+        console.log(`renderTotals`, window.clone(o));
+        // make sure the game object is up to date before proceeding
+        socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
+            updateGame(rgame);
+            const barsPos = $($('.barchart').find('tr')[0]).find('.bar');
+            const barsNeg = $($('.barchart').find('tr')[1]).find('.bar');
+            const typeMap = {
+                t2030: 'total2030',
+                t2040: 'scorePlusShare',
+                tfinal: 'grandTotal'
+            };
+            const scoresSumm = window.getScoresSummary();
+            const totals = Object.values(scoresSumm).map(s => s[typeMap[`t${o.actionArg}`]]);
+            console.log(o.actionArg)
+            console.log(typeMap[`t${o.actionArg}`])
+            let tAbs = totals.map(s => s = Math.abs(s));
+            const max = tAbs.sort(sortNumber)[0];
+            const mult = 100 / max;
+            $(`.totalNum`).html('');
+            console.log(o);
+            console.log(scoresSumm);
             console.log(totals);
-        }
-        totals = totals.map(s => s.gt);
-
-//        console.log(JSON.parse(JSON.stringify(totals)));
-        let tAbs = totals.map(s => s = Math.abs(s));
-        const max = tAbs.sort(sortNumber)[0];
-        const mult = 100 / max;
-        $(`.totalNum`).html('');
-        barsPos.each((i, b) => {
-            const ob = Boolean(totals[i]) ? totals[i] : orig[`t${i}`];
-            console.log(`using ${Boolean(totals[i]) ? 'array': 'object'}`)
-//            const perc = totals[i] * mult;
-            const perc = ob * mult;
-            let newH = perc;
-            let neg = Math.abs(newH);
-            if (newH < 0) {
-                newH = 0;
-            } else {
-                neg = 0;
-            }
-            const positive = (newH / 100) * $(b).parent().height();
-            const negative = (neg / 100) * $(b).parent().height();
-            $(b).animate({height: `${newH}%`});
-            const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
-            total.html(roundNumber(totals[i], 1));
-            const tPos = neg === 0 ? positive + 50 : positive;
-            total.animate({bottom: `${tPos}px`});
-            console.log(i, perc, totals[i], mult, newH, total.html());
-            console.log(totals[`t${i}`]);
-            console.log(orig[`t${i}`]);
-            $(`#b${i}Neg`).animate({height: `${neg}%`});
+            barsPos.each((i, b) => {
+//                console.log(totals[i]);
+                const perc = totals[i] * mult;
+                let newH = perc;
+                let neg = Math.abs(newH);
+                if (newH < 0) {
+                    newH = 0;
+                } else {
+                    neg = 0;
+                }
+                const positive = (newH / 100) * $(b).parent().height();
+                const negative = (neg / 100) * $(b).parent().height();
+                $(b).animate({height: `${newH}%`});
+                const total = neg === 0 ? $(`#tn${i}Pos`) : $(`#tn${i}Neg`);
+                total.html(roundNumber(totals[i], 1));
+                const tPos = neg === 0 ? positive + 50 : positive;
+                if (justNumber(total.html()) === 0) {
+                    total.css({bottom: '40px'});
+                } else {
+                    total.animate({bottom: `${tPos}px`});
+                }
+                $(`#b${i}Neg`).animate({height: `${neg}%`});
+            });
         });
     };
     // End specific actions
@@ -1122,29 +1028,26 @@ document.addEventListener('DOMContentLoaded', function () {
 //    window.toggleDevInfo = toggleDevInfo;
     const slideAction = (slOb) => {
         const rOb = {gameID: game.uniqueID};
-
-//        console.log(`slide has action`, slOb.hasOwnProperty('action'));
+        let tempAction = null;
         if (slOb.hasOwnProperty('action')) {
-//            console.log(`the action is`, slOb.action);
             if (slOb.action.includes(':')) {
+                tempAction = slOb.action;
                 const s = slOb.action.split(':');
-//                console.log(`action item:`, s);
                 slOb.action = s[0];
                 rOb.actionArg = s[1];
-//                console.log(slOb.action);
-//                console.log(rOb.actionArg);
             }
             if (window[slOb.action]) {
-//                console.log('action exists in the code, rOb:');
-//                console.log(rOb)
                 window[slOb.action](rOb);
+                if (tempAction) {
+                    slOb.action = tempAction;
+                }
             } else {
 //                console.log(`action does not exist in code (${slOb.action})`);
             }
         }
     };
     const showSlide = (slOb) => {
-//        console.log(`showSlide`, slOb);
+//        console.log(`showSlide`, window.clone(slOb));
         devInfo(slOb);
         setCurrentSlideObject(slOb);
 //        console.log(`currentSlideObject set to `, slOb);
@@ -1169,8 +1072,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const updateSlide = () => {
-//        console.log(`updateSlide`);
         const slOb = currentSlideObject;
+//        console.log(`updateSlide, slOb:`, window.clone(slOb));
         if (slOb) {
             if (slOb.action) {
                 slideAction(slOb);
@@ -1187,6 +1090,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return s;
     };
     const onScoresUpdated = (sc) => {
+//        console.log(`onScoresUpdated`);
         game.scores = sc;
 //        console.log(game);
         showRound1();

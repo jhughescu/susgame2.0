@@ -158,7 +158,7 @@ class Game {
         return this.scorePackets;
     }
     getDetailedScorePackets() {
-        console.log(`getDetailedScorePackets`)
+//        console.log(`getDetailedScorePackets`);
         this.detailedScorePackets = [];
         this.scores.forEach(s => {
             this.detailedScorePackets.push(new ScorePacket(s));

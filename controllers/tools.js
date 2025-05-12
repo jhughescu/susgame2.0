@@ -1,3 +1,6 @@
+
+//import { LoremIpsum } from "lorem-ipsum";
+const LoremIpsum = require("lorem-ipsum").LoremIpsum;
 const os = require('os');
 const procVal = (v) => {
 //    console.log(`procVal ${v}`);
@@ -72,6 +75,21 @@ const mapSessionToGame = (s, g) => {
     }
     return rg;
 };
+const getLoremIpsum = (n) => {
+    // return a random LI string of length [n] words (default is 5)
+    return lorem.generateWords(n || 5);
+};
+
+const lorem = new LoremIpsum({
+  sentencesPerParagraph: {
+    max: 8,
+    min: 4
+  },
+  wordsPerSentence: {
+    max: 16,
+    min: 4
+  }
+});
 module.exports = {
     procVal,
     toCamelCase,
@@ -79,5 +97,6 @@ module.exports = {
     roundNumber,
     isValidJSON,
     getIPv4Address,
-    mapSessionToGame
+    mapSessionToGame,
+    getLoremIpsum
 }

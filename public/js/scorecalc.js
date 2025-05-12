@@ -224,8 +224,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return out;
     };
     const expandTeams = () => {
-        const pdt = game.persistentData.teamsArray;
-        teams.forEach((t, i) => t.displayColour = pdt[i].displayColour);
+        if (game) {
+            const pdt = game.persistentData.teamsArray;
+            teams.forEach((t, i) => t.displayColour = pdt[i].displayColour);
+        } else {
+            console.warn(`expandTeams cannot complete; no game found`);
+        }
     };
     const renderFormSummary = (o) => {
         console.log(o)
