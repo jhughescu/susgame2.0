@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('retrieve template from store');
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
             if (document.getElementById(targ)) {
-                const firstLineNew = compiledTemplate(ob).split(`\r\n`)[0].trim();
+                const firstLineNew = compiledTemplate(ob).split(`\n`)[0].trim();
                 console.log(`firstLineCurrent: ${firstLineCurrent}`);
                 console.log(`firstLineNew: ${firstLineNew}`);
 //                console.log(compiledTemplate(ob).split(`\n\r`)[0]);
