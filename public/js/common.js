@@ -362,7 +362,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const clone = (o) => {
         // return a simple flat duplicate of an object
-        return JSON.parse(JSON.stringify(o));
+        if (o) {
+            return JSON.parse(JSON.stringify(o));
+        }
     };
     const createCopyLinks = () => {
         let uc = $('.copylink');

@@ -197,7 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     rOb.temp = `game.${hash.replace('#', '')}`;
                     updateRenderState(rOb);
                 }
-//                console.log('call render')
+//                console.log('call render');
+                console.log(`call to render: registerwithGame`);
                 render(() => {
 //                    console.log('render callback')
                     if (justNumber(game.round) > 0) {
@@ -210,75 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkWebSocketConnection();
                 }, 2000);
 //                console.log('COMPLETE');
-            }
-        });
-    };
-    const registerwithGameV1 = () => {
-//        getFakeID();
-//        lID = `${lIDStub}${qu.fake ? qu[fID] : ''}`;
-        lID = lIDStub + (qu.fake ? `-${qu[fID]}` : ``);
-//        console.log(qu);
-//        console.log(lID);
-        let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
-//        console.log(`ID: ${ID}`);
-        const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
-        window.socketShare(socket);
-        socket.emit('registerPlayer', initObj, (ob) => {
-//            console.log('regPlayer callback:', ob);
-//            console.log(player)
-            if (ob) {
-                let res = ob.id;
-                if (ob.game) {
-                    ob.game = JSON.parse(ob.game);
-                    if (ob.game.round) {
-                        ob.game.round = justNumber(ob.game.round);
-                    }
-                    updateGame(ob.game);
-                    setPlayer(game);
-//                    console.log(player)
-                }
-                // amend for fake players
-//                if (res.indexOf('f', 0) > -1 && lID.indexOf(res, 0) === -1) {
-                if (res.indexOf('f', 0) > -1) {
-//                    lID = lID + res;
-                    lID = `${lIDStub}-${res}`;
-//                    console.log(`registerwithGame, lID set to ${lID}`);
-                } else {
-                    lID = lIDStub;
-                }
-//                console.log(`storing`, lID, res);
-                localStorage.setItem(lID, res);
-                if (ob.renderState) {
-                    ob.renderState.source = `registerPlayer event`;
-                    updateRenderState(ob.renderState);
-                    renderStateServer = ob.renderState;
-                }
-                let hash = window.location.hash;
-                if (hash) {
-                    let rOb = {temptype: 'sub'};
-                    if (/\d/.test(hash)) {
-                        // number found in hash; assume a team page, fetch object accordingly
-                        const n = parseInt(hash.match(/\d+/)[0]);
-                        rOb.ob = Object.assign({}, game.persistentData.teams[`t${n}`]);
-                        delete rOb.ob.game;
-                        hash = hash.replace(/\d/g, '');
-                    }
-                    rOb.temp = `game.${hash.replace('#', '')}`;
-                    updateRenderState(rOb);
-                }
-//                console.log('here');
-                render(() => {
-//                    console.log(`the render callback: ${game.round} ${justNumber(game.round) > 0}`);
-
-                    if (justNumber(game.round) > 0) {
-//                        console.log(`call onStartRound with ${game.round} (${typeof(game.round)})`)
-                        onStartRound(game.round);
-                    }
-                });
-                clearInterval(pingCheck);
-                pingCheck = setInterval(() => {
-                    checkWebSocketConnection();
-                }, 2000);
             }
         });
     };
@@ -298,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isItHere(`resetPlayer`);
 //        localStorage.clear();
         updateRenderState({temp: 'game.pending'});
+        console.log(`call to render: resetPlayer`);
         render();
     };
     const getGames = () => {
@@ -385,19 +318,21 @@ document.addEventListener('DOMContentLoaded', function() {
         window.playerShare(player);
     };
     const teamsAssigned = (fgame) => {
-        console.log(`teamsAssigned`);
-        console.log(window.clone(fgame));
-        console.log(window.clone(player));
+//        console.log(`teamsAssigned`);
+//        console.log(window.clone(fgame));
+//        console.log(window.clone(player));
         updateGame(fgame);
         setPlayer(fgame);
         updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
 //        isItHere(`teamsAssigned`);
+        console.log(`call to render: teamsAssigned`);
         render();
     };
     const teamsReset = (fgame) => {
         updateGame(fgame);
         updateRenderState({temp: 'game.intro', ob: player});
 //        isItHere(`teamsReset`);
+        console.log(`call to render: teamsReset`);
         render();
     };
     const showOverlay = (id, ob) => {
@@ -473,34 +408,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const activateYourmoveButton = () => {
-        console.log(`activateYourmoveButton`);
+//        console.log(`activateYourmoveButton`);
         const ymb = $('.yourmove-btn');
 //        console.log(ymb);
         if (ymb.length > 0) {
-            const rOb = Object.assign({}, renderState);
-            rOb.active = false;
-            rOb.source = `activateYourmove`;
-            rOb.note = `set in scriptplayer.js`;
-            setRenderStateLocal(rOb);
-            ymb.removeClass('disabled');
-            ymb.off('click').on('click', async () => {
-                setRoundState(true);
-                const rs = await new Promise((resolve, reject) => {
-                    const idOb = {game: game, playerID: player.id};
-                    socket.emit('getRenderState', idOb, (rs) => {
-                        resolve(rs);
-                        updateRenderState(rs);
-                        const rOb = Object.assign({}, renderState);
-                        rOb.active = true;
-                        rOb.source = `yourmove click`;
-                        rOb.note = `set in scriptplayer.js`;
-                        setRenderStateLocal(rOb);
-//                        isItHere(`activateYourmoveButton`);
-                        render();
+//            console.log(ymb);
+            if (ymb.hasClass('disabled')) {
+                const rOb = Object.assign({}, renderState);
+                rOb.active = false;
+                rOb.source = `activateYourmove`;
+                rOb.note = `set in scriptplayer.js`;
+                setRenderStateLocal(rOb);
+                ymb.removeClass('disabled');
+                ymb.off('click').on('click', async () => {
+                    setRoundState(true);
+                    const rs = await new Promise((resolve, reject) => {
+                        const idOb = {game: game, playerID: player.id};
+                        socket.emit('getRenderState', idOb, (rs) => {
+                            resolve(rs);
+                            updateRenderState(rs);
+                            const rOb = Object.assign({}, renderState);
+                            rOb.active = true;
+                            rOb.source = `yourmove click`;
+                            rOb.note = `set in scriptplayer.js`;
+                            setRenderStateLocal(rOb);
+    //                        isItHere(`activateYourmoveButton`);
+                            console.log(`call to render: activateYourmoveButton`);
+                            render();
+                        });
                     });
                 });
-            });
-            highlightElement(ymb);
+                console.log('HIGHLIGHT YOURMOVE');
+                highlightElement(ymb);
+            }
         }
     }
     const activateYourmove = async () => {
@@ -518,16 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const round = game.persistentData.rounds[procVal(game.round)];
                 const inThisRound = round.type === player.teamObj.type;
                 const rs = await thisRoundScored();
-
-    //            console.log(`activateYourmove, home: ${home}, interaction: ${interaction}, hasScored: ${hasScored}`);
-        //        console.log(`round`, round);
-        //        console.log(`game.round`, game.round);
-        //        console.log(`NEW - have I scored?`, iHaveScored(rs));
-        //        console.log(`thisRoundScored`, rs);
-    //            console.log(`inThisRound`, inThisRound);
-    //            console.log(`renderState`, renderState);
-        //        console.log(`game`, game);
-        //        console.log(`player`, player);
                 if (round.n > 0) {
         //            console.log('there is a round in progress');
                     // need further conditionals here - is this player invloved in the current round? Is the round already complete?
@@ -539,11 +469,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (!home && !interaction) {
                                     gotoHomeState();
 //                                    isItHere(`activateYourmove`);
+                                    console.log(`call to render: activateYourMove`);
                                     render(activateYourmoveButton);
                                 } else {
-        //                            if (interaction) {
+                                    if (home) {
                                         activateYourmoveButton();
-        //                            }
+                                    }
                                 }
                             } else {
 //                                console.log(`I've already scored, apparently`)
@@ -597,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return sc.length > 0;
     };
     const onStartRound = async (ob) => {
-//        console.log(`onStartRound`, ob);
+        console.log(`onStartRound`, ob);
         if (player) {
             const trs = await thisRoundScored(player);
             if (ob.game) {
@@ -608,11 +539,12 @@ document.addEventListener('DOMContentLoaded', function() {
             round = game.persistentData.rounds[r];
             if (r === -1) {
                 updateRenderState({temp: 'game.main', partialName: 'game-links'});
+                console.log(`call to render: onStartRound`);
                 render();
             }
             if (round) {
                 if (round.type === player.teamObj.type) {
-//                    console.log('yes, I will activate your move');
+                    console.log('yes, I will activate your move');
                     activateYourmove();
                 }
             }
@@ -640,6 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             gotoHomeState();
             setRoundState(false);
             resetScroll();
+            console.log(`call to render: setupHomeButton`);
             render(activateYourmove);
             const round = game.persistentData.rounds[game.round];
             if (round) {
@@ -671,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal({temp: 'game.global', sub: null, tempType: 'sub', ob: {hasContent: true}});
             updateRenderState({temp: 'game.global', sub: null, tempType: 'sub', ob: {hasContent: true}});
             resetScroll();
+            console.log(`call to render: main control link clicked`);
             render();
         });
         lc.on('click', () => {
@@ -678,8 +612,10 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal({temp: 'game.connecton', sub: null, tempType: 'sub'});
             updateRenderState({temp: 'game.connecton', sub: null, tempType: 'sub'});
             resetScroll();
+            console.log(`call to render: main control link clicked`);
             render();
         });
+        console.log(`setupMainControl`);
         activateYourmove();
     };
     const setupGlobalControl = () => {
@@ -702,25 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal(sob);
             // 20250507 Why was the line below included? It caused a render error...
 //            updateRenderState({temp: `game.connecton.team`, ob: tm});
-            render(() => {
-                console.log(`ok, we can set up the button now`)
-            });
-        })
-    };
-    const setupConnectonControlV1 = () => {
-        console.log(`setupConnectonControl`);
-        setupHomeButton();
-//        const a = $('a');
-        const a = $('.team-link');
-        a.off('click').on('click', function () {
-            const t = $(this).attr('id').split('_')[1];
-            const tm = Object.assign({}, game.persistentData.teams[`t${t}`]);
-            tm.game = {};
-            delete tm.game;
-            console.log(`yep`, tm);
-            setHash(`connecton.team${t}`)
-            setRenderStateLocal({temp: `game.connecton.team`, ob: tm, preserveOb: true});
-            updateRenderState({temp: `game.connecton.team`, ob: tm});
+            console.log(`call to render: setupConnectonControl`);
             render(() => {
                 console.log(`ok, we can set up the button now`)
             });
@@ -736,6 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Note: set hash to 'reset' first, as the setHash method will not overwrite hash if it includes the new hash
             setHash('reset');
             setHash('connecton');
+            console.log(`call to render: setupTeamControl`);
             render();
         });
     };
@@ -756,6 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.setupAllocationControl();
                 break;
             case 'collaboration':
+                console.log(`setupControl will call setupCollaborationControl`);
                 window.setupCollaborationControl();
                 break;
             case 'vote':
@@ -827,8 +747,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const gotoHomeState = () => {
         setRenderStateLocal(homeState);
 //        if (window.isValidJSON(homeState))
-        console.log(homeState)
-        console.log(typeof(homeState))
+//        console.log(homeState);
+//        console.log(typeof(homeState));
         if (typeof(homeState) !== 'object') {
             homeState = JSON.parse(homeState);
         }
@@ -883,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const fsp = window.filterScorePackets;
             const gSPs = game.detailedScorePackets;
             rOb.dynamicTeamData = window.createDynamicTeamData();
-            console.log(rOb.dynamicTeamData)
+//            console.log(rOb.dynamicTeamData);
             if (Boolean(player.teamObj)) {
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             }
@@ -919,8 +839,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 //            console.log(`do I know the round? ${game.round} (${typeof(game.round)})`);
 //            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
-            console.log(`renderTemplate`, targ, renderState.temp, rOb);
+//            console.log(`renderTemplate`, targ, renderState.temp, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
+                console.log(`***************************************** render calls setupControl`)
                 setupControl(rType);
                 setHash();
                 if (cb) {
@@ -936,6 +857,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.clear();
 //        renderState = {temp: 'game.gameover', ob: {}};
         updateRenderState({temp: 'game.gameover', ob: {}});
+        console.log(`call to render: onGameEnd`);
         render();
     };
     const onGameUpdate = (rOb) => {
@@ -971,8 +893,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             break;
                         case 'startround':
 //                            window.location.reload();
+                            console.log(`round started: ${rgame.round}`);
+                            console.log(`renderState.temp: ${renderState.temp}`);
+                            console.log(`my type: ${player.teamObj.type}, round type: ${rgame.persistentData.rounds[rgame.round].type}`);
                             if (renderState.temp !== 'game.main' && rgame.persistentData.rounds[rgame.round].type !== player.teamObj.type) {
                                 // not in the home state and not involved in this round - go home
+                                console.log(`I'm coming home`);
+                                console.log(`call to render: onGameUpdate (startround update)`);
                                 gotoHomeState();
                                 render();
                             } else {
@@ -997,6 +924,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateGame(rgame);
 //            console.log(`onGameUpdate`);
             setPlayer(game);
+            console.log('onGameUpdate');
+            console.log(`call to render: onGameUpdate method ending`);
             render();
             activateYourmove();
         } else {
@@ -1013,6 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('returned state', rs);
             updateGame(rs.theGame);
             updateRenderState(rs);
+            console.log(`call to render: forceUpdate`);
             render();
         });
     };
@@ -1047,6 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearMyStorage();
             updateRenderState({temp: ob.temp});
             isItHere(`onRemoval`);
+            console.log(`call to render: onRemoval`);
             render();
         }
     };
@@ -1117,7 +1048,8 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('renderPlayer', (rOb) => {
 //        isItHere(`renderPlayer`)
 //        isItHere(rOb)
-        console.log(`renderPlayer`)
+//        console.log(`renderPlayer`);
+
         const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
         const temp = rOb.temp;
 //        renderState = {temp: temp, ob: ob};
@@ -1125,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (rOb.hasOwnProperty('targ')) {
             renderState.targ = rOb.targ;
         }
+        console.log(`call to render: renderPlayer event`);
         render();
     });
     socket.on('forceRefresh', () => {
