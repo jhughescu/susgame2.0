@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const renderTemplate = (targ, temp, ob, cb) => {
 //        console.log(`renderTemplate`, targ, temp);
-//        console.log(ob);
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
@@ -266,13 +265,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (targ.indexOf('#', 0) === 0) {
             targ = targ.replace('#', '');
         }
-//        console.log(`targ: ${targ}`);
         $(`#${targ}`).css({opacity: 0});
+//        console.log(`renderTemplate`, $(`#${targ}`));
+//        console.log($(`#${targ}`).children());
+        const firstLineCurrent = $(`#${targ}`).html().split(`\n`)[0].trim();
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
             if (document.getElementById(targ)) {
-                document.getElementById(targ).innerHTML = compiledTemplate(ob);
+                const firstLineNew = compiledTemplate(ob).split(`\r\n`)[0].trim();
+//                console.log(compiledTemplate(ob).split(`\n\r`)[0]);
+                if (firstLineNew === firstLineCurrent) {
+                    console.log('looks like a rewrite, leave it as is')
+                } else {
+                    document.getElementById(targ).innerHTML = compiledTemplate(ob);
+                }
             } else {
 //                console.warn(`target HTML not found: ${targ}`);
             }
@@ -280,6 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 cb();
             }
             $(`#${targ}`).css({opacity: 1});
+
         } else {
             // If this template is being requested for the first time we will have to fetch it from the server
             fetch(`/getTemplate?template=${temp}`, {

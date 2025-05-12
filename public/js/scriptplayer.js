@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const activateYourmove = async () => {
-        console.log(`activateYourmove`);
+//        console.log(`activateYourmove`);
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
@@ -765,24 +765,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     };
     const render = (cb) => {
-//        console.log('RENDER');
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
-//        console.log(renderState === srs);
-//        console.log(srs);
         renderState = srs ? srs : renderState;
-//        console.log(renderState);
         if (typeof(renderState) === 'object' && !$.isEmptyObject(renderState)) {
             const GAMESTUB = `game.`;
             const targ = renderState.hasOwnProperty('targ') ? renderState.targ : 'insertion';
             const rOb = renderState.hasOwnProperty('ob') && renderState.ob !== undefined ? renderState.ob : {};
             rOb.game = game;
             if (!player) {
-//                console.log('OH NO, NO PLAYER');
                 return;
-            } else {
-//                console.log('we have a player');
             }
             if (Boolean(player.teamObj)) {
                 rOb.renderButton = !player.teamObj.hasLead || (player.teamObj.hasLead && Boolean(player.isLead));
@@ -833,13 +826,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // delete playersFull from the render object 'game' object, as this causes circularity
             delete rOb.game.playersFull;
-//            console.log('RENDER', renderState);
             rOb.headlines = rOb.game.persistentData.headlines.slice(0);
             rOb.showHeadlines = justNumber(game.slide) > 4;
 
-//            console.log(`do I know the round? ${game.round} (${typeof(game.round)})`);
-//            console.log(`rendering ${renderState.temp} with rOb.showHeadlines: ${rOb.showHeadlines}, slide: ${game.slide}`);
-//            console.log(`renderTemplate`, targ, renderState.temp, rOb);
+            // build in a check to prevent re-render when page has not changed
+//            console.log(`render check, temp: ${renderState.temp}, stored:`);
+//            console.log(getStoredRenderState().temp);
+            // \/ prob can't use that, might prevent initial render on refresh
+//            console.log(getStoredRenderState().temp === renderState.temp);
             renderTemplate(targ, renderState.temp, rOb, () => {
                 console.log(`***************************************** render calls setupControl`)
                 setupControl(rType);
