@@ -271,9 +271,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const firstLineCurrent = $(`#${targ}`).html().split(`\n`)[0].trim();
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
+            console.log('retrieve template from store');
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
             if (document.getElementById(targ)) {
                 const firstLineNew = compiledTemplate(ob).split(`\r\n`)[0].trim();
+                console.log(`firstLineCurrent: ${firstLineCurrent}`);
+                console.log(`firstLineNew: ${firstLineNew}`);
 //                console.log(compiledTemplate(ob).split(`\n\r`)[0]);
                 if (firstLineNew === firstLineCurrent) {
                     console.log('looks like a rewrite, leave it as is')
@@ -290,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } else {
             // If this template is being requested for the first time we will have to fetch it from the server
+            console.log('template fetched from server');
             fetch(`/getTemplate?template=${temp}`, {
                     method: 'POST',
                     headers: {
