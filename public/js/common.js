@@ -224,6 +224,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
 
+    const getFirstLine = (s) => {
+        return s.split(`\n`)[0].replace(/'/g, '"').trim();
+    };
+
     const renderPartial = (targ, temp, ob, cb) => {
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
@@ -268,13 +272,13 @@ document.addEventListener('DOMContentLoaded', function () {
         $(`#${targ}`).css({opacity: 0});
 //        console.log(`renderTemplate`, $(`#${targ}`));
 //        console.log($(`#${targ}`).children());
-        const firstLineCurrent = $(`#${targ}`).html().split(`\n`)[0].trim();
+        const firstLineCurrent = getFirstLine($(`#${targ}`).html());
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
             console.log('retrieve template from store');
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
             if (document.getElementById(targ)) {
-                const firstLineNew = compiledTemplate(ob).split(`\n`)[0].trim();
+                const firstLineNew = getFirstLine(compiledTemplate(ob));
                 console.log(`firstLineCurrent: ${firstLineCurrent}`);
                 console.log(`firstLineNew: ${firstLineNew}`);
 //                console.log(compiledTemplate(ob).split(`\n\r`)[0]);
