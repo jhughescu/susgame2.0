@@ -864,12 +864,13 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`onGameUpdate`, rOb);
         const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
         let go = Boolean(player);
+        let ev = null;
 //        console.log(`go: ${go}`);
         if (rOb.hasOwnProperty('_updateSource')) {
             if (rOb._updateSource.hasOwnProperty('event')) {
                 if (player) {
                     const us = rOb._updateSource;
-                    const ev = us.event.split(' ')[1].toLowerCase();
+                    ev = us.event.split(' ')[1].toLowerCase();
 //                    console.log(`ev: ${ev}`);
 //                    checkGameChanges(rgame);
                     switch (ev) {
@@ -901,6 +902,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 console.log(`I'm coming home`);
                                 console.log(`call to render: onGameUpdate (startround update)`);
                                 gotoHomeState();
+//                                go = true;
                                 render();
                             } else {
 //                                console.log('%cno need to update me in this round', 'background-color: black; color: green;');
@@ -924,7 +926,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateGame(rgame);
 //            console.log(`onGameUpdate`);
             setPlayer(game);
-            console.log('onGameUpdate');
+            console.log(`onGameUpdate, event: ${ev}`);
             console.log(`call to render: onGameUpdate method ending`);
             render();
             activateYourmove();
