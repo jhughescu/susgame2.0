@@ -1,11 +1,4 @@
-<!--
-<table><tbody>
-    {{#each this}}
-    <tr><td><span class='slide_link{{#if isCurrent}} current{{else}}{{/if}}' id='slide_link_{{this.ref}}'>{{{this.title}}}</span></td><td><button class='material-icons'>replay</button></td></tr>
-    <tr><td class=''><div class='overlay'>{{this.title}}</div><div class='slide_progress_bar'></div></td></tr>
-    {{/each}}
-</tbody></table>
--->
+<!-- forceOverwrite -->
 <div class='vertstack'>
     {{#each this}}
     <div class='slide_info exc_{{exclude}}{{#if linkFail}} linkFail{{/if}}' id='slide_info_{{this.ref}}'{{#if linkFail}} title='video reference update required'{{/if}}>

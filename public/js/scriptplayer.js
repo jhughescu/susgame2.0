@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateRenderState(rOb);
                 }
 //                console.log('call render');
-                console.log(`call to render: registerwithGame`);
+                // console.log(`call to render: registerwithGame`);
                 render(() => {
 //                    console.log('render callback')
                     if (justNumber(game.round) > 0) {
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isItHere(`resetPlayer`);
 //        localStorage.clear();
         updateRenderState({temp: 'game.pending'});
-        console.log(`call to render: resetPlayer`);
+        // console.log(`call to render: resetPlayer`);
         render();
     };
     const getGames = () => {
@@ -325,14 +325,14 @@ document.addEventListener('DOMContentLoaded', function() {
         setPlayer(fgame);
         updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
 //        isItHere(`teamsAssigned`);
-        console.log(`call to render: teamsAssigned`);
+        // console.log(`call to render: teamsAssigned`);
         render();
     };
     const teamsReset = (fgame) => {
         updateGame(fgame);
         updateRenderState({temp: 'game.intro', ob: player});
 //        isItHere(`teamsReset`);
-        console.log(`call to render: teamsReset`);
+        // console.log(`call to render: teamsReset`);
         render();
     };
     const showOverlay = (id, ob) => {
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             rOb.note = `set in scriptplayer.js`;
                             setRenderStateLocal(rOb);
     //                        isItHere(`activateYourmoveButton`);
-                            console.log(`call to render: activateYourmoveButton`);
+                            // console.log(`call to render: activateYourmoveButton`);
                             render();
                         });
                     });
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (!home && !interaction) {
                                     gotoHomeState();
 //                                    isItHere(`activateYourmove`);
-                                    console.log(`call to render: activateYourMove`);
+                                    // console.log(`call to render: activateYourMove`);
                                     render(activateYourmoveButton);
                                 } else {
                                     if (home) {
@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return sc.length > 0;
     };
     const onStartRound = async (ob) => {
-        console.log(`onStartRound`, ob);
+//        console.log(`onStartRound`, ob);
         if (player) {
             const trs = await thisRoundScored(player);
             if (ob.game) {
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
             round = game.persistentData.rounds[r];
             if (r === -1) {
                 updateRenderState({temp: 'game.main', partialName: 'game-links'});
-                console.log(`call to render: onStartRound`);
+                // console.log(`call to render: onStartRound`);
                 render();
             }
             if (round) {
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             gotoHomeState();
             setRoundState(false);
             resetScroll();
-            console.log(`call to render: setupHomeButton`);
+            // console.log(`call to render: setupHomeButton`);
             render(activateYourmove);
             const round = game.persistentData.rounds[game.round];
             if (round) {
@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal({temp: 'game.global', sub: null, tempType: 'sub', ob: {hasContent: true}});
             updateRenderState({temp: 'game.global', sub: null, tempType: 'sub', ob: {hasContent: true}});
             resetScroll();
-            console.log(`call to render: main control link clicked`);
+            // console.log(`call to render: main control link clicked`);
             render();
         });
         lc.on('click', () => {
@@ -612,10 +612,10 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal({temp: 'game.connecton', sub: null, tempType: 'sub'});
             updateRenderState({temp: 'game.connecton', sub: null, tempType: 'sub'});
             resetScroll();
-            console.log(`call to render: main control link clicked`);
+            // console.log(`call to render: main control link clicked`);
             render();
         });
-        console.log(`setupMainControl`);
+//        console.log(`setupMainControl`);
         activateYourmove();
     };
     const setupGlobalControl = () => {
@@ -638,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setRenderStateLocal(sob);
             // 20250507 Why was the line below included? It caused a render error...
 //            updateRenderState({temp: `game.connecton.team`, ob: tm});
-            console.log(`call to render: setupConnectonControl`);
+            // console.log(`call to render: setupConnectonControl`);
             render(() => {
                 console.log(`ok, we can set up the button now`)
             });
@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Note: set hash to 'reset' first, as the setHash method will not overwrite hash if it includes the new hash
             setHash('reset');
             setHash('connecton');
-            console.log(`call to render: setupTeamControl`);
+            // console.log(`call to render: setupTeamControl`);
             render();
         });
     };
@@ -835,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // \/ prob can't use that, might prevent initial render on refresh
 //            console.log(getStoredRenderState().temp === renderState.temp);
             renderTemplate(targ, renderState.temp, rOb, () => {
-                console.log(`***************************************** render calls setupControl`)
+//                console.log(`***************************************** render calls setupControl`);
                 setupControl(rType);
                 setHash();
                 if (cb) {
@@ -851,7 +851,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.clear();
 //        renderState = {temp: 'game.gameover', ob: {}};
         updateRenderState({temp: 'game.gameover', ob: {}});
-        console.log(`call to render: onGameEnd`);
+        // console.log(`call to render: onGameEnd`);
         render();
     };
     const onGameUpdate = (rOb) => {
@@ -888,13 +888,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             break;
                         case 'startround':
 //                            window.location.reload();
-                            console.log(`round started: ${rgame.round}`);
-                            console.log(`renderState.temp: ${renderState.temp}`);
-                            console.log(`my type: ${player.teamObj.type}, round type: ${rgame.persistentData.rounds[rgame.round].type}`);
+//                            console.log(`round started: ${rgame.round}`);
+////                            console.log(`renderState.temp: ${renderState.temp}`);
+//                            console.log(`my type: ${player.teamObj.type}, round type: ${rgame.persistentData.rounds[rgame.round].type}`);
                             if (renderState.temp !== 'game.main' && rgame.persistentData.rounds[rgame.round].type !== player.teamObj.type) {
                                 // not in the home state and not involved in this round - go home
-                                console.log(`I'm coming home`);
-                                console.log(`call to render: onGameUpdate (startround update)`);
+//                                console.log(`I'm coming home`);
+                                // console.log(`call to render: onGameUpdate (startround update)`);
                                 gotoHomeState();
 //                                go = true;
                                 render();
@@ -920,8 +920,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateGame(rgame);
 //            console.log(`onGameUpdate`);
             setPlayer(game);
-            console.log(`onGameUpdate, event: ${ev}`);
-            console.log(`call to render: onGameUpdate method ending`);
+//            console.log(`onGameUpdate, event: ${ev}`);
+            // console.log(`call to render: onGameUpdate method ending`);
             render();
             activateYourmove();
         } else {
@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('returned state', rs);
             updateGame(rs.theGame);
             updateRenderState(rs);
-            console.log(`call to render: forceUpdate`);
+            // console.log(`call to render: forceUpdate`);
             render();
         });
     };
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearMyStorage();
             updateRenderState({temp: ob.temp});
             isItHere(`onRemoval`);
-            console.log(`call to render: onRemoval`);
+            // console.log(`call to render: onRemoval`);
             render();
         }
     };
@@ -1053,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (rOb.hasOwnProperty('targ')) {
             renderState.targ = rOb.targ;
         }
-        console.log(`call to render: renderPlayer event`);
+        // console.log(`call to render: renderPlayer event`);
         render();
     });
     socket.on('forceRefresh', () => {

@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // messages
     const HASZEROES = `You are about to submit your final vote for all teams, this action cannot be undone. Are you sure?`;
     // end messages
+    // FORCE_TEMPLATE_OVERWITE (i.e. 'forceOverwrite', if included in first line of a template, means that template will always be rendered even if it matches the rendered content
+    const FORCE_TEMPLATE_OVERWRITE = 'forceOverwrite';
 
     // Define the setupObserver function to accept an element ID as an argument
     const setupObserver = (elementId, cb) => {
@@ -225,7 +227,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const getFirstLine = (s) => {
-        return s.split(`\n`)[0].replace(/'/g, '"').trim();
+        const fl = s ? s.split(`\n`)[0].replace(/'/g, '"').trim() : '';
+        return fl;
     };
 
     const renderPartial = (targ, temp, ob, cb) => {
@@ -236,11 +239,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (targ.indexOf('#', 0) === 0) {
             targ = targ.replace('#', '');
         }
-        console.log(`targ: ${targ}, temp: ${temp}`);
+//        console.log(`targ: ${targ}, temp: ${temp}`);
         $(`#${targ}`).css({opacity: 0});
         const part = Handlebars.partials[temp];
-        console.log('renderPartial');
-        console.log(part);
+//        console.log('renderPartial');
+//        console.log(part);
 //        console.log(part(ob));
         if (document.getElementById(targ)) {
                 document.getElementById(targ).innerHTML = part(ob);
@@ -270,20 +273,15 @@ document.addEventListener('DOMContentLoaded', function () {
             targ = targ.replace('#', '');
         }
         $(`#${targ}`).css({opacity: 0});
-//        console.log(`renderTemplate`, $(`#${targ}`));
-//        console.log($(`#${targ}`).children());
         const firstLineCurrent = getFirstLine($(`#${targ}`).html());
         if (templateStore.hasOwnProperty(temp)) {
             // if this template has already been requested we can just serve it from the store
-            console.log('retrieve template from store');
             const compiledTemplate = Handlebars.compile(templateStore[temp]);
             if (document.getElementById(targ)) {
                 const firstLineNew = getFirstLine(compiledTemplate(ob));
-                console.log(`firstLineCurrent: ${firstLineCurrent}`);
-                console.log(`firstLineNew: ${firstLineNew}`);
-//                console.log(compiledTemplate(ob).split(`\n\r`)[0]);
-                if (firstLineNew === firstLineCurrent) {
-                    console.log('looks like a rewrite, leave it as is')
+//                console.log(firstLineNew, firstLineNew.includes(FORCE_TEMPLATE_OVERWRITE));
+                if (firstLineNew === firstLineCurrent && !firstLineNew.includes(FORCE_TEMPLATE_OVERWRITE)) {
+                    console.log(`render ${temp}: looks like a rewrite, leave it as is`);
                 } else {
                     document.getElementById(targ).innerHTML = compiledTemplate(ob);
                 }
@@ -297,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } else {
             // If this template is being requested for the first time we will have to fetch it from the server
-            console.log('template fetched from server');
             fetch(`/getTemplate?template=${temp}`, {
                     method: 'POST',
                     headers: {
@@ -732,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             } else {
                                 const tID = myPlayer.teamObj.id;
                                 let t = myPlayer.teamObj.id;
-                                console.log(game.round, typeof(game.round));
+//                                console.log(game.round, typeof(game.round));
 //                                console.log('slides:');
 //                                window.showSlides();
                                 const vob = {game: game.uniqueID, values: {team: t, round: game.round, action: actionV, description: descV}};

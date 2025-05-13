@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lf.show();
             }, 200);
         }
+//        console.log(logFeed);
         window.renderTemplate('logFeed', 'facilitatorLogFeed', logFeed);
     };
     const clearLogFeed = () => {
@@ -1298,13 +1299,13 @@ document.addEventListener('DOMContentLoaded', function() {
             addToLogFeed(msg, true);
         }
         if (emitting) {
-            console.log('emit the startRound event');
+//            console.log('emit the startRound event');
             socket.emit('startRound', {gameID: game.uniqueID, round: r, ok: ok});
         }
 //        console.log(`the teams: ${t}, ${t.length}`);
 //        console.log(game);
 //        console.log(`tryStartRound: ${r} (${typeof(r)}) - current: ${gr} (${typeof(gr)}), is next? ${r === gr + 1}`);
-        console.log(`tryStartRound, r: ${r}, gr: ${gr}, ric: ${ric}, msg: ${msg} r === gr ? ${r === gr}, game.round: ${game.round}`);
+//        console.log(`tryStartRound, r: ${r}, gr: ${gr}, ric: ${ric}, msg: ${msg} r === gr ? ${r === gr}, game.round: ${game.round}`);
         return ok;
     };
     const showScoreSummary = (summ, teams) => {
@@ -1421,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const updateRoundDisplay = () => {
-        console.log('updateRoundDisplay', game.round);
+//        console.log('updateRoundDisplay', game.round);
 //        console.log(game.round);
         const rounds = game.persistentData.rounds;
         const slides = game.presentation.slideData.slideList;
@@ -1502,6 +1503,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             list = processPlayers(list);
             clearTimeout(pso.timeout);
+//            console.log('render playerList');
             renderTemplate(targ, 'playerlist', list, () => {
                 setupPlayerControls(targ);
             })
@@ -2555,14 +2557,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         //////////////////////////////////////////////////////////////////////////////////////////// another use of the tryStartRound - which one to keep??
 
-                        console.log(`slide test calls tryStartRound: ${r}, action: ${sl.action}`);
+//                        console.log(`slide test calls tryStartRound: ${r}, action: ${sl.action}`);
                         test = tryStartRound(r);
                     }
 //                    console.log(ac);
                     if (ac.toLowerCase().includes('assignteams')) {
                         // Use preview teams as this method does not update the game model
                         tested = true;
-                        console.log('yesy!');
+//                        console.log('yesy!');
                         const teamer = await emitWithPromise(socket, 'assignTeams', {address: game.address, type: 'order', preview: true});
                         test = typeof(teamer) === 'object' && game.teams.length === 0;
 //                        if (test) {
