@@ -134,11 +134,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return currentSlideObject ? currentSlideObject : '';
     };
     const onGameUpdate = (rGame) => {
-        console.log(`onGameUpdate`, rGame);
-        console.log(`watchFor`, watchFor);
-        console.log('watched game: ', game[watchFor].toString());
-        console.log('watched rGame: ', rGame[watchFor].toString());
-        console.log('different?', (game[watchFor].toString() !== rGame[watchFor].toString()));
+//        console.log(`onGameUpdate`, rGame);
+//        console.log(`watchFor`, watchFor);
+//        console.log('watched game: ', game[watchFor].toString());
+//        console.log('watched rGame: ', rGame[watchFor].toString());
+//        console.log('different?', (game[watchFor].toString() !== rGame[watchFor].toString()));
         if (watchFor) {
             if (game[watchFor].toString() !== rGame[watchFor].toString()) {
                 if (watchFor === 'scores') {
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showAllocationSlide(3);
     };
     const showRound1V1 = () => {
-        console.log('showRound1');
+//        console.log('showRound1');
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 1);
@@ -546,8 +546,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                     }
                 }
-                console.log('go render', rOb);
-                console.log('go render', rOb2);
+//                console.log('go render', rOb);
+//                console.log('go render', rOb2);
                 renderTemplate(targ, 'slides/showround4', rOb2, () => {});
             });
         });
@@ -609,11 +609,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     let alloCount = 0;
     const showAllocationSlide = (n) => {
-        console.log(`showRound${n}, ${game.round}`);
+//        console.log(`showRound${n}, ${game.round}`);
         setWatch('scores');
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             onGameUpdate(rgame);
-            console.log(rgame.values);
+//            console.log(rgame.values);
             const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', n);
             socket.emit('getScores', `game-${game.uniqueID}`, (rs) => {
                 rs = filterScorePackets(rs, 'round', n);
@@ -818,8 +818,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const renderTotals = async (o) => {
 //        console.clear();
-        console.log(`+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++`);
-        console.log(`renderTotals`, window.clone(o));
+//        console.log(`+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++`);
+//        console.log(`renderTotals`, window.clone(o));
         // make sure the game object is up to date before proceeding
         socket.emit('getGame', `${game.uniqueID}`, (rgame) => {
             updateGame(rgame);
@@ -832,15 +832,15 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             const scoresSumm = window.getScoresSummary();
             const totals = Object.values(scoresSumm).map(s => s[typeMap[`t${o.actionArg}`]]);
-            console.log(o.actionArg)
-            console.log(typeMap[`t${o.actionArg}`])
+//            console.log(o.actionArg);
+//            console.log(typeMap[`t${o.actionArg}`]);
             let tAbs = totals.map(s => s = Math.abs(s));
             const max = tAbs.sort(sortNumber)[0];
             const mult = 100 / max;
             $(`.totalNum`).html('');
-            console.log(o);
-            console.log(scoresSumm);
-            console.log(totals);
+//            console.log(o);
+//            console.log(scoresSumm);
+//            console.log(totals);
             barsPos.each((i, b) => {
 //                console.log(totals[i]);
                 const perc = totals[i] * mult;

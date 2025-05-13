@@ -1328,6 +1328,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const round = game.persistentData.rounds[r];
                 const subs = round.submissions;
                 const teams = game.persistentData[round.teams];
+                console.log(round.teams);
+                console.log(game.persistentData[round.teams]);
                 // scores assumed to be always required:
                 const scorePackets = filterScorePackets(game.scores.map(unpackScore), 'round', round.n);
                 let scorers = [];
@@ -1338,6 +1340,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // players score
                     teams.forEach(t => {
+                        console.log(t);
+                        console.log(t.id);
+                        console.log(game.teams);
                         const tm = game.teams[t.id];
                         tm.forEach(p => {
                             scorers.push(game.playersFull[p]);
