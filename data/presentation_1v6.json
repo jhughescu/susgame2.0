@@ -1,0 +1,75 @@
+{
+    "slideList": [
+        {"id": "2", "type": "video", "srcRef": "v1", "title": "Entrance Soundscape", "behaviour": "loop", "action": "showGameQR"},
+        {"id": "3", "type": "video", "srcRef": "v2", "title": "Logo Animation"},
+        {"id": "4", "type": "video", "srcRef": "v3", "title": "Game Explainer"},
+        {"id": "7", "type": "image", "src": "slide_img_02.jpg", "title": "Game Explainer Still"},
+        {"id": "5", "type": "video", "srcRef": "v4", "title": "2024-2030 Countup"},
+        {"id": "6", "type": "video", "srcRef": "v5", "title": "2030 News Headlines"},
+        {"id": "7", "type": "image", "src": "slide_img_03.jpg", "title": "2030 Headlines Still"},
+        {"id": "8", "type": "video", "srcRef": "v18", "title": "Post-2030 Headlines"},
+        {"id": "7", "type": "image", "src": "slide_img_04.jpg", "title": "Post-2030 Headlines Still (updates devices)", "action": "startRound:1", "note": "Only available in sequence"},
+        {"id": "10", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Teams Allocation", "actionNO": "showAllocation:1", "action": "showRound1", "trigger": "scoreRound:1"},
+        {"id": "11", "type": "video", "srcRef": "v19", "title": "Post-2030 Headlines PV"},
+        {"id": "12", "type": "image", "src": "slide_img_10.jpg", "title": "Post-2030 Headlines PV Still (updates devices)", "action": "startRound:2", "note": "Only available in sequence"},
+        {"id": "13", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Allocation results", "action": "renderTotals:2030", "trigger": "scoreRound:2"},
+        {"id": "14", "type": "video", "srcRef": "v8", "title": "Launch to 2050"},
+        {"id": "15", "type": "video", "srcRef": "v9", "title": "Disruption"},
+        {"id": "16", "type": "video", "srcRef": "v10", "title": "Recalculation Collaboration Strategy"},
+
+        {"id": "17", "type": "image", "src": "slide_img_04.jpg", "title": "NEW SLIDE (updates devices)", "action": "startRound:3", "note": "Only available in sequence"},
+        {"id": "18", "type": "slide", "slide": "slide_110_stakeholders", "title": "NEW Display Teams Allocation", "action": "showRound3", "trigger": "scoreRound:3"},
+
+        {"id": "19", "type": "image", "src": "slide_img_15.jpg", "title": "Collaboration Prompt (updates devices)", "action": "startRound:4", "note": "Only available in sequence"},
+        {"id": "20", "type": "slide", "slide": "slide_110_stakeholders", "title": "Display Team Collaboration", "action": "showCollaboration", "trigger": "scoreRound:4", "note": "Only available in sequence"},
+        {"id": "21", "type": "video", "srcRef": "v19", "title": "2030 Headlines PV"},
+        {"id": "22", "type": "image", "src": "slide_img_10.jpg", "title": "Public Voices Prompt (updates devices)", "action": "startRound:5", "note": "Only available in sequence"},
+        {"id": "24", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display 2040 Results", "action": "renderTotals:2040", "trigger": "scoreRound:5"},
+        {"id": "25", "type": "slide", "slide": "slide_3010_2030_total", "title": "Display Final Results", "action": "renderTotals:final", "trigger": "scoreRound:99"},
+        {"id": "26", "type": "slide", "slide": "slide_3020_totaltable", "title": "Display Final Results (table)", "action": "renderTotalsTable", "trigger": "scoreRound:999"},
+
+
+
+        {"id": "24", "type": "video", "srcRef": "v11", "title": "Post-collaboration 4 Futures"},
+        {"id": "25", "type": "video", "srcRef": "v12", "title": "Quadrant of Futures"},
+        {"id": "26", "type": "image", "src": "slide_img_20.jpg", "title": "Quadrant of Futures Still"},
+        {"id": "27", "type": "video", "srcRef": "v13", "title": "Post-Extinction Park"},
+        {"id": "28", "type": "video", "srcRef": "v14", "title": "Global Equity Tribunal"},
+        {"id": "29", "type": "video", "srcRef": "v15", "title": "Craft Protein Fest"},
+        {"id": "30", "type": "video", "srcRef": "v16", "title": "Tranquilium Valley"},
+        {"id": "31", "type": "video", "srcRef": "v17", "title": "Post-4 Futures"},
+        {"id": "32", "type": "image", "src": "slide_img_25.jpg", "title": "Post-4 Futures Still"}
+    ],
+    "videoLinks": {
+        "v1OLD": "83943b38-d332-4e2c-a125-b2820023dbdb",
+        "v1": "4d35e81e-85e8-4fd3-8394-b0a100e3fbf8",
+        "v2": "d2ca51a4-2bd2-4b82-a749-b2910006dce0",
+        "v3OLD": "14a26b9d-4732-48c5-a3af-b28200223240",
+        "v3": "b03a33e9-294a-4f1c-8271-b2ae00df0eb3",
+        "v4": "3d4964d0-579a-4671-8065-b282003d7005",
+        "v5": "f93b4eeb-c4a6-44ca-96e8-b28200264fec",
+        "v6": "1e330698-1cd1-4874-8e26-b2820022325f",
+        "v7": "a9fd2d99-a94f-4340-9349-b2820022cb01",
+        "v8": "15730480-d9db-4d08-b33e-b2820022327f",
+        "v9": "cfab1019-3c77-410d-9b58-b282003ef5a1",
+        "v10OLD": "3331980d-1505-4799-a089-b2820023575b",
+        "v10": "338ba0f3-dbc7-4e32-ba5c-b2b100b6b66e",
+        "v11": "c46714ae-6aee-4329-b539-b2ae00b7837b",
+        "v12": "947ccd93-ae8c-4420-a35f-b2ae00eb00a3",
+        "v13": "1da9201e-7fbb-4e3c-975e-b2a600b378cd",
+        "v14": "69eea970-300f-4e0d-b669-b2a4010ad543",
+        "v15": "1794df38-5ada-4386-80aa-b2a500a16b70",
+        "v16": "1686c16f-c71b-49a3-8965-b2ae00a44d8c",
+        "v17": "d7319f25-d924-4e7b-9d00-b2ae00c12d43",
+        "v18": "19673929-5c95-4dcb-b26f-b2ae00b57a5b",
+        "v19": "7f69d08d-d94f-4083-8486-b2b100b3574e"
+    },
+    "videoEnv": "https://cranfield.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=",
+    "videoSettings": "&autoplay=true&offerviewer=false&showtitle=false&showbrand=false&captions=false&interactivity=none",
+    "removedSlides": [
+        {"id": "slide_230_stakeholderscollab", "title": "Teams Collaboration", "viewtype": "frame1", "header": "Collaboration"},
+        {"id": "slide_020_entry", "title": "Address/session (no session? Use 'Reload slide' button)", "viewtype": "fullscreen1", "url": "null", "code": "null"}
+
+    ]
+}
+

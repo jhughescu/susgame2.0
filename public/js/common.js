@@ -564,6 +564,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const il = window.location.hostname.includes('localhost');
         return il;
     };
+    const isDashboard = () => {
+        return window.location.href.toLocaleLowerCase().includes('facilitatordashboard');
+    };
 //    console.log(isLocal());
     // allocation/collaboration/vote controls can be used in facilitator dashboards, hence are defined in common.
     const getRemainingAllocation = (pl) => {
@@ -599,15 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const setupAllocationControl = async (inOb) => {
-//        console.log(`setupAllocationControl`);
-//        console.log(game);
-//        console.log(`${game.round} (${typeof(game.round)})`);
         formatGame();
-//        console.log(game);
-//        console.log(`${game.round} (${typeof(game.round)})`);
-//        console.log(player === null);
-//        console.log(player);
-//        console.log(inOb);
         const myPlayer = player === null ? inOb : player;
         const PD = game.persistentData;
         let team = null;
@@ -623,20 +618,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const ints = $('#vote_btn_minus, #vote_btn_plus, #buttonAllocate, #action-choice, #actionDesc');
             const descMax = 150;
             const hasS = await thisRoundScored(myPlayer);
-
             window.initScoreboard(game.address, myPlayer.id, game);
             const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
-//            console.log(scoreSumm);
-    //        const resourceRemaining = team.votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
             // Allocation ALWAYS has full vote potential
             const resourceRemaining = PD.teamsArray[team.id].votes;
-    //        console.log(game.round);
-    //        console.log(team);
-//            console.log(`resourceRemaining: ${resourceRemaining}`);
             remain.html(resourceRemaining);
-
-
-//            console.log('local', isLocal());
             if (isLocal()) {
                 socket.emit('getLoremIpsum', 7, (li) => {
 //                    console.log('li:', li);
@@ -648,9 +634,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     action.val(actions[Math.floor(Math.random() * actions.length)]);
                 });
             }
-
-
-
 
 
             let isDev = false;
@@ -713,6 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const pick = 1 + Math.floor(Math.random() * (range - 1));
                         action.prop('selectedIndex', pick);
                     }
+//                    console.log(myPlayer);
                     submit.on('click', () => {
     //                    console.log('submit');
                         const allGone = justNumber(val.html()) === resourceRemaining;
@@ -737,6 +721,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 const sob = {scoreCode: {src: t, dest: t, val: scoreV}, game: game.uniqueID, client: myPlayer.id};
                                 socket.emit('submitScore', sob, (scores) => {
                                     setupAllocationControl();
+                                    if (isDashboard()) {
+                                        socket.emit('refreshClient', myPlayer);
+                                    }
                                 });
                             }
                         }
@@ -749,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     const setupVoteControl = async (inOb) => {
-//        console.log(`setupVoteControl`);
+        console.log(`setupVoteControl`);
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -892,6 +879,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         socket.emit('submitScoreForAverage', sOb);
                         localStorage.removeItem(storeID);
                         setupVoteControl(myPlayer);
+                        if (isDashboard()) {
+                            socket.emit('refreshClient', myPlayer);
+                        }
                     }
                 });
             }
@@ -1012,6 +1002,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 setupCollaborationControl(myPlayer);
                             });
                         });
+                        if (isDashboard()) {
+                            socket.emit('refreshClient', myPlayer);
+                        }
                     });
                 }
                 localStorage.setItem(storeID, store.toString());
@@ -1024,10 +1017,45 @@ document.addEventListener('DOMContentLoaded', function () {
         const rOb = {game: game};
 //        console.log(rOb.game);
         rOb.dynamicTeamData = [];
+        const dsp = rOb.game.detailedScorePackets;
+        const pdt = game.persistentData.teamsArray;
+        const gv = game.values;
+        console.log(gv);
         rOb.game.persistentData.mainTeams.forEach((t, i) => {
             t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
-
-            t.scores = rOb.game.detailedScorePackets.filter(sp => sp.src === t.id)[0];
+            t.valuesR1 = rOb.game.values.filter(tm => tm.team === t.id).filter(tm => tm.round === 1)[0];
+            t.valuesR3 = rOb.game.values.filter(tm => tm.team === t.id).filter(tm => tm.round === 3)[0];
+            t.scores = dsp.filter(sp => sp.src === t.id)[0];
+            t.scoresR1 = dsp.filter(sp => sp.src === t.id).filter(sp => sp.round === 1)[0];
+            t.scoresR3 = dsp.filter(sp => sp.src === t.id).filter(sp => sp.round === 3)[0];
+            t.pvSupportR2 = dsp.filter(sp => sp.round === 2).filter(sp => sp.dest === t.id);
+            t.pvSupportR5 = dsp.filter(sp => sp.round === 5).filter(sp => sp.dest === t.id);
+            t.pvSupportR2Full = [];
+            t.pvSupportR2.forEach((sp, i) => {
+                const T = pdt[i];
+                const v = gv.filter(sp => sp.round === 2);
+                const vals = gv.filter(o => o.team === T.id)[0];
+                const ob = {
+                    title: T.title,
+                    val: sp.val,
+                    action: vals.action,
+                    description: vals.description
+                };
+                t.pvSupportR2Full.push(ob);
+            });
+            t.pvSupportR5Full = [];
+            t.pvSupportR5.forEach((sp, i) => {
+                const T = pdt[i];
+                const v = gv.filter(sp => sp.round === 5);
+                const vals = gv.filter(o => o.team === T.id)[0];
+                const ob = {
+                    title: T.title,
+                    val: sp.val,
+                    action: vals.action,
+                    description: vals.description
+                };
+                t.pvSupportR5Full.push(ob);
+            });
             rOb.dynamicTeamData.push(t)
         });
         return rOb.dynamicTeamData;

@@ -377,9 +377,11 @@ function initSocket(server) {
                 gameController.reassignTeam(obj);
             });
             socket.on('refreshClient', (clOb) => {
-//                gameController.makeLead(obj);
-//                console.log(clOb);
                 io.to(clOb.socketID).emit('forceRefresh');
+            });
+            socket.on('refreshAllClients', (gId) => {
+//                console.log(`${gId} should match game address`);
+                io.to(gId).emit('forceRefresh');
             });
             socket.on('removePlayer', (plOb, cb) => {
 //                gameController.makeLead(obj);

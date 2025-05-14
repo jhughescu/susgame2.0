@@ -897,7 +897,8 @@ const newGetTheRenderState = (game, id) => {
                         if (roundComplete) {
                             rs.temp = `game.main`;
                         } else {
-                            rs.temp = `game.${roundInfo.template}.complete`;
+                            console.log(roundInfo)
+                            rs.temp = `game.${roundInfo.template}.${roundInfo.template === 'allocation' ? `r${roundInfo.n}.` : ``}complete`;
                         }
                     }
                 } else {

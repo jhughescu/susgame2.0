@@ -768,6 +768,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
+        const PDT = game.persistentData.teamsArray;
         renderState = srs ? srs : renderState;
         if (typeof(renderState) === 'object' && !$.isEmptyObject(renderState)) {
             const GAMESTUB = `game.`;
@@ -795,6 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let rType = null;
             const fsp = window.filterScorePackets;
             const gSPs = game.detailedScorePackets;
+            const jn = window.justNumber;
             rOb.dynamicTeamData = window.createDynamicTeamData();
 //            console.log(rOb.dynamicTeamData);
             if (Boolean(player.teamObj)) {
@@ -819,6 +821,46 @@ document.addEventListener('DOMContentLoaded', function() {
                     rOb.dynamicSubTeamData[i] = {id: t, votes: prsp};
                 });
                 rOb.myDynamicSubTeamData = rOb.dynamicSubTeamData.filter(td => td.id === player.id)[0];
+//                console.log(player.teamObj);
+//                console.log(gSPs);
+//                console.log(fsp(gSPs, 'client', window.justNumber(player.id)));
+                rOb.pv1 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 2);
+                rOb.pv2 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 5);
+                rOb.pv1.forEach((sp, i) => {
+                    rOb.pv1[i] = {
+                        title: PDT[i].title,
+                        action: rOb.dynamicTeamData[i].valuesR1.action,
+                        description: rOb.dynamicTeamData[i].valuesR1.description,
+                        val: sp.val
+                    };
+                });
+                rOb.pv2.forEach((sp, i) => {
+                    rOb.pv2[i] = {
+                        title: PDT[i].title,
+                        action: rOb.dynamicTeamData[i].valuesR3.action,
+                        description: rOb.dynamicTeamData[i].valuesR3.description,
+                        val: sp.val
+                    };
+                });
+//                console.log(player)
+//                rOb.pv1Me = rOb.pv1[player.id];
+//                rOb.pv2Me = rOb.pv2[player.id];
+                /*
+                rOb.dynamicSubTeamData2 = rOb.dynamicSubTeamData.slice();
+                rOb.dynamicSubTeamData2.forEach(d => {
+                    d.voteObj = {};
+                    d.votes.forEach((v, i) => {
+//                        console.log(i, v);
+                        const t = PDT[i];
+                        d.voteObj[`t${i}`] = {
+                            title: t.title,
+                            abbr: t.abbr,
+                            displayColour: t.displayColour,
+                            vote: v
+                        };
+                    });
+                });
+                */
             }
 
             if (renderState.temp) {
@@ -834,6 +876,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(getStoredRenderState().temp);
             // \/ prob can't use that, might prevent initial render on refresh
 //            console.log(getStoredRenderState().temp === renderState.temp);
+            console.log(`render template: ${renderState.temp}`, rOb);
+            console.log(rOb.pv1);
+            console.log(rOb.pv2);
+//            console.log(rOb.dynamicTeamData);
+//            console.log(rOb.dynamicSubTeamData2);
             renderTemplate(targ, renderState.temp, rOb, () => {
 //                console.log(`***************************************** render calls setupControl`);
                 setupControl(rType);

@@ -1300,6 +1300,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (emitting) {
 //            console.log('emit the startRound event');
+            // 20250513 try forcing a refresh of all the player clients to ensure correct display
+            refreshPlayers();
             socket.emit('startRound', {gameID: game.uniqueID, round: r, ok: ok});
         }
 //        console.log(`the teams: ${t}, ${t.length}`);
@@ -1464,6 +1466,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return list;
     };
 
+    const refreshPlayers = () => {
+        // emit a command to refresh all player clients for this game
+        socket.emit('refreshAllClients', game.address);
+    };
     const renderPlayers = (targ) => {
         if (game) {
             let basicList = game.players.slice(0);
