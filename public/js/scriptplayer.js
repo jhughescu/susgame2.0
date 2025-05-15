@@ -448,52 +448,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const activateYourmove = async () => {
-//        console.log(`activateYourmove`);
+//        console.log(`activateYourmove activateYourmove activateYourmove activateYourmove activateYourmove activateYourmove `);
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
         if (renderState.temp && player) {
             if (player.teamObj) {
-//                console.log(`activateYourmove`);
 //                console.log(player)
-                const home = renderState.temp.indexOf('main', 0) > -1;
-                const interaction = renderState.tempType === 'interaction';
-                const hasScored = false;
-                const round = game.persistentData.rounds[procVal(game.round)];
-                const inThisRound = round.type === player.teamObj.type;
-                const rs = await thisRoundScored();
-                if (round.n > 0) {
-        //            console.log('there is a round in progress');
-                    // need further conditionals here - is this player invloved in the current round? Is the round already complete?
-                    if (game.round.toString().indexOf('*', 0) === -1) {
-        //                console.log(`round not complete`)
-                        if (inThisRound) {
-                            if (!iHaveScored(rs)) {
-            //                    console.log(`I've not scored`);
-                                if (!home && !interaction) {
-                                    gotoHomeState();
-//                                    isItHere(`activateYourmove`);
-                                    // console.log(`call to render: activateYourMove`);
-                                    render(activateYourmoveButton);
-                                } else {
-                                    if (home) {
-                                        activateYourmoveButton();
+//                socket.emit('getGame', game.address, async (g) => {
+//                    game = g;
+                    const home = renderState.temp.indexOf('main', 0) > -1;
+                    const interaction = renderState.tempType === 'interaction';
+                    const hasScored = false;
+                    const round = game.persistentData.rounds[procVal(game.round)];
+                    const inThisRound = round.type === player.teamObj.type;
+                    const rs = await thisRoundScored();
+//                    console.log(`activateYourmove, round`, round);
+//                    console.log(game.persistentData.rounds)
+//                    console.log(procVal(game.round));
+//                    console.log(window.clone(game));
+                    if (round.n > 0) {
+//                        console.log('there is a round in progress');
+                        // need further conditionals here - is this player invloved in the current round? Is the round already complete?
+                        if (game.round.toString().indexOf('*', 0) === -1) {
+//                            console.log(`round not complete`)
+                            if (inThisRound) {
+//                                console.log(`I am in this round (${inThisRound}) round.type: ${round.type}, team type: ${player.teamObj.type}`);
+                                if (!iHaveScored(rs)) {
+//                                    console.log(`I've not scored`);
+                                    if (!home && !interaction) {
+                                        gotoHomeState();
+    //                                    isItHere(`activateYourmove`);
+//                                         console.log(`call to render: activateYourMove`);
+                                        render(activateYourmoveButton);
+                                    } else {
+                                        if (home) {
+                                            activateYourmoveButton();
+                                        }
                                     }
+                                } else {
+    //                                console.log(`I've already scored, apparently`)
                                 }
-                            } else {
-//                                console.log(`I've already scored, apparently`)
                             }
+                        } else {
+                            // '*' in the round - round is complete
+    //                        console.log('the current round is complete');
                         }
                     } else {
-                        // '*' in the round - round is complete
-//                        console.log('the current round is complete');
+    //                    console.log('no round right now')
                     }
-                } else {
-//                    console.log('no round right now')
-                }
+//                });
+
             }
         }
     };
+    window.testA = activateYourmove;
     const iHaveScored = (sOb) => {
         // method takes a score object returned from the server, calculates whether player has scored based on type
 //        console.log(`so, have I scored?`);
@@ -1133,8 +1142,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.reload();
 //        console.log(`I feel refreshed`)
     });
-    socket.on('sendHome', () => {
+    socket.on('sendHome', (g) => {
 //        console.log('send me home');
+        console.log('send me home, game', g);
+        if (g) {
+            game = g;
+            console.log('game updated', game);
+        }
         gotoHomeState();
         render();
     });

@@ -213,6 +213,10 @@ function initSocket(server) {
 //                    console.log(`getRenderState heard`)
                     gameController.getRenderState(ob, cb);
                 });
+                socket.on('getGame', (id, cb) => {
+                    console.log('SC getGame', id);
+                    gameController.getGame(id, cb);
+                });
                 socket.on('getGameCount', (cb) => {
                     gameController.getGameCount(cb);
                 });
@@ -385,7 +389,10 @@ function initSocket(server) {
             });
             socket.on('sendClientsHome', (gId) => {
 //                console.log(`${gId} should match game address`);
-                io.to(gId).emit('sendHome');
+                gameController.getGame(gId, (g) => {
+                    io.to(gId).emit('sendHome', g);
+                });
+
             });
             socket.on('removePlayer', (plOb, cb) => {
 //                gameController.makeLead(obj);
