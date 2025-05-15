@@ -383,6 +383,10 @@ function initSocket(server) {
 //                console.log(`${gId} should match game address`);
                 io.to(gId).emit('forceRefresh');
             });
+            socket.on('sendClientsHome', (gId) => {
+//                console.log(`${gId} should match game address`);
+                io.to(gId).emit('sendHome');
+            });
             socket.on('removePlayer', (plOb, cb) => {
 //                gameController.makeLead(obj);
 //                console.log(clOb);

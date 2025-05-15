@@ -10,13 +10,11 @@
                 <div class='title'>{{title}}</div>
             </div>
             <div class='description'>
-                {{values.description}}
+                {{#if is2030}}{{myPV1.description}}{{else}}{{myPV2.description}}{{/if}}
             </div>
             <div class='counter resources-buttons' id='resources-buttons-{{this.id}}'>
-<!--                <p><span class='value' id='voteValue{{this.id}}'>{{scores.val}}</span></p>-->
-                <p><span class='value' id='voteValue{{this.id}}'>{{scores.val}}</span></p>
-<!--                <button class='resources-btn vote_btn_minus' disabled><span>-</span></button>-->
-<!--                <button class='resources-btn vote_btn_plus' disabled>+</button>-->
+<!--                <p><span class='value' id='voteValue{{this.id}}'>{{myPV1.val}}</span></p>-->
+                <p><span class='value' id='voteValue{{this.id}}'>{{#if is2030}}{{myPV1.val}}{{else}}{{myPV2.val}}{{/if}}</span></p>
             </div>
         </div>
     </div>

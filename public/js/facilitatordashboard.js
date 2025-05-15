@@ -1252,9 +1252,6 @@ document.addEventListener('DOMContentLoaded', function() {
         r = window.justNumber(r);
         const gr = window.justNumber(game.round);
         const ric = game.round.toString().indexOf('*', 0) > -1 || gr === 0;
-//        const ric = game.round.toString().indexOf('*', 0) > -1;
-//        console.log(`ric: ${ric}`);
-//        console.log(game)
         const oneUp = (r - gr) === 1;
         const idm = socket.emit('checkDevMode', (dm) => {
 //            console.log(`idm ${dm}`);
@@ -1301,7 +1298,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (emitting) {
 //            console.log('emit the startRound event');
             // 20250513 try forcing a refresh of all the player clients to ensure correct display
-            refreshPlayers();
+//            refreshPlayers();
+            // 20250518 instead, force any clients not on home page to go home
+            sendPlayersHome();
             socket.emit('startRound', {gameID: game.uniqueID, round: r, ok: ok});
         }
 //        console.log(`the teams: ${t}, ${t.length}`);
@@ -1469,6 +1468,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const refreshPlayers = () => {
         // emit a command to refresh all player clients for this game
         socket.emit('refreshAllClients', game.address);
+//        socket.emit('sendClientsHome', game.address);
+    };
+    const sendPlayersHome = () => {
+        // emit a command to refresh all player clients for this game
+//        socket.emit('refreshAllClients', game.address);
+        socket.emit('sendClientsHome', game.address);
     };
     const renderPlayers = (targ) => {
         if (game) {
@@ -1972,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     const launchScoreboard = () => {
-        const rOb = {x: 100, y: 100, w: 980, h: 290, data: {preventTemplate: true, launchMethod: 'launchScoreboard'}};
+        const rOb = {x: 100, y: 100, w: 1100, h: 290, data: {preventTemplate: true, launchMethod: 'launchScoreboard'}};
         const id = 'facilitator-scoreboard';
         addWidget(id, rOb, (w) => {
             renderScoreFrame();
@@ -2019,7 +2024,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             const newOb = {totalsObject: o};
-            console.log(newOb);
+//            console.log(newOb);
             renderTemplate('facilitateScoresContent', 'facilitator.totals', newOb, () => {
                 document.querySelectorAll('.aligndecimal').forEach(function(el) {
                     let number = el.textContent.trim();

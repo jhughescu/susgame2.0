@@ -389,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             rArrNew.push(ob);
         });
+        console.log(rArrNew);
         return rArrNew;
     };
 
@@ -488,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
     const showCollaboration = () => {
-//        console.log(`showCollaboration`);
+        console.log(`showCollaboration`);
 
         const preScores = filterScorePackets(game.scores.map(s => unpackScore(s)), 'round', 4);
         const rOb = {};
@@ -509,6 +510,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const rOb2 = {};
                 const scoreSumm = window.getScoresSummary();
                 const vals1 = game.values.filter(v => v.round === 1);
+                const vals3 = game.values.filter(v => v.round === 3);
                 Object.entries(scoreSumm).forEach((r, i) => {
                     const votes = r[1].collScores;
                     votes.forEach((v, n) => {
@@ -518,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         };
                     });
                     votes.splice(i, 1);
-                    const vals = vals1.filter(v => v.team === i)[0];
+                    const vals = vals3.filter(v => v.team === i)[0];
 
                     const ob = Object.assign(t[i], {
                         votes: votes,
@@ -547,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 //                console.log('go render', rOb);
-//                console.log('go render', rOb2);
+                console.log('go render', rOb2);
                 renderTemplate(targ, 'slides/showround4', rOb2, () => {});
             });
         });

@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let pingCheck = 0;
     let pingState = true;
     const connectionTimer = 500;
+    const getReconnectTime = () => {
+        // for reconnecting; add random element to avoid simultaneous calls
+        return connectionTimer + (Math.random() * connectionTimer);
+    };
     const homeStateObj = {note: 'homeState setting', temp: 'game.main', partialName: 'game-links', ob: player, tempType: 'homeState', sub: null};
     let homeState = JSON.stringify(homeStateObj);
     const qu = window.getQueries(window.location.href);
@@ -73,8 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 estSocket();
                 setTimeout(() => {
                     connectCheck();
-                }, connectionTimer);
-            }, connectionTimer);
+                }, getReconnectTime());
+            }, getReconnectTime());
         } else {
 //            console.log('content rendered');
         }
@@ -84,8 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
         estSocket();
         setTimeout(() => {
             connectCheck();
-        }, connectionTimer);
-    }, connectionTimer);
+        }, getReconnectTime());
+    }, getReconnectTime());
 
 
     const checkGameChanges = (rg) => {
@@ -795,9 +799,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             let rType = null;
             const fsp = window.filterScorePackets;
-            const gSPs = game.detailedScorePackets;
+            const GS = game.scores;
+//            const gSPs = game.detailedScorePackets;
+            const gSPs = [];
             const jn = window.justNumber;
             rOb.dynamicTeamData = window.createDynamicTeamData();
+            GS.forEach(s => {
+                gSPs.push(window.unpackScore(s));
+            });
+//            console.log(gSPs);
 //            console.log(rOb.dynamicTeamData);
             if (Boolean(player.teamObj)) {
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
@@ -813,7 +823,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 rOb.scoresOut3All = [];
                 game.persistentData.mainTeams.forEach((t, i) => {
                     const s = rOb.scoresOut3.filter(sp => sp.dest === t.id)[0];
-                    rOb.scoresOut3All[i] = Object.assign({val: s ? s.val : 0}, t);
+//                    console.log(s)
+//                    console.log(player.teamObj.id);
+//                    console.log(gSPs);
+//                    console.log(GS);
+                    let r3Scores = gSPs.filter(sp => sp.src === player.teamObj.id);
+//                    console.log(r3Scores);
+                    r3Scores = r3Scores.filter(sp => sp.round === 4);
+//                    r3Scores = r3Scores.map(sp => sp.val);
+                    r3Scores = r3Scores.filter(sp => sp.dest === t.id)[0];
+//                    console.log(r3Scores)
+//                    rOb.scoresOut3All[i] = Object.assign({val: s ? s.val : 0}, t);
+                    rOb.scoresOut3All[i] = Object.assign({val: r3Scores ? r3Scores.val : 0}, t);
                 });
                 const rsp = window.filterScorePackets(game.detailedScorePackets, 'round', game.round);
                 rOb.dynamicSubTeamData.forEach((t, i) => {
@@ -876,9 +897,13 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(getStoredRenderState().temp);
             // \/ prob can't use that, might prevent initial render on refresh
 //            console.log(getStoredRenderState().temp === renderState.temp);
+            rOb.is2030 = window.justNumber(rOb.game.round) < 3;
             console.log(`render template: ${renderState.temp}`, rOb);
-            console.log(rOb.pv1);
-            console.log(rOb.pv2);
+            rOb.dynamicTeamData.forEach(td => {
+//                console.log(td.myPV1);
+            });
+//            console.log(rOb.pv1);
+//            console.log(rOb.pv2);
 //            console.log(rOb.dynamicTeamData);
 //            console.log(rOb.dynamicSubTeamData2);
             renderTemplate(targ, renderState.temp, rOb, () => {
@@ -1015,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const isSocket = ob.sock === player.socketID;
         const isPlayer = ob.player === player.id;
         const isDef = isGame && isSocket && isPlayer;
-        console.log(isGame, isSocket, isPlayer, isDef);
+//        console.log(isGame, isSocket, isPlayer, isDef);
         if (isDef) {
             clearMyStorage();
             updateRenderState({temp: ob.temp});
@@ -1107,6 +1132,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('make me refresh');
         window.location.reload();
 //        console.log(`I feel refreshed`)
+    });
+    socket.on('sendHome', () => {
+//        console.log('send me home');
+        gotoHomeState();
+        render();
     });
     socket.on('startRound', (ob) => {
         console.log(`startRound heard, ob:`, ob);

@@ -897,7 +897,8 @@ const newGetTheRenderState = (game, id) => {
                         if (roundComplete) {
                             rs.temp = `game.main`;
                         } else {
-                            console.log(roundInfo)
+//                            console.log(roundInfo);
+//                            rs.temp = `game.${roundInfo.template}.${roundInfo.template === 'allocation' || roundInfo.template === 'vote' ? `r${roundInfo.n}.` : ``}complete`;
                             rs.temp = `game.${roundInfo.template}.${roundInfo.template === 'allocation' ? `r${roundInfo.n}.` : ``}complete`;
                         }
                     }
@@ -1208,11 +1209,11 @@ const startRound = async (ob) => {
     const round = ob.round;
     const game_id = `game-${gameID}`;
     const game = games[game_id];
-    console.log(`startRound:`);
-    console.log(round);
+//    console.log(`startRound:`);
+//    console.log(round);
     if (game) {
         const rounds = game.persistentData.rounds;
-        console.log(rounds[round]);
+//        console.log(rounds[round]);
         const rIndex = ob.round - 1;
         if (ob.round > rounds.length) {
             const warning = `cannot start round ${ob.round}, game only has ${rounds.length} rounds.`;
@@ -1222,7 +1223,7 @@ const startRound = async (ob) => {
                 game.round = ob.round;
             }
             const session = await sessionController.updateSession(gameID, { round });
-            console.log(session);
+//            console.log(session);
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             if (okToUpdate) {
                 const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
@@ -1419,29 +1420,21 @@ const scoreForAverageSubmitted = async (ob, cb) => {
     if (game) {
         sc.forEach(s => {
             let sp = new ScorePacket(game.round, s.src, s.dest, s.val, s.client);
-//            console.log(sp);
             let p = sp.getPacket();
             let d = sp.getDetail();
             scOut.push(p);
         });
-//        console.log(`scoreForAverageSubmitted`);
-//        console.log(game.scores);
-//        console.log(scOut);
         game.scores = [...new Set([...game.scores, ...scOut])];
-//        console.log(noo);
         const session = await sessionController.updateSession(ob.game, { $push: {scores: { $each: scOut}}});
         if (session) {
-//            game.scores = session.scores;
             const roundDetail = checkRound(ob.game);
             logController.addLog('round', {game: game.address, roundType: game.round.type, submissions: roundDetail});
-//            console.log(roundDetail);
             const roundComplete = roundDetail.indexOf(false) === -1;
             const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob}}, game);
             eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 eventEmitter.emit('roundComplete', eGame);
             }
-//            eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 endRound(ob);
             }

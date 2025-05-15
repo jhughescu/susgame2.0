@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let scoresTemp = [];
     let scorePackets = [];
     let mode = 0;
+    const ROUNDFAC = 2;
     const modes = ['single', 'full'];
     const createScore = (r, s, d, v, c) => {
         return `${r}_${s}_${d}_${v}_${c}`;
@@ -147,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const processData = () => {
 //        console.log(`processData`);
-//        console.log(game)
         const out = {};
         const T = 5;
         const gtv = getTotalVals;
@@ -158,18 +158,125 @@ document.addEventListener('DOMContentLoaded', function () {
         let shArray = new Array();
         let shTotal = new Array(5).fill(0);
         let c = 0;
-//        for (let i = 0; i < T; i++) {
-//            const t = gtv(gss(i, grs(1)));
-//            console.log(t);
-//        }
         for (let i = 0; i < T; i++) {
+
             const a1 = gds(i, grs(1))[0];
             const a2 = gds(i, grs(3))[0];
             const t = gtv(gds(i, grs(4)));
             const at = gtv(gds(i, grs(3))) + gtv(gds(i, grs(4))); /* formula N */
             const pv1_1 = gds(i, gss(5, grs(2)))[0]; /* first PV1 score  */
+            const pv1_1All = gds(i, gss(5, grs(2))); /* first PV1 score set  */
+            const pv1_1Total = gtv(pv1_1All);
+            const pv1_1AvAll = pv1_1Total / pv1_1All.length;
+            const pv1_1AvNoZero = pv1_1Total / pv1_1All.filter(sp => sp.val !== 0).length;
+            const pv1_2 = gds(i, gss(6, grs(2)))[0]; /* first PV2 score  */
+            const pv1_2All = gds(i, gss(6, grs(2))); /* first PV2 score set */
+            const pv1_2Total = gtv(pv1_2All);
+            const pv1_2AvAll = pv1_2All.length > 0 ? pv1_2Total / pv1_2All.length : 0;
+            const pv1_2AvNoZero = pv1_2Total / pv1_2All.filter(sp => sp.val !== 0).length;
+
+            //const pvt1 = gtv(gds(i, grs(2))); /* first PV total */
+            const pvt1NoRound = pv1_1AvAll + pv1_2AvAll; /* first PV total */
+            const pvt1 = window.roundNumber(pv1_1AvAll + pv1_2AvAll, ROUNDFAC); /* first PV total */
+//            const apv1 = gsv(a1) * pvt1;
+            const apv1 = window.roundNumber(gsv(a1) * pvt1NoRound, ROUNDFAC);
+//            console.log(`${gsv(a1)} * ${pvt1NoRound} = ${apv1}`);
+            const collArray = gds(i, grs(4));
+            const collScores = [];
+
+            const pv2_1 = gds(i, gss(5, grs(5)))[0]; /* second PV1 score  */
+            const pv2_1All = gds(i, gss(5, grs(5))); /* second PV1 score set  */
+            const pv2_1Total = gtv(pv2_1All);
+            const pv2_1AvAll = 0 || pv2_1Total / pv2_1All.length;
+            const pv2_1AvNoZero = pv2_1Total / pv2_1All.filter(sp => sp.val !== 0).length;
+
+            const pv2_2 = gds(i, gss(6, grs(5)))[0]; /* second PV2 score  */
+            const pv2_2All = gds(i, gss(6, grs(5))); /* second PV2 score set */
+            const pv2_2Total = gtv(pv2_2All);
+            const pv2_2AvAll = pv2_2Total / pv2_2All.length;
+            const pv2_2AvNoZero = pv2_2Total / pv2_2All.filter(sp => sp.val !== 0).length;
+
+
+            //const pvt2 = gtv(gds(i, grs(5))); /* second PV total */
+            const pvt2NoRound = pv2_1AvAll + pv2_2AvAll; /* second PV total */
+            const pvt2 = window.roundNumber(pv2_1AvAll + pv2_2AvAll, ROUNDFAC); /* second PV total */
+
+            const acpvf = (gtv(gds(i, grs(3))) + gtv(gds(i, grs(4)))) * gtv(gds(i, grs(5))); /* formula P */
+            for (let j = 0; j < T; j++) {
+                const coll = gds(i, grs(4));
+                const coll2 = gds(i, collArray);
+                const collScoreArr = gss(j, coll2);
+                const collScore = collScoreArr.length ? collScoreArr[0] : '-';
+                collScores.push(collScore);
+                const sc = gsv(gss(j, coll)[0]);
+                const f = (sc / at) * acpvf;
+                shArray.push({sh: i === j ? 0 : f});
+                if (!isNaN(f)) {
+                    shTotal[i] += f;
+                }
+            };
+            const rExp1 = gtv(gss(i, grs(1)));
+            out[`r${i}`] = {
+                t: teams[i].title,
+                a1: a1,
+                collTotal: t,
+                collScores: collScores,
+                allCollTotal: at,
+                pv1_1: pv1_1,
+                pv1_2: pv1_2,
+                pv1_1AvAll: window.roundNumber(pv1_1AvAll, ROUNDFAC),
+                pv1_2AvAll: window.roundNumber(pv1_2AvAll, ROUNDFAC),
+                pvt1: pvt1,
+                total2030: apv1,
+                a2: a2,
+                pv2_1: pv2_1,
+                pv2_2: pv2_2,
+                pv2_1AvAll: window.roundNumber(pv2_1AvAll, ROUNDFAC),
+                pv2_2AvAll: window.roundNumber(pv2_2AvAll, ROUNDFAC),
+                pvt2: pvt2,
+                allCollPV: acpvf,
+                shTotal: shTotal,
+                shArray: [],
+                teamExpR1: rExp1
+            };
+//            console.log(out);
+        }
+        Object.values(out).forEach((r, i) => {
+            for (let j = 0; j < T; j++) {
+                const n = shArray[(j * T) + i].sh;
+                r.shArray.push(n);
+            }
+            r.shTotal = r.shArray.reduce((total, num) => total + (isNaN(num) ? 0 : num), 0);
+            r.scorePlusShare = r.shTotal + r.allCollPV;
+            r.grandTotal = r.scorePlusShare + r.total2030;
+        });
+//        console.log(out);
+        return out;
+    };
+    const processDataV1 = () => {
+        console.log(`processData`);
+        const out = {};
+        const T = 5;
+        const gtv = getTotalVals;
+        const gds = getDestScores;
+        const gss = getSrcScores;
+        const grs = getRoundScores;
+        const gsv = getScoreValue;
+        let shArray = new Array();
+        let shTotal = new Array(5).fill(0);
+        let c = 0;
+        for (let i = 0; i < T; i++) {
+
+            const a1 = gds(i, grs(1))[0];
+            const a2 = gds(i, grs(3))[0];
+            const t = gtv(gds(i, grs(4)));
+            const at = gtv(gds(i, grs(3))) + gtv(gds(i, grs(4))); /* formula N */
+            const pv1_1 = gds(i, gss(5, grs(2)))[0]; /* first PV1 score  */
+            console.log(pv1_1);
+            console.log(gds(i, gss(5, grs(2))));
             const pv1_2 = gds(i, gss(6, grs(2)))[0]; /* first PV2 score  */
             const pvt1 = gtv(gds(i, grs(2))); /* first PV total */
+            console.log(pvt1)
             const apv1 = gsv(a1) * pvt1;
             const collArray = gds(i, grs(4));
             const collScores = [];
@@ -387,8 +494,10 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.values(B).forEach((R, i) => {
             const t = Object.values(T)[i];
             updateField(R.a1, getScoreValue(t.a1));
-            updateField(R.pv1_1, getScoreValue(t.pv1_1));
-            updateField(R.pv1_2, getScoreValue(t.pv1_2));
+//            updateField(R.pv1_1, getScoreValue(t.pv1_1));
+            updateField(R.pv1_1, t.pv1_1AvAll);
+//            updateField(R.pv1_2, getScoreValue(t.pv1_2));
+            updateField(R.pv1_2, t.pv1_2AvAll);
             updateField(R.pvt1, t.pvt1);
             updateField(R.total2030, t.total2030);
             R.c.each((j, c) => {
@@ -407,8 +516,10 @@ document.addEventListener('DOMContentLoaded', function () {
             updateField(R.a2, getScoreValue(t.a2));
             updateField(R.totalColl, t.collTotal);
             updateField(R.allCollTotal, t.allCollTotal);
-            updateField(R.pv2_1, getScoreValue(t.pv2_1));
-            updateField(R.pv2_2, getScoreValue(t.pv2_2));
+//            updateField(R.pv2_1, getScoreValue(t.pv2_1));
+//            updateField(R.pv2_2, getScoreValue(t.pv2_2));
+            updateField(R.pv2_1, t.pv2_1AvAll);
+            updateField(R.pv2_2, t.pv2_2AvAll);
             updateField(R.pvt2, t.pvt2);
             updateField(R.allCollPV, t.allCollPV);
             R.sh.each((j, s) => {

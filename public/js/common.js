@@ -104,14 +104,15 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const justNumber = (i) => {
         if (i !== undefined && i !== null) {
-//            console.log(`converting ${i}`);
-            // returns just the numeric character(s) of a string/number
-            const out = parseInt(i.toString().replace(/\D/g, ''));
-            return out;
+            // Preserve leading negative sign and remove all non-digit characters
+            const out = parseInt(i.toString().replace(/^(-)?\D*/g, '$1').replace(/[^\d-]/g, ''));
+            return isNaN(out) ? 0 : out;
         } else {
-            console.log(`no value passed to justNumber`)
+            console.log(`no value passed to justNumber`);
+            return 0;
         }
     };
+
     const roundNumber = (n, r) => {
         let m = 1;
         let rr = r === undefined ? 3 : r;
@@ -264,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const renderTemplate = (targ, temp, ob, cb) => {
-//        console.log(`renderTemplate`, targ, temp);
+//        console.log(`renderTemplate`, targ, temp, ob);
         if (ob === undefined) {
             console.error('Error: Data object is undefined');
             return;
@@ -281,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const firstLineNew = getFirstLine(compiledTemplate(ob));
 //                console.log(firstLineNew, firstLineNew.includes(FORCE_TEMPLATE_OVERWRITE));
                 if (firstLineNew === firstLineCurrent && !firstLineNew.includes(FORCE_TEMPLATE_OVERWRITE)) {
-                    console.log(`render ${temp}: looks like a rewrite, leave it as is`);
+//                    console.log(`render ${temp}: looks like a rewrite, leave it as is`);
                 } else {
                     document.getElementById(targ).innerHTML = compiledTemplate(ob);
                 }
@@ -434,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const sa = s.split('_');
         const o = {};
         sa.forEach((ss, i) => {
+//            console.log(ss, justNumber(ss))
             o[scoreMap[i]] = justNumber(ss);
         });
         return o;
@@ -620,14 +622,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const hasS = await thisRoundScored(myPlayer);
             window.initScoreboard(game.address, myPlayer.id, game);
             const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
-            // Allocation ALWAYS has full vote potential
-            const resourceRemaining = PD.teamsArray[team.id].votes;
+            // Allocation ALWAYS has full vote potential - no they don't
+            const dsp = game.detailedScorePackets;
+            // total all the scorepackets from this src
+            const spt = dsp.filter(sp => sp.src === myPlayer.teamObj.id).map(sp => sp.val).reduce((sum, num) => sum + (isNaN(num) ? 0 : num), 0);
+            const resourceRemaining = PD.teamsArray[team.id].votes - spt;
+//            console.log(`setupAllocationControl`);
+//            console.log(game.detailedScorePackets);
+//            console.log(myPlayer);
+//            console.log(`total spent: ${spt}`);
             remain.html(resourceRemaining);
             if (isLocal()) {
                 socket.emit('getLoremIpsum', 7, (li) => {
 //                    console.log('li:', li);
                     desc.val(li);
-                    val.html(Math.ceil(Math.random() * 4));
+                    val.html(Math.ceil(Math.random() * (resourceRemaining - 2)));
                     let actions = $('#action-choice option').map(function() {
                         return $(this).val();
                     }).get().slice(1);
@@ -736,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     const setupVoteControl = async (inOb) => {
-        console.log(`setupVoteControl`);
+//        console.log(`setupVoteControl`);
         const myPlayer = player === null ? inOb : player;
         const storeID = `votes-${game.address}-${myPlayer.id}-r${game.round}`;
         let store = [];
@@ -760,6 +769,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const vTotal = myPlayer.teamObj.votes;
         const r = parseInt(game.round);
         const aOb = {gameID: `game-${game.uniqueID}`, round: procVal(game.round), src: myPlayer.teamObj.id};
+        let spent = game.detailedScorePackets.filter(sp => sp.client === window.justNumber(myPlayer.id));
+//        console.log(`vTotal:`, vTotal);
+//        console.log(`spent:`, spent);
+        spent = spent.filter(sp => sp.src === myPlayer.teamObj.id);
+//        console.log(`spent:`, spent);
+        spent = spent.map(sp => sp.val);
+//        console.log(`spent:`, spent);
+        spent = spent.reduce((sum, num) => sum + (isNaN(num) ? 0 : Math.abs(num)), 0);
+//        console.log(`spent: ${spent}`, spent);
+        const resRem = vTotal - spent;
+        vTotalDisp.html(resRem);
         socket.emit('getAggregates', aOb, (a, sp, report) => {
             const myScores = filterScorePackets(filterScorePackets(sp, 'client', plID), 'round', game.round);
             const playerHasScored = Boolean(myScores.length);
@@ -860,27 +880,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 submit.off('click').on('click', () => {
                     const sOb = {scoreCode: [], game: game.uniqueID, player: myPlayer.id};
-//                    console.log('votes/values submitted, slides:');
-//                    window.showSlides();
-                    let someZero = false;
-                    let goodToGo = true;
-                    val.each((i, v) => {
-                        if (parseInt($(v).html()) === 0) {
-                            someZero = true;
-                        }
-                    });
-                    if (someZero) {
-                        goodToGo = window.confirm(HASZEROES);
+                    let ok = true;
+                    if (vAvailDisp.html() === vTotalDisp.html() && game.round < 5) {
+                        alert('Please keep some of your resources in reserve for subsequent rounds');
+                        ok = false;
                     }
-                    if (goodToGo) {
+                    if (ok) {
+                        let someZero = false;
+                        let goodToGo = true;
                         val.each((i, v) => {
-                            sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+                            if (parseInt($(v).html()) === 0) {
+                                someZero = true;
+                            }
                         });
-                        socket.emit('submitScoreForAverage', sOb);
-                        localStorage.removeItem(storeID);
-                        setupVoteControl(myPlayer);
-                        if (isDashboard()) {
-                            socket.emit('refreshClient', myPlayer);
+                        if (someZero) {
+                            goodToGo = window.confirm(HASZEROES);
+                        }
+                        if (goodToGo) {
+                            val.each((i, v) => {
+                                sOb.scoreCode.push({src: myPlayer.teamObj.id, dest: justNumber($(v).attr('id')), val: parseInt($(v).html()), client: justNumber(myPlayer.id)});
+                            });
+                            socket.emit('submitScoreForAverage', sOb);
+                            localStorage.removeItem(storeID);
+                            setupVoteControl(myPlayer);
+
+                            if (isDashboard()) {
+                                socket.emit('refreshClient', myPlayer);
+                            } else {
+                                window.location.reload();
+                            }
                         }
                     }
                 });
@@ -889,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     };
     const setupCollaborationControl = async (inOb) => {
-        console.log('we set up collab control');
+//        console.log('we set up collab control');
         const PD = game.persistentData;
         const myPlayer = player === null ? inOb : player;
         const team = myPlayer.teamObj;
@@ -907,15 +935,23 @@ document.addEventListener('DOMContentLoaded', function () {
         let stored = localStorage.getItem(storeID);
         let playerHasScored = false;
 
+        const SC = game.scores;
+        const DSP = [];
+        SC.forEach(s => {
+            DSP.push(window.unpackScore(s));
+        });
         window.initScoreboard(game.address, myPlayer.id, game);
         const scoreSumm = window.getScoresSummary()[`r${window.justNumber(team.id)}`];
-        const resourceRemaining = PD.teamsArray[team.id].votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
-//        console.log(team);
-        console.log('scoreSumm:');
-        console.log(scoreSumm);
-//        console.log(PD.teamsArray[team.id].votes);
-        console.log(`resourceRemaining: ${resourceRemaining}`);
-
+//        const resourceRemaining = PD.teamsArray[team.id].votes - (game.round === 1 ? 0 : scoreSumm.a2.val);
+        const resAll = PD.teamsArray[team.id].votes;
+//        const resourceRemaining = resAll - (game.round === 1 ? 0 : scoreSumm.a2.val);
+        let spent = DSP.filter(sp => sp.src === myPlayer.teamObj.id);
+//        console.log('dsp', game.detailedScorePackets);
+//        console.log('spent', spent);
+        spent = spent.map(sp => sp.val).reduce((sum, num) => sum + (isNaN(num) ? 0 : num), 0);
+//        console.log('spent', spent);
+        const resourceRemaining = resAll - spent;
+//        console.log('rem', resourceRemaining)
 //        console.log('OK, we just need to add a condition which means the form does not remember results if we are in the FDB');
 //        console.log(storeID, stored);
 
@@ -1004,6 +1040,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                         if (isDashboard()) {
                             socket.emit('refreshClient', myPlayer);
+                        } else {
+                            window.location.reload();
                         }
                     });
                 }
@@ -1017,10 +1055,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const rOb = {game: game};
 //        console.log(rOb.game);
         rOb.dynamicTeamData = [];
-        const dsp = rOb.game.detailedScorePackets;
+        let dsp = [];
+        const ds = rOb.game.scores;
         const pdt = game.persistentData.teamsArray;
         const gv = game.values;
-        console.log(gv);
+        ds.forEach(s => {
+//            console.log(s)
+            dsp.push(unpackScore(s));
+        });
+//        console.log(gv);
         rOb.game.persistentData.mainTeams.forEach((t, i) => {
             t.values = rOb.game.values.filter(tm => tm.team === t.id)[0];
             t.valuesR1 = rOb.game.values.filter(tm => tm.team === t.id).filter(tm => tm.round === 1)[0];
@@ -1028,34 +1071,69 @@ document.addEventListener('DOMContentLoaded', function () {
             t.scores = dsp.filter(sp => sp.src === t.id)[0];
             t.scoresR1 = dsp.filter(sp => sp.src === t.id).filter(sp => sp.round === 1)[0];
             t.scoresR3 = dsp.filter(sp => sp.src === t.id).filter(sp => sp.round === 3)[0];
-            t.pvSupportR2 = dsp.filter(sp => sp.round === 2).filter(sp => sp.dest === t.id);
-            t.pvSupportR5 = dsp.filter(sp => sp.round === 5).filter(sp => sp.dest === t.id);
-            t.pvSupportR2Full = [];
-            t.pvSupportR2.forEach((sp, i) => {
-                const T = pdt[i];
-                const v = gv.filter(sp => sp.round === 2);
-                const vals = gv.filter(o => o.team === T.id)[0];
-                const ob = {
-                    title: T.title,
-                    val: sp.val,
-                    action: vals.action,
-                    description: vals.description
-                };
-                t.pvSupportR2Full.push(ob);
-            });
-            t.pvSupportR5Full = [];
-            t.pvSupportR5.forEach((sp, i) => {
-                const T = pdt[i];
-                const v = gv.filter(sp => sp.round === 5);
-                const vals = gv.filter(o => o.team === T.id)[0];
-                const ob = {
-                    title: T.title,
-                    val: sp.val,
-                    action: vals.action,
-                    description: vals.description
-                };
-                t.pvSupportR5Full.push(ob);
-            });
+            t.is2030 = justNumber(rOb.game.round) < 3;
+//            t.pvSupportR2 = dsp.filter(sp => sp.round === 2).filter(sp => sp.dest === t.id);
+//            t.pvSupportR5 = dsp.filter(sp => sp.round === 5).filter(sp => sp.dest === t.id);
+            if (player) {
+//                console.log(player);
+//                console.log(game);
+//                console.log(dsp);
+//                console.log(ds);
+//                console.log(unpackScore(ds[0]));
+
+//                t.pvSupportR2 = dsp.filter(sp => sp.round === 2).filter(sp => sp.client === window.justNumber(player.id));
+//                t.pvSupportR5 = dsp.filter(sp => sp.round === 5).filter(sp => sp.client === window.justNumber(player.id));
+                let value = rOb.game.values.filter(v => v.round === 1).filter(v => v.team === i)[0];
+                let val = dsp.filter(sp => sp.round === 2).filter(sp => sp.dest === i).filter(sp => sp.client === window.justNumber(player.id));
+//                console.log(dsp);
+//                console.log(val);
+                if (value && val.length > 0) {
+                    t.myPV1 = {
+                        title: t.title,
+                        action: value.action,
+                        description: value.description,
+                        val: val[0].val
+                    }
+                }
+                value = rOb.game.values.filter(v => v.round === 3).filter(v => v.team === i)[0];
+                val = dsp.filter(sp => sp.round === 5).filter(sp => sp.dest === i).filter(sp => sp.client === window.justNumber(player.id))
+                if (value && val.length > 0) {
+                    t.myPV2 = {
+                        title: t.title,
+                        action: value.action,
+                        description: value.description,
+                        val: val[0].val
+                    }
+                }
+                /*
+                t.pvSupportR2Full = [];
+                t.pvSupportR2.forEach((sp, i) => {
+                    const T = pdt[i];
+                    const v = gv.filter(sp => sp.round === 2);
+                    const vals = gv.filter(o => o.team === T.id)[0];
+                    const ob = {
+                        title: T.title,
+                        val: sp.val,
+                        action: vals.action,
+                        description: vals.description
+                    };
+                    t.pvSupportR2Full.push(ob);
+                });
+                t.pvSupportR5Full = [];
+                t.pvSupportR5.forEach((sp, i) => {
+                    const T = pdt[i];
+                    const v = gv.filter(sp => sp.round === 5);
+                    const vals = gv.filter(o => o.team === T.id)[0];
+                    const ob = {
+                        title: T.title,
+                        val: sp.val,
+                        action: vals.action,
+                        description: vals.description
+                    };
+                    t.pvSupportR5Full.push(ob);
+                });
+                */
+            }
             rOb.dynamicTeamData.push(t)
         });
         return rOb.dynamicTeamData;
