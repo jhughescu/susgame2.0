@@ -407,29 +407,27 @@ const getGame = (id, cb) => {
     let gg = null;
 //    log(`get game with id ${id}`);
 //    log(games);
-    if (id) {
-        id = id.toString();
-        if (id.indexOf('/', 0) > -1) {
-            // presume searching with address
-    //        log(`presume searching with address`);
-            gg = getGameWithAddress(id);
-        } else {
-            // presume searching with uniqueID
-    //        log(`presume searching with uniqueID`);
-            gg = getGameWithUniqueID(id);
-        }
-        if (!gg) {
-            console.log(`no game with ID ${id}`)
-        } else {
-            gg.detailedScorePackets = gg.getDetailedScorePackets();
-        }
-
-    //    log(gg);
-        if (cb) {
-            cb(gg);
-        }
-        return gg;
+    id = id.toString();
+    if (id.indexOf('/', 0) > -1) {
+        // presume searching with address
+//        log(`presume searching with address`);
+        gg = getGameWithAddress(id);
+    } else {
+        // presume searching with uniqueID
+//        log(`presume searching with uniqueID`);
+        gg = getGameWithUniqueID(id);
     }
+    if (!gg) {
+        console.log(`no game with ID ${id}`)
+    } else {
+        gg.detailedScorePackets = gg.getDetailedScorePackets();
+    }
+
+//    log(gg);
+    if (cb) {
+        cb(gg);
+    }
+    return gg;
 };
 const getGameWithUniqueID = (id) => {
 //    console.log(`getGameWithUniqueID`, id, Object.values(games).length)

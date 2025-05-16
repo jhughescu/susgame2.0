@@ -447,36 +447,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    const activateYourmove = () => {
-//        console.log(`######################## activateYourmove`);
+    const activateYourmove = async () => {
+//        console.log(`activateYourmove`);
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
         if (renderState.temp && player) {
             if (player.teamObj) {
+//                console.log(`activateYourmove`);
+//                console.log(player)
                 const home = renderState.temp.indexOf('main', 0) > -1;
                 const interaction = renderState.tempType === 'interaction';
                 const hasScored = false;
-                const roundObj = game.persistentData.rounds[procVal(game.round)];
-                const inThisRound = roundObj.type === player.teamObj.type;
-//                const rs = await thisRoundScored();
-                if (roundObj.n > 0) {
-                    console.log(`there is a round in progress, game.round: ${game.round}, round.n: ${roundObj.n}`);
+                const round = game.persistentData.rounds[procVal(game.round)];
+                const inThisRound = round.type === player.teamObj.type;
+                const rs = await thisRoundScored();
+                if (round.n > 0) {
+        //            console.log('there is a round in progress');
                     // need further conditionals here - is this player invloved in the current round? Is the round already complete?
                     if (game.round.toString().indexOf('*', 0) === -1) {
-                        console.log(`round not complete`, game.round);
+        //                console.log(`round not complete`)
                         if (inThisRound) {
-                            console.log(`I am in this round (${inThisRound}) round.type: ${roundObj.type}, team type: ${player.teamObj.type}`);
-//                                console.log(game.scores);
-//                            console.log(game.detailedScorePackets);
-                            const alreadyScored = game.detailedScorePackets.filter(sp => sp.round === game.round).length > 0;
-//                                if (!iHaveScored(rs)) {
-                            if (!alreadyScored) {
-                                console.log(`I've not scored`, alreadyScored);
+                            if (!iHaveScored(rs)) {
+            //                    console.log(`I've not scored`);
                                 if (!home && !interaction) {
                                     gotoHomeState();
 //                                    isItHere(`activateYourmove`);
-//                                     console.log(`call to render: activateYourMove`);
+                                    // console.log(`call to render: activateYourMove`);
                                     render(activateYourmoveButton);
                                 } else {
                                     if (home) {
@@ -484,21 +481,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                     }
                                 }
                             } else {
-                                console.log(`I've already scored, apparently`, alreadyScored)
+//                                console.log(`I've already scored, apparently`)
                             }
                         }
                     } else {
                         // '*' in the round - round is complete
-                        console.log('the current round is complete');
+//                        console.log('the current round is complete');
                     }
                 } else {
-                    console.log('no round right now')
+//                    console.log('no round right now')
                 }
-
             }
         }
     };
-    window.testA = activateYourmove;
     const iHaveScored = (sOb) => {
         // method takes a score object returned from the server, calculates whether player has scored based on type
 //        console.log(`so, have I scored?`);
@@ -805,12 +800,15 @@ document.addEventListener('DOMContentLoaded', function() {
             let rType = null;
             const fsp = window.filterScorePackets;
             const GS = game.scores;
+//            const gSPs = game.detailedScorePackets;
             const gSPs = [];
             const jn = window.justNumber;
             rOb.dynamicTeamData = window.createDynamicTeamData();
             GS.forEach(s => {
                 gSPs.push(window.unpackScore(s));
             });
+//            console.log(gSPs);
+//            console.log(rOb.dynamicTeamData);
             if (Boolean(player.teamObj)) {
                 rOb.myDynamicTeamData = rOb.dynamicTeamData[player.teamObj.id]
             }
@@ -825,9 +823,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 rOb.scoresOut3All = [];
                 game.persistentData.mainTeams.forEach((t, i) => {
                     const s = rOb.scoresOut3.filter(sp => sp.dest === t.id)[0];
+//                    console.log(s)
+//                    console.log(player.teamObj.id);
+//                    console.log(gSPs);
+//                    console.log(GS);
                     let r3Scores = gSPs.filter(sp => sp.src === player.teamObj.id);
+//                    console.log(r3Scores);
                     r3Scores = r3Scores.filter(sp => sp.round === 4);
+//                    r3Scores = r3Scores.map(sp => sp.val);
                     r3Scores = r3Scores.filter(sp => sp.dest === t.id)[0];
+//                    console.log(r3Scores)
+//                    rOb.scoresOut3All[i] = Object.assign({val: s ? s.val : 0}, t);
                     rOb.scoresOut3All[i] = Object.assign({val: r3Scores ? r3Scores.val : 0}, t);
                 });
                 const rsp = window.filterScorePackets(game.detailedScorePackets, 'round', game.round);
@@ -836,6 +842,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     rOb.dynamicSubTeamData[i] = {id: t, votes: prsp};
                 });
                 rOb.myDynamicSubTeamData = rOb.dynamicSubTeamData.filter(td => td.id === player.id)[0];
+//                console.log(player.teamObj);
+//                console.log(gSPs);
+//                console.log(fsp(gSPs, 'client', window.justNumber(player.id)));
                 rOb.pv1 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 2);
                 rOb.pv2 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 5);
                 rOb.pv1.forEach((sp, i) => {
@@ -854,6 +863,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         val: sp.val
                     };
                 });
+//                console.log(player)
+//                rOb.pv1Me = rOb.pv1[player.id];
+//                rOb.pv2Me = rOb.pv2[player.id];
+                /*
+                rOb.dynamicSubTeamData2 = rOb.dynamicSubTeamData.slice();
+                rOb.dynamicSubTeamData2.forEach(d => {
+                    d.voteObj = {};
+                    d.votes.forEach((v, i) => {
+//                        console.log(i, v);
+                        const t = PDT[i];
+                        d.voteObj[`t${i}`] = {
+                            title: t.title,
+                            abbr: t.abbr,
+                            displayColour: t.displayColour,
+                            vote: v
+                        };
+                    });
+                });
+                */
             }
 
             if (renderState.temp) {
@@ -865,10 +893,21 @@ document.addEventListener('DOMContentLoaded', function() {
             rOb.showHeadlines = justNumber(game.slide) > 4;
 
             // build in a check to prevent re-render when page has not changed
+//            console.log(`render check, temp: ${renderState.temp}, stored:`);
+//            console.log(getStoredRenderState().temp);
             // \/ prob can't use that, might prevent initial render on refresh
+//            console.log(getStoredRenderState().temp === renderState.temp);
             rOb.is2030 = window.justNumber(rOb.game.round) < 3;
             console.log(`render template: ${renderState.temp}`, rOb);
+            rOb.dynamicTeamData.forEach(td => {
+//                console.log(td.myPV1);
+            });
+//            console.log(rOb.pv1);
+//            console.log(rOb.pv2);
+//            console.log(rOb.dynamicTeamData);
+//            console.log(rOb.dynamicSubTeamData2);
             renderTemplate(targ, renderState.temp, rOb, () => {
+//                console.log(`***************************************** render calls setupControl`);
                 setupControl(rType);
                 setHash();
                 if (cb) {
@@ -1094,18 +1133,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.reload();
 //        console.log(`I feel refreshed`)
     });
-    socket.on('sendHome', (g) => {
+    socket.on('sendHome', () => {
 //        console.log('send me home');
-        console.log('send me home, game', g);
-        if (g) {
-            game = g;
-            console.log('game updated', game);
-        }
         gotoHomeState();
         render();
     });
     socket.on('startRound', (ob) => {
-//        console.log(`startRound heard, ob:`, ob);
+        console.log(`startRound heard, ob:`, ob);
         onStartRound(ob);
     });
     socket.on('waitForGame', () => {
