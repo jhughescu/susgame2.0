@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (c) {
                 console.log('no content visible')
                 socket.emit('playerErrorReport', {player: player, err: 'no page content; force refresh'});
-//                debugger;
+                debugger;
                 window.location.reload();
             }
         }, 2000);
@@ -447,33 +447,53 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    const activateYourmove = async () => {
+    const activateYourmove = () => {
 //        console.log(`activateYourmove`);
         // If home page not displayed, go there.
         // Light up the yourmove button & bring it into focus
         // This method now includes a server call for score check
         if (renderState.temp && player) {
             if (player.teamObj) {
-//                console.log(`activateYourmove`);
+                console.log(`********************** activateYourmove ****************************`);
 //                console.log(player)
                 const home = renderState.temp.indexOf('main', 0) > -1;
                 const interaction = renderState.tempType === 'interaction';
                 const hasScored = false;
                 const round = game.persistentData.rounds[procVal(game.round)];
                 const inThisRound = round.type === player.teamObj.type;
-                const rs = await thisRoundScored();
+//                const rsOld = await thisRoundScored();
+                const typePlayer = player.teamObj.type;
+                const typeRound = round.type;
+//                const facPlayer = typePlayer === 1 ? 'src' : 'client';
+//                const facRound = typeRound === 1 ? 'src' : 'dest';
+                const facPlayer = typePlayer === 1 ? player.teamObj.id : window.justNumber(player.id);
+                const facRound = typeRound === 1 ? 'src' : 'client';
+                const roundScores = game.detailedScorePackets.filter(sp => sp.round === window.justNumber(game.round));
+                const playerScores = roundScores.filter(sp => sp[facRound] === facPlayer);
+                const rs = {
+                    hasScore: playerScores.length > 0,
+                    scorePackets: roundScores,
+                    scorePacket: playerScores
+                };
+                console.log(player);
+                console.log(`player type: ${typePlayer}, round type: ${typeRound}, player fac: ${facPlayer}, round fac: ${facRound}`);
+                console.log(typeRound);
+                console.log(rs);
+//                console.log(rsOld);
+//                console.log(game.detailedScorePackets.filter(sp => sp.round === window.justNumber(game.round)));
                 if (round.n > 0) {
         //            console.log('there is a round in progress');
                     // need further conditionals here - is this player invloved in the current round? Is the round already complete?
                     if (game.round.toString().indexOf('*', 0) === -1) {
         //                console.log(`round not complete`)
                         if (inThisRound) {
-                            if (!iHaveScored(rs)) {
-            //                    console.log(`I've not scored`);
+                            if (!rs.hasScore) {
+//                            if (!iHaveScored(rs)) {
+                                console.log(`I've not scored`);
                                 if (!home && !interaction) {
                                     gotoHomeState();
 //                                    isItHere(`activateYourmove`);
-                                    // console.log(`call to render: activateYourMove`);
+                                     console.log(`call to render: activateYourMove`);
                                     render(activateYourmoveButton);
                                 } else {
                                     if (home) {
@@ -496,39 +516,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const iHaveScored = (sOb) => {
         // method takes a score object returned from the server, calculates whether player has scored based on type
-//        console.log(`so, have I scored?`);
         // Ror type 1 (main teams) use src (team) as comp metric.
         // For type 2 (sub teams) use type - this is specific to a player rather than a team.
         const type = player.teamObj.type;
         const criteria = type === 1 ? 'src' : 'client';
-//        const metric = justNumber(type === 2 ? player.index - 1 : player.teamObj.id);
-//        const metric = justNumber(type === 2 ? player.index : player.teamObj.id);
         let metric = justNumber(type === 2 ? justNumber(player.id) : player.teamObj.id);
-//        console.log(`metric unconverted`, (type === 2 ? justNumber(player.id) : player.teamObj.id));
-//        console.log(`metric converted`, justNumber(type === 2 ? justNumber(player.id) : player.teamObj.id));
-//        console.log(`type`, type);
-//        console.log(`justNumber(player.id)`, justNumber(player.id));
-//        console.log(`player.teamObj.id`,  player.teamObj.id);
-//        console.log(`type: ${type}`);
-//        console.log(`criteria: ${criteria}`);
-//        console.log(`metric: ${metric} (${type === 2 ? 'player.index' : 'player.teamObj.id'})`);
         const sc = filterScorePackets(sOb.scorePackets, criteria, metric);
-//        console.log(`sc`, sc);
-        return sc.length > 0;
-    };
-    const iHaveScoredV1 = (sOb) => {
-        // method takes a score object returned from the server, calculates whether player has scored based on type
-//        console.log(`so, have I scored?`);
-        // Ror type 1 (main teams) use src (team) as comp metric.
-        // For type 2 (sub teams) use type - this is specific to a player rather than a team.
-        const type = player.teamObj.type;
-        const criteria = type === 1 ? 'src' : 'client';
-        const metric = justNumber(type === 2 ? player.id : player.teamObj.id);
-        console.log(`type: ${type}`);
-        console.log(`criteria: ${criteria}`);
-        console.log(`metric: ${metric} (${type === 2 ? 'player.id' : 'player.teamObj.id'})`);
-        const sc = filterScorePackets(sOb.scorePackets, criteria, metric);
-//        console.log(`sc`, sc);
         return sc.length > 0;
     };
     const onStartRound = async (ob) => {

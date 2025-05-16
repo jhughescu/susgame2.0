@@ -464,46 +464,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const thisRoundScored = (pl) => {
 
 
-
-
         // NOTE adjust this method to allow for different behaviour between type 1 and 2 teams
         // i.e. type 1 has only 1 active player, so any score counts. With type 2 any player can score so only player-specifc scores should count.
 
 
-
-
-
         const myPlayer = player === null ? pl : player;
-//        console.log(`judged player`, myPlayer);
         if (socket && myPlayer) {
             return new Promise((resolve, reject) => {
                 socket.emit('getScorePackets', `game-${game.uniqueID}`, (sps) => {
                     if (myPlayer.teamObj) {
-//                        const specificID = myPlayer.teamObj.type === 1 ? justNumber(myPlayer.id) : myPlayer.teamObj.id;
                         const specificID = myPlayer.teamObj.type === 1 ? myPlayer.teamObj.id : justNumber(myPlayer.id);
                         const specificProp = justNumber(myPlayer.teamObj.type) === 1 ? 'src' : 'client';
-//                        console.log(`thisRoundScored ${myPlayer.teamObj.type}, ID: ${specificID}, prop: ${specificProp}`);
-    //                    console.log(filterScorePackets(sps, specificProp, specificID));
                         const roundScores = filterScorePackets(sps, 'round', justNumber(game.round))
                         const myScores = filterScorePackets(roundScores, specificProp, specificID);
-
-    //                    console.log(myScores.length);
-//                        console.log(roundScores);
-//                        console.log(myScores);
-    //                    console.log(`new era, thisRoundScored? ${myScores.length > 0}`);
                         const scoreSumm = sps.map(s => `${s.round}.${s.src}`);
                         const rID = `${justNumber(game.round)}.${myPlayer.teamObj.id}`;
                         const spi = scoreSumm.indexOf(rID);
-
-//                        console.log(`scoreSumm`, scoreSumm);
-//                        console.log(`rID`, rID);
-
-//                        console.log(`sps`, sps);
-//                        console.log(`spi`, spi);
                         const resOb = {hasScore: spi > -1, scorePacket: sps[spi], scorePackets: filterScorePackets(sps, 'round', game.round)};
                         // NEW:
                         resOb.hasScore = myScores.length > 0;
-    //                    console.log(resOb);
                         resolve(resOb);
                     }
                 });
@@ -1041,7 +1020,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (isDashboard()) {
                             socket.emit('refreshClient', myPlayer);
                         } else {
-                            window.location.reload();
+                            // DON'T USE RELOADS, THEY SUCK
+//                            window.location.reload();
                         }
                     });
                 }
