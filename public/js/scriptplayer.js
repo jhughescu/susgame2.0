@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log('connect socket');
         estSocket();
         setTimeout(() => {
-            connectCheck();
+//            connectCheck();
         }, getReconnectTime());
     }, getReconnectTime());
 
@@ -144,52 +144,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
-//            console.log(ob);
             if (ob) {
-//                console.log('yep, ob');
                 let res = ob.id;
-
                 // amend for fake players
                 if (res.indexOf('f', 0) > -1) {
                     lID = `${lIDStub}-${res}`;
                 } else {
                     lID = lIDStub;
                 }
-//                console.log(`lID: ${lID}`);
                 localStorage.setItem(lID, res);
-
                 if (ob.game) {
-//                    console.log('yep, game');
                     ob.game = JSON.parse(ob.game);
                     if (ob.game.round) {
                         ob.game.round = justNumber(ob.game.round);
                     }
                     updateGame(ob.game);
-//                    console.log(`register with game:`);
-//                    console.log(ob.game);
                     setPlayer(ob.game);
-//                    setPlayer(game);
                 }
-                /*
-                // Moved up /\
-                // amend for fake players
-                if (res.indexOf('f', 0) > -1) {
-                    lID = `${lIDStub}-${res}`;
-                } else {
-                    lID = lIDStub;
-                }
-                console.log(`lID: ${lID}`);
-                localStorage.setItem(lID, res);
-                */
                 if (ob.renderState) {
-//                    console.log('yep, renderState')
                     ob.renderState.source = `registerPlayer event`;
                     updateRenderState(ob.renderState);
                     renderStateServer = ob.renderState;
                 }
                 let hash = window.location.hash;
                 if (hash) {
-//                    console.log(`yep, hash: ${hash}`);
                     let rOb = {temptype: 'sub'};
                     if (/\d/.test(hash)) {
                         // number found in hash; assume a team page, fetch object accordingly
@@ -201,12 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     rOb.temp = `game.${hash.replace('#', '')}`;
                     updateRenderState(rOb);
                 }
-//                console.log('call render');
-                // console.log(`call to render: registerwithGame`);
                 render(() => {
-//                    console.log('render callback')
                     if (justNumber(game.round) > 0) {
-//                        console.log('start a round');
                         onStartRound(game.round);
                     }
                 });
@@ -214,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 pingCheck = setInterval(() => {
                     checkWebSocketConnection();
                 }, 2000);
-//                console.log('COMPLETE');
             }
         });
     };
@@ -252,15 +225,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     };
+    const getTimer = () => {
+        let gt = null;
+        if (now) {
+            gt = Date.now() - now;
+        }
+        return gt;
+    };
+
     const onConnect = () => {
         // ping the game controller until some games are available
         now = Date.now();
+//        console.log(`now: ${now}`);
         getGames();
     };
     const getAddress = () => {
         return window.location.pathname;
     };
     const startContentCheck = () =>{
+        if ($('#insertion').find('div').length === 1) {
+            // no content rendered
+            setTimeout(startContentCheck, 200);
+//            console.log('content NOT rendered:', getTimer());
+            if (getTimer() / 1000 > 5) {
+                // 5 seconds since connect, find out what the problem is
+                console.warn('no content rendered after 5 secs');
+                $('#insertion').html('something went wrong, please try again');
+            }
+        } else {
+//            console.log('content rendered', getTimer());
+        }
+    };
+    const startContentCheckV1 = () =>{
         setInterval(() => {
             const c = $('#insertion').children(':visible').length === 0;
             if (c) {
@@ -279,8 +275,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(window.location.search);
 //        console.log(`playerConnect receives the iLID stub: ${lid}, creates lIDStub: ${lIDStub}`);
 //        console.log(`heidee`, getPlayerID());
-        startContentCheck();
         onConnect();
+        startContentCheck();
     };
     const getTeam = (fgame) => {
         const id = getPlayerID();
@@ -454,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // This method now includes a server call for score check
         if (renderState.temp && player) {
             if (player.teamObj) {
-                console.log(`********************** activateYourmove ****************************`);
+//                console.log(`********************** activateYourmove ****************************`);
 //                console.log(player)
                 const home = renderState.temp.indexOf('main', 0) > -1;
                 const interaction = renderState.tempType === 'interaction';
@@ -475,10 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     scorePackets: roundScores,
                     scorePacket: playerScores
                 };
-                console.log(player);
-                console.log(`player type: ${typePlayer}, round type: ${typeRound}, player fac: ${facPlayer}, round fac: ${facRound}`);
-                console.log(typeRound);
-                console.log(rs);
+//                console.log(player);
+//                console.log(`player type: ${typePlayer}, round type: ${typeRound}, player fac: ${facPlayer}, round fac: ${facRound}`);
+//                console.log(typeRound);
+//                console.log(rs);
 //                console.log(rsOld);
 //                console.log(game.detailedScorePackets.filter(sp => sp.round === window.justNumber(game.round)));
                 if (round.n > 0) {
@@ -489,11 +485,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (inThisRound) {
                             if (!rs.hasScore) {
 //                            if (!iHaveScored(rs)) {
-                                console.log(`I've not scored`);
+//                                console.log(`I've not scored`);
                                 if (!home && !interaction) {
                                     gotoHomeState();
 //                                    isItHere(`activateYourmove`);
-                                     console.log(`call to render: activateYourMove`);
+//                                     console.log(`call to render: activateYourMove`);
                                     render(activateYourmoveButton);
                                 } else {
                                     if (home) {
@@ -891,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // \/ prob can't use that, might prevent initial render on refresh
 //            console.log(getStoredRenderState().temp === renderState.temp);
             rOb.is2030 = window.justNumber(rOb.game.round) < 3;
-            console.log(`render template: ${renderState.temp}`, rOb);
+//            console.log(`render template: ${renderState.temp}`, rOb);
             rOb.dynamicTeamData.forEach(td => {
 //                console.log(td.myPV1);
             });

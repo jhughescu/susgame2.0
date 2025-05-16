@@ -125,7 +125,7 @@
 }
 
 .voteform .resources-btn:disabled, .voteform .buttonSubmit:disabled {
-    background-color: #6c7583;
+    background-color: #9d9ea0;
     cursor: default;
 }
 

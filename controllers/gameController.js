@@ -724,7 +724,6 @@ const assignToNextTeam = (game, p, ID) => {
 
                     } else {
     //                    console.log('main teams not yet filled')
-//                        game.teams.reduce((a, b) => (a.length <= b.length ? a : b)).push(ID);
                         const smallestTeam = game.teams.reduce((a, b) => (a.length <= b.length ? a : b));
                         teamID = game.teams.indexOf(smallestTeam);
                         smallestTeam.push(ID);
@@ -739,13 +738,10 @@ const assignToNextTeam = (game, p, ID) => {
                 onTeamsAssigned(game.teams, game);
             }
             const uo = {teams: game.teams};
-//            console.log(`player added: ${ID}, teamID: ${teamID}`);
             sessionController.updateSession(game.uniqueID, uo, (s) => {
-//                console.log('cb', s);
                 const pl = game.playersFull[ID];
                 console.log(`player ${ID} added to ${pl.teamObj.title} (socket: ${pl.socketID})`)
             });
-//            console.log(game.playersFull[ID]);
         } else {
             console.log(`can't set teams up yet, players exist but playersFull does not`);
         }
