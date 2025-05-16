@@ -242,18 +242,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const getAddress = () => {
         return window.location.pathname;
     };
+    const getDebugSummary = () => {
+        const G = game;
+        const P = player;
+        const T = getStoredRenderState();
+        const o = {};
+        if (G) {
+            o.gameID = G.uniqueID;
+            o.address = G.address;
+        }
+        if (P) {
+            o.playerID = P.id;
+            o.socket = P.socketID;
+            if (P.teamObj) {
+                o.teamID = P.teamObj.id;
+                o.team = P.teamObj.title;
+            }
+        }
+        if (T) {
+            o.template = T.temp;
+        }
+        return o;
+    };
+    const getDebugMarkup = () => {
+        const o = getDebugSummary();
+        let m = '<table><tbody>';
+        Object.entries(o).forEach(e => {
+//            console.log(e[0], e[1]);
+            m += `<tr><td>${e[0]}:</td><td>${e[1]}</td></tr>`;
+        })
+        m += '</tbody></table>';
+        return m;
+    };
     const startContentCheck = () =>{
         if ($('#insertion').find('div').length === 1) {
             // no content rendered
             setTimeout(startContentCheck, 200);
 //            console.log('content NOT rendered:', getTimer());
-            if (getTimer() / 1000 > 5) {
+            if (getTimer() / 3000 > 1) {
                 // 5 seconds since connect, find out what the problem is
                 console.warn('no content rendered after 5 secs');
-                $('#insertion').html('something went wrong, please try again');
+                $('#insertion').html(`${getDebugMarkup()}<br>Sorry, something has gone wrong, please refresh the page to try again.`);
             }
         } else {
 //            console.log('content rendered', getTimer());
+//            console.log(getStoredRenderState());
+//            console.log(game);
+//            console.log(player);
+            console.log(getDebugMarkup());
         }
     };
     const startContentCheckV1 = () =>{
