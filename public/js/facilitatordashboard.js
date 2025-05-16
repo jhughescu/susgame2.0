@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return rtn;
     };
-    window.assignTeams = assignTeams;
+//    window.assignTeams = assignTeams;
     const resetTeams = () => {
 //        console.log(`resetTeams: ${game.scores.length}`);
         if (game.scores.length === 0) {
@@ -857,6 +857,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const gr = al.find('#gameReset');
         const sr = al.find('#sessionReset');
         const fg = al.find('#fakeGen');
+        const allRefr = al.find('#refreshAll');
+        const allHome = al.find('#allHome');
 //        console.log(qr);
         bt.add('#completeRound');
         bt.each((i, b) => {
@@ -911,6 +913,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         fg.off('click').on('click', () => {
             launchFakeGenerator();
+        });
+        allRefr.off('click').on('click', () => {
+            const c = confirm(`Are you sure you want to refresh all ${game.players.length} players browsers?`);
+            if (c) {
+                refreshPlayers();
+            }
+        });
+        allHome.off('click').on('click', () => {
+            const c = confirm(`This will send all ${game.players.length} players back to the home page, are you sure you want to do this?`);
+            if (c) {
+                sendPlayersHome();
+            }
         });
     };
     const buildScoreDetail = (s) => {
@@ -2764,7 +2778,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        });
     };
 //    window.rScores = renderScoreboard;
-    window.rf = renderFacilitate;
+//    window.rf = renderFacilitate;
 
 //    window.oo = exportResults
     //

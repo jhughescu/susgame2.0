@@ -1,7 +1,7 @@
 <!-- forceOverwrite -->
 <div class='vertstack' id='contentControls'>
 <!--    <div><button id='gameStart'>Start Game</button></div>-->
-    <div><button id='gameReset' {{#if teamsAssigned}}{{else}}disabled{{/if}}>Reset Game</button></div>
+<!--    <div><button id='gameReset' {{#if teamsAssigned}}{{else}}disabled{{/if}}>Reset Game</button></div>-->
     <div><button id='fakeGen'>Launch Fake Generator</button> (dev only, launches new tab)</div>
     <div><button id='showqr' title=`show QR`>Show/hide QR code</button></div>
     <div><button id='launchqr' title=`launch QR popup`>Launch QR popup</button></div>
@@ -24,9 +24,10 @@
     <div><button id='completeRound'>Complete Round</button> (opens new panel)</div>
     {{/if}}
     <div><button id='identify' >Identify Players</button> (shows info on players' devices)</div>
+    <div><button id='refreshAll' >Refresh Players</button> <button id='allHome' >Players Home</button></div>
     <div><button id='sessionReset'>Reset Session</button></div>
-    {{#if isDev}}<div><button id='clearConsole'>Clear browser console</button></div>{{/if}}
-    {{#if isDev}}<div><button id='presInfo'>Toggle presentation info</button></div>{{/if}}
+<!--    {{#if isDev}}<div><button id='clearConsole'>Clear browser console</button></div>{{/if}}-->
+<!--    {{#if isDev}}<div><button id='presInfo'>Toggle presentation info</button></div>{{/if}}-->
     <div><button id='downloadRes'{{#if disableDownload}} disabled{{/if}}>Download Results</button>{{#if disableDownload}} (Only available on completion){{/if}}</div>
     <div><button id='gameEnding'>End Game</button></div>
     <div><button id='signOut'>Sign out</button></div>

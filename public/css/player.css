@@ -33,7 +33,7 @@ body {
     padding: 20px;
 }
 .overlay .playerIdentifier {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
 }
 .link_main {
     cursor: pointer;
@@ -122,10 +122,12 @@ input[type=submit] {
     cursor: pointer;
 }
 .playerIdentifier {
+    z-index: 10;
     font-size: 1.2rem;
 }
 
 .playerIdentifier td {
+    padding-right: 8px;
     background-color: rgba(0, 0, 0, 0.54);
 }
 
