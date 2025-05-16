@@ -6,7 +6,7 @@
             "lead": "Eurasia Food Evaluation Bureau (EFEB)",
             "displayColour": "#0099C4",
             "abbr": "gov",
-            "actions": ["Dialogue", "Invest", "Mobilise", "Demonstrate", "(Dis)Incentivise", "Equip", "Other"],
+            "actions": ["Other", "Dialogue", "Invest", "(Re)orientate", "Demonstrate", "(Dis)Incentivise", "Learn"],
             "bio": {
                 "summary" : ["Food safety and standards policy maker", "35 member countries", "HQ Brussels, Belgium"],
                 "followers": "102,560",
@@ -23,7 +23,7 @@
             "lead": "Jamie Bernath",
             "displayColour": "#95C11F",
             "abbr": "icm",
-            "actions": ["Dialogue", "Disrupt", "Mobilise", "Demonstrate", "Create", "Equip"],
+            "actions": ["Other", "Dialogue", "Cancel", "Mobilise", "Demonstrate", "Create", "Invest"],
             "bio": {
                 "summary" : ["Foodtech influencer and entrepreneur", "5 million social media followers", "Helsinki, Finland"],
                 "followers": "5.1m",
@@ -41,7 +41,7 @@
             "lead": "Brewbucks",
             "displayColour": "#633E8C",
             "abbr": "web",
-            "actions": ["Dialogue", "Invest", "Mobilise", "Demonstrate", "(Dis)Incentivise", "Create"],
+            "actions": ["Other", "Dialogue", "Invest", "Mobilise", "Demonstrate", "(Dis)Incentivise", "Create"],
             "bio": {
                 "summary" : ["For-profit, publicly listed corporation", "Global", "30,000 stores", "HQ Seattle, USA"],
                 "followers": "3m",
@@ -58,7 +58,7 @@
             "lead": "ChainReAction Foundation",
             "displayColour": "#D1356F",
             "abbr": "cso",
-            "actions": ["Invest", "Mobilise (Act)", "Mobilise (Rally)", "Equip", "Create", "Dialogue", "Other"],
+            "actions": ["Invest", "Mobilise (Act)", "Mobilise (Rally)", "Provide", "Create", "Dialogue", "Other"],
             "bio": {
                 "summary" : ["Charity", "Member of Chaintrade International, representing 2 million farmers", "HQ London, UK"],
                 "followers": "200,000",
@@ -74,7 +74,7 @@
             "lead": "Sunfoods",
             "displayColour": "#F6C310",
             "abbr": "se",
-            "actions": ["Dialogue", "Disrupt", "Mobilise", "Demonstrate", "Invest", "Create"],
+            "actions": ["Other", "Dialogue", "Promote", "Mobilise", "Demonstrate", "Invest", "Create"],
             "bio": {
                 "summary" : ["Food wholesaler and distributor", "4 UK distribution centres", "HQ Johannesburg, South Africa"],
                 "followers": "10,200",
