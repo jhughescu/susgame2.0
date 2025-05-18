@@ -274,6 +274,11 @@ document.addEventListener('DOMContentLoaded', function() {
         m += '</tbody></table>';
         return m;
     };
+    const showConnectWarning = () => {
+        $('#insertion').html(`<div id='connectfailmsg'>Sorry, something has gone wrong, please refresh the page to try again.<p>Debug information:</p>${getDebugMarkup()}</div>`);
+    };
+//    window.showc = showConnectWarning;
+//    setTimeout(showConnectWarning, 2000);
     const startContentCheck = () =>{
         if ($('#insertion').find('div').length === 1) {
             // no content rendered
@@ -281,8 +286,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('content NOT rendered:', getTimer());
             if (getTimer() / 3000 > 1) {
                 // 5 seconds since connect, find out what the problem is
-                console.warn('no content rendered after 5 secs');
-                $('#insertion').html(`${getDebugMarkup()}<br>Sorry, something has gone wrong, please refresh the page to try again.`);
+                console.warn('no content rendered after 3 secs');
+                showConnectWarning();
             }
         } else {
 //            console.log('content rendered', getTimer());

@@ -131,3 +131,22 @@ input[type=submit] {
     background-color: rgba(0, 0, 0, 0.54);
 }
 
+#connectfailmsg {
+    text-align: center;
+    padding: 80px;
+    font-size: 1.6rem;
+}
+#connectfailmsg table {
+    text-align: left;
+    font-size: 1rem;
+/*    background-color: darkgrey;*/
+}
+#connectfailmsg td {
+    padding-right: 20px;
+}
+#connectfailmsg p {
+    padding: 100px 0px 0px 0px;
+    text-align: left;
+    font-size: 1rem;
+/*    background-color: red;*/
+}
