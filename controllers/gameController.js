@@ -682,7 +682,81 @@ const assignTeams = (ob, cb) => {
     }
 };
 
-const assignToNextTeam = (game, p, ID) => {
+const assignToNextTeam = (game, player, ID) => {
+    const PD = game.persistentData;
+    const ts = game.mainTeamSize ?? 5;
+
+    if (!PD) {
+        console.error('assignToNextTeam: persistentData missing');
+        return;
+    }
+
+    if (game.teams.length === 0) {
+        game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
+    }
+
+    if (game.teams.flat().includes(ID)) {
+        console.warn(`assignToNextTeam: player ${ID} already assigned`);
+        return;
+    }
+
+    let teamID = -1;
+
+    const mainTeamLimit = PD.mainTeams.length;
+    const totalTeamLimit = mainTeamLimit + PD.secondaryTeams.length;
+
+    // Main teams not full
+    const availableMainTeams = game.teams.slice(0, mainTeamLimit).filter(t => t.length < ts);
+
+    if (availableMainTeams.length > 0) {
+        const smallestTeam = availableMainTeams.reduce((a, b) => (a.length <= b.length ? a : b));
+        teamID = game.teams.indexOf(smallestTeam);
+        smallestTeam.push(ID);
+    } else {
+        // Fill secondary teams
+        while (game.teams.length < totalTeamLimit) {
+            game.teams.push([]);
+        }
+
+        const st1 = game.teams[mainTeamLimit];
+        const st2 = game.teams[mainTeamLimit + 1];
+
+        const target = st1.length <= st2.length ? st1 : st2;
+        target.push(ID);
+        teamID = game.teams.indexOf(target);
+    }
+
+    // Final check
+    const fullTeamStack = game.teams.length === totalTeamLimit;
+    const allTeamsOccupied = game.teams.every(t => t.length > 0);
+
+    if (fullTeamStack && allTeamsOccupied) {
+        onTeamsAssigned(game.teams, game);
+    }
+
+    // Get team name from ordered list of team keys
+    const teamKeyList = [...PD.mainTeams, ...PD.secondaryTeams];
+    const teamKey = teamKeyList[teamID];
+    const teamObj = PD.teams[teamKey];
+
+    if (!teamObj) {
+        console.warn(`assignToNextTeam: No team object found for teamID=${teamID}, key=${teamKey}`);
+    }
+
+    player.teamObj = teamObj;
+    game.playersFull[ID] = player;
+
+    sessionController.updateSession(game.uniqueID, { teams: game.teams }, () => {
+        console.log(
+          'Player ' + ID +
+          ' assigned to ' + (teamObj && teamObj.title ? teamObj.title : 'unknown team') +
+          ' (socket: ' + player.socketID + ')'
+        );
+    });
+};
+
+
+const assignToNextTeamV1 = (game, p, ID) => {
     // 2025 method; players to be assigned to teams in order of arrival
     // Read teams, create if it doesn't exist
     // 5 main teams, sort on size, add player to first (smallest) team
@@ -1009,7 +1083,85 @@ const getRenderState = (ob, cb) => {
 //    console.log(ob);
     cb(getTheRenderState(ob.game, ob.playerID));
 };
+
 const registerPlayer = (ob, cb) => {
+    const game = getGameWithAddress(ob.game);
+    if (!game) {
+        const idStr = ob.player === undefined ? '' : `(${ob.player})`;
+        console.log(`No game found at ${ob.game}. Retrying... ${idStr}`);
+        setTimeout(() => registerPlayer(ob, cb), 500);
+        return;
+    }
+
+    const plOrig = JSON.stringify(game.players);
+    let ID = ob.player || `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
+    const isNewPlayer = !game.players.includes(ID);
+
+    if (isNewPlayer) {
+        game.players.push(ID);
+    }
+
+    const alreadyRegistered = game.playersFull.hasOwnProperty(ID);
+    let player;
+
+    if (alreadyRegistered) {
+        // Reconnect case
+        player = game.playersFull[ID];
+        player.socketID = ob.socketID;
+        console.log(`Player ${ID} reconnected`);
+    } else {
+        // New player
+        const index = game.players.indexOf(ID);
+        player = new Player(ID, index, ob.socketID);
+        player.idNum = tools.justNumber(player.idNum);
+
+        if (autoTeam) {
+            assignToNextTeam(game, player, ID);
+            game.setTeam(player); // Optional: if game.setTeam sets internal flags
+        } else {
+            game.playersFull[ID] = player;
+            console.log(`New player ${ID} added without team assignment`);
+        }
+    }
+
+    // Handle late joiner logic if teams are already assigned
+    if (isNewPlayer && !autoTeam && game.teams.length > 0) {
+        console.log(`Late joiner detected: ${ID}`);
+        game.addLatecomer(player);
+        sessionController.updateSession(game.uniqueID, { teams: game.teams });
+    }
+
+    // Debounced player list update
+    if (JSON.stringify(game.players) !== plOrig) {
+        clearTimeout(updateDelay);
+        updateDelay = setTimeout(() => {
+            sessionController.updateSession(game.uniqueID, { players: game.players });
+        }, 5000);
+    }
+
+    // Emit current game state to the client
+    const eGame = {
+        ...game,
+        _updateSource: {
+            event: 'gameController registerPlayer',
+            playerID: player.id,
+        },
+    };
+
+    emitUpdate(eGame);
+
+    if (cb) {
+        const renDo = getTheRenderState(game, ID);
+        cb({ id: ID, renderState: renDo, game: JSON.stringify(game) });
+    } else {
+        log('registerPlayer: no callback');
+    }
+
+    return ID;
+};
+
+
+const registerPlayerV1 = (ob, cb) => {
     const game = getGameWithAddress(ob.game);
     let ID = null;
     let newP = null;
@@ -1109,6 +1261,7 @@ const registerPlayer = (ob, cb) => {
         }, 500);
     }
 };
+
 const registerPlayerORIG = (ob, cb) => {
     const game = getGameWithAddress(ob.game);
 //    console.log(`gameController registerPlayer`);
