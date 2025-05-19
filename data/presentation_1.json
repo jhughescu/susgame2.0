@@ -4,7 +4,7 @@
         {"id": "3", "type": "video", "srcRef": "v2", "title": "Logo Animation"},
         {"id": "3", "type": "video", "srcRef": "v30", "title": "Sensitivity Warning"},
         {"id": "4", "type": "video", "srcRef": "v3", "title": "Welcome"},
-        {"id": "7", "type": "image", "src": "slide_img_02.jpg", "title": "Welcome Still"},
+        {"id": "7", "type": "image", "src": "welcome_still.jpg", "title": "Welcome Still"},
         {"id": "7", "type": "image", "src": "three_questions_still.png", "title": "Three Questions Still"},
         {"id": "7", "type": "image", "src": "all_teams_still.jpg", "title": "All Teams Still"},
         {"id": "5", "type": "video", "srcRef": "v31", "title": "Wormhole"},
