@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
                 // temporarily turn off YM altogether
-                return;
+                //return;
 
 
 
