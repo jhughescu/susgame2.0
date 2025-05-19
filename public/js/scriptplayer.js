@@ -460,6 +460,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 rOb.source = `activateYourmove`;
                 rOb.note = `set in scriptplayer.js`;
                 setRenderStateLocal(rOb);
+
+
+
+                // temporarily turn off YM altogether
+                return;
+
+
+
                 ymb.removeClass('disabled');
                 ymb.off('click').on('click', async () => {
                     setRoundState(true);

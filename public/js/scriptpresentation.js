@@ -767,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const showVideo = (slOb) => {
         removeTemplate(targ, () => {
-//            console.log(`render with`, slOb)
+            console.log(`render with`, slOb)
             renderTemplate(targ, 'slides/video_player', slOb, () => {
                 slideAction(slOb);
                 goVideo(slOb.srcRef);
@@ -874,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Panopto API code:
     var embedApi;
     function goVideo(id) {
-        console.log(`goVideo:`);
+//        console.log(`goVideo:`);
         return;
         if (embedApi) {
             delete embedApi.sessionID;
@@ -1049,11 +1049,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     const showSlide = (slOb) => {
-//        console.log(`showSlide`, window.clone(slOb));
+        console.log(`showSlide`, window.clone(slOb));
         devInfo(slOb);
         setCurrentSlideObject(slOb);
-//        console.log(`currentSlideObject set to `, slOb);
-//        console.log(`getCurrentSlide returns:`, getCurrentSlide());
+        console.log(`currentSlideObject set to `, slOb);
+        console.log(`getCurrentSlide returns:`, getCurrentSlide());
         slOb.gameAddress = game.address;
 
         if (slOb.type === 'video') {
