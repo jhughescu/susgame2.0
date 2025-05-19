@@ -100,9 +100,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const getQR = () => {
         const c = countFakes();
-        console.log(`getQR, ${c} fake${c === 1 ? '' : 's'} registered`);
+//        console.log(`getQR, ${c} fake${c === 1 ? '' : 's'} registered`);
+//        console.log(window.isLocal());
+//        console.log(window.location);
+//        console.log(`${window.isLocal() ? window.location.origin : game.localDevAddress}`);
+//        console.log(`${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`);
+//        console.log(`${window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`);
+//        console.log(`${window.isLocal() ? game.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`);
         if (!isNaN(c)) {
-            const url = `${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`;
+//            const url = `${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`;
+            const url = `${window.isLocal() ? game.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`;
             $('#qroverlay').html('');
             socket.emit('getQrString', url, (str) => {
                 console.log(`update QR to ${url}`);

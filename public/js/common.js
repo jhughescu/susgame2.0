@@ -1188,4 +1188,5 @@ document.addEventListener('DOMContentLoaded', function () {
     window.sortNumber = sortNumber;
     window.filterScorePackets = filterScorePackets;
     window.mapSessionToGame = mapSessionToGame;
+    window.isLocal = isLocal;
 });
