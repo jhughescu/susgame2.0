@@ -29,7 +29,7 @@ class Presentation {
             const data = await fs.promises.readFile(filePath, 'utf8');
             this.slideData = this.processData(JSON.parse(data));
 //            console.log(this.slideData)
-            console.log('slideData ready');
+//            console.log('slideData ready');
         } catch (error) {
             console.error('Error reading or parsing JSON file:', error);
             throw error;

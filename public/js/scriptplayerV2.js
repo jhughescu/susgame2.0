@@ -138,12 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const registerwithGame = () => {
-//        console.log(`reg with game`)
+        console.log(`reg with game`);
         lID = lIDStub + (qu.fake ? `-${qu[fID]}` : ``);
         let ID = qu.hasOwnProperty(fID) ? qu[fID] : fake ? '': localStorage.getItem(lID);
         const initObj = {game: gID, player: ID, fake: fake, socketID: socket.id};
         window.socketShare(socket);
         socket.emit('registerPlayer', initObj, (ob) => {
+            console.log('register player callback', ob);
             if (ob) {
                 let res = ob.id;
                 // amend for fake players
@@ -279,13 +280,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 //    window.showc = showConnectWarning;
 //    setTimeout(showConnectWarning, 2000);
+    let contentCheckTimeout = null;
     const startContentCheck = () =>{
         if ($('#insertion').find('div').length === 1) {
             // no content rendered
-            setTimeout(startContentCheck, 200);
+            clearTimeout(contentCheckTimeout);
+            contentCheckTimeout = setTimeout(startContentCheck, 200);
 //            console.log('content NOT rendered:', getTimer());
             if (getTimer() / 3000 > 1) {
                 // 5 seconds since connect, find out what the problem is
+                clearTimeout(contentCheckTimeout);
                 console.warn('no content rendered after 3 secs');
                 showConnectWarning();
             }
@@ -294,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(getStoredRenderState());
 //            console.log(game);
 //            console.log(player);
-            console.log(getDebugMarkup());
+//            console.log(getDebugMarkup());
         }
     };
     const startContentCheckV1 = () =>{
@@ -321,12 +325,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const getTeam = (fgame) => {
         const id = getPlayerID();
-//        console.log(`id`, id);
         const arr = fgame.teams;
-//        console.log(`arr`, arr);
         let ti = -1;
         for (let i = 0; i < arr.length; i++) {
-//            console.log(' - ', arr[i], id);
             if (arr[i].includes(id)) {
                 ti = i;
                 break;
@@ -336,32 +337,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return t;
     };
     const setPlayer = (fgame) => {
-//        console.log(`setPlayer will create the player object:`);
-//        console.log(`fgame`, fgame);
+        console.log(`setPlayer will create the player object:`);
+        console.log(`fgame`, fgame);
         const t = getTeam(fgame);
 //        console.log(`t`, t);
         const newPlayer = fgame.playersFull[getPlayerID()];
-//        console.log(`newPlayer`, newPlayer);
+        console.log(`newPlayer`, newPlayer);
         if (player) {
-//            console.log('player exists');
+            console.log('player exists');
             if (Boolean(player.teamObj) && Boolean(newPlayer.teamObj)) {
                 if (player.teamObj.id !== newPlayer.teamObj.id || player.isLead !== newPlayer.isLead) {
 //                    window.location.reload();
                 }
             }
         } else {
-//            console.log('player does not exist');
+            console.log('player does not exist');
         }
 
         player = newPlayer;
-//        console.log(player);
+        console.log(player);
 //        console.log(newPlayer);
         window.playerShare(player);
     };
     const teamsAssigned = (fgame) => {
-//        console.log(`teamsAssigned`);
-//        console.log(window.clone(fgame));
-//        console.log(window.clone(player));
+        console.log(`teamsAssigned`);
+        console.log(window.clone(fgame));
+        console.log(window.clone(player));
         updateGame(fgame);
         setPlayer(fgame);
         updateRenderState({temp: 'game.main', ob: player, partialName: 'game-links'});
@@ -774,9 +775,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             const show = Object.assign({}, renderState);
-//            console.log(`updateRenderState`, ob);
-//            console.log(`renderState`, renderState);
-//            console.log(`renderState`, typeof(renderState));
             if (typeof(renderState) === 'string') {
 //                console.log(`can't be a string, convert to Ob if JSON`);
 //                const amI = JSON.parse(renderState);
@@ -807,6 +805,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     };
     const render = (cb) => {
+        console.log(`let's render!`)
         // render can accept an optional callback
         // \/ temporary: default to stored state in all cases where it exists
         const srs = getStoredRenderState();
@@ -818,6 +817,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rOb = renderState.hasOwnProperty('ob') && renderState.ob !== undefined ? renderState.ob : {};
             rOb.game = game;
             if (!player) {
+                console.log('no player, uh-oh');
                 return;
             }
             if (Boolean(player.teamObj)) {
@@ -861,17 +861,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 rOb.scoresOut3All = [];
                 game.persistentData.mainTeams.forEach((t, i) => {
                     const s = rOb.scoresOut3.filter(sp => sp.dest === t.id)[0];
-//                    console.log(s)
-//                    console.log(player.teamObj.id);
-//                    console.log(gSPs);
-//                    console.log(GS);
                     let r3Scores = gSPs.filter(sp => sp.src === player.teamObj.id);
-//                    console.log(r3Scores);
                     r3Scores = r3Scores.filter(sp => sp.round === 4);
-//                    r3Scores = r3Scores.map(sp => sp.val);
                     r3Scores = r3Scores.filter(sp => sp.dest === t.id)[0];
-//                    console.log(r3Scores)
-//                    rOb.scoresOut3All[i] = Object.assign({val: s ? s.val : 0}, t);
                     rOb.scoresOut3All[i] = Object.assign({val: r3Scores ? r3Scores.val : 0}, t);
                 });
                 const rsp = window.filterScorePackets(game.detailedScorePackets, 'round', game.round);
@@ -880,9 +872,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     rOb.dynamicSubTeamData[i] = {id: t, votes: prsp};
                 });
                 rOb.myDynamicSubTeamData = rOb.dynamicSubTeamData.filter(td => td.id === player.id)[0];
-//                console.log(player.teamObj);
-//                console.log(gSPs);
-//                console.log(fsp(gSPs, 'client', window.justNumber(player.id)));
                 rOb.pv1 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 2);
                 rOb.pv2 = fsp(gSPs, 'client', jn(player.id)).filter(sp => sp.round === 5);
                 rOb.pv1.forEach((sp, i) => {
@@ -901,25 +890,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         val: sp.val
                     };
                 });
-//                console.log(player)
-//                rOb.pv1Me = rOb.pv1[player.id];
-//                rOb.pv2Me = rOb.pv2[player.id];
-                /*
-                rOb.dynamicSubTeamData2 = rOb.dynamicSubTeamData.slice();
-                rOb.dynamicSubTeamData2.forEach(d => {
-                    d.voteObj = {};
-                    d.votes.forEach((v, i) => {
-//                        console.log(i, v);
-                        const t = PDT[i];
-                        d.voteObj[`t${i}`] = {
-                            title: t.title,
-                            abbr: t.abbr,
-                            displayColour: t.displayColour,
-                            vote: v
-                        };
-                    });
-                });
-                */
             }
 
             if (renderState.temp) {
@@ -929,21 +899,8 @@ document.addEventListener('DOMContentLoaded', function() {
             delete rOb.game.playersFull;
             rOb.headlines = rOb.game.persistentData.headlines.slice(0);
             rOb.showHeadlines = justNumber(game.slide) > 4;
-
-            // build in a check to prevent re-render when page has not changed
-//            console.log(`render check, temp: ${renderState.temp}, stored:`);
-//            console.log(getStoredRenderState().temp);
-            // \/ prob can't use that, might prevent initial render on refresh
-//            console.log(getStoredRenderState().temp === renderState.temp);
             rOb.is2030 = window.justNumber(rOb.game.round) < 3;
-//            console.log(`render template: ${renderState.temp}`, rOb);
-            rOb.dynamicTeamData.forEach(td => {
-//                console.log(td.myPV1);
-            });
-//            console.log(rOb.pv1);
-//            console.log(rOb.pv2);
-//            console.log(rOb.dynamicTeamData);
-//            console.log(rOb.dynamicSubTeamData2);
+            console.log(`render template: ${renderState.temp}`, rOb);
             renderTemplate(targ, renderState.temp, rOb, () => {
 //                console.log(`***************************************** render calls setupControl`);
                 setupControl(rType);
@@ -1028,7 +985,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (go) {
             const back = objectSnapshot(rgame);
             updateGame(rgame);
-//            console.log(`onGameUpdate`);
+            console.log(`onGameUpdate`);
             setPlayer(game);
 //            console.log(`onGameUpdate, event: ${ev}`);
             // console.log(`call to render: onGameUpdate method ending`);
@@ -1110,84 +1067,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start observing the target div for changes
     observer.observe(targetDiv, config);
     const setupSocket = () => {
-    socket.on('gameUpdate', (rOb) => {
-//        console.log('socket hears gameUpdate');
-//        console.log(rOb);
-//        console.log(rOb._updateSource);
-        onGameUpdate(rOb);
-    });
-    socket.on('playerUpdate', (rOb) => {
+        socket.on('gameUpdate', (rOb) => {
+    //        console.log('socket hears gameUpdate');
+    //        console.log(rOb);
+    //        console.log(rOb._updateSource);
+            onGameUpdate(rOb);
+        });
+        socket.on('playerUpdate', (rOb) => {
         const rgame = rOb.hasOwnProperty('game') ? rOb.game : rOb;
 //        console.log('playerUpdate:', rgame);
         if (rOb.hasOwnProperty('emitType')) {
 //            console.log(`emitType: ${rOb.emitType}`);
         }
     });
-    socket.on('test', () => {
-        console.log('testing')
-    });
-    socket.on('playerConnect', (lid) => {
-        playerConnect(lid);
-    });
-    socket.on('resetPlayer', resetPlayer);
-    socket.on('teamsAssigned', (rgame) => {
-//        console.log('the event')
-        teamsAssigned(rgame);
-    });
-    socket.on('teamsReset', (rgame) => {
-//        console.log('the event')
-        teamsReset(rgame);
-    });
-    socket.on('identifyPlayer', () => {
-        identifyPlayer();
-    });
-    socket.on('identifySinglePlayer', (pl) => {
-//        console.log(`id me: ${pl}, ${player.id}`);
-        if (pl === player.id) {
+        socket.on('test', () => {
+            console.log('testing')
+        });
+        socket.on('playerConnect', (lid) => {
+            playerConnect(lid);
+        });
+        socket.on('resetPlayer', resetPlayer);
+        socket.on('teamsAssigned', (rgame) => {
+    //        console.log('the event')
+            teamsAssigned(rgame);
+        });
+        socket.on('teamsReset', (rgame) => {
+    //        console.log('the event')
+            teamsReset(rgame);
+        });
+        socket.on('identifyPlayer', () => {
             identifyPlayer();
-        }
-    });
-    socket.on('gameOver', () => {
-//        console.log(`gameOver heard`);
-        onGameEnd();
-    });
-    socket.on('renderPlayer', (rOb) => {
-//        isItHere(`renderPlayer`)
-//        isItHere(rOb)
-//        console.log(`renderPlayer`);
+        });
+        socket.on('identifySinglePlayer', (pl) => {
+    //        console.log(`id me: ${pl}, ${player.id}`);
+            if (pl === player.id) {
+                identifyPlayer();
+            }
+        });
+        socket.on('gameOver', () => {
+    //        console.log(`gameOver heard`);
+            onGameEnd();
+        });
+        socket.on('renderPlayer', (rOb) => {
+    //        isItHere(`renderPlayer`)
+    //        isItHere(rOb)
+    //        console.log(`renderPlayer`);
 
-        const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
-        const temp = rOb.temp;
-//        renderState = {temp: temp, ob: ob};
-        updateRenderState({temp: temp, ob: ob});
-        if (rOb.hasOwnProperty('targ')) {
-            renderState.targ = rOb.targ;
-        }
-        // console.log(`call to render: renderPlayer event`);
-        render();
-    });
-    socket.on('forceRefresh', () => {
-//        console.log('make me refresh');
-        window.location.reload();
-//        console.log(`I feel refreshed`)
-    });
-    socket.on('sendHome', () => {
-//        console.log('send me home');
-        gotoHomeState();
-        render();
-    });
-    socket.on('startRound', (ob) => {
-        console.log(`startRound heard, ob:`, ob);
-        onStartRound(ob);
-    });
-    socket.on('waitForGame', () => {
-//        console.log('waitForGame - connected but no game, try again in a minute');
-//        window.location.reload();
-    });
-    socket.on('playerRemoved', (ob) => {
-        onRemoval(ob);
-    });
-    socket.on('pong', () => {
+            const ob = rOb.hasOwnProperty(ob) ? rOb.ob : {};
+            const temp = rOb.temp;
+    //        renderState = {temp: temp, ob: ob};
+            updateRenderState({temp: temp, ob: ob});
+            if (rOb.hasOwnProperty('targ')) {
+                renderState.targ = rOb.targ;
+            }
+            // console.log(`call to render: renderPlayer event`);
+            render();
+        });
+        socket.on('forceRefresh', () => {
+    //        console.log('make me refresh');
+            window.location.reload();
+    //        console.log(`I feel refreshed`)
+        });
+        socket.on('sendHome', () => {
+    //        console.log('send me home');
+            gotoHomeState();
+            render();
+        });
+        socket.on('startRound', (ob) => {
+            console.log(`startRound heard, ob:`, ob);
+            onStartRound(ob);
+        });
+        socket.on('waitForGame', () => {
+    //        console.log('waitForGame - connected but no game, try again in a minute');
+    //        window.location.reload();
+        });
+        socket.on('playerRemoved', (ob) => {
+            onRemoval(ob);
+        });
+        socket.on('pong', () => {
 //        console.log('ponged');
         pingState = true;
     });

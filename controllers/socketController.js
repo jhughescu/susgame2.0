@@ -9,27 +9,34 @@ const downloadController = require('./../controllers/downloadController');
 const logController = require('./../controllers/logController');
 const gfxController = require('./../controllers/gfxController');
 
+const chalk = require('chalk');
 const tools = require('./../controllers/tools');
 
 const eventEmitter = getEventEmitter();
 
+const toString = () => {return 'socketController'};
 let io = null;
 let adminDashboardNamespace = null;
 let facilitatorDashboardNamespace = null;
 let playerNamespace = null;
-const logging = false;
+
+const fakegens = new Map(); /* handle multiple fakeGenerator clients */
+let fakegenN = 1;
+const fakegenNumbers = new Map();
 
 const gameNamespaces = {};
 
 const log = (msg) => {
+    const m = toString();
+    const logging = logController.moduleLogging(m);
     if (process.env.ISDEV && logging) {
         if (typeof(msg) === 'object' && !msg.hasOwnProperty('length')) {
-            console.log(Object.assign({loggedBy: 'socketController'}, msg));
+            console.log(Object.assign({loggedBy: m}, msg));
         } else {
-            console.log(`socketController: ${msg}`);
+            console.log(chalk.bgWhite.black(m), chalk.green(msg));
         }
     }
-}
+};
 const procVal = (v) => {
     // process values into numbers, booleans etc
     if (!isNaN(parseInt(v))) {
@@ -83,6 +90,7 @@ const getRoomSockets = (id) => {
 function initSocket(server) {
     io = socketIo(server);
     logController.emptyFolder('logs');
+
     // Handle client events
     io.on('connection', async (socket) => {
         let ref = socket.request.headers.referer;
@@ -179,7 +187,7 @@ function initSocket(server) {
             // This is a player client, add it to the relevant room (unless admin preview)
             socket.join(src);
 //            showRoomSize(src);
-            console.log(`player joins room ${src}, socket: ${socket.id}`);
+//            log(`player joins room ${src}, socket: ${socket.id}`);
             const queries = getQueries(ref);
             const isReal = queries['isAdmin'] !== true;
             if (isReal) {
@@ -190,25 +198,64 @@ function initSocket(server) {
                     socketID: socket.id,
                     connect: true
                 };
+
 //                gameController.playerConnectEvent(gameID, socket.id, true);
                 gameController.playerConnectEvent(pceo);
 //                io.to(facilitator).emit('playerUpdate', {event: 'connection', val: true, ref: ref});
                 const session = await sessionController.getSessionWithAddress(`/${gameID}`);
                 if (session) {
                     socket.emit('playerConnect', process.env.STORAGE_ID);
+//                    log(`session OK: ${session.uniqueID}`);
+//                    console.log(session);
+                    const myGame = gameController.gameExists(`game-${session.uniqueID}`);
+                    if (myGame) {
+//                        log(`yes, we have a game`);
+                        gameController.playerConnectEvent(pceo);
+                    } else {
+//                        log('no game found, should I attempt to restore it?');
+                        gameController.restoreGame(JSON.stringify(session), () => {
+//                            log('restoreGame callback');
+                            gameController.playerConnectEvent(pceo);
+                        });
+                    }
                 }
+
                 const hasID = queries.hasOwnProperty('fid');
                 const idStr = hasID ? `with ID ${queries.fid}` : '';
+
+
                 socket.on('registerPlayer', (data, cb) => {
                     const pceo = {
                         gameID: gameID,
                         socketID: socket.id,
                         connect: true
                     };
+
+                    // Wrap the callback to insert custom logic
+                    const wrappedCallback = (...args) => {
+                        // First call the original callback with any args from registerPlayer
+                        if (typeof cb === 'function') cb(...args);
+
+                        // Then trigger the playerConnectEvent
+                        gameController.playerConnectEvent(pceo);
+                    };
+
+                    gameController.registerPlayer(data, wrappedCallback);
+                });
+                socket.on('registerPlayerNO', (data, cb) => {
+                    const pceo = {
+                        gameID: gameID,
+                        socketID: socket.id,
+                        connect: true
+                    };
+//                    console.log('PLAYER REG')
                     gameController.registerPlayer(data, cb);
-//                    gameController.playerConnectEvent(gameID, socket.id, true);
                     gameController.playerConnectEvent(pceo);
                 });
+                socket.on('removePlayer', (plOb, cb) => {
+                    gameController.removePlayer(plOb, cb);
+                });
+//                socket.on('restoreGame', );
                 socket.on('getRenderState', (ob, cb) => {
 //                    console.log(`getRenderState heard`)
                     gameController.getRenderState(ob, cb);
@@ -268,14 +315,14 @@ function initSocket(server) {
                     }
                 });
                 log(`${queries['fake'] ? 'fake' : 'real'} player connected to game ${src} with ID ${idStr}`);
-//                console.log(Boolean(gameController.getGameWithAddress(src)));
                 if (!Boolean(gameController.getGameWithAddress(src))) {
 //                    console.log(`game not ready, request a retry`);
                     socket.emit('waitForGame');
-//                    res.status(404).set('Refresh', '5;url=/'); // Refresh after 5 seconds and redirect to the home page
-//                    res.send('Game not ready yet. Please wait and refresh the page.');
-
-//                    return; // Exit the function to prevent further processing
+                } else {
+                    if (!gameController.getGameWithAddress(src).persistentData) {
+//                        console.log(`No persistentData found, request retry`);
+                        socket.emit('waitForGame');
+                    }
                 }
             }
 
@@ -291,16 +338,19 @@ function initSocket(server) {
 //                const session = await sessionController.getSessionWithAddress(Q.id);
                 roomID = `${Q.id}-fac`
             } else {
-                console.log(`facilitator attempts to find session with ID ${Q.id}`);
+                log(`facilitator attempts to find session with ID ${Q.id}`);
                 const session = await sessionController.getSessionWithID(Q.id);
                 if (session) {
                     roomID = `${session.address}-fac`;
                 } else {
-                    console.log(`facilitator connection found no session (id: ${Q.id})`)
+                    log(`facilitator connection found no session (id: ${Q.id})`)
                 }
             }
 //            roomID = '/trouot';
 //            console.log(`facilitator joins room ${roomID}`);
+
+//            console.log(`type: ${Q.type}`);
+
             socket.join(roomID);
 //            showRoomSize(roomID);
 
@@ -324,7 +374,7 @@ function initSocket(server) {
                 }
             });
             socket.on('restoreGame', (o, cb) => {
-                console.log(`restoreGame heard in socketController`);
+//                console.log(`restoreGame heard in socketController`);
                 gameController.restoreGame(o, cb);
             });
             socket.on('resetSession', (id, cb) => {
@@ -339,8 +389,8 @@ function initSocket(server) {
                 gameController.endGame(game, cb);
             });
             socket.on('sessionNameChange', async (ob, cb) => {
-                console.log(ob);
-                console.log(`${ob.gameID}`, {name: ob.name});
+//                console.log(ob);
+//                console.log(`${ob.gameID}`, {name: ob.name});
                 gameController.changeName(ob);
 //                return;
 //                const sesh = await sessionController.updateSession(`${ob.gameID}`, {name: ob.name});
@@ -383,13 +433,18 @@ function initSocket(server) {
 //                console.log(`${gId} should match game address`);
                 io.to(gId).emit('forceRefresh');
             });
+            socket.on('closeAllClients', (gId) => {
+//                console.log(`${gId} should match game address`);
+                io.to(gId).emit('forceClose');
+            });
             socket.on('sendClientsHome', (gId) => {
 //                console.log(`${gId} should match game address`);
                 io.to(gId).emit('sendHome');
             });
             socket.on('removePlayer', (plOb, cb) => {
 //                gameController.makeLead(obj);
-//                console.log(clOb);
+//                console.log('removePlayer heard');
+//                console.log(plOb);
                 gameController.removePlayer(plOb, cb);
 //                io.to(clOb.socketID).emit('forceRefresh');
             });
@@ -542,12 +597,77 @@ function initSocket(server) {
                 }
             });
         }
-        // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // End facilitator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // Fake Generator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        if (Q.role === 'fakegen') {
+            let roomID = `${Q.id}-fakegen`;
+            socket.join(roomID);
+            const fId = Q.clientId;
+
+            // Assign fakegen number if this client is new
+            if (!fakegenNumbers.has(fId)) {
+                fakegenNumbers.set(fId, fakegenN++);
+            }
+
+            // Track current socket.id under clientId
+            if (!fakegens.has(fId)) {
+                fakegens.set(fId, new Set());
+            }
+            fakegens.get(fId).add(socket.id);
+
+            // Send back the stable ID
+            socket.emit('checkOnConnection', { fakegenID: fakegenNumbers.get(fId) });
+
+            socket.on('getGame', (id, cb) => {
+                gameController.getGame(id, cb);
+            });
+
+            socket.on('disconnect', () => {
+                const sockets = fakegens.get(fId);
+                if (sockets) {
+                    sockets.delete(socket.id);
+                    if (sockets.size === 0) {
+                        fakegens.delete(fId);
+                        // Note: Do NOT delete fakegenNumbers if you want persistent IDs
+                    }
+                }
+});
+
+        }
+        if (Q.role === 'fakegenNO') {
+            let roomID = `${Q.id}-fakegen`;
+            socket.join(roomID);
+            const fId = Q.clientId;
+            if (!fakegens.has(fId)) {
+                fakegens.set(fId, new Set());
+                fakegenNumbers.set(fId, fakegenN++);
+            }
+            fakegens.get(fId).add(socket.id);
+            console.log(Q);
+            console.log(`returning ID: ${fakegenNumbers.get(fId)}`);
+            socket.emit('checkOnConnection', {fakegenID: fakegenNumbers.get(fId)});
+            socket.on('getGame', (id, cb) => {
+                gameController.getGame(id, cb);
+            });
+            socket.on('disconnect', () => {
+                const sockets = fakegens.get(fId);
+                if (sockets) {
+                    sockets.delete(socket.id);
+                    if (sockets.size === 0) {
+                        fakegens.delete(fId);
+                    }
+                }
+            });
+
+        }
+        // end Fake Generator clients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // presentation (or slideshow) controller ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role === 'presentation-control') {
 //            const roomID = `/${Q.id}-pres-control`;
-            console.log(`socketController - presentation-control calls getWithSessionID with ID ${Q.id}`);
+//            console.log(`socketController - presentation-control calls getWithSessionID with ID ${Q.id}`);
             const session = await sessionController.getSessionWithID(Q.id);
             if (session) {
             roomID = `${session.address}-pres-control`;
@@ -680,6 +800,19 @@ function initSocket(server) {
             });
         }
          // end session display client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // playerList client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (Q.role === 'playerList') {
+            const id = `/${Q.id}-playerList`;
+
+//            console.log('playerList client', id);
+            socket.join(id);
+            socket.on('getGame', (o, cb) => {
+//                console.log('try to get the game');
+                cb(gameController.getGameWithAddress(`/${o}`));
+            });
+//            console.log(id, showRoomSize(id));
+        };
+        // end playerList client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         // scoretest client ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (Q.role) {
@@ -715,7 +848,7 @@ function initSocket(server) {
         socket.on('getSesssionWithID', (id) => {
             // Call appropriate controller method
 //            log('sock');
-            console.log(`"other" event looks for session with ID ${id}`);
+//            console.log(`"other" event looks for session with ID ${id}`);
             sessionController.getSessionWithID(id);
         });
 
@@ -782,12 +915,10 @@ function initSocket(server) {
     });
 
     eventEmitter.on('gameUpdate', (game) => {
-//        const eGame = Object.assign({'updateSource': 'eventEmitter'}, game);
+//        console.log('EMIT GAME UPDATE');
         const eGame = Object.assign({}, game);
         eGame._updateSource = Object.assign({conduit: `eventEmitter`}, eGame._updateSource);
-//        eGame.updateSource = Object.assign({'updateSource': 'eventEmitter'}, game);
-        const rooms = ['-pres', '-pres-control', '-fac', '', '-displaygame', '-scoreSetter']; /* empty value for the player clients */
-//        console.log('hup date');
+        const rooms = ['-pres', '-pres-control', '-fac', '', '-displaygame', '-scoreSetter', '-playerList', '-fakegen']; /* empty value for the player clients */
         rooms.forEach(r => {
             const room = `${game.address}${r}`;
 //            console.log(`emit gameUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
@@ -796,11 +927,13 @@ function initSocket(server) {
     });
     eventEmitter.on('gameRestored', (gOb) => {
         let roomName = `${gOb.game}-fac`;
-//        console.log('noo event');
+        log('game restored event');
         showRoomSize(roomName);
         io.to(roomName).emit('onGameRestored', gOb);
         roomName = `${gOb.game}-pres`;
-//        console.log('noo event');
+        showRoomSize(roomName);
+        io.to(roomName).emit('onGameRestored', gOb);
+        roomName = `${gOb.game}`;
         showRoomSize(roomName);
         io.to(roomName).emit('onGameRestored', gOb);
     });
@@ -841,10 +974,14 @@ function initSocket(server) {
     eventEmitter.on('playerRemoved', (ob) => {
 //        console.log(`removed player`);
 //        console.log(ob);
-//        console.log(`emit to ${ob.sock} (${typeof(ob.sock)})`);
-//        showRoomSize(ob.player.sock)
-//        io.to(ob.game).emit('playerRemoved', Object.assign({src: 'all game'}, ob));
         io.to(ob.sock).emit('playerRemoved', Object.assign({src: 'just socket'}, ob));
+        const rooms = ['-fakegen'];
+        rooms.forEach(r => {
+            const room = `${ob.game}${r}`;
+//            log(room);
+//            log(`emit gameUpdate to room ${room} which has ${getRoomSockets(room).size} socket(s)`);
+            io.to(room).emit('playerRemoved', Object.assign({src: 'just socket'}, ob));
+        });
     });
     eventEmitter.on('gameWarning', (ob) => {
         let room = `${ob.gameID}-fac`;
@@ -856,9 +993,9 @@ function initSocket(server) {
         let room = io.sockets.adapter.rooms.get(game.address);
         if (room) {
             const numSockets = room.size;
-            log(`Number of sockets in room ${game.address}: ${numSockets}`);
+//            log(`Number of sockets in room ${game.address}: ${numSockets}`);
         } else {
-            log(`Room ${game.address} does not exist or has no sockets.`);
+//            log(`Room ${game.address} does not exist or has no sockets.`);
         }
         io.to(game.address).emit('teamsAssigned', game);
         let roomName = `${game.address}-fac`;
@@ -866,9 +1003,9 @@ function initSocket(server) {
 //        console.log('teamsAssigned');
         if (room) {
             const numSockets = room.size;
-            log(`Number of sockets in room ${game.address}: ${numSockets}`);
+//            log(`Number of sockets in room ${game.address}: ${numSockets}`);
         } else {
-            log(`Room ${game.address} does not exist or has no sockets.`);
+//            log(`Room ${game.address} does not exist or has no sockets.`);
         }
         io.to(roomName).emit('teamsAssigned', game);
     });
@@ -891,15 +1028,15 @@ function initSocket(server) {
         const room = io.sockets.adapter.rooms.get(add);
         if (room) {
             const numSockets = room.size;
-            log(`Number of sockets in room ${add}: ${numSockets}`);
+//            log(`Number of sockets in room ${add}: ${numSockets}`);
         } else {
-            log(`Room ${add} does not exist or has no sockets.`);
+//            log(`Room ${add} does not exist or has no sockets.`);
         }
         io.to(add).emit(ob.update, ob);
     });
     eventEmitter.on('resetAll', (address) => {
 //        playerNamespace.emit('resetAll');
-        log(`resetAll: ${address}`);
+//        log(`resetAll: ${address}`);
         showRoomSize(address)
         io.to(address).emit('resetPlayer');
     });
@@ -930,7 +1067,13 @@ function initSocket(server) {
 //        return getSockets(id);
     });
     eventEmitter.on('refreshSockets', (id) => {
+        log(`forcing refresh: ${id}`);
         io.to(id).emit('forceRefresh');
+    });
+    eventEmitter.on('renewSockets', (game) => {
+        // if game has been restored (e.g. via server restart), resupply the clienst with their player data
+        log(`renewing clients: ${game.address}`);
+        io.to(game.address).emit('renew', game);
     });
     eventEmitter.on('showSlide', (slOb) => {
 //        console.log('I hear you');

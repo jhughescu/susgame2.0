@@ -11,6 +11,7 @@ const LOGF_ROUNDS = 'rounds';
 const LOG_FILE = 'all_logs';
 const updateList = [];
 const logList = [];
+
 let updateTime = null;
 let logTime = null;
 
@@ -44,7 +45,7 @@ const emptyFolder = async (directoryPath) => {
                     }
                 }
             }
-            console.log(`All contents deleted from ${directoryPath}`);
+//            console.log(`All contents deleted from ${directoryPath}`);
 //            fs.writeFile('logs/updates.json', JSON.stringify({piss: 'boil'}));
         } catch (err) {
             console.error(`Error clearing directory: ${err.message}`);
@@ -140,6 +141,16 @@ const writeLogsV1 = async () => {
     }
 };
 
+const moduleLogging = (c) => {
+    let il = false;
+    let ls = process.env.LOGSET;
+    if (ls) {
+        ls = ls.split(',');
+        il = ls.includes(c);
+    }
+    return il;
+}
+
 const writeLogs = async () => {
     if (isDev()) {
         try {
@@ -210,5 +221,6 @@ module.exports = {
     writeBeautifiedJson,
     addUpdate,
     getUpdateLog,
-    addLog
+    addLog,
+    moduleLogging
 };

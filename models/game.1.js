@@ -58,6 +58,7 @@ class Game {
                         const player = this.playersFull[pr];
                         if (!ob.preview) {
                             player.isLead = i === 0;
+                            console.log(`${player.id} is lead? ${player.isLead}`);
                         }
                     } else {
                         console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> playersFull has no player with id ${pr}`);
@@ -106,7 +107,7 @@ class Game {
     }
     setTeam (player) {
         // set the team (teamObj) for a single player (restore method)
-//        console.log(`setTeam method`);
+//        console.log(`setTeam method: ${player.id}`);
         if (this.persistentData) {
             let pt = this.persistentData.teams;
 //            console.log('teams', this.teams);
@@ -116,11 +117,11 @@ class Game {
                     player.teamObj = pt[`t${i}`];
                     // Only players of team type 1 have leads
                     player.isLead = t[0] === player.id && player.teamObj.type === 1;
-//                    console.log(`${player.id} assigned to ${player.teamObj.title} team as ${player.isLead ? 'lead' : 'ordinary member'}`);
+                    console.log(`${player.id} assigned to ${player.teamObj.title} team as ${player.isLead ? 'lead' : 'ordinary member'}`);
                 }
             })
         } else {
-            console.log('no pres data');
+            console.log('no persistent data');
         }
     }
     addLatecomer(player) {

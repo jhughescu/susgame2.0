@@ -8,21 +8,25 @@ const { getEventEmitter } = require('./../controllers/eventController');
 const routeController = require('./../controllers/routeController');
 const gfxController = require('./../controllers/gfxController');
 const logController = require('./../controllers/logController');
+const { getGameMutex } = require('./mutexRegistry');
 
+const chalk = require('chalk');
 const tools = require('./../controllers/tools');
 
 const eventEmitter = getEventEmitter();
+const toString = () => {return 'gameController'};
 let updateDelay = null;
 const games = {};
-const logging = true;
 const autoTeam = true; /* autoTeam means players will be assigned a team upon entering the session */
 
 const log = (msg) => {
+    const m = toString();
+    const logging = logController.moduleLogging(m);
     if (process.env.ISDEV && logging) {
         if (typeof(msg) === 'object' && !msg.hasOwnProperty('length')) {
-            console.log(Object.assign({loggedBy: `gameController`}, msg));
+            console.log(Object.assign({loggedBy: m}, msg));
         } else {
-            console.log(`gameController: ${msg}`);
+            console.log(chalk.bgWhite.black(m), chalk.yellow(msg));
         }
     }
 };
@@ -54,10 +58,10 @@ async function startGame (o, cb) {
             games[game] = newGame;
 //            console.log(`start it up ${newGame.presentation.currentSlide}`);
         } else {
-            console.log('cannot start game, session has no "type" property');
+            log('cannot start game, session has no "type" property');
         }
     } else {
-        console.log('game already exists, do nothing');
+//        console.log('game already exists, do nothing');
     }
     games[game].presentation.currentSlide = session.slide;
 //    console.log(`the game`);
@@ -107,23 +111,35 @@ async function startGame (o, cb) {
     return rg;
 };
 async function restoreGame (o, cb) {
+//    log('RESTORE');
+//    console.log(o);
+//    console.log(JSON.parse(o));
     // restoreGame will set up a game that has been started, but due to some sort of failure has been removed from the 'games' object.
     // Restore by creating a new instance of Game and then loading any stored info from the database.
     // NOTE a Game is a far more complex object than a Session, which comprises only the persistent data, hence the need to rebuild.
     let game = await startGame(o);
-//    console.log(`restoreGame:`);
-//    console.log(JSON.parse(o));
-    console.log(`restoreGame looks for session with ID ${game.uniqueID}`);
+//    console.log(`restoreGame looks for session with ID ${game.uniqueID}`);
     const session = await sessionController.getSessionWithID(game.uniqueID);
     if (session) {
         game = Object.assign(game, session._doc);
+//        log(`num players: ${game.players.length} num fullplayers: ${Object.values(game.playersFull).length}`);
+//        log(`num developed fullplayers: ${Object.values(game.playersFull).filter(p => p.hasOwnProperty('teamObj')).length}`);
+//        log(`num undeveloped fullplayers: ${Object.values(game.playersFull).filter(p => !p.hasOwnProperty('teamObj'))}`);
+        Object.values(game.playersFull).forEach((p, i) => {
+            const s = `${i} ${p.id} ${p.teamObj ? p.teamObj.title : ''}`;
+//            log(s);
+        });
+
         // RETAIN LINE BELOW:
-        console.log(`gameController.restoreGame has restored the game ${game.uniqueID}`);
-//        console.log(game.players);
-//        console.log(game.playersFull);
-        restoreClients(game.address);
+//        log(`gameController.restoreGame has restored the game ${game.uniqueID}`);
+        if (tools.isDev()) {
+//            restoreClients(game.address);
+        }
+        // instead of refreshing clients /\ try renewing \/ them with updated game data
+        renewClients(game);
         eventEmitter.emit('gameRestored', {game: game.address});
     }
+//    console.log(game);
     if (cb) {
         cb(game);
     } else {
@@ -131,7 +147,7 @@ async function restoreGame (o, cb) {
     }
 };
 async function resetGame(id, cb) {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> reset game');
+    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> reset game');
     const game = getGameWithUniqueID(id);
     const exclusions = ['presentation', 'persistentData', 'players'];
     if (game) {
@@ -183,19 +199,19 @@ async function resetGame(id, cb) {
         };
         const session = await sessionController.updateSession(id, sOb);
         if (session) {
-            console.log('return updated session here');
-            console.log(session);
+            log('return updated session here');
+            log(session);
             if (cb) {
                 cb(session);
             }
         } else {
-            console.log('no session')
+            log('no session')
         }
-        const eGame = Object.assign({'_updateSource': {event: 'gameController resetGame'}}, game);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController resetGame', type: 'game'}}, game);
         // eventEmitter.emit('gameUpdate', eGame);
         emitUpdate(eGame);
     } else {
-        console.log('no game');
+        log('no game');
     }
 };
 async function makeLead (ob) {
@@ -213,13 +229,13 @@ async function makeLead (ob) {
         game.setTeam(leadOld);
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
 //        const eGame = Object.assign({'_updateEvent': 'makeLead'}, game);
-        const eGame = Object.assign({'_updateSource': {event: 'gameController makeLead', playerID: ob.player.id}}, game);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController makeLead', playerID: ob.player.id, type: 'team'}}, game);
         // eventEmitter.emit('gameUpdate', eGame);
         emitUpdate(eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadNew, game});
         eventEmitter.emit('singlePlayerGameUpdate', {player: leadOld, game});
     } else {
-        console.log(`cannot change lead; no game with ID game-${ob.game}`)
+        log(`cannot change lead; no game with ID game-${ob.game}`)
     }
 
 };
@@ -247,16 +263,18 @@ async function reassignTeam (ob) {
 //        game.setTeam(leadOld);
         const session = await sessionController.updateSession(ob.game, {teams: game.teams});
 //        const eGame = Object.assign({'_updateEvent': 'reassignTeam'}, game);
-        const eGame = Object.assign({'_updateSource': {event: 'gameController reassignTeam', playerID: player.id}}, game);
+        const eGame = Object.assign({'_updateSource': {event: 'gameController reassignTeam', playerID: player.id, type: 'team'}}, game);
         // eventEmitter.emit('gameUpdate', eGame);
         emitUpdate(eGame);
         eventEmitter.emit('singlePlayerGameUpdate', {player: player, game});
     } else {
-        console.log(`cannot reassign player; no game with ID game-${ob.game}`)
+        log(`cannot reassign player; no game with ID game-${ob.game}`)
     }
 
 };
 async function removePlayer (ob, cb) {
+//    console.log('removePlayer:');
+//    console.log(ob);
     const pl = ob.player;
     if (!cb) {
         cb = () => {};
@@ -266,34 +284,47 @@ async function removePlayer (ob, cb) {
         try {
             // remove player from any teams they belong to
             const t = game.teams.filter(tm => tm.indexOf(pl, 0) > -1);
-            game.teams.forEach(tm => {
+            game.teams.forEach((tm, i) => {
                 if (tm.indexOf(ob.player, 0) > -1) {
-                    console.log(`player ${pl} is in team: `, tm);
                     if (tm.length === 1) {
-                        console.log('player is only team member');
-                        throw new Error('player is only team member');
+//                        throw new Error('player is only team member');
                     }
+                    game.teams[i].splice(game.teams[i].indexOf(pl), 1);
                 }
             });
             const newP = game.players.splice(game.players.indexOf(pl, 0), 1);
-            const session = await sessionController.updateSession(ob.game, {players: game.players});
-            const fullPlayer = game.playersFull[pl];
+            const session = await sessionController.updateSession(ob.game, {players: game.players, teams: game.teams});
+//            console.log('detective');
+//            console.log(pl);
+//            console.log(game.playersFull[pl]);
+            let fullPlayer = game.playersFull[pl] ? JSON.parse(JSON.stringify(game.playersFull[pl])) : false;
             const removeObj = {
                 game: game.address,
-                sock: fullPlayer.socketID,
                 player: pl,
                 temp: 'game.removed'
             };
-//            const eGame = Object.assign({'_updateEvent': 'removePlayer'}, game);
-            const eGame = Object.assign({'_updateSource': {event: 'gameController removePlayer', playerID: pl.id}}, game);
-            // eventEmitter.emit('gameUpdate', eGame);
+            // add to removeObj all props of ob EXCEPT player and game
+            Object.entries(ob).forEach(e => {
+                if (e[0] !== 'game' && e[0] !== 'player') {
+                    removeObj[e[0]] = e[1];
+                }
+            });
+            if (fullPlayer) {
+                removeObj.sock = fullPlayer.socketID;
+            }
+            delete game.playersFull[pl];
+            const eGame = Object.assign({'_updateSource': {event: 'gameController removePlayer', playerID: pl.id, type: 'player'}}, game);
             emitUpdate(eGame);
+            log('PLAYER REMOVED');
             eventEmitter.emit('playerRemoved', removeObj);
+            if (cb) {
+                cb({success: true});
+            }
         } catch (error) {
-            cb({data: null, err: error.message});
+            cb({data: null, err: error.message, success: false});
         }
     } else {
-        console(`can't remove player, specifed game doesn't exist.`);
+        console.log(`can't remove player, specifed game doesn't exist.`);
     }
 };
 async function changeName (ob, cb) {
@@ -309,7 +340,7 @@ async function changeName (ob, cb) {
         if (game) {
             game.name = sesh.name;
 //            const eGame = Object.assign({'_updateEvent': 'changeName'}, game);
-            const eGame = Object.assign({'_updateSource': {event: 'gameController changeName'}}, game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController changeName', type: 'session'}}, game);
             // eventEmitter.emit('gameUpdate', eGame);
             emitUpdate(eGame);
         }
@@ -322,12 +353,12 @@ async function changeName (ob, cb) {
 };
 
 const temp = () => {
-    console.log('hiaisoj')
+    log('hiaisoj')
 };
 const clearPlayers = (gID) => {
     // clear the players AND teams
     const g = games[gID];
-    console.log('clearPlayers method');
+//    log('clearPlayers method');
 //    console.log(g);
     if (g) {
         g.players = [];
@@ -335,12 +366,12 @@ const clearPlayers = (gID) => {
         g.teams = [];
         g.teamObjects = {};
     } else {
-        console.log(`game not found: ${gID}`);
+//        log(`game not found: ${gID}`);
     }
 };
 const resetSession = async (id, cb) => {
     // dev only method for now
-    console.log(`resetSession, id: ${id}`);
+    log(`resetSession, id: ${id}`);
     const sesh = await sessionController.resetSession(id);
     const gID = `game-${id}`;
 //    console.log(games[gID])
@@ -374,9 +405,10 @@ const emitUpdate = (eGame) => {
 //            console.log(eGame.address);
             logController.addUpdate({game: eGame.address, update: us});
         } else {
-            console.log('JSON error')
+            log('JSON error');
         }
     }
+//    log('emit an update');
     eventEmitter.emit('gameUpdate', eGame);
 };
 const restoreClients = (address) => {
@@ -389,6 +421,22 @@ const restoreClients = (address) => {
                     // game has connected clients, wait then refresh them
                     setTimeout(() => {
                         eventEmitter.emit('refreshSockets', address);
+                    }, 1000);
+                }
+            }
+        });
+    }, 500);
+};
+const renewClients = (game) => {
+    // renew connected clients on game restore
+    setTimeout(() => {
+        eventEmitter.emit('getSockets', game.address, (socks) => {
+            if (socks) {
+                if (socks.size > 0) {
+//                    console.log(`${address} has ${socks.size} clients connected`);
+                    // game has connected clients, wait then refresh them
+                    setTimeout(() => {
+                        eventEmitter.emit('renewSockets', game);
                     }, 1000);
                 }
             }
@@ -418,7 +466,7 @@ const getGame = (id, cb) => {
         gg = getGameWithUniqueID(id);
     }
     if (!gg) {
-        console.log(`no game with ID ${id}`)
+        log(`no game with ID ${id}`)
     } else {
         gg.detailedScorePackets = gg.getDetailedScorePackets();
     }
@@ -428,6 +476,12 @@ const getGame = (id, cb) => {
         cb(gg);
     }
     return gg;
+};
+const gameExists = (gid) => {
+    Object.keys(games).forEach(g => {
+//        log(g);
+    });
+    return games.hasOwnProperty(gid);
 };
 const getGameWithUniqueID = (id) => {
 //    console.log(`getGameWithUniqueID`, id, Object.values(games).length)
@@ -456,15 +510,15 @@ const getScores = (gameID, cb) => {
     const game = games[gameID];
     let ss = [];
     if (game) {
-        console.log(`game.scores`, game.scores);
+        log(`game.scores`, game.scores);
         game.scores.forEach(s => {
             ss.push(s)
         });
     } else {
-        console.log(`no game with ID ${gameID}`);
+        log(`no game with ID ${gameID}`);
     }
     if (cb) {
-        console.log(`getScores callback, ss:`, ss);
+        log(`getScores callback, ss:`, ss);
         cb(ss);
     }
     return ss;
@@ -482,7 +536,7 @@ const getScorePackets = (gameID, cb) => {
             sps.push(new ScorePacket(s))
         });
     } else {
-        console.log(`no game with ID ${gameID}`);
+        log(`no game with ID ${gameID}`);
     }
     if (cb) {
 //        console.log(`getScorePackets callback, sps:`, sps);
@@ -534,7 +588,7 @@ const getTotals4 = (gameID, cb) => {
     }
     const game = games[gameID];
     if (game) {
-        console.log('we have a game');
+        log('we have a game');
         cb(game.getTotals4())
     } else {
 //        console.log('no game no way');
@@ -594,10 +648,10 @@ const createAggregate = (ob, cb) => {
         if (cb) {
             cb(a, spStatic, report);
         } else {
-            console.log(`createAggregate error: no callback sent`)
+            log(`createAggregate error: no callback sent`)
         }
     } else {
-        console.log(`createAggregate error; no ame with ID ${gameID}`);
+        log(`createAggregate error; no ame with ID ${gameID}`);
     }
 };
 const getAllValues = (gameID, cb) => {
@@ -609,7 +663,7 @@ const getAllValues = (gameID, cb) => {
             vs.push(v);
         });
     } else {
-        console.log(`no game with ID ${gameID}`);
+        log(`no game with ID ${gameID}`);
     }
     if (cb) {
         cb(vs);
@@ -628,7 +682,7 @@ const getValues = (idOb, cb) => {
             }
         }
     } else {
-        console.log(`no game called ${idOb.gameID}`);
+        log(`no game called ${idOb.gameID}`);
     }
 };
 const onTeamsAssigned = (t, g) => {
@@ -640,7 +694,7 @@ const onTeamsAssigned = (t, g) => {
         g.setTeams();
         eventEmitter.emit('teamsAssigned', g);
     } else {
-        console.log(`ERROR: attempt to call onTeamsAssigned without sufficient args`)
+        log(`ERROR: attempt to call onTeamsAssigned without sufficient args`)
     }
 };
 const assignTeams = (ob, cb) => {
@@ -649,8 +703,8 @@ const assignTeams = (ob, cb) => {
     switch (ob.type) {
         case 'order':
             t = game.assignTeamsOrder(ob);
-            console.log('teams as assigned:');
-            console.log(t);
+            log('teams as assigned:');
+            log(t);
             break;
         default:
             log('no order type specified');
@@ -683,11 +737,12 @@ const assignTeams = (ob, cb) => {
 };
 
 const assignToNextTeam = (game, player, ID) => {
+
     const PD = game.persistentData;
     const ts = game.mainTeamSize ?? 5;
 
     if (!PD) {
-        console.error('assignToNextTeam: persistentData missing');
+        log('assignToNextTeam: persistentData missing');
         return;
     }
 
@@ -696,7 +751,7 @@ const assignToNextTeam = (game, player, ID) => {
     }
 
     if (game.teams.flat().includes(ID)) {
-        console.warn(`assignToNextTeam: player ${ID} already assigned`);
+//        log(`assignToNextTeam: player ${ID} already assigned`);
         return;
     }
 
@@ -707,10 +762,11 @@ const assignToNextTeam = (game, player, ID) => {
 
     // Main teams not full
     const availableMainTeams = game.teams.slice(0, mainTeamLimit).filter(t => t.length < ts);
-
+//    log(`we have ${availableMainTeams.length} main team(s)`);
     if (availableMainTeams.length > 0) {
         const smallestTeam = availableMainTeams.reduce((a, b) => (a.length <= b.length ? a : b));
         teamID = game.teams.indexOf(smallestTeam);
+//        log(`set teamID to ${teamID}`);
         smallestTeam.push(ID);
     } else {
         // Fill secondary teams
@@ -737,93 +793,33 @@ const assignToNextTeam = (game, player, ID) => {
     // Get team name from ordered list of team keys
     const teamKeyList = [...PD.mainTeams, ...PD.secondaryTeams];
     const teamKey = teamKeyList[teamID];
-    const teamObj = PD.teams[teamKey];
-
+    let teamObj = PD.teams[teamKey];
     if (!teamObj) {
-        console.warn(`assignToNextTeam: No team object found for teamID=${teamID}, key=${teamKey}`);
+        teamObj = PD.teams['t' + teamID];
+    }
+//    log(`KEYS, teamKey: ${teamKey}, teamID: ${teamID}`);
+//    log(`existing is undefined? ${PD.teams[teamKey] === undefined}`);
+//    log(`new is undefined? ${PD.teams['t' + teamID] === undefined}`);
+    if (!teamObj) {
+        log(`assignToNextTeam: No team object found for teamID=${teamID}, key=${teamKey}`);
     }
 
     player.teamObj = teamObj;
+//    log(`here we add ${ID} to playersFull`);
     game.playersFull[ID] = player;
 
-    sessionController.updateSession(game.uniqueID, { teams: game.teams }, () => {
-        console.log(
+    sessionController.updateSession(game.uniqueID, { teams: game.teams }, () => {game
+    /*
+    log(
           'Player ' + ID +
           ' assigned to ' + (teamObj && teamObj.title ? teamObj.title : 'unknown team') +
           ' (socket: ' + player.socketID + ')'
         );
+                                                                                 */
     });
 };
-
-
-const assignToNextTeamV1 = (game, p, ID) => {
-    // 2025 method; players to be assigned to teams in order of arrival
-    // Read teams, create if it doesn't exist
-    // 5 main teams, sort on size, add player to first (smallest) team
-//    console.log(game.teams);
-    const PD = game.persistentData;
-    const ts = game.mainTeamSize === undefined ? 5 : game.mainTeamSize;
-    const playersFullNotReady = game.players.length > 0 && Object.values(game.playersFull).length === 0;
-    let teamID = 0;
-    if (!PD) {
-        console.log('failure in assignToNextTeam - no persistentData found');
-    } else {
-        if (!playersFullNotReady || game.teams.length === 0) {
-            if (game.teams.flat().includes(ID)) {
-                teamID = game.teams.findIndex(team => team.includes(ID));
-    //            console.log(`player ${ID} already registered for a team`);
-            } else {
-                if (game.teams.length === 0) {
-    //                console.log(`teams not defined, create from scratch`);
-                    game.teams = new Array(PD.mainTeams.length).fill(null).map(() => []);
-                    game.teams[0].push(ID);
-                } else {
-    //                console.log(`teams length = ${game.teams.length}`);
-                    if (game.teams.filter(t => t.length < ts).length === 0) {
-    //                    console.log('all main teams maxxed');
-                        // all main teams at max, add & begin building the 2 secondary teams
-                        const gt = game.teams;
-                        if (gt.length < Object.values(PD.teams).length) {
-                            gt.push([], []);
-                        }
-                        const st1 = gt[gt.length - 1];
-                        const st2 = gt[gt.length - 2];
-                        if (st1.length <= st2.length) {
-                            st1.push(ID);
-                            teamID = gt.length - 1;
-                        } else {
-                            st2.push(ID);
-                            teamID = gt.length;
-                        }
-
-                    } else {
-    //                    console.log('main teams not yet filled')
-                        const smallestTeam = game.teams.reduce((a, b) => (a.length <= b.length ? a : b));
-                        teamID = game.teams.indexOf(smallestTeam);
-                        smallestTeam.push(ID);
-                    }
-                }
-            }
-            const fullTeamStack = game.teams.length === PD.mainTeams.length + PD.secondaryTeams.length;
-            const allTeamsOccupied = game.teams.filter(t => t.length === 0).length === 0;
-            // NOTE not getting called because this block only runs when setting up the PV teams.
-            // INSTEAD add a new conditional which checks for teams.length against full team size (main + secondary) and only then looks for empty teams
-            if (fullTeamStack && allTeamsOccupied) {
-                onTeamsAssigned(game.teams, game);
-            }
-            const uo = {teams: game.teams};
-            sessionController.updateSession(game.uniqueID, uo, (s) => {
-                const pl = game.playersFull[ID];
-                console.log(`player ${ID} added to ${pl.teamObj.title} (socket: ${pl.socketID})`)
-            });
-        } else {
-            console.log(`can't set teams up yet, players exist but playersFull does not`);
-        }
-    }
-};
-
 const resetTeams = (ob, cb) => {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> resetTeams');
+    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> resetTeams');
     const game = getGameWithAddress(ob.address);
     let t = [];
     const uo = {teams: t};
@@ -845,7 +841,7 @@ const setTeamSize = (ob, cb) => {
         sessionController.updateSession(ob.gameID.replace('game-', ''), {mainTeamSize: ob.n});
         cb(games[ob.gameID]);
     } else {
-        console.log(`setTeamSize: no game with ID ${ob.gameID} exists`);
+        log(`setTeamSize: no game with ID ${ob.gameID} exists`);
         Object.keys(games).forEach(g => console.log(g))
     }
 };
@@ -865,11 +861,11 @@ const getFullTeam = (id, game) => {
     return t;
 };
 const showGames = () => {
-    console.log(`showGames:`)
+    log(`showGames:`)
     Object.keys(games).forEach(g => console.log(g));
 };
 const endGame = (game, cb) => {
-    console.log(`end game with address ${game.address}`);
+    log(`end game with address ${game.address}`);
     routeController.destroyRoute(game.address);
     game.players = [];
     game.playersFull = {};
@@ -881,7 +877,7 @@ const endGame = (game, cb) => {
     eventEmitter.emit('gameEnded', game);
 };
 const deleteGame = (gameID) => {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> deleteGame');
+    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>> deleteGame');
     // Heavyweight deletion method. Called from socketController via sessionController, which have password safeguards etc.
     // Do not implement via other modules without adding significant protection.
     const killID = gameID.includes('game-') ? gameID : `game-${gameID}`;
@@ -1084,271 +1080,159 @@ const getRenderState = (ob, cb) => {
     cb(getTheRenderState(ob.game, ob.playerID));
 };
 
+const retrieveTeam = (id, G) => {
+    // working from a playerID and a game, get the team object if player exists in the game.teams array
+    let t = null;
+    const T = G.teams;
+    const PT = G.persistentData.teamsArray;
+//    console.log(`search for team of player ${id}`);
+//    console.log('teams', T.flat());
+//    console.log('in?', T.flat().includes(id));
+//    console.log(`PD has ${PT.length} teams`)
+    if (T.flat().includes(id)) {
+        const index = T.findIndex(i => i.includes(id));
+//        console.log(`index: ${index}`);
+        if (index > -1) {
+            t = PT[index];
+        }
+    }
+    return t;
+};
 const registerPlayer = (ob, cb) => {
+
     const game = getGameWithAddress(ob.game);
     if (!game) {
         const idStr = ob.player === undefined ? '' : `(${ob.player})`;
-        console.log(`No game found at ${ob.game}. Retrying... ${idStr}`);
-        setTimeout(() => registerPlayer(ob, cb), 500);
+//        console.log(`No game found at ${ob.game}. Retrying... ${idStr}`);
+//        setTimeout(() => registerPlayer(ob, cb), 500);
         return;
     }
-
-    const plOrig = JSON.stringify(game.players);
-    let ID = ob.player || `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
-    const isNewPlayer = !game.players.includes(ID);
-
-    if (isNewPlayer) {
-        game.players.push(ID);
-    }
-
-    const alreadyRegistered = game.playersFull.hasOwnProperty(ID);
-    let player;
-
-    if (alreadyRegistered) {
-        // Reconnect case
-        player = game.playersFull[ID];
-        player.socketID = ob.socketID;
-        console.log(`Player ${ID} reconnected`);
-    } else {
-        // New player
-        const index = game.players.indexOf(ID);
-        player = new Player(ID, index, ob.socketID);
-        player.idNum = tools.justNumber(player.idNum);
-
-        if (autoTeam) {
-            assignToNextTeam(game, player, ID);
-            game.setTeam(player); // Optional: if game.setTeam sets internal flags
+    const mutex = getGameMutex(game.uniqueID);
+    mutex.runExclusive(async () => {
+        const plOrig = JSON.stringify(game.players);
+        let ID = ob.player || `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
+//        log(` *  *  *  *  *  *  * registerPlayer: ${ID}`);
+        const isNewPlayer = !game.players.includes(ID);
+        if (isNewPlayer) {
+            game.players.push(ID);
+        }
+        const alreadyRegistered = game.playersFull.hasOwnProperty(ID);
+        let player;
+        if (alreadyRegistered) {
+            // Reconnect case
+            player = game.playersFull[ID];
+            player.socketID = ob.socketID;
+//            log(`Player ${ID} reconnected`);
+            if (player.teamObj === null) {
+//                player.teamObj = retrieveTeam(player.id, game);
+                const t = retrieveTeam(player.id, game);
+                const T = game.teams;
+//                log(`BUT has no team, add one: ${t.title}`);
+//                console.log(T);
+//                console.log(T.filter(te => te.includes(ID))[0]);
+//                console.log(T.filter(te => te.includes(ID))[0].indexOf(ID));
+//                console.log(T.filter(te => te.includes(ID))[0].indexOf(ID) === 0);
+                player.teamObj = t;
+                player.isLead = T.filter(te => te.includes(ID))[0].indexOf(ID) === 0;
+//                log(t);
+            }
         } else {
+            // New player
+            const index = game.players.indexOf(ID);
+            player = new Player(ID, index, ob.socketID);
+//            log(`create new player:`);
+//            log(player);
+            player.idNum = tools.justNumber(player.idNum);
             game.playersFull[ID] = player;
-            console.log(`New player ${ID} added without team assignment`);
-        }
-    }
-
-    // Handle late joiner logic if teams are already assigned
-    if (isNewPlayer && !autoTeam && game.teams.length > 0) {
-        console.log(`Late joiner detected: ${ID}`);
-        game.addLatecomer(player);
-        sessionController.updateSession(game.uniqueID, { teams: game.teams });
-    }
-
-    // Debounced player list update
-    if (JSON.stringify(game.players) !== plOrig) {
-        clearTimeout(updateDelay);
-        updateDelay = setTimeout(() => {
-            sessionController.updateSession(game.uniqueID, { players: game.players });
-        }, 5000);
-    }
-
-    // Emit current game state to the client
-    const eGame = {
-        ...game,
-        _updateSource: {
-            event: 'gameController registerPlayer',
-            playerID: player.id,
-        },
-    };
-
-    emitUpdate(eGame);
-
-    if (cb) {
-        const renDo = getTheRenderState(game, ID);
-        cb({ id: ID, renderState: renDo, game: JSON.stringify(game) });
-    } else {
-        log('registerPlayer: no callback');
-    }
-
-    return ID;
-};
-
-
-const registerPlayerV1 = (ob, cb) => {
-    const game = getGameWithAddress(ob.game);
-    let ID = null;
-    let newP = null;
-    let timer = null;
-    let player = null;
-    if (game) {
-        // store a copy of the list of players for later comparison
-        const plOrig = JSON.stringify(game.players);
-        // index will be the joining order (i.e first connected player index = 1 etc)
-        let index = -1;
-        if (ob.player) {
-            ID = ob.player;
-            const pl = game.players.reduce((acc, plID) => {
-                acc[plID] = true;
-                return acc;
-            }, {});
-            newP = !pl.hasOwnProperty(ob.player);
-            if (newP) {
-                game.players.push(ob.player);
-                index = game.players.length;
-            }
-//            console.log(`gameController registerPlayer, ${ID} player already added? ${game.playersFull.hasOwnProperty(ID)} (players registered: ${Object.values(game.playersFull).length})`);
-            if (game.players.length > 0 && Object.values(game.playersFull).length === 0) {
-//                console.log('>>>>>>>>>>>>>>>>>>>>>>>>> oh no, looks like players are re-entering before playersFull has been generated');
-            }
-            const playersNotExpanded = game.players.length > 0 && Object.values(game.playersFull).length === 0;
-            if (game.playersFull.hasOwnProperty(ID)) {
-                // player already registered with game
-                // update the existing player object with the new socketID
-//                console.log('existing player re-enters');
-                game.playersFull[ID].socketID = ob.socketID;
-
+//            log(`New player ${ID} added without team assignment`);
+            if (autoTeam) {
+                assignToNextTeam(game, player, ID);
+                game.setTeam(player); // Optional: if game.setTeam sets internal flags
             } else {
-                // player not yet registered with game
-//                console.log('this THINKS it is a new player');
-                if (autoTeam) {
-                    assignToNextTeam(game, player, ID);
-                    let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
-                    let pplayer = new Player(ID, plIndex, ob.socketID);
-                    game.playersFull[ID] = pplayer;
-//                    console.log('gameController calling setTeam');
-                    game.setTeam(pplayer);
-                }
-            }
-
-
-
-            /*
-            if (!game.playersFull.hasOwnProperty(ID)) {
-                let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
-                player = new Player(ID, plIndex, ob.socketID);
-                player.idNum = tools.justNumber(player.idNum);
                 game.playersFull[ID] = player;
-                game.setTeam(player);
-            } else {
-                // update the existing player object with the new socketID
-                game.playersFull[ID].socketID = ob.socketID;
-            }
-            */
-
-
-        } else {
-            ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
-            game.players.push(ID);
-            newP = true;
-        }
-        if (newP && game.teams.length > 0) {
-            if (!autoTeam) {
-                console.log(`looks like a new player (${ID}) joining after teams are assigned`);
-                game.addLatecomer(player);
-                sessionController.updateSession(game.uniqueID, {teams: game.teams});
+//                log(`New player ${ID} added without team assignment`);
             }
         }
-        const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
-        emitUpdate(eGame);
-        // Compare the list of players with the stored list & update database if they differ
-        if (JSON.stringify(game.players) !== plOrig) {
-            clearTimeout(updateDelay);
-            updateDelay = setTimeout(() => {
-                // save list of players, but do so on a timeout so as not to address the database too frequently
-                sessionController.updateSession(game.uniqueID, {players: game.players});
-            }, 5000);
-        }
-        if (cb) {
-            const renDo = getTheRenderState(game, ID);
-            cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
-        } else {
-            log('reg P, no CB');
-        }
-        return ID;
-    } else {
-        // safeguard against registration prior to completion of game setup
-        const idStr = ob.player === undefined ? '' : `(${ob.player})`;
-        console.log(`no game exists with address ${ob.game}, try again after delay ${idStr}`);
-        setTimeout(() => {
-            registerPlayer(ob, cb);
-        }, 500);
-    }
-};
-
-const registerPlayerORIG = (ob, cb) => {
-    const game = getGameWithAddress(ob.game);
-//    console.log(`gameController registerPlayer`);
-    let ID = null;
-    let newP = null;
-    let timer = null;
-    let player = null;
-    if (game) {
-        // store a copy of the list of players for later comparison
-        const plOrig = JSON.stringify(game.players);
-        // index will be the joining order (i.e first connected player index = 1 etc)
-        let index = -1;
-        if (ob.player) {
-            ID = ob.player;
-            const pl = game.players.reduce((acc, plID) => {
-                acc[plID] = true;
-                return acc;
-            }, {});
-            newP = !pl.hasOwnProperty(ob.player);
-            if (newP) {
-                game.players.push(ob.player);
-                index = game.players.length;
-            }
-            if (!game.playersFull.hasOwnProperty(ID)) {
-                let plIndex = index > -1 ? index - 1 : game.players.indexOf(ID);
-                player = new Player(ID, plIndex, ob.socketID);
-                player.idNum = tools.justNumber(player.idNum);
-                game.playersFull[ID] = player;
-                game.setTeam(player);
-            } else {
-                // update the existing player object with the new socketID
-                game.playersFull[ID].socketID = ob.socketID;
-            }
-        } else {
-            ID = `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
-            game.players.push(ID);
-            newP = true;
-        }
-        if (newP && game.teams.length > 0) {
-            console.log(`looks like a new player (${ID}) joining after teams are assigned`);
+        // Handle late joiner logic if teams are already assigned
+        if (isNewPlayer && !autoTeam && game.teams.length > 0) {
+    //        console.log(`Late joiner detected: ${ID}`);
             game.addLatecomer(player);
-            sessionController.updateSession(game.uniqueID, {teams: game.teams});
+            sessionController.updateSession(game.uniqueID, { teams: game.teams });
         }
-        const eGame = Object.assign({'_updateSource': {event: 'gameController registerPlayer', playerID: player ? player.id : ob.player}}, game);
-        emitUpdate(eGame);
-        // Compare the list of players with the stored list & update database if they differ
+        // Debounced player list update
         if (JSON.stringify(game.players) !== plOrig) {
             clearTimeout(updateDelay);
             updateDelay = setTimeout(() => {
-                // save list of players, but do so on a timeout so as not to address the database too frequently
-                sessionController.updateSession(game.uniqueID, {players: game.players});
+                sessionController.updateSession(game.uniqueID, { players: game.players });
             }, 5000);
         }
+        // Emit current game state to the client
+        const eGame = {
+            ...game,
+            _updateSource: {
+                event: 'gameController registerPlayer',
+                playerID: player.id,
+                type: 'player'
+            },
+        };
+        emitUpdate(eGame);
         if (cb) {
             const renDo = getTheRenderState(game, ID);
-            cb({id: ID, renderState: renDo, game: JSON.stringify(game)});
+            cb({ id: ID, renderState: renDo, game: JSON.stringify(game) });
         } else {
-            log('reg P, no CB');
+            log('registerPlayer: no callback');
         }
         return ID;
-    } else {
-        // safeguard against registration prior to completion of game setup
-        const idStr = ob.player === undefined ? '' : `(${ob.player})`;
-        console.log(`no game exists with address ${ob.game}, try again after delay ${idStr}`);
-        setTimeout(() => {
-            registerPlayer(ob, cb);
-        }, 500);
-    }
+    }).catch(err => {
+        console.error('Failed to assign player due to mutex error:', err);
+    });
 };
+
+
+
 const playerConnectEvent = (ob) => {
-//    console.log(`playerConnectEvent`);
-//    console.log(ob);
     const gameID = ob.gameID;
     const playerID = ob.socketID;
     const boo = ob.connect;
     const game = getGameWithAddress(`/${gameID}`);
+
+//    console.log(ob);
+
     if (game) {
+//        log(`game OK: ${playerID}`);
+//        console.log(game.playersFull);
         const playerArray = Object.values(game.playersFull);
         const socketIDs = playerArray.map(player => player.socketID);
         const player = playerArray[socketIDs.indexOf(playerID)];
+//        console.log(playerArray);
+//        console.log(socketIDs);
 //        console.log(player);
         if (player) {
+//            log(`playerConnectEvent, player (${player.id}) OK, boo: ${boo}`);
             player.connected = boo;
-            const eGame = Object.assign({'_updateSource': {event: 'gameController playerConnectEvent', var: boo, playerID: playerID, pid: player.id}}, game);
-            // eventEmitter.emit('gameUpdate', eGame);
+            const usv1 = {
+                event: 'gameController playerConnectEvent',
+                var: boo,
+                playerID: playerID,
+                pid: player.id,
+                type: 'player'
+            };
+            // us object remodelled to use playerID instead of socketID
+            const us = {
+                event: 'gameController playerConnectEvent',
+                var: boo,
+                playerID: player.id,
+                socketID: playerID,
+//                pid: player.id,
+                type: 'player'
+            };
+            const eGame = Object.assign({'_updateSource': us}, game);
             emitUpdate(eGame);
+        } else {
+//            log('NO PLAYER');
         }
+    } else {
+//        console.log('whoops, no game');
     }
 };
 
@@ -1375,7 +1259,7 @@ const startRound = async (ob) => {
 //            console.log(session);
             eventEmitter.emit('updatePlayers', {game: game, update: 'startRound', val: round});
             if (okToUpdate) {
-                const eGame = Object.assign({'_updateSource': {event: 'gameController startRound'}}, game);
+                const eGame = Object.assign({'_updateSource': {event: 'gameController startRound', type: 'game'}}, game);
                 emitUpdate(eGame);
             } else {
                 console.log('startRound will not emit gameUpdate (ob.ok set to false)');
@@ -1435,7 +1319,7 @@ const endRound = async (ob, cb) => {
         const session = await sessionController.updateSession(ob.game, {round: `${game.round}*`});
         if (session) {
             game.round = session.round;
-            const eGame = Object.assign({'_updateSource': {event: 'gameController endRound'}}, game);
+            const eGame = Object.assign({'_updateSource': {event: 'gameController endRound', type: 'game'}}, game);
             emitUpdate(eGame);
         }
     } else {
@@ -1518,7 +1402,7 @@ const scoreSubmitted = async (ob, cb) => {
                     if (cb) {
                         cb(game.scores);
                     }
-                    const eGame = Object.assign({_updateSource: {event: 'gameController scoreSubmitted', src: ob}}, game);
+                    const eGame = Object.assign({_updateSource: {event: 'gameController scoreSubmitted', src: ob, type: 'score'}}, game);
                     eventEmitter.emit('scoresUpdated', eGame);
                     if (roundComplete) {
                         eventEmitter.emit('roundComplete', eGame);
@@ -1579,7 +1463,7 @@ const scoreForAverageSubmitted = async (ob, cb) => {
             const roundDetail = checkRound(ob.game);
             logController.addLog('round', {game: game.address, roundType: game.round.type, submissions: roundDetail});
             const roundComplete = roundDetail.indexOf(false) === -1;
-            const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob}}, game);
+            const eGame = Object.assign({_updateSource: {event: 'gameController scoreForAverageSubmitted', src: ob, type: 'score'}}, game);
             eventEmitter.emit('scoresUpdated', eGame);
             if (roundComplete) {
                 eventEmitter.emit('roundComplete', eGame);
@@ -1628,7 +1512,7 @@ const presentationAction = (ob) => {
     if (game) {
         game.slide = ob.ref;
     }
-    const eGame = Object.assign({'_updateSource': {event: 'gameController presentationAction'}}, game);
+    const eGame = Object.assign({'_updateSource': {event: 'gameController presentationAction', type: 'presentation'}}, game);
     // eventEmitter.emit('gameUpdate', eGame);
     emitUpdate(eGame);
 
@@ -1663,6 +1547,7 @@ const get = (id, prop) => {
 
 module.exports = {
     getGame,
+    gameExists,
     getGameCount,
     getGameWithAddress,
     getGameWithUniqueID,

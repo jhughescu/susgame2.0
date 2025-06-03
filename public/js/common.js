@@ -407,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const getQueries = (u) => {
         // return an object all query string properties in a given URL
         let qu = {};
+        u = u || window.location.href;
         if (u.indexOf('?', 0) > -1) {
             let r = u.split('?')[1];
 //            console.log(r);

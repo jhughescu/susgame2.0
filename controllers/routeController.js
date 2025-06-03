@@ -97,6 +97,9 @@ app.get('/player', (req, res) => {
 app.get('/gameover', (req, res) => {
     res.sendFile(path.join(basePath, 'gameover.html'));
 });
+app.get('/removed', (req, res) => {
+    res.sendFile(path.join(basePath, 'player.removed.html'));
+});
 app.get('/teamtest', (req, res) => {
     res.render(`game_connecton_team`);
 });
@@ -223,6 +226,9 @@ app.get(`/ptest`, (req, res) => {
 });
 
 
+app.get('/dev/players', (req, res) => {
+    res.sendFile(path.join(basePath, 'dev.players.html'));
+});
 app.get('/dev/scores', (req, res) => {
 //    const o = {teams: [0,1,2,3,4]}
 //    res.render('dev_scoretest', o);

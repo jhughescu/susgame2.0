@@ -79,6 +79,9 @@ const getLoremIpsum = (n) => {
     // return a random LI string of length [n] words (default is 5)
     return lorem.generateWords(n || 5);
 };
+const isDev = () => {
+    return procVal(process.env.ISDEV);
+};
 
 const lorem = new LoremIpsum({
   sentencesPerParagraph: {
@@ -98,5 +101,6 @@ module.exports = {
     isValidJSON,
     getIPv4Address,
     mapSessionToGame,
-    getLoremIpsum
+    getLoremIpsum,
+    isDev
 }

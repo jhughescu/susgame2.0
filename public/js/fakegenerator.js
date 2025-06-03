@@ -1,20 +1,29 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const gameID = window.location.hash.replace('#', '');
+    const gameID = window.location.hash.replace('#', '').replace(/\?.*$/, '');
+    const clientId = sessionStorage.getItem('clientId') || crypto.randomUUID();
+    sessionStorage.setItem('clientId', clientId);
+//    console.log(sessionStorage.getItem('clientId'));
     const socket = io('', {
         query: {
-            role: 'facilitator',
+//            role: 'facilitator',
+            role: 'fakegen',
             type: 'fakeGenerator',
-            id: gameID
-//            session: session
+            id: gameID,
+            clientId: clientId
         }
     });
     const fakeNum = $('#num');
     const fakeRange = {min: 1, max: 40};
     let game = null;
+    let myFakes;
+    let fCount;
+    let fakegenID;
+    let launchType;
+    const fakeStep = 40;
+    let fDatum = parseInt(window.getQueries().start || 0);
     function rsort () {
         return Math.floor(Math.random() * 3) - 1;
     }
-
     const nsort = (a, b) => {
         let rn = 0;
         if (a < b) {
@@ -34,7 +43,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return rn;
     };
-    function reopenFakes(event) {
+    const updateMyFakes = () => {
+        sessionStorage.setItem(getStoreID(), JSON.stringify(myFakes));
+    };
+    const reopenFakes = (event) => {
+        event.preventDefault();
+        showMyFakes();
+        const closed = myFakes.filter(f => f.s === 2);
+        if (closed.length > 0) {
+            const conf = confirm(`This will reopen ${closed.length} fake player${closed.length > 1 ? 's' : ''}, are you sure you want to do this?`);
+            if (conf) {
+                launchType = 2;
+                launchFake();
+            }
+        } else {
+            alert('no closed fakes');
+        }
+    };
+    function reopenFakesV1(event) {
         event.preventDefault();
         socket.emit('getGame', gameID, (g) => {
             const pb = g.players;
@@ -64,30 +90,47 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
         });
+    };
+    const clearFakes = (ev) => {
+        ev.preventDefault();
+        const closed = myFakes.filter(f => !f.o);
+        myFakes = myFakes.filter(f => f.o);
+        sessionStorage.setItem(getStoreID(), JSON.stringify(myFakes));
+        showMyFakes();
     }
 
-    function launchFakes(event) {
+    const launchFake = () => {
+//        const unopened = myFakes.filter(f => f.o === false);
+        const unopened = myFakes.filter(f => f.s === launchType);
+        const nextF = unopened[0];
+        if (unopened.length) {
+            const pId = `pf${(fakegenID * fakeStep) + nextF.n}`;
+            const lId = `${gameID}?fake=true&fid=${pId}`;
+//            console.log('next to launch: ', nextF, lId);
+            nextF.o = true;
+            nextF.s = 1
+            nextF.p = pId;
+            updateMyFakes();
+            window.open(lId, '_blank');
+            setTimeout(launchFake, 300 + (Math.random() * 400));
+        } else {
+            $('#fakeForm').find('button').attr('disabled', false);
+        }
+    };
+    const launchFakes = (event) => {
         event.preventDefault();
-        const num = parseInt(document.getElementById('num').value);
-        let top = 0;
-        socket.emit('getGame', gameID, (game) => {
-            if (game) {
-                let p = game.players.filter(item => item.includes('f')).map(item => parseInt(item.replace('pf', ''))).sort(rsort).sort(nsort);
-                if (p.length > 0) {
-                    top = p[p.length - 1] + 1;
-                }
-                for (let i = 0; i < num; i++) {
-                    const d = (i + 1) * 500;
-                    setTimeout(() => {
-                        window.open(`${gameID}?fake=true&fid=pf${top + i}`, '_blank');
-                    }, d);
-                }
-            } else {
-                console.log(`no game "${gameID}" found`);
-            }
-        });
-
-    }
+        $('#fakeForm').find('button').attr('disabled', true);
+        fCount = parseFloat($('#num').val());
+        const n = myFakes.length ? myFakes[myFakes.length - 1].n : 0;
+        for (let i = 0; i < fCount; i++) {
+            myFakes.push({n: i + n + 1, o: false, s: 0});
+        }
+//        console.log(myFakes.slice(0));
+//        return;
+        showMyFakes();
+        launchType = 0;
+        launchFake();
+    };
     const checkInputType = () => {
 //        console.log(fakeNum);
 //        console.log(parseInt(fakeNum.val()));
@@ -100,15 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const getQR = () => {
         const c = countFakes();
-//        console.log(`getQR, ${c} fake${c === 1 ? '' : 's'} registered`);
-//        console.log(window.isLocal());
-//        console.log(window.location);
-//        console.log(`${window.isLocal() ? window.location.origin : game.localDevAddress}`);
-//        console.log(`${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`);
-//        console.log(`${window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`);
-//        console.log(`${window.isLocal() ? game.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`);
-        if (!isNaN(c)) {
-//            const url = `${game.localDevAddress}${game.address}?fake=true&fid=pf${c + 1}`;
+        if (!isNaN(c) && game !== null) {
             const url = `${window.isLocal() ? game.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`;
             $('#qroverlay').html('');
             socket.emit('getQrString', url, (str) => {
@@ -120,12 +155,21 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const showQR = () => {};
     const countFakes = () => {
+        if (!game) return 0;
+        if (game.players.length === 0) return 0;
+        const pMax = Math.max(...game.players.map(p => window.justNumber(p)));
+        return pMax;
+    };
+    const countFakesV2 = () => {
         let c = null;
         const g = game;
         if (g) {
             c = g.players.filter(p => p.includes('f')).length;
         }
-        return c;
+        const pMax = Math.max(...g.players.map(p => window.justNumber(p)));
+        console.log(`max fake: ${pMax}`);
+//        return c;
+        return pMax;
     };
     const countFakesV1 = () => {
         let c = null;
@@ -149,12 +193,37 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`we currently have ${c} fake player${c === 1 ? '': 's'}`);
     };
     const onGameUpdate = () => {
-        console.log(`game update, number of fakes: ${countFakes()}`);
-        console.log(game.players);
-        console.log(game.playersFull);
+//        console.log(`game update, number of fakes: ${countFakes()}`);
+//        console.log(game.players);
+//        console.log(game.playersFull);
         getQR();
     };
-    socket.on('checkOnConnection', () => {
+    const getStoreID = () => {
+        // use only fater checkOnConnection
+        return `fakegen-${gameID}-${fakegenID}-fakes`;
+    };
+    const showMyFakes = () => {
+        if (myFakes.length) {
+//            console.log('here are the fakes:')
+//            myFakes.forEach(f => console.log(window.clone(f)));
+        } else {
+            console.log('no fakes exist')
+        }
+    };
+
+    socket.on('checkOnConnection', (o) => {
+//        console.log('connex', o);
+        fakegenID = o.fakegenID;
+        myFakes = sessionStorage.getItem(getStoreID()) || [];
+        myFakes = typeof(myFakes) === 'string' ? JSON.parse(myFakes) : myFakes;
+//        const baseTitle = document.title.replace(/(\d+\)$\s\/, '');
+        const baseTitle = document.title.replace(/^\(\d+\)\s*/, '');
+        document.title = `(${fakegenID}) ${baseTitle}`;
+        const baseH = $('H1').html().replace(/^\(\d+\)\s*/, '');
+        $('H1').html(`(${fakegenID}) ${baseH}`);
+        $('H1').css({'font-size': '2rem'})
+//        console.log(getStoreID());
+//        console.log(myFakes);
         socket.emit('getGame', gameID, (g) => {
             game = g;
             onGameUpdate();
@@ -163,9 +232,21 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('gameUpdate', (o) => {
         game = o;
         onGameUpdate();
+//        console.log(o);
     });
+    socket.on('playerRemoved', (o) => {
+        const my = myFakes.filter(p => p.p === o.player)[0];
+        my.o = false;
+        my.s = 2;
+        console.log(`playerRemoved`, o);
+//        console.log(myFakes);
+//        console.log(my);
+        showMyFakes();
+        updateMyFakes();
+    })
     window.launchFakes = launchFakes;
     window.reopenFakes = reopenFakes;
+    window.clearFakes = clearFakes;
     window.checkInputType = checkInputType;
 
 });

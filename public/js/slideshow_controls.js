@@ -53,23 +53,24 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const onGameUpdate = (rg) => {
         const og = JSON.parse(JSON.stringify(game));
-        const gt = og.teams;
-        const event = rg._updateSource.event.split(' ').reverse()[0];
-        const allowedEvents = ['startRound', 'endRound', 'presentationAction'];
-        const isAllowed = allowedEvents.some(term => event.includes(term));
-        game = rg;
-        if (isAllowed) {
-//            \/ timeout used to ensure game has updated before this code runs
-            setTimeout(() => {
-                const teamsChanged = game.teams.length !== gt.length;
-                const roundChanged = justNumber(game.round) !== justNumber(og.round);
-                const roundCompleted = rg.round.toString().includes('*');
-//                console.log(`${event}:, teamsChanged: ${teamsChanged}, roundChanged: ${roundChanged}, roundCompleted: ${roundCompleted}`);
-                if (teamsChanged || roundChanged || roundCompleted) {
-                    updateSlidelist();
-                }
-                setupControls();
-            }, 300)
+        if (og) {
+            const gt = og.teams;
+            const event = rg._updateSource.event.split(' ').reverse()[0];
+            const allowedEvents = ['startRound', 'endRound', 'presentationAction'];
+            const isAllowed = allowedEvents.some(term => event.includes(term));
+            game = rg;
+            if (isAllowed) {
+    //            \/ timeout used to ensure game has updated before this code runs
+                setTimeout(() => {
+                    const teamsChanged = game.teams.length !== gt.length;
+                    const roundChanged = justNumber(game.round) !== justNumber(og.round);
+                    const roundCompleted = rg.round.toString().includes('*');
+                    if (teamsChanged || roundChanged || roundCompleted) {
+                        updateSlidelist();
+                    }
+                    setupControls();
+                }, 300)
+            }
         }
     };
     const getBlankSlide = () => {

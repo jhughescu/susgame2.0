@@ -5,13 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sustainability Game</title>
-    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+<!--    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>-->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <!--    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>-->
     <script src='https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.8/handlebars.min.js'></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/common.js"></script>
-    <script src="js/scriptplayer.js"></script>
-    <script src="js/scorecalc.js"></script>
+<!--    <script src="jsmin/common.min.js"></script>-->
+    <script type='module' src="js/player.init.js"></script>
+    <script src="jsmin/scorecalc.min.js"></script>
 <!--    <script src="js/allocation_control.js"></script>-->
     <link rel='stylesheet' href='css/basics.css'>
     <link rel='stylesheet' href='css/portal-app-styles-v1.css'>
@@ -21,6 +23,7 @@
 </head>
 
 <body>
+    <button id='resign'>leave game</button>
      <div id='insertion'>
      <div class="main-content center">
 

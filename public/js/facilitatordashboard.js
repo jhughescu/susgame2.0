@@ -247,18 +247,36 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const updateGame = (ngame) => {
         // Method to use any time the game is updated (i.e never use "game = ...")
-//        console.log(`let's update the game:`);
-//        console.log(`old`, JSON.parse(JSON.stringify(game)));
-//        console.log(`new`, JSON.parse(JSON.stringify(ngame)));
         if (game) {
-            Object.assign(game, ngame);
+            if (ngame.hasOwnProperty('updateType')) {
+//                Object.assign(game, ngame);
+//                window.gameShare(game);
+//                return;
+                // not a full game update, requires further logic
+                switch (ngame.updateType) {
+                    case 'add':
+                        // add to an existing property of game
+                        if (game.hasOwnProperty(ngame.dest)) {
+                            game[ngame.dest][ngame.new.id] = ngame.new;
+                        }
+                        break;
+                    case 'replace':
+                        // replace an existing property of game
+                        game[ngame.dest] = ngame.new;
+//                        console.log('updated game', game);
+                        break;
+                    default:
+                        console.warn(`updateType '${ngame.updateType}' has no associated action; game will not be updated`);
+                }
+            } else {
+                Object.assign(game, ngame);
+            }
         } else {
             game = Object.assign({}, ngame);
             window.gameShare(game);
             // \/ optional method; listens for change to game object (use in dev only)
 //            setupWatch(game, handleChange);
         }
-//        console.log(`let's update the game:`, JSON.parse(JSON.stringify(game)).teams);
     };
     const onScoreChange = (diff) => {
 //        console.log(`score change detected:`);
@@ -272,9 +290,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
     const onGameUpdate = (g) => {
-//        console.log(`###############################################`);
-//        console.log(`gameUpdate:`, g);
-//        console.log(g._updateSource);
+//        console.log(`onGameUpdate ###############################################`);
+        if (g._updateSource) {
+//            console.log(window.clone(g._updateSource));
+//            console.log(window.clone(g));
+        }
         const pv = procVal;
         let comp = 'playersFull';
         // cg will be an array of updated values, precluding any changes to props containing 'warning'
@@ -285,7 +305,6 @@ document.addEventListener('DOMContentLoaded', function() {
             onScoreChange(scoreDiff);
         }
         if (g.round.toString().includes('*')) {
-//            alert(`round complete!]`);
             addToLogFeed(`round ${game.round} complete`);
         }
         if (g.hasOwnProperty('_updateSource')) {
@@ -315,15 +334,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
 //            console.log(`cgf`, cgf);
             if (pv(g.uniqueID) === pv(getSessionID())) {
+                let updateFullGame = true;
                 addToLogFeed('gameUpdate');
-                updateGame(g);
+                if (g._updateSource) {
+//                    console.log(`_updateSource`, g._updateSource);
+                    if (g._updateSource.type) {
+                        if (g._updateSource.type === `player`) {
+                            updateFullGame = false;
+                            const ng = window.clone(g);
+                            console.log(`we will only update the player now, player:`);
+                            const newP = ng.playersFull[ng._updateSource.playerID];
+                            console.log(newP);
+//                            console.log(ng);
+                            if (newP) {
+                                updateGame({updateType: 'add', dest: 'playersFull', id: newP.id, new: newP});
+                            } else {
+                                updateGame({updateType: 'replace', dest: 'playersFull', new: ng.playersFull});
+                            }
+                            updateGame({updateType: 'replace', dest: 'players', new: ng.players});
+                            updateGame({updateType: 'replace', dest: 'teams', new: ng.teams});
+                        }
+                    }
+                } else {
+                    console.warn('no _updateSource provided, SLEDGEHAMMER METHOD - will update entire game')
+                }
+                if (updateFullGame) {
+                    console.warn('full game update');
+                    updateGame(g);
+                }
                 if (displayedProperty) {
                     setupTab(getCurrentTab().title);
                 }
                 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
                 // 20240701 added a delay to avoid multiple renders on app restart. Consider removing this in production.
+//                console.log(`let's render players`);
+//                console.log(game);
                 clearTimeout(renderDelay);
                 renderDelay = setTimeout(() => {
+//                    console.log('after the timeout, stuff will happen');
                     renderPlayers('facilitatePlayersContent');
                     updatePlayerMeter();
                     updateRoundDisplay();
@@ -858,6 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sr = al.find('#sessionReset');
         const fg = al.find('#fakeGen');
         const allRefr = al.find('#refreshAll');
+        const allRemove = al.find('#removeAll');
         const allHome = al.find('#allHome');
 //        console.log(qr);
         bt.add('#completeRound');
@@ -918,6 +967,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const c = confirm(`Are you sure you want to refresh all ${game.players.length} players browsers?`);
             if (c) {
                 refreshPlayers();
+            }
+        });
+        allRemove.off('click').on('click', () => {
+            const c = confirm(`Are you sure you want to close all ${game.players.length} players browsers?`);
+            if (c) {
+                removeAllPlayers();
             }
         });
         allHome.off('click').on('click', () => {
@@ -1091,18 +1146,22 @@ document.addEventListener('DOMContentLoaded', function() {
         refresh.off('click').on('click', function () {
             const id = $(this).attr('id').split('_').splice(2);
             const pl = game.playersFull[`${id}`];
-            const sock = pl.socketID;
+            const sock = pl ? pl.socketID : '';
             const clOb = {game: game.uniqueID, player: pl, socketID: sock};
             socket.emit(`refreshClient`, clOb);
         });
         remove.off('click').on('click', function () {
+            let warn;
             const id = $(this).attr('id').split('_')[2];
             const plOb = {game: game.uniqueID, player: id};
+            console.log(plOb);
             if (game.playersFull.hasOwnProperty(`${id}`)) {
                 const player = game.playersFull[`${id}`];
                 if (player.isLead) {
-                    alert('cannot remove a team lead, assign a new lead before trying again');
-                    return;
+                    warn = confirm('It is risky to remove a team lead, consider assigning a new lead first. Click OK if you are sure you want to remove the player.');
+                    if (!warn) {
+                        return;
+                    }
                 }
                 if (player.connected) {
                     alert('Note: removing a currently connected player may cause unexpected results');
@@ -1114,10 +1173,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
             }
-            const warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
+            warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
             if (warn) {
                 socket.emit('removePlayer', plOb, (r) => {
-                    console.log(r);
+//                    console.log(r);
                     if (r.hasOwnProperty('err')) {
                         alert(`Cannot remove ${id}: ${r.err}`);
                     }
@@ -1134,112 +1193,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(butd)
         butd.removeAttr('title');
 
-    };
-    const setupPlayerControlsV1 = () => {
-        const pso = playerSortOrder;
-        $('.listSort').off('click');
-        $('.listSort').on('click', function () {
-            pso.dir = pso.prop === this.textContent ? !pso.dir : true;
-            pso.prop = this.textContent;
-            renderPlayers();
-            const index = $('.listSort').filter(function() {
-                return $(this).text().trim() === pso.prop;
-            }).index();
-            $($('.listSort')[index]).addClass('highlight');
-        });
-        $('.makeLead').off('click');
-        $('.makeLead').on('click', function () {
-            const leader = $(this).attr('id').split('_').splice(1);
-            const leadObj = {game: game.uniqueID, team: parseInt(leader[0]), player: leader[1]};
-            socket.emit('makeLead', leadObj);
-        });
-        $('.reassign').off('click');
-        $('.reassign').on('click', function () {
-            const leader = $(this).attr('id').split('_').splice(1);
-            const tID = parseInt(leader[0]);
-            const leadObj = {game: game.uniqueID, team: tID, player: leader[1]};
-            const ts = game.persistentData.teamsArray;
-            if (game.teams[tID].indexOf(leader[1]) === 0 && ts[tID].type !== 2) {
-//                console.log();
-                alert('Cannot reassign a team lead');
-                return;
-            }
-            let str = '';
-            let poss = [];
-//                    console.log(t)
-            ts.forEach(t => {
-                if (t.id != tID) {
-                    poss.push(t.id)
-                    str += `\n${t.id} ${t.title}`;
-                }
-            });
-            let newT = prompt(`Type the NUMBER of the team you would like to reassign ${leader[1]} to:${str}`);
-            if (newT) {
-                if (!isNaN(parseInt(newT))) {
-                    newT = parseInt(newT);
-                    if (poss.indexOf(newT) > -1) {
-                        const go = confirm(`You are about to move ${leader[1]} to the ${ts[newT].title} team, is this OK?`);
-                        leadObj.newTeam = newT;
-                        if (go) {
-                            socket.emit('reassignTeam', leadObj);
-                        }
-                    } else {
-                        alert(`Not possible, the allowed set of options is ${poss}.`);
-                    }
-                } else {
-                    alert('You need to enter the number for the team you would like to rassign to, please try again.');
-                }
-            } else {
-
-            }
-        });
-        $('.refresh').off('click');
-        $('.refresh').on('click', function () {
-            const id = $(this).attr('id').split('_').splice(2);
-            const pl = game.playersFull[`${id}`];
-            const sock = pl.socketID;
-            const clOb = {game: game.uniqueID, player: pl, socketID: sock};
-            socket.emit(`refreshClient`, clOb);
-        });
-        $(`.remove`).off('click').on('click', function () {
-            const id = $(this).attr('id').split('_')[2];
-            const plOb = {game: game.uniqueID, player: id};
-            if (game.playersFull.hasOwnProperty(`${id}`)) {
-                const player = game.playersFull[`${id}`];
-                if (player.isLead) {
-                    alert('cannot remove a team lead, assign a new lead before trying again');
-                    return;
-                }
-                if (player.connected) {
-                    alert('Note: removing a currently connected player may cause unexpected results');
-//                    return;
-                }
-                if (player.teamObj) {
-                    alert('Note: removing a player already assigned to a team may cause unexpected results');
-//                    return;
-                }
-
-            }
-            const warn = confirm(`Are you absolutely sure you want to remove player ${id}`);
-            if (warn) {
-                socket.emit('removePlayer', plOb, (r) => {
-                    console.log(r);
-                    if (r.hasOwnProperty('err')) {
-                        alert(`Cannot remove ${id}: ${r.err}`);
-                    }
-                });
-            }
-        });
-        const rollovers = $('.rollover');
-        rollovers.on('hover', function () {
-            alert(0)
-        })
-        $('.warning').off('click');
-        $('.warning').on('click', function () {
-            // NOTE: the collection of TRs includes the header, hence adjust rowIndex below:
-            const rowIndex = $(this).closest('tr').index() - 1;
-            alert(list[rowIndex].warningMessage)
-        });
     };
     const launchSlideshowControls = () => {
 //        console.log(game);
@@ -1484,6 +1437,21 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('refreshAllClients', game.address);
 //        socket.emit('sendClientsHome', game.address);
     };
+    const removeAllPlayers = () => {
+        // emit a command to refresh all player clients for this game
+//        socket.emit('closeAllClients', game.address);
+        socket.emit('getGame', game.address, (g) => {
+            g.players.forEach(p => {
+                const plOb = {game: game.uniqueID, player: p, alsoClose: true};
+                console.log(plOb);
+                socket.emit('removePlayer', plOb, (r) => {
+                    if (r.hasOwnProperty('err')) {
+                        console.warn(`Could not remove: ${r.err}`);
+                    }
+                });
+            });
+        });
+    };
     const sendPlayersHome = () => {
         // emit a command to refresh all player clients for this game
 //        socket.emit('refreshAllClients', game.address);
@@ -1492,7 +1460,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderPlayers = (targ) => {
         if (game) {
             let basicList = game.players.slice(0);
+//            console.log(basicList);
             const pf = Object.assign({}, game.playersFull);
+//            console.log(pf);
             basicList.forEach((p, i) => basicList[i] = {id: p, connected: false});
             let list = basicList;
             list.forEach((p, i) => {
@@ -1533,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             list = processPlayers(list);
             clearTimeout(pso.timeout);
-//            console.log('render playerList');
+//            console.log('render playerList', list);
             renderTemplate(targ, 'playerlist', list, () => {
                 setupPlayerControls(targ);
             })
@@ -2435,6 +2405,13 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(game);
         return game;
     };
+    const showTeams = () => {
+        let t = 'no teams to show';
+        if (game.teams) {
+            t = game.teams;
+        }
+        return t;
+    };
     const compare = (a, b) => {
         const as = JSON.stringify(a);
         const bs = JSON.stringify(b);
@@ -2670,37 +2647,6 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('gameUpdate', (g) => {
         onGameUpdate(g);
     });
-    socket.on('gameUpdateOLD', (g) => {
-        console.log(`###############################################`);
-        console.log(`gameUpdate:`, g);
-        const pv = procVal;
-        let comp = 'playersFull';
-        // cg will be an array of updated values, precluding any changes to props containing 'warning'
-        const cg = compareGames(g, comp);
-        if (cg) {
-            const cgf = cg.filter(str => !str.includes('warning'));
-            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
-            if (pv(g.uniqueID) === pv(getSessionID())) {
-                addToLogFeed('gameUpdate');
-                updateGame(g);
-                if (displayedProperty) {
-                    setupTab(getCurrentTab().title);
-                }
-                // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
-                renderPlayers('facilitatePlayersContent');
-                updatePlayerMeter();
-                updateRoundDisplay();
-                if ($('#roundcompleter').length > 0) {
-                    if ($('#roundcompleter').is(':visible')) {
-                        closeModal();
-                        showRoundCompleter();
-                    }
-                }
-            }
-        } else {
-            console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
-        }
-    });
     socket.on('onGameRestored', (gOb) => {
 //        console.log('game restored!', gOb);
         onGameRestored(gOb);
@@ -2750,6 +2696,7 @@ document.addEventListener('DOMContentLoaded', function() {
     procVal = window.procVal;
     //
     window.showGame = showGame;
+    window.showTeams = showTeams;
     window.startGame = startGame;
     window.getSessionID = getSessionID;
 //    console.log(`getSessionID defined on window scope`);
@@ -2784,4 +2731,3 @@ document.addEventListener('DOMContentLoaded', function() {
     //
     domInit();
 });
-
