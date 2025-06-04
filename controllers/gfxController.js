@@ -8,6 +8,7 @@ const data = 'this is a QR code';
 const colours = {dark: '#252721', light: '#ffffff'}
 
 const generateQRText = async (url, cb) => {
+//    console.log('gen QR');
     try {
         const svg = await QRCode.toString(url, {
             type: 'svg',

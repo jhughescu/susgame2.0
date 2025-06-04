@@ -194,7 +194,9 @@ async function getSession(req, res) {
             const ip = tools.getIPv4Address();
             if (Boolean(ip)) {
                 session.localIP = ip;
+//                console.log('try grok');
                 if (global.ngrokUrl) {
+//                    console.log('got grok', global.ngrokUrl);
                     session.localDevAddress = global.ngrokUrl;
                 }
             }

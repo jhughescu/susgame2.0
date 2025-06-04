@@ -1150,6 +1150,40 @@ document.addEventListener('DOMContentLoaded', function () {
 //        console.log('share it out; game');
 
     };
+
+    const getSession = (sessionId, cb) => {
+        fetch('/admin/getSession?sessionID=' + sessionId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    const msg = 'Failed to get session data';
+                    throw new Error(msg);
+                }
+                return response.json();
+            })
+            .then(data => {
+                let session = data;
+                session.base = window.location.origin;
+                if (session.localIP) {
+                    session.localIP = window.procVal(session.localIP);
+                    if (session.localIP) {
+                        session.base = session.base.replace('localhost', session.localIP);
+                    }
+                }
+                session.playerURL = `${session.base}${session.address}`;
+                if (cb) {
+                    cb(session);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    };
+
     // NOTE: parials are currently set up each time the system admin connects, so the method call below is safe for now.
     // In case of problems getting partials, check the order of system architecture.
     getPartials();
@@ -1177,6 +1211,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.getPartials = getPartials;
     window.socketShare = socketShare;
     window.getSocket = getSocket;
+    window.getSession = getSession;
     window.playerShare = playerShare;
     window.gameShare = gameShare;
     window.thisRoundScored = thisRoundScored;

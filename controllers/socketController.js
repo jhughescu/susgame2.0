@@ -621,6 +621,7 @@ function initSocket(server) {
             socket.emit('checkOnConnection', { fakegenID: fakegenNumbers.get(fId) });
 
             socket.on('getGame', (id, cb) => {
+                console.log('fake gen getGame');
                 gameController.getGame(id, cb);
             });
 
@@ -633,7 +634,10 @@ function initSocket(server) {
                         // Note: Do NOT delete fakegenNumbers if you want persistent IDs
                     }
                 }
-});
+            });
+            socket.on('getQrString', (url, cb) => {
+                gfxController.generateQRText(url, cb);
+            });
 
         }
         if (Q.role === 'fakegenNO') {
@@ -1128,6 +1132,16 @@ function initSocket(server) {
         const roomID = `${s.address}-displaysession`;
 //        console.log(`emit onSessionUpdated to room ${roomID} which has ${getRoomSockets(roomID).size} socket(s)`);
         io.to(roomID).emit('onSessionUpdated', s);
+    });
+    eventEmitter.on('sessionReset', (id) => {
+//        console.log(`NEW: ${id}`);
+        const R = ['fakegen'];
+        R.forEach(r => {
+            const rid = `${id}-${r}`;
+//            console.log(rid);
+//            console.log(`emit sessionReset to room ${rid} which has ${getRoomSockets(rid).size} socket(s)`);
+            io.to(rid).emit('sessionReset', id);
+        });
     });
 };
 

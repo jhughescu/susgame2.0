@@ -24,12 +24,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // logFeed is an array of messages to be revealed to the client
     const logFeed = [];
     const logFeedArchive = [];
+    const updateQueue = [];
 //    console.log(`null the session`);
     let session = null;
     let game = null;
     let gameSeekTimeout = null;
     let renderDelay = 0;
     let renderTimeout = null;
+    let processingUpdates = false;
 
     const playerSortOrder = {prop: null, dir: true, timeout: -1};
     const SLIDESHOW_CONTROL = 'facilitator-slideshow-controls';
@@ -249,9 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Method to use any time the game is updated (i.e never use "game = ...")
         if (game) {
             if (ngame.hasOwnProperty('updateType')) {
-//                Object.assign(game, ngame);
-//                window.gameShare(game);
-//                return;
                 // not a full game update, requires further logic
                 switch (ngame.updateType) {
                     case 'add':
@@ -263,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     case 'replace':
                         // replace an existing property of game
                         game[ngame.dest] = ngame.new;
-//                        console.log('updated game', game);
                         break;
                     default:
                         console.warn(`updateType '${ngame.updateType}' has no associated action; game will not be updated`);
@@ -274,8 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             game = Object.assign({}, ngame);
             window.gameShare(game);
-            // \/ optional method; listens for change to game object (use in dev only)
-//            setupWatch(game, handleChange);
         }
     };
     const onScoreChange = (diff) => {
@@ -289,24 +285,22 @@ document.addEventListener('DOMContentLoaded', function() {
         window.renderScoreboard('insertion');
 //        socket.emit('scoreUpdate', {address: game.address, sp: sc});
     };
-    const onGameUpdate = (g) => {
-//        console.log(`onGameUpdate ###############################################`);
-        if (g._updateSource) {
-//            console.log(window.clone(g._updateSource));
-//            console.log(window.clone(g));
+
+    function processUpdateQueue() {
+        if (updateQueue.length === 0) {
+            processingUpdates = false;
+            return;
         }
-        const pv = procVal;
-        let comp = 'playersFull';
-        // cg will be an array of updated values, precluding any changes to props containing 'warning'
-        const cg = compareGames(g, comp);
-        // scoreDiff will be an array of any scores that have changed in this update
-        const scoreDiff = compareScores(g.scores);
-        if (scoreDiff.length > 0) {
-            onScoreChange(scoreDiff);
-        }
-        if (g.round.toString().includes('*')) {
-            addToLogFeed(`round ${game.round} complete`);
-        }
+
+        processingUpdates = true;
+        const latest = updateQueue.pop();  // process the most recent update
+        updateQueue.length = 0;            // discard older ones
+//        console.log('from the queue');
+        onGameUpdate(latest);
+
+        setTimeout(processUpdateQueue, 1000); // run every 200ms
+    }
+    const updateLog = (g) => {
         if (g.hasOwnProperty('_updateSource')) {
             if (g._updateSource.hasOwnProperty('event')) {
                 const us = g._updateSource;
@@ -325,27 +319,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     default:
                         col = 'white';
                 }
-//                console.log(`update event: %c${ev}`, `color: ${col};`)
             }
 
         };
+    };
+    const onGameUpdate = (g) => {
+//        console.log(`onGameUpdate ###############################################`);
+        const pv = procVal;
+        let comp = 'playersFull';
+        const cg = !compareGames(g, comp);
+        const scoreDiff = compareScores(g.scores);
+        if (scoreDiff.length > 0) {
+            onScoreChange(scoreDiff);
+        }
         if (cg) {
-            const cgf = cg.filter(str => !str.includes('warning'));
-            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
-//            console.log(`cgf`, cgf);
             if (pv(g.uniqueID) === pv(getSessionID())) {
                 let updateFullGame = true;
-                addToLogFeed('gameUpdate');
                 if (g._updateSource) {
-//                    console.log(`_updateSource`, g._updateSource);
                     if (g._updateSource.type) {
                         if (g._updateSource.type === `player`) {
                             updateFullGame = false;
                             const ng = window.clone(g);
-                            console.log(`we will only update the player now, player:`);
                             const newP = ng.playersFull[ng._updateSource.playerID];
-                            console.log(newP);
-//                            console.log(ng);
                             if (newP) {
                                 updateGame({updateType: 'add', dest: 'playersFull', id: newP.id, new: newP});
                             } else {
@@ -359,26 +354,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.warn('no _updateSource provided, SLEDGEHAMMER METHOD - will update entire game')
                 }
                 if (updateFullGame) {
-                    console.warn('full game update');
                     updateGame(g);
-                }
-                if (displayedProperty) {
-                    setupTab(getCurrentTab().title);
                 }
                 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
                 // 20240701 added a delay to avoid multiple renders on app restart. Consider removing this in production.
-//                console.log(`let's render players`);
-//                console.log(game);
                 clearTimeout(renderDelay);
                 renderDelay = setTimeout(() => {
-//                    console.log('after the timeout, stuff will happen');
                     renderPlayers('facilitatePlayersContent');
                     updatePlayerMeter();
                     updateRoundDisplay();
                     renderAdvanced();
-//                    console.log('the render')
-                }, 300);
-//                refreshAllWidgets();
+                }, 1000);
                 if ($('#roundcompleter').length > 0) {
                     if ($('#roundcompleter').is(':visible')) {
                         closeModal();
@@ -390,6 +376,129 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
         }
     };
+    const onGameUpdateV2 = (g) => {
+        console.log(`onGameUpdate ###############################################`);
+        const pv = procVal;
+        let comp = 'playersFull';
+        const cg = !compareGames(g, comp);
+        // scoreDiff will be an array of any scores that have changed in this update
+        const scoreDiff = compareScores(g.scores);
+        if (scoreDiff.length > 0) {
+            onScoreChange(scoreDiff);
+        }
+//        updateLog(g);
+        if (cg) {
+            console.log('diff');
+//            const cgf = cg.filter(str => !str.includes('warning'));
+//            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
+            if (pv(g.uniqueID) === pv(getSessionID())) {
+                console.log('yep game');
+                let updateFullGame = true;
+                if (g._updateSource) {
+                    if (g._updateSource.type) {
+                        if (g._updateSource.type === `player`) {
+                            console.log('player update');
+                            updateFullGame = false;
+                            const ng = window.clone(g);
+                            const newP = ng.playersFull[ng._updateSource.playerID];
+                            if (newP) {
+                                updateGame({updateType: 'add', dest: 'playersFull', id: newP.id, new: newP});
+                            } else {
+                                updateGame({updateType: 'replace', dest: 'playersFull', new: ng.playersFull});
+                            }
+                            updateGame({updateType: 'replace', dest: 'players', new: ng.players});
+                            updateGame({updateType: 'replace', dest: 'teams', new: ng.teams});
+                        }
+                    }
+                } else {
+                    console.warn('no _updateSource provided, SLEDGEHAMMER METHOD - will update entire game')
+                }
+                if (updateFullGame) {
+                    console.log('full update')
+                    updateGame(g);
+                }
+                // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
+                // 20240701 added a delay to avoid multiple renders on app restart. Consider removing this in production.
+                clearTimeout(renderDelay);
+                renderDelay = setTimeout(() => {
+                    renderPlayers('facilitatePlayersContent');
+                    updatePlayerMeter();
+                    updateRoundDisplay();
+                    renderAdvanced();
+                }, 300);
+                if ($('#roundcompleter').length > 0) {
+                    if ($('#roundcompleter').is(':visible')) {
+                        closeModal();
+                        showRoundCompleter();
+                    }
+                }
+            }
+        } else {
+            console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
+        }
+    };
+    const onGameUpdateV1 = (g) => {
+        console.log(`onGameUpdate ###############################################`);
+        const pv = procVal;
+        let comp = 'playersFull';
+        // cg will be an array of updated values, precluding any changes to props containing 'warning'
+        const cg = compareGames(g, comp);
+        // scoreDiff will be an array of any scores that have changed in this update
+        const scoreDiff = compareScores(g.scores);
+        if (scoreDiff.length > 0) {
+            onScoreChange(scoreDiff);
+        }
+//        updateLog(g);
+        if (cg) {
+            const cgf = cg.filter(str => !str.includes('warning'));
+            const displayedProperty = Boolean(cgf.slice(0).indexOf('socketID', 0) === -1);
+            if (pv(g.uniqueID) === pv(getSessionID())) {
+                let updateFullGame = true;
+                if (g._updateSource) {
+                    if (g._updateSource.type) {
+                        if (g._updateSource.type === `player`) {
+                            updateFullGame = false;
+                            const ng = window.clone(g);
+                            const newP = ng.playersFull[ng._updateSource.playerID];
+                            if (newP) {
+                                updateGame({updateType: 'add', dest: 'playersFull', id: newP.id, new: newP});
+                            } else {
+                                updateGame({updateType: 'replace', dest: 'playersFull', new: ng.playersFull});
+                            }
+                            updateGame({updateType: 'replace', dest: 'players', new: ng.players});
+                            updateGame({updateType: 'replace', dest: 'teams', new: ng.teams});
+                        }
+                    }
+                } else {
+                    console.warn('no _updateSource provided, SLEDGEHAMMER METHOD - will update entire game')
+                }
+                if (updateFullGame) {
+                    updateGame(g);
+                }
+                if (displayedProperty) {
+                    setupTab(getCurrentTab().title);
+                }
+                // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> need a better approach to line below - player lists will be updated on any/all game updates
+                // 20240701 added a delay to avoid multiple renders on app restart. Consider removing this in production.
+                clearTimeout(renderDelay);
+                renderDelay = setTimeout(() => {
+                    renderPlayers('facilitatePlayersContent');
+                    updatePlayerMeter();
+                    updateRoundDisplay();
+                    renderAdvanced();
+                }, 300);
+                if ($('#roundcompleter').length > 0) {
+                    if ($('#roundcompleter').is(':visible')) {
+                        closeModal();
+                        showRoundCompleter();
+                    }
+                }
+            }
+        } else {
+            console.warn(`gameUpdate has not completed due to a failure at compareGames method`);
+        }
+    };
+
     const launchPresentation = () => {
 
 //         console.log(`/presentation#${game.address.replace('/', '')}`, '_blank');
@@ -398,6 +507,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const launchFakeGenerator = () => {
 //        console.log(game);
         window.open(`/fakegenerator#${game.address}`, '_blank');
+    };
+    const launchPlayersWin = () => {
+//        console.log(game);
+        window.open(`/dev/players#${game.address}`, '_blank');
     };
     const setupTeamsLinks = () => {
         const tl = $('#contentTeams').find('.link');
@@ -905,6 +1018,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const gr = al.find('#gameReset');
         const sr = al.find('#sessionReset');
         const fg = al.find('#fakeGen');
+        const pw = al.find('#playersWin');
         const allRefr = al.find('#refreshAll');
         const allRemove = al.find('#removeAll');
         const allHome = al.find('#allHome');
@@ -962,6 +1076,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         fg.off('click').on('click', () => {
             launchFakeGenerator();
+        });
+        pw.off('click').on('click', () => {
+            launchPlayersWin();
         });
         allRefr.off('click').on('click', () => {
             const c = confirm(`Are you sure you want to refresh all ${game.players.length} players browsers?`);
@@ -1443,7 +1560,7 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('getGame', game.address, (g) => {
             g.players.forEach(p => {
                 const plOb = {game: game.uniqueID, player: p, alsoClose: true};
-                console.log(plOb);
+//                console.log(plOb);
                 socket.emit('removePlayer', plOb, (r) => {
                     if (r.hasOwnProperty('err')) {
                         console.warn(`Could not remove: ${r.err}`);
@@ -2412,14 +2529,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return t;
     };
-    const compare = (a, b) => {
+    const compareV1 = (a, b, ignores) => {
         const as = JSON.stringify(a);
         const bs = JSON.stringify(b);
-//        console.log(`compare: ${as === bs}`);
-//        console.log(as);
-//        console.log(bs);
         return as === bs;
     };
+    const compare = (a, b, ignores = []) => {
+
+        const clean = (obj) => {
+            const copy = {...obj};
+            for (const key of ignores) {
+                delete copy[key];
+            }
+            return copy;
+        };
+
+        const as = JSON.stringify(clean(a));
+        const bs = JSON.stringify(clean(b));
+        const rtn = as === bs;
+        if (ignores.length > 0) {
+//            console.log('compare', ignores, rtn);
+//            console.log(clean(a));
+//            console.log(clean(b));
+        }
+        return rtn;
+    };
+
     let compCount = 0;
     let changeReport = [];
     const showChangeReport = () => {
@@ -2429,8 +2564,95 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     window.showChangeReport = showChangeReport;
-    const compareGames = (g, comp) => {
+
+    const compareGames = (g) => {
+        const c = deepEqual(g, game);
+//        console.log(c);
+        return c;
+    }
+
+    const compareShallowExcluding = (a, b, ignores = []) => {
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        for (const key of keys) {
+            if (ignores.includes(key)) continue;
+            if (!equal(a[key], b[key])) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const compareGamesV3 = (g, comp) => {
+        if (!game || !g[comp] || !game[comp]) return [];
+
+        const changedProps = [];
+        console.log(`Comparing ${comp}...`);
+
+        const newItems = g[comp];
+        const oldItems = game[comp];
+
+        for (const key in newItems) {
+            const newItem = newItems[key];
+            const oldItem = oldItems[key];
+
+            if (!oldItem) {
+                changedProps.push({ player: key, reason: 'new' });
+                continue;
+            }
+
+            if (!compareShallowExcluding(newItem, oldItem, ['titleClip', 'teamObj'])) {
+                for (const prop in newItem) {
+                    if (['titleClip', 'teamObj'].includes(prop)) continue;
+                    if (!equal(newItem[prop], oldItem[prop])) {
+                        changedProps.push({
+                            player: key,
+                            prop,
+                            old: oldItem[prop],
+                            new: newItem[prop],
+                        });
+                        break; // stop after first differing prop
+                    }
+                }
+            }
+        }
+
+        return changedProps;
+    };
+
+
+    const compareGamesV2 = (g, comp) => {
         // compare a newly supplied game object with the existing game and reveal differences (dev method)
+        if (game) {
+//            const src = g.hasOwnProperty('updateSource') ? g.updateSource : 'no source provided';
+            let out = [];
+            console.log(`comparing ${comp}`);
+            if (!compare(g[comp], game[comp], ['titleClip', 'teamObj'])) {
+                out = [];
+                compCount++;
+                Object.entries(g[comp]).forEach((pl, i) => {
+                    if (!compare(pl[1], game[comp][pl[0]])) {
+                        const pre = game[comp][pl[0]];
+                        const post = pl[1];
+                        for (let n in pre) {
+                            console.log('FINAL ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+                            if (!compare(pre[n], post[n], ['titleClip'])) {
+                                console.log(`mismatch between player objects ${pl[0]}: ${n}`);
+                                console.log(window.clone(pre[n]));
+                                console.log(window.clone(post[n]));
+                                const ob = {player: pl[0], prop: n, old: pre[n], new: post[n]};
+                                changeReport.push(ob);
+                                out.push(n);
+                            }
+                        }
+                    }
+                })
+            }
+            return out;
+        }
+    };
+    const compareGamesV1 = (g, comp) => {
+        // compare a newly supplied game object with the existing game and reveal differences (dev method)
+        console.log(`comparing ${comp}`);
         if (game) {
             const src = g.hasOwnProperty('updateSource') ? g.updateSource : 'no source provided';
             let out = [];
@@ -2461,9 +2683,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const a1c = [...a1];
         const a2c = [...a2];
         const difference = a1c.filter(x => !a2.includes(x)).concat(a2c.filter(x => !a1.includes(x)));
-//        console.log(`comparing:`);
-//        console.log(a1);
-//        console.log(a2);
         return difference;
     };
 
@@ -2646,6 +2865,9 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('test', () => {console.log('test')});
     socket.on('gameUpdate', (g) => {
         onGameUpdate(g);
+        return;
+        updateQueue.push(g);
+        if (!processingUpdates) processUpdateQueue();
     });
     socket.on('onGameRestored', (gOb) => {
 //        console.log('game restored!', gOb);

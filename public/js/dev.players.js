@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const gameID = window.location.hash.replace('#', '');
+    const gameID = window.location.hash.replace('#', '').replace('/', '');
     let players = {};
     let updateInt;
     const socket = io('', {
@@ -135,8 +135,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     socket.emit('getGame', gameID, (g) => {
-                console.log('got', g.playersFull);
-        onPlayers(g.playersFull);
+        console.log(gameID);
+        console.log(g);
+        if (g) {
+            console.log('got', g.playersFull);
+            onPlayers(g.playersFull);
+        }
     });
     socket.on('gameUpdate', (g) => {
                 console.log('heard', g.playersFull);

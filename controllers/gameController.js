@@ -377,6 +377,7 @@ const resetSession = async (id, cb) => {
 //    console.log(games[gID])
 //    deleteGame(gID);
     clearPlayers(gID);
+    eventEmitter.emit('sessionReset', games[gID].address);
     if (sesh) {
 //        delete games[gID];
         if (cb) {
@@ -473,6 +474,9 @@ const getGame = (id, cb) => {
 
 //    log(gg);
     if (cb) {
+        if (gg) {
+            console.log(gg.uniqueID, gg.localDevAddress);
+        }
         cb(gg);
     }
     return gg;
