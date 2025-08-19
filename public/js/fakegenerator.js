@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const gameID = window.location.hash.replace('#', '').replace(/\?.*$/, '');
     const clientId = sessionStorage.getItem('clientId') || crypto.randomUUID();
     sessionStorage.setItem('clientId', clientId);
-//    console.log(sessionStorage.getItem('clientId'));
     const socket = io('', {
         query: {
 //            role: 'facilitator',
@@ -15,13 +14,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const fakeNum = $('#num');
     const fakeRange = {min: 1, max: 40};
     let game = null;
+    let session = null;
     let myFakes;
     let fCount;
     let fakegenID;
     let launchType;
-    const fakeStep = 40;
+    const fakeStep = 50;
     let fDatum = parseInt(window.getQueries().start || 0);
-    function rsort () {
+    //
+    const rsort = () => {
         return Math.floor(Math.random() * 3) - 1;
     }
     const nsort = (a, b) => {
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const reopenFakes = (event) => {
         event.preventDefault();
-        showMyFakes();
+//        showMyFakes();
         const closed = myFakes.filter(f => f.s === 2);
         if (closed.length > 0) {
             const conf = confirm(`This will reopen ${closed.length} fake player${closed.length > 1 ? 's' : ''}, are you sure you want to do this?`);
@@ -60,45 +61,21 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('no closed fakes');
         }
     };
-    function reopenFakesV1(event) {
-        event.preventDefault();
-        socket.emit('getGame', gameID, (g) => {
-            const pb = g.players;
-            const pf = g.playersFull;
-            const p = []
-            pb.forEach(pl => {
-                if (pf.hasOwnProperty(pl)) {
-                    if (!pf[pl].connected) {
-                        p.push({id: pl});
-                    }
-                } else {
-                    p.push({id: pl});
-                }
-            });
-            if (p.length === 0) {
-                alert('all registered fakes already open');
-                return;
-            } else {
-                const sure = confirm(`This will reopen ${p.length} fake client${p.length > 1 ? 's' : ''}, continue?`);
-                if (sure) {
-                    p.forEach((pl, i) => {
-                        setTimeout(() => {
-                            window.open(`${gameID}?fake=true&fid=${pl.id}`, '_blank');
-                        }, (i * 200));
-                    });
-                }
-            }
-
-        });
-    };
     const clearFakes = (ev) => {
         ev.preventDefault();
-        const closed = myFakes.filter(f => !f.o);
-        myFakes = myFakes.filter(f => f.o);
-        sessionStorage.setItem(getStoreID(), JSON.stringify(myFakes));
-        showMyFakes();
+        const closed = myFakes.filter(f => f.s === 2);
+        if (closed.length > 0) {
+            const l = closed.length;
+            const conf = confirm(`will remove ${l} fake player${l > 1 ? 's' : ''}`);
+            if (conf) {
+                myFakes = myFakes.filter(f => f.s !== 2);
+                showMyFakes();
+                updateMyFakes();
+            }
+        } else {
+            alert('no closed fakes');
+        }
     }
-
     const launchFake = () => {
 //        const unopened = myFakes.filter(f => f.o === false);
         const unopened = myFakes.filter(f => f.s === launchType);
@@ -127,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 //        console.log(myFakes.slice(0));
 //        return;
-        showMyFakes();
+//        showMyFakes();
         launchType = 0;
         launchFake();
     };
@@ -142,12 +119,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     const getQR = () => {
-        const c = countFakes();
-        if (!isNaN(c) && game !== null) {
-            const url = `${window.isLocal() ? game.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${c + 1}`;
+        const c = countFakes() + (fakegenID * fakeStep);
+        if (!isNaN(c) && game !== null && session !== null) {
+            const n = 1000 + (c + 1);
+//            console.log(c, n);
+            const url = `${window.isLocal() ? session.localDevAddress : window.location.origin}${game.address}?fake=true&fid=pf${n}`;
             $('#qroverlay').html('');
-            socket.emit('getQrString', url, (str) => {
-                console.log(`update QR to ${url}`);
+            socket.emit('getQrString', url.replace('=pf', '=pfm'), (str) => {
                 const qrstr = `${url}${str}`;
                 $('#qroverlay').html(qrstr);
             });
@@ -155,6 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const showQR = () => {};
     const countFakes = () => {
+        return myFakes.length;
+    };
+    const countFakesV3 = () => {
         if (!game) return 0;
         if (game.players.length === 0) return 0;
         const pMax = Math.max(...game.players.map(p => window.justNumber(p)));
@@ -193,11 +174,18 @@ document.addEventListener('DOMContentLoaded', function() {
 //        console.log(`we currently have ${c} fake player${c === 1 ? '': 's'}`);
     };
     const onGameUpdate = () => {
+        console.log('game updated');
 //        console.log(`game update, number of fakes: ${countFakes()}`);
 //        console.log(game.players);
 //        console.log(game.playersFull);
+//        console.log(game.localDevAddress);
         getQR();
     };
+    const onSessionReset = () => {
+        sessionStorage.clear();
+        window.location.reload();
+    };
+
     const getStoreID = () => {
         // use only fater checkOnConnection
         return `fakegen-${gameID}-${fakegenID}-fakes`;
@@ -205,45 +193,65 @@ document.addEventListener('DOMContentLoaded', function() {
     const showMyFakes = () => {
         if (myFakes.length) {
 //            console.log('here are the fakes:')
-//            myFakes.forEach(f => console.log(window.clone(f)));
+            myFakes.forEach(f => console.log(window.clone(f)));
         } else {
             console.log('no fakes exist')
         }
     };
-
-    socket.on('checkOnConnection', (o) => {
-//        console.log('connex', o);
+    const getGameFromServer = () => {
+        socket.emit('getGame', gameID, (g) => {
+            game = g;
+            if (game) {
+                window.getSession(game.uniqueID, (s) => {
+                    session = s;
+                    onGameUpdate();
+                });
+            }
+        });
+    };
+    const init = (o) => {
         fakegenID = o.fakegenID;
         myFakes = sessionStorage.getItem(getStoreID()) || [];
         myFakes = typeof(myFakes) === 'string' ? JSON.parse(myFakes) : myFakes;
-//        const baseTitle = document.title.replace(/(\d+\)$\s\/, '');
         const baseTitle = document.title.replace(/^\(\d+\)\s*/, '');
         document.title = `(${fakegenID}) ${baseTitle}`;
         const baseH = $('H1').html().replace(/^\(\d+\)\s*/, '');
         $('H1').html(`(${fakegenID}) ${baseH}`);
-        $('H1').css({'font-size': '2rem'})
-//        console.log(getStoreID());
-//        console.log(myFakes);
-        socket.emit('getGame', gameID, (g) => {
-            game = g;
-            onGameUpdate();
+        $('H1').css({'font-size': '2rem'});
+        const inp = $('#num');
+        inp.val(sessionStorage.getItem(`${getStoreID}-inp`) || 1);
+        inp.on('change', () => {
+            const v = window.justNumber(inp.val());
+            sessionStorage.setItem(`${getStoreID}-inp`, v);
         });
+        getGameFromServer();
+    };
+    //
+    socket.on('checkOnConnection', (o) => {
+        init(o);
     });
     socket.on('gameUpdate', (o) => {
+
         game = o;
         onGameUpdate();
-//        console.log(o);
+
     });
     socket.on('playerRemoved', (o) => {
         const my = myFakes.filter(p => p.p === o.player)[0];
-        my.o = false;
-        my.s = 2;
-        console.log(`playerRemoved`, o);
+
+//        console.log(`playerRemoved`, o);
 //        console.log(myFakes);
 //        console.log(my);
-        showMyFakes();
+        my.o = false;
+        my.s = 2;
+
+//        showMyFakes();
         updateMyFakes();
-    })
+    });
+    socket.on('sessionReset', (id) => {
+//        console.log('sesh reset', id);
+        onSessionReset();
+    });
     window.launchFakes = launchFakes;
     window.reopenFakes = reopenFakes;
     window.clearFakes = clearFakes;

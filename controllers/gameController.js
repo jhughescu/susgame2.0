@@ -1107,7 +1107,7 @@ const registerPlayer = (ob, cb) => {
     const game = getGameWithAddress(ob.game);
     if (!game) {
         const idStr = ob.player === undefined ? '' : `(${ob.player})`;
-//        console.log(`No game found at ${ob.game}. Retrying... ${idStr}`);
+        console.log(`No game found at ${ob.game}. Retrying... ${idStr}`);
 //        setTimeout(() => registerPlayer(ob, cb), 500);
         return;
     }
@@ -1115,7 +1115,7 @@ const registerPlayer = (ob, cb) => {
     mutex.runExclusive(async () => {
         const plOrig = JSON.stringify(game.players);
         let ID = ob.player || `p${ob.fake ? 'f' : ''}${game.players.length + 1}`;
-//        log(` *  *  *  *  *  *  * registerPlayer: ${ID}`);
+        log(` *  *  *  *  *  *  * registerPlayer: ${ID}`);
         const isNewPlayer = !game.players.includes(ID);
         if (isNewPlayer) {
             game.players.push(ID);
@@ -1126,35 +1126,24 @@ const registerPlayer = (ob, cb) => {
             // Reconnect case
             player = game.playersFull[ID];
             player.socketID = ob.socketID;
-//            log(`Player ${ID} reconnected`);
             if (player.teamObj === null) {
-//                player.teamObj = retrieveTeam(player.id, game);
                 const t = retrieveTeam(player.id, game);
                 const T = game.teams;
 //                log(`BUT has no team, add one: ${t.title}`);
-//                console.log(T);
-//                console.log(T.filter(te => te.includes(ID))[0]);
-//                console.log(T.filter(te => te.includes(ID))[0].indexOf(ID));
-//                console.log(T.filter(te => te.includes(ID))[0].indexOf(ID) === 0);
                 player.teamObj = t;
                 player.isLead = T.filter(te => te.includes(ID))[0].indexOf(ID) === 0;
-//                log(t);
             }
         } else {
             // New player
             const index = game.players.indexOf(ID);
             player = new Player(ID, index, ob.socketID);
-//            log(`create new player:`);
-//            log(player);
             player.idNum = tools.justNumber(player.idNum);
             game.playersFull[ID] = player;
-//            log(`New player ${ID} added without team assignment`);
             if (autoTeam) {
                 assignToNextTeam(game, player, ID);
                 game.setTeam(player); // Optional: if game.setTeam sets internal flags
             } else {
                 game.playersFull[ID] = player;
-//                log(`New player ${ID} added without team assignment`);
             }
         }
         // Handle late joiner logic if teams are already assigned

@@ -82,6 +82,8 @@ const generateSessionQR = (session) => {
     }
 //    generateQR(`${session.base}/presentation#${session.address.replace('/', '')}`, `${session.uniqueID}-presentation`);
 };
+
+
 const ensureDirectoryExists = async (directory) => {
     try {
         // Check if the directory exists

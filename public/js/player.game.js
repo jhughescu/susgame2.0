@@ -44,10 +44,21 @@ export const updateGame = (g) => {
 //    console.log('game', game);
 };
 export const onGameUpdate = (rOb) => {
+//    console.log(`i have an update`, window.clone(rOb));
+    const inOb = window.clone(rOb);
+    console.log(`player update received:`, inOb.hasOwnProperty('_updateSource'), inOb);
+    if (inOb.hasOwnProperty('_updateSource')) {
+        console.log(inOb._updateSource);
+    }
     const updateSource = rOb._updateSource;
     delete rOb._updateSource;
     const gDiff = compareObs(game, rOb);
-    const newP = rOb.playersFull[player.id];
+    console.log(`player.id: ${player.id}, updateSource.playerID: ${updateSource.playerID}`);
+    const identifier = player.id || updateSource.playerID;
+    console.log(`identifier: ${identifier}`);
+//    const newP = rOb.playersFull[player.id];
+    const newP = rOb.playersFull[identifier];
+    console.log('newP', newP);
     if (!$.isEmptyObject(player)) {
         if (newP) {
             const pDiff = compareObs(player, newP);
@@ -61,11 +72,13 @@ export const onGameUpdate = (rOb) => {
             console.log('game update renders', gDiff);
             render(rOb);
         }
+    } else {
+        console.warn('player is empty object');
     }
 };
 export const onPlayerUpdate = (rOb) => {
     // Your game update logic here
-//    console.log(`player update received:`, window.clone(rOb));
+
     Object.assign(player, rOb);
     render();
 };

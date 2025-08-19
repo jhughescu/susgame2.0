@@ -5,6 +5,7 @@ import { addToStorage } from './player.storage.js';
 let renderState = {};
 let renderStateLocal = {};
 //
+
 const setRenderStateLocal = (ob) => {
     renderStateLocal = typeof(ob) === 'string' ? JSON.parse(ob) : Object.assign({}, ob);
     // 'ob' is player info, no need to store that - unless preserveOb = true
@@ -32,9 +33,14 @@ const showOverlay = (id, ob) => {
     });
 };
 const getSelect = (ob, arr) => {
-    const filtered = Object.fromEntries(
-        Object.entries(ob).filter(([key]) => arr.includes(key))
-    );
+//    console.log(`getSelect`, ob, arr);
+    let filtered = null;
+    if (ob) {
+//        console.log('attempts')
+        filtered = Object.fromEntries(
+            Object.entries(ob).filter(([key]) => arr.includes(key))
+        );
+    }
     return filtered;
 };
 const getRenderDetailV1 = () => {
@@ -46,18 +52,32 @@ const getRenderDetailV1 = () => {
 };
 const getRenderDetail = (ob, arr) => {
     let d = '';
-    Object.entries(getSelect(ob, arr)).forEach(e => {
-        d += `<tr><td>${e[0]}: </td><td>${e[1]}</td></tr>`;
-    });
+//    console.log(`getRenderDetail`, ob, arr);
+    if (ob) {
+        Object.entries(getSelect(ob, arr)).forEach(e => {
+            d += `<tr><td>${e[0]}: </td><td>${e[1]}</td></tr>`;
+        });
+    } else {
+        console.warn('cannot render; no arg received');
+    }
     return d;
 };
 //
 export const render = () => {
+    console.log(`render`, player);
+    let c = 0;
+    Object.entries(player).forEach(([k, v]) => {
+//        console.log(' * ', k, v);
+        c++;
+    });
+    console.log(`player detail levels: ${c}`);
     const rDest = $(`#insertion`);
     let s = '<table>';
     s += `<tr><td colspan="2">PLAYER</td></tr>`;
+//    console.log('try to send player');
     s += getRenderDetail(player, ['id', 'index', 'connected', 'socketID', 'isFake', 'isLead']);
     s += `<tr><td colspan="2">TEAM</td></tr>`;
+//    console.log('try to send player.teamObj', player);
     s += getRenderDetail(player.teamObj, ['title', 'type']);
     s += `<tr><td colspan="2">GAME</td></tr>`;
     s += getRenderDetail(game, ['uniqueID', 'address', 'round']);
@@ -133,6 +153,7 @@ export const updateRenderState = (ob) => {
     }
 };
 export const identifyPlayer = (pId, gId) => {
+//    console.log(`identifyPlayer`, pId, gId)
     const idOb = {
         id: player.id,
         connected: player.connected,

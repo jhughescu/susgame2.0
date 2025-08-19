@@ -94,7 +94,10 @@ function initSocket(server) {
     // Handle client events
     io.on('connection', async (socket) => {
         let ref = socket.request.headers.referer;
-        let src = ref.split('?')[0]
+        let src = ref.split('?')[0];
+        const userId = socket.handshake.auth.userId; // set from client auth
+        console.log(`userId: ${userId}`);
+        console.log(socket.handshake.auth);
         src = src.split('/').reverse()[0];
         src = `/${src}`;
         const Q = socket.handshake.query;
