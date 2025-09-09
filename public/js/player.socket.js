@@ -1,16 +1,37 @@
 let socket;
 
 export const initSocket = () => {
-    socket = io();
+    //    socket = io();
+    //    socket = io({
+    //        query: {
+    //            role: 'player'
+    //        },
+    //        auth: { token: "BUTTER.butter.butter" } // or however you store it
+    //    });
+    /*
+    socket = io({
+        query: {
+            role: 'player',
+            id: 'testplayer-' + Date.now(), // unique fallback
+            route: window.location.pathname, // for duplicate-tab detection
+            tabId: crypto.randomUUID()
+        },
+        auth: {
+            token: localStorage.getItem('jwt') || ""
+        }
+    });
+    */
+    /*
     // new stuff
     socket.emit('route_opened', {
         route: currentRoute,
         tabId
     });
+    */
     // end new stuff
     return socket;
 };
-
+/*
 // new stuff start
 const generateTabId = () => {
     // Use randomUUID if available
@@ -48,7 +69,7 @@ window.addEventListener('beforeunload', () => {
         tabId
     });
 });
-
+*/
 // new stuff end
 
 export const getSocket = () => socket;

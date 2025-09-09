@@ -53,7 +53,10 @@ export const onGameUpdate = (rOb) => {
     const updateSource = rOb._updateSource;
     delete rOb._updateSource;
     const gDiff = compareObs(game, rOb);
-    console.log(`player.id: ${player.id}, updateSource.playerID: ${updateSource.playerID}`);
+    console.log(`player.id: ${player.id}`);
+    if (updateSource) {
+        console.log(`updateSource.playerID: ${updateSource.playerID}`);
+    }
     const identifier = player.id || updateSource.playerID;
     console.log(`identifier: ${identifier}`);
 //    const newP = rOb.playersFull[player.id];

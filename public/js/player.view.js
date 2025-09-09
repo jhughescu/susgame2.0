@@ -85,6 +85,11 @@ export const render = () => {
     rDest.html(s);
     updateRenderState({test: true, temp: 'test'})
 };
+export const renderTemplateMain = (temp = 'notfound', obj = {}, callback) => {
+    window.renderTemplate('insertion', temp, obj, callback || (() => {
+        console.log('render complete');
+    }));
+};
 export const renderV2 = () => {
     const rDest = $(`#insertion`);
     let s = '<table>';

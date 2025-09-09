@@ -355,5 +355,6 @@ module.exports = {
     getSessionPassword,
     getSessionWithAddress,
     resetSession,
+    sessionExists,
     deleteSession
 };
